@@ -8,7 +8,9 @@
     "./layout": "./src/layout.ts",
     "./schemas": "./src/schemas.ts",
     "./session": "./src/session.ts",
-    "./balance.logic": "./src/balance.logic.ts"
+    "./substitution.logic": "./src/substitution.logic.ts",
+    "./grow.logic": "./src/grow.logic.ts",
+    "./place.logic": "./src/place.logic.ts"
   },
   "scripts": {
     "test": "vitest run",

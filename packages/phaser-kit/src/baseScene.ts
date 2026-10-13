@@ -44,7 +44,8 @@ export abstract class BaseScene extends Phaser.Scene {
     const g = this.add.graphics();
     g.fillStyle(THEME.sky, 1);
     g.fillRect(0, 0, this.W, this.H);
-    g.fillStyle(THEME.skyDeep, 1);
+    // 深色标题条：浅底浅字在换配色后看不清了
+    g.fillStyle(THEME.inkSoft, 1);
     g.fillRect(0, 0, this.W, 150);
     if (label) {
       this.add.text(this.W / 2, 75, label, textStyle(52, CSS.paper, true)).setOrigin(0.5);
@@ -173,6 +174,12 @@ export abstract class BaseScene extends Phaser.Scene {
 
   protected speak(text: string): void {
     this.ctx.services.audio.speak(text);
+  }
+
+  /** 场景开场淡入；尊重"减少动画"设置 */
+  protected fadeIn(): void {
+    if (this.ctx.reducedMotion) return;
+    this.cameras.main.fadeIn(220, 20, 16, 32);
   }
 
   protected onShutdownCleanup(fn: () => void): void {

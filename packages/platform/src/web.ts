@@ -123,6 +123,9 @@ export function createWebAudioBus(): AudioBus {
     play(key: SfxKey): void {
       patterns[key]();
     },
+    tone(freq: number, durationMs: number): void {
+      tone(freq, durationMs / 1000, 0, 'triangle');
+    },
     speak(text: string): void {
       if (muted || typeof speechSynthesis === 'undefined') return;
       speechSynthesis.cancel();

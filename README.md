@@ -21,30 +21,40 @@ pnpm e2e:dist       # 针对生产构建产物再跑一遍（验证 chunk 懒加
 
 调试直达链接：`/?autoplay=1#/play/caochong-elephant`（自动通关，用于无头验证）
 
-## 当前进度（阶段 0 已通过 + 曹冲称象重做）
+## 当前进度
 
-pnpm verify 全绿；真实浏览器端到端 3 项通过（含真实鼠标拖拽通关）；首屏 shell **59 KB gzip**（不含 Phaser），
-游戏 chunk 仅在进入游戏时加载（生产产物实测：进游戏前 1 个 JS chunk，进游戏后新增游戏 chunk）。
+两个典故已完整跑通，`pnpm verify` 全绿，端到端 **6 项通过**（每部游戏都有真实鼠标操作的通关用例）。
+首屏 shell **60.6 KB gzip**（不含 Phaser）；两部游戏各自的业务 chunk 只有 3 KB / 7 KB，
+Phaser 是共享 chunk，只在进入游戏时加载。
 
-### 设计原则：少写字，多动手
+### 一、曹冲称象（信史 · 等量代换）
 
-曹冲称象不再有「下一幕」按钮，也没有文字选择题。玩家亲手走完曹冲的四步：
+不再有「下一幕」按钮，也没有文字选择题。玩家亲手走完曹冲的四步：
+拖大象上秤（压垮）→ 拖上船（沉下去）→ 点船身刻水痕 → 一块块搬石头直到水痕回到水面 → 石头过秤得出 3000。
 
-1. **拖大象上秤** → 秤被压垮（体会「称不动」）
-2. **拖大象上船** → 船沉下去，水面在船身留下痕迹
-3. **点船身刻一刀** → 把「大象有多重」这件事记下来
-4. **一块块搬石头** → 直到水痕重新回到水面（核心：等量代换）
-5. **石头过秤** → 数字累加，大象 = 3000
+| 分幕绘本 | 秤被压垮 | 刻水痕 | 搬石头代换 | 水痕对上 | 大象 = 3000 |
+|---|---|---|---|---|---|
+| ![绘本](docs/screenshots/02-story.png) | ![压垮](docs/screenshots/04-scale-fails.png) | ![刻痕](docs/screenshots/05-mark.png) | ![搬石头](docs/screenshots/06-substitute.png) | ![对上](docs/screenshots/07-matched.png) | ![称重](docs/screenshots/08-weighed.png) |
 
-全程几乎不出现文字：靠图形、动画、音效反馈。孩子是「做」出这个办法，而不是被告知。
+### 二、盘古开天辟地（神话 · 创造与化身）
 
-| 分幕绘本（一句话） | 试着直接上秤（压垮） | 象上船，刻水痕 |
-|---|---|---|
-| ![分幕绘本](docs/screenshots/02-story.png) | ![秤被压垮](docs/screenshots/04-scale-fails.png) | ![刻水痕](docs/screenshots/05-mark.png) |
+五段式，由三个模板 + 一个专属场景拼成：
 
-| 搬石头代换 | 水痕对上 | 大象 = 3000 |
-|---|---|---|
-| ![搬石头](docs/screenshots/06-substitute.png) | ![水痕对上](docs/screenshots/07-matched.png) | ![称出重量](docs/screenshots/08-weighed.png) |
+1. **开** — 连点蛋壳 4 次，混沌炸开，亮粒子上升、暗块下沉（专属场景）
+2. **撑** — 连点 30 次，天升一丈、地降一丈、**盘古在画面里被真的拉长**，点满一万八千年
+3. **化** — 拖 6 团光归位：左眼→太阳、右眼→月亮、头发→星辰、气息→风云、血液→江河、汗毛→草木
+
+拿起一团光时，它该去的位置会自己发光——零失败、零文字；归位时用**语音**念出原文。
+全程没有死亡表现：盘古是「躺下 → 化成光 → 光一件件回到世界」。
+
+| 混沌之蛋 | 裂缝 | 撑天（一万四千年） | 拖光球归位 | 世界成形 |
+|---|---|---|---|---|
+| ![混沌](docs/screenshots/13-chaos.png) | ![裂缝](docs/screenshots/14-cracked.png) | ![撑天](docs/screenshots/17-sky-high.png) | ![归位](docs/screenshots/19-sun-placed.png) | ![成形](docs/screenshots/20-world-complete.png) |
+
+## 设计原则：少写字，多动手
+
+两部游戏加起来，屏幕上出现的教学文字只有开场那两句话。其余全靠图形、动画、音效与语音。
+孩子是「做」出这个办法，而不是被告知。
 
 ## 目录结构
 
@@ -56,7 +66,8 @@ packages/templates         玩法模板：story / balance / quiz / reward
 packages/phaser-kit        Phaser 启动器、主题、基础场景
 packages/platform          Web 实现：IndexedDB / WebAudio / TTS / 生命周期
 packages/progress          存档、复习调度（纯函数，可单测）
-games/caochong-elephant    曹冲称象（阶段 0 样板）
+games/caochong-elephant    曹冲称象（等量代换：substitution 模板）
+games/pangu                盘古开天辟地（撑天 grow + 化身 place + 专属开蛋场景）
 e2e                        Playwright 冒烟
 ```
 

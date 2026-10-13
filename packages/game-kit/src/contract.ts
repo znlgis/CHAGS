@@ -1,7 +1,7 @@
 import type { AllusionContent } from '@chags/content';
 
 export type TemplateId =
-  | 'story' | 'substitution' | 'quiz' | 'match' | 'order' | 'drag'
+  | 'story' | 'substitution' | 'grow' | 'place' | 'quiz' | 'match' | 'order' | 'drag'
   | 'board' | 'timing' | 'react' | 'branch' | 'build' | 'grow';
 
 export interface GameManifest {
@@ -70,6 +70,8 @@ export interface AudioBus {
   /** iOS / 微信必须由用户手势触发解锁 */
   unlock(): Promise<void>;
   play(key: SfxKey): void;
+  /** 指定音高的一声，用于"进度听得见"（例如天越撑越高，音调越高） */
+  tone(freq: number, durationMs: number): void;
   speak(text: string): void;
   stopSpeech(): void;
   setMuted(muted: boolean): void;

@@ -1,6 +1,18 @@
 import { expect, test } from '@playwright/test';
 import { clickDesign, dragDesign, events } from './helpers';
 import { REWARD, SUB, SUB_PILES } from '../packages/templates/src/layout';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+interface StageScript { template: string; levelScript: unknown }
+
+/** Playwright 的 ESM 加载器不接受裸 JSON 导入，这里自己读 */
+function loadContent(id: string): { game: { stages: StageScript[] } } {
+  const path = fileURLToPath(new URL('../packages/content/src/allusions/' + id + '.json', import.meta.url));
+  return JSON.parse(readFileSync(path, 'utf8')) as { game: { stages: StageScript[] } };
+}
+
+const panguJson = loadContent('pangu');
 
 const BOAT = { x: SUB.boatX, y: 600 };
 
@@ -57,4 +69,61 @@ test('autoplay 全流程 + 刷新后进度还在', async ({ page }) => {
 
   await page.getByRole('button', { name: '我的图鉴' }).click();
   await expect(page.getByTestId('album-card-caochong-elephant')).toBeVisible();
+});
+interface PlaceScript {
+  slots: { id: string; x: number; y: number }[];
+  orbs: { id: string; slotId: string; x: number; y: number }[];
+}
+
+const panguPlace = panguJson.game.stages[1]!.levelScript as unknown as PlaceScript;
+
+test('盘古：点蛋 → 连点撑天 → 拖光球化身，真实操作通关', async ({ page }) => {
+  await page.goto('/#/play/pangu');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+
+  // 两幕故事
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(320);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:chaos');
+
+  // ① 连点蛋壳 4 次，混沌炸开
+  for (let i = 0; i < 4; i += 1) {
+    await clickDesign(page, 375, 700);
+    await page.waitForTimeout(130);
+  }
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('scene:enter:grow');
+
+  // ② 连点 30 次，把天撑到一万八千年
+  for (let i = 0; i < 30; i += 1) {
+    await clickDesign(page, 375, 700);
+    await page.waitForTimeout(55);
+  }
+  await expect.poll(() => events(page), { timeout: 30_000 }).toContain('scene:enter:place');
+
+  // ③ 六个部位各归各位
+  for (const orb of panguPlace.orbs) {
+    const slot = panguPlace.slots.find((s) => s.id === orb.slotId);
+    if (!slot) throw new Error('光球 ' + orb.id + ' 找不到槽位');
+    await dragDesign(page, { x: orb.x, y: orb.y }, { x: slot.x, y: slot.y });
+    await page.waitForTimeout(200);
+  }
+
+  await expect.poll(() => events(page), { timeout: 30_000 }).toContain('card:unlocked');
+  await expect.poll(() => events(page), { timeout: 30_000 }).toContain('level:complete');
+
+  await clickDesign(page, REWARD.done.x, REWARD.done.y);
+  await expect.poll(() => events(page)).toContain('session:exit');
+});
+
+test('盘古 autoplay 全流程 + 进度落盘', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/pangu');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+
+  await expect(page).toHaveURL(/#\/$/);
+  await expect(page.getByTestId('collected-count')).toHaveText('1');
+  await page.reload();
+  await expect(page.getByTestId('collected-count')).toHaveText('1');
 });

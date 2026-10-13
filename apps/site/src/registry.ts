@@ -6,4 +6,5 @@ import type { GameModule } from '@chags/game-kit';
  */
 export const registry: Record<string, () => Promise<{ default: GameModule }>> = {
   'caochong-elephant': () => import('@chags/game-caochong-elephant'),
+  pangu: () => import('@chags/game-pangu'),
 };

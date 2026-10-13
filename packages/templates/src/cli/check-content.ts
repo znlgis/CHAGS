@@ -13,15 +13,17 @@ console.log('校验 ' + allusions.length + ' 个典故…\n');
 for (const allusion of allusions) {
   console.log('· ' + allusion.title + ' (' + allusion.id + ')');
 
-  // 1) 关卡脚本必须符合它声明的模板
-  const schema = templateSchemas[allusion.game.template];
-  if (!schema) {
-    fail('未知玩法模板 "' + allusion.game.template + '"，请在 packages/templates/src/schemas.ts 登记');
-  } else {
-    const result = schema.safeParse(allusion.game.levelScript);
+  // 1) 每一段关卡脚本都必须符合它声明的模板
+  for (const stage of allusion.game.stages) {
+    const schema = templateSchemas[stage.template];
+    if (!schema) {
+      fail('未知玩法模板 "' + stage.template + '"，请在 packages/templates/src/schemas.ts 登记');
+      continue;
+    }
+    const result = schema.safeParse(stage.levelScript);
     if (!result.success) {
       for (const issue of result.error.issues) {
-        fail('levelScript.' + issue.path.join('.') + ': ' + issue.message);
+        fail(stage.template + ' 脚本 ' + issue.path.join('.') + ': ' + issue.message);
       }
     }
   }
@@ -43,7 +45,11 @@ for (const allusion of allusions) {
   }
 
   console.log(
-    '  · ' + allusion.story.length + ' 幕故事 / ' + allusion.quiz.length + ' 道复习题 / 模板 ' + allusion.game.template,
+    '  · ' + (allusion.kind === 'myth' ? '神话' : '信史') +
+      ' / ' + allusion.story.length + ' 幕故事' +
+      ' / ' + allusion.quiz.length + ' 道复习题' +
+      ' / ' + allusion.game.stages.length + ' 段玩法：' +
+      allusion.game.stages.map((s) => s.template).join(' → '),
   );
 }
 

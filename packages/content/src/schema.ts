@@ -41,9 +41,17 @@ export const SourceSchema = z.object({
   quote: z.string().min(1),
 });
 
+/** 一个典故可以由多段玩法拼成（例如盘古 = 撑天 + 化身） */
+export const GameStageSchema = z.object({
+  template: z.string().min(1),
+  levelScript: z.unknown(),
+});
+
 export const AllusionSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9-]+$/, 'id 只能是小写字母、数字与连字符'),
+    /** 信史 or 神话：历史长卷要分开呈现（神话落在最左端） */
+    kind: z.enum(['history', 'myth']).default('history'),
     title: z.string().min(1),
     pinyin: z.string().min(1),
     dynasty: z.string().min(1),
@@ -60,7 +68,12 @@ export const AllusionSchema = z
     keyMoment: KeyMomentSchema,
     misconceptions: z.array(z.string().min(1)).min(1),
     quiz: z.array(QuizQuestionSchema).min(2),
-    game: z.object({ template: z.string().min(1), levelScript: z.unknown() }),
+    game: z.object({
+      /** 主玩法模板，用于缩略图与筛选 */
+      template: z.string().min(1),
+      /** 实际参与编排的各段脚本，按顺序执行 */
+      stages: z.array(GameStageSchema).min(1).max(3),
+    }),
   })
   .refine((v) => v.quiz.every((q) => q.answer < q.options.length), {
     message: 'quiz 的 answer 下标越界',
@@ -84,6 +97,7 @@ export const AllusionSchema = z
   });
 
 export type AllusionContent = z.infer<typeof AllusionSchema>;
+export type GameStage = z.infer<typeof GameStageSchema>;
 export type StoryBeat = z.infer<typeof StoryBeatSchema>;
 export type KeyMoment = z.infer<typeof KeyMomentSchema>;
 export type KeyMomentOption = z.infer<typeof KeyMomentOptionSchema>;

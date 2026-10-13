@@ -19,7 +19,7 @@ const gameModule: GameModule = {
 
   async mount(ctx: GameContext): Promise<void> {
     // 关卡脚本来自内容 JSON；模板只认 schema，不认典故
-    const level = substitutionLevel(ctx.content.game.levelScript);
+    const level = substitutionLevel(ctx.content);
     const session = createSessionState(ctx.services.now());
 
     game = createPhaserGame(ctx, {
