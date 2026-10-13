@@ -3,7 +3,23 @@ import pluginVue from 'eslint-plugin-vue';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/playwright-report/**', '**/test-results/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/coverage/**',
+      '**/playwright-report/**',
+      '**/test-results/**',
+      // 打包产物与第三方工程：不是我们的代码，lint 它们没有意义
+      // （Tauri 的 target/ 里嵌入了压缩后的前端产物，会让 eslint 报几千条）
+      'apps/desktop/src-tauri/target/**',
+      'apps/desktop/src-tauri/gen/**',
+      'apps/mobile/android/**',
+      'apps/mobile/resources/**',
+      'release/**',
+      '.scratch/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...pluginVue.configs['flat/recommended'],

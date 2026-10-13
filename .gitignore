@@ -9,3 +9,23 @@ test-results/
 blob-report/
 .scratch/
 *.tsbuildinfo
+
+# 打包产物（源码与安卓工程要入库，构建输出不入库）
+apps/site/dist/
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+apps/desktop/src-tauri/icon-source.png
+apps/mobile/android/app/build/
+apps/mobile/android/build/
+apps/mobile/android/.gradle/
+apps/mobile/android/local.properties
+apps/mobile/android/app/src/main/assets/public/
+apps/mobile/android/app/src/main/res/xml/config.xml
+
+# 签名材料绝不入库
+*.keystore
+*.jks
+keystore.properties
+
+# 分发产物（二进制不入库，用 pnpm dist:win / dist:apk 生成）
+release/

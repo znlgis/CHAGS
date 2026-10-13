@@ -15,7 +15,10 @@
     "e2e": "playwright test",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm content:check && pnpm build",
     "e2e:dist": "playwright test --config playwright.preview.config.ts",
-    "audit:i18n": "playwright test --config playwright.audit.config.ts"
+    "audit:i18n": "playwright test --config playwright.audit.config.ts",
+    "icons": "python scripts/make-icons.py",
+    "dist:win": "pnpm --filter @chags/site build && pnpm --filter @chags/desktop build",
+    "dist:apk": "pnpm --filter @chags/site build && pnpm --filter @chags/mobile build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from 'vue';
 import { navigate, useRoute } from './router';
+import { installBackButtonHandler } from './shell/backButton';
 import { platform } from './shell/platform';
 import { useLocale } from './stores/locale';
 import { useProgress } from './stores/progress';
@@ -20,6 +21,8 @@ function unlockAudio(): void {
 onMounted(() => {
   void progress.init();
   window.addEventListener('pointerdown', unlockAudio, { once: true });
+  // 只在原生壳里生效；浏览器里是空操作
+  installBackButtonHandler(route);
 });
 
 onBeforeUnmount(() => {
@@ -68,7 +71,10 @@ function navClass(active: boolean): string {
       </nav>
     </header>
 
-    <main class="min-h-0 flex-1 overflow-y-auto bg-[#fdf3dc]">
+    <main
+      class="min-h-0 flex-1 bg-[#fdf3dc]"
+      :class="route.name === 'play' ? 'overflow-hidden' : 'overflow-y-auto'"
+    >
       <PlayView
         v-if="route.name === 'play'"
         :key="route.gameId + ':' + i18n.locale"

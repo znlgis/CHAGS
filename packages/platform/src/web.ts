@@ -3,6 +3,7 @@ import type {
   AudioBus, LifecycleBus, Locale, PlatformServices, ProgressStore, SaveData, SfxKey, Telemetry,
 } from '@chags/game-kit';
 import { emptySave, migrate } from '@chags/progress';
+import { nativeTextToSpeech } from './runtime';
 
 const DB_NAME = 'chags';
 const STORE_NAME = 'kv';
@@ -128,7 +129,27 @@ export function createWebAudioBus(): AudioBus {
       tone(freq, durationMs / 1000, 0, 'triangle');
     },
     speak(text: string, locale: Locale): void {
-      if (muted || typeof speechSynthesis === 'undefined') return;
+      if (muted) return;
+
+      // ① 原生 TTS（安卓）：WebView 没有 Web Speech API，必须走系统语音
+      const native = nativeTextToSpeech();
+      if (native) {
+        void native
+          .speak({
+            text,
+            lang: speechLang(locale),
+            rate: locale === 'en' ? 0.95 : 0.9,
+            pitch: 1.05,
+            volume: 1,
+          })
+          .catch(() => {
+            // 安卓设备没装语音包时会失败；静默降级，绝不让游戏卡住
+          });
+        return;
+      }
+
+      // ② Web Speech API（桌面 WebView2 / 浏览器）
+      if (typeof speechSynthesis === 'undefined') return;
       speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = speechLang(locale);
@@ -141,6 +162,11 @@ export function createWebAudioBus(): AudioBus {
       speechSynthesis.speak(utterance);
     },
     stopSpeech(): void {
+      const native = nativeTextToSpeech();
+      if (native) {
+        void native.stop().catch(() => undefined);
+        return;
+      }
       if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
     },
     setMuted(next: boolean): void {

@@ -6,6 +6,7 @@ packages:
 allowBuilds:
   esbuild: true
   '@tailwindcss/oxide': true
+  sharp: true
 
 minimumReleaseAgeExclude:
   - '@typescript-eslint/eslint-plugin@8.71.2'

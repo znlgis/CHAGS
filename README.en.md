@@ -20,6 +20,8 @@ pnpm verify         # typecheck + lint + test + content:check + build (must be g
 pnpm e2e            # Playwright end-to-end (run npx playwright install chromium first)
 pnpm e2e:dist       # same suite against the production build (verifies chunk lazy-loading)
 pnpm audit:i18n     # screenshot every screen in both languages into .scratch/i18n-audit/
+pnpm dist:win       # portable Windows exe (~3.3 MB, double-click to play, no install)
+pnpm dist:apk       # Android APK (sideload)
 ```
 
 Handy debug links:

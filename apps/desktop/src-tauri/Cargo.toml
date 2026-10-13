@@ -1,0 +1,20 @@
+[package]
+name = "chags"
+version = "0.1.0"
+description = "Chinese Historical Anecdotes Game Series"
+edition = "2021"
+rust-version = "1.77"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[profile.release]
+# 便携版 exe 要小：开 LTO、去掉符号、按体积优化
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+opt-level = "s"

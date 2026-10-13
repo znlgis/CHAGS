@@ -1,0 +1,38 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "CHAGS",
+  "version": "0.1.0",
+  "identifier": "com.chags.tales",
+  "build": {
+    "frontendDist": "../../site/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "中国历史典故 · Chinese Tales",
+        "width": 500,
+        "height": 920,
+        "minWidth": 400,
+        "minHeight": 700,
+        "resizable": true,
+        "center": true,
+        "backgroundColor": "#3a2f26"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ]
+  }
+}

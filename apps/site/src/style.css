@@ -7,8 +7,17 @@ body,
   margin: 0;
 }
 
+html,
+body {
+  /* 应用外壳自己管滚动，根节点永不出现滚动条（桌面窗口里尤其明显） */
+  overflow: hidden;
+}
+
 body {
   background: #3a2f26;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
   color: #3a2f26;
   font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -20,4 +29,10 @@ body {
   display: block;
   touch-action: none;
   margin: 0 auto;
+}
+
+/* 原生/桌面壳里把安全区让出来：安卓的刘海与手势条 */
+#app {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }

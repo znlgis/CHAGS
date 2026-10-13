@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#E0554A</color>
+    <color name="colorPrimaryDark">#3A2F26</color>
+    <color name="colorAccent">#F2B134</color>
+    <color name="chagsBackground">#3A2F26</color>
+</resources>
