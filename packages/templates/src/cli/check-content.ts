@@ -26,14 +26,9 @@ for (const allusion of allusions) {
     }
   }
 
-  // 2) 关键抉择点必须落在故事里，且干扰项要有“引导提示”
+  // 2) 关键抉择点：现在是“动手做出来”的关键动作，数据用于揭晓语与复习题
   if (!allusion.story.some((b) => b.id === allusion.keyMoment.beatId)) {
     fail('keyMoment.beatId 不在 story 中');
-  }
-  for (const option of allusion.keyMoment.options) {
-    if (!option.isCanonical && option.hint.trim().length === 0) {
-      fail('干扰项 "' + option.id + '" 缺少 hint，孩子选错时将得不到引导');
-    }
   }
 
   // 3) 迁移题是“真的记住”的证据，不能只有记忆题
@@ -48,7 +43,7 @@ for (const allusion of allusions) {
   }
 
   console.log(
-    '  · ' + allusion.story.length + ' 幕故事 / ' + allusion.quiz.length + ' 道题 / 模板 ' + allusion.game.template,
+    '  · ' + allusion.story.length + ' 幕故事 / ' + allusion.quiz.length + ' 道复习题 / 模板 ' + allusion.game.template,
   );
 }
 

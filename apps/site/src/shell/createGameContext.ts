@@ -20,6 +20,17 @@ export function readDebugOptions(): DebugOptions | undefined {
   return options;
 }
 
+/** 事件细节：调试桥和 e2e 都靠它区分“哪一个场景 / 哪一个选择” */
+function detailOf<K extends keyof GameEventMap>(
+  type: K,
+  payload: GameEventMap[K],
+): string | undefined {
+  if (type === 'scene:enter') return (payload as GameEventMap['scene:enter']).scene;
+  if (type === 'choice:made') return (payload as GameEventMap['choice:made']).choiceId;
+  if (type === 'beat:enter') return (payload as GameEventMap['beat:enter']).beatId;
+  return undefined;
+}
+
 export function createGameContext(
   manifest: GameManifest,
   container: HTMLElement,
@@ -38,11 +49,7 @@ export function createGameContext(
     debug: readDebugOptions(),
     emit(type, payload) {
       platform.telemetry.track(type, payload);
-      if (type === 'scene:enter') {
-        recordDebugEvent(type, (payload as GameEventMap['scene:enter']).scene);
-      } else {
-        recordDebugEvent(type);
-      }
+      recordDebugEvent(type, detailOf(type, payload));
       hooks.onEvent(type, payload);
     },
     requestExit() {

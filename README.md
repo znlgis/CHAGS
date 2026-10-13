@@ -21,20 +21,30 @@ pnpm e2e:dist       # 针对生产构建产物再跑一遍（验证 chunk 懒加
 
 调试直达链接：`/?autoplay=1#/play/caochong-elephant`（自动通关，用于无头验证）
 
-## 当前进度（阶段 0 已通过）
+## 当前进度（阶段 0 已通过 + 曹冲称象重做）
 
-`pnpm verify` 全绿；真实浏览器端到端 3 项通过；首屏 shell **59.5 KB gzip**（不含 Phaser），游戏 chunk 仅在进入游戏时加载。
+pnpm verify 全绿；真实浏览器端到端 3 项通过（含真实鼠标拖拽通关）；首屏 shell **59 KB gzip**（不含 Phaser），
+游戏 chunk 仅在进入游戏时加载（生产产物实测：进游戏前 1 个 JS chunk，进游戏后新增游戏 chunk）。
 
-| 典故馆 | 分幕绘本 | 关键抉择 |
+### 设计原则：少写字，多动手
+
+曹冲称象不再有「下一幕」按钮，也没有文字选择题。玩家亲手走完曹冲的四步：
+
+1. **拖大象上秤** → 秤被压垮（体会「称不动」）
+2. **拖大象上船** → 船沉下去，水面在船身留下痕迹
+3. **点船身刻一刀** → 把「大象有多重」这件事记下来
+4. **一块块搬石头** → 直到水痕重新回到水面（核心：等量代换）
+5. **石头过秤** → 数字累加，大象 = 3000
+
+全程几乎不出现文字：靠图形、动画、音效反馈。孩子是「做」出这个办法，而不是被告知。
+
+| 分幕绘本（一句话） | 试着直接上秤（压垮） | 象上船，刻水痕 |
 |---|---|---|
-| ![典故馆](docs/screenshots/01-hall.png) | ![分幕绘本](docs/screenshots/02-story.png) | ![关键抉择](docs/screenshots/03-choice.png) |
+| ![分幕绘本](docs/screenshots/02-story.png) | ![秤被压垮](docs/screenshots/04-scale-fails.png) | ![刻水痕](docs/screenshots/05-mark.png) |
 
-| 亲手称象 | 小考验 | 典故卡 |
+| 搬石头代换 | 水痕对上 | 大象 = 3000 |
 |---|---|---|
-| ![称象](docs/screenshots/05-balance.png) | ![小考验](docs/screenshots/06-quiz.png) | ![典故卡](docs/screenshots/07-card.png) |
-
-> 阶段 0 刻意零美术资源、零音频文件：几何图形 + WebAudio 合成音效 + 浏览器 TTS 旁白，
-> 先把“看 → 做 → 记”的闭环跑通。换真资源时不改游戏代码。
+| ![搬石头](docs/screenshots/06-substitute.png) | ![水痕对上](docs/screenshots/07-matched.png) | ![称出重量](docs/screenshots/08-weighed.png) |
 
 ## 目录结构
 

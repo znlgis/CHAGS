@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { GameEventMap, GameModule } from '@chags/game-kit';
-import { gradeFromScore } from '@chags/progress';
 import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import { navigate } from '../router';
 import { registry } from '../registry';
@@ -18,11 +17,8 @@ let disposed = false;
 function handleEvent<K extends keyof GameEventMap>(type: K, payload: GameEventMap[K]): void {
   if (type === 'level:complete') {
     const result = payload as GameEventMap['level:complete'];
-    void progress.recordCompletion(
-      props.gameId,
-      result.stars,
-      gradeFromScore(result.correct, result.total),
-    );
+    // 一局的表现直接决定下次复习间隔：3 星 → 3 级
+    void progress.recordCompletion(props.gameId, result.stars, result.stars);
   }
 }
 
@@ -55,11 +51,11 @@ onBeforeUnmount(async () => {
 </script>
 
 <template>
-  <div class="relative h-full w-full bg-[#17181d]">
+  <div class="relative h-full w-full bg-[#3a2f26]">
     <div ref="host" class="game-host h-full w-full" />
     <p
       v-if="error"
-      class="absolute inset-x-4 top-4 rounded-2xl bg-[#c23b2e] px-4 py-3 text-sm text-[#f3e8d2]"
+      class="absolute inset-x-4 top-4 rounded-2xl bg-[#e0554a] px-4 py-3 text-sm text-[#fdf3dc]"
     >
       {{ error }}
     </p>

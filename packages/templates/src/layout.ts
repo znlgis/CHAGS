@@ -1,47 +1,49 @@
-/** 设计分辨率与所有可点击元素的坐标。e2e 直接复用这些常量。 */
+/** 设计分辨率与所有可交互元素的坐标。e2e 直接复用这些常量。 */
 export const DESIGN = { width: 750, height: 1334 } as const;
 
 export const SCENE_KEYS = {
   story: 'story',
-  balance: 'balance',
+  substitution: 'substitution',
   quiz: 'quiz',
   reward: 'reward',
 } as const;
 
-export const STORY_ART = { x: 55, y: 290, w: 640, h: 610 } as const;
-export const STORY_TITLE_Y = 180;
-export const STORY_TEXT_Y = 930;
-export const STORY_NEXT = { x: 375, y: 1190 } as const;
+// ---------- 分幕绘本 ----------
+export const STORY_ART = { x: 55, y: 300, w: 640, h: 620 } as const;
+export const STORY_TITLE_Y = 205;
+export const STORY_TEXT_Y = 985;
+export const STORY_TEXT_WRAP = 560;
 
-export const CHOICE_TITLE_Y = 200;
-export const CHOICE_QUESTION_Y = 280;
-export const CHOICE_TOAST_Y = 700;
-export const CHOICE_OPTIONS = [
-  { x: 375, y: 800 },
-  { x: 375, y: 960 },
-  { x: 375, y: 1120 },
-] as const;
-export const REVEAL_NEXT = { x: 375, y: 950 } as const;
-
-export const BALANCE = {
-  promptY: 190,
-  waterY: 560,
-  waterBottom: 810,
-  hullWidth: 420,
-  hullHeight: 150,
-  hintY: 840,
-  totalY: 1250,
-} as const;
-export const BALANCE_STONE_BUTTONS = [
-  { x: 170, y: 960 },
-  { x: 375, y: 960 },
-  { x: 580, y: 960 },
-] as const;
-export const BALANCE_CONTROLS = {
-  undo: { x: 240, y: 1120 },
-  reset: { x: 510, y: 1120 },
+// ---------- 等量代换场景 ----------
+export const SUB = {
+  /** 水面高度 */
+  waterTop: 620,
+  waterBottom: 1080,
+  /** 近岸沙滩：留够高度让大象、石堆、大秤都站在岸上 */
+  bankTop: 1080,
+  boatX: 400,
+  hullWidth: 460,
+  hullHeight: 160,
+  /** 大象（重物）在沙滩上的落点 */
+  heavyHome: { x: 152, y: 1176 },
+  /** 大秤：既能被压垮（第一步），也是最后称石头的地方（第四步） */
+  scalePos: { x: 606, y: 1168 },
+  /** 结算等式放在空着的天空区域，和水面上的船分开 */
+  equationY: 330,
 } as const;
 
+/** 三种石头的取用点（数量无限，随便搬） */
+export const SUB_PILES = [
+  { x: 322, y: 1192 },
+  { x: 402, y: 1210 },
+  { x: 462, y: 1218 },
+] as const;
+
+/** 船的可放置区域（比船身宽松，小朋友不用对准） */
+export const SUB_BOAT_DROP = { x: 400, y: 560, w: 600, h: 500 } as const;
+export const SUB_SCALE_DROP = { x: 606, y: 1108, w: 260, h: 300 } as const;
+
+// ---------- 复习小考验（复习模式用，首次通关不出现） ----------
 export const QUIZ = {
   questionY: 250,
   options: [
@@ -53,6 +55,7 @@ export const QUIZ = {
   next: { x: 375, y: 1200 },
 } as const;
 
+// ---------- 典故卡 ----------
 export const REWARD = {
   card: { x: 60, y: 230, w: 630, h: 830 },
   done: { x: 375, y: 1190 },

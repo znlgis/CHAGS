@@ -14,11 +14,11 @@
     "chapter": "邓哀王冲传",
     "quote": "置象大船之上，而刻其水痕所至，称物以载之，则校可知矣。"
   },
-  "moral": "遇到难题，换个角度想一想，难题就变小了。",
+  "moral": "称不动的东西，换一个能称的来替它。",
   "keywords": [
     "观察",
-    "转化",
-    "浮力"
+    "替换",
+    "水痕"
   ],
   "ageRange": [
     7,
@@ -28,56 +28,36 @@
     {
       "id": "s1",
       "title": "一头大象",
-      "text": "孙权送来一头大象，曹操想知道：它到底有多重？",
-      "narration": "很久很久以前，有人送给曹操一头大象。曹操很想知道，这头大象到底有多重呢？",
+      "text": "有人送给曹操一头大象。",
+      "narration": "有人送给曹操一头大象。",
       "illustration": "none"
     },
     {
       "id": "s2",
-      "title": "没有这么大的秤",
-      "text": "大象太重了，抬不起来，也没有那么大的秤。",
-      "narration": "可是大象太重啦，抬也抬不动，找遍了全城，也找不到能称大象的大秤。",
-      "illustration": "none"
-    },
-    {
-      "id": "s3",
-      "title": "怎么办呢",
-      "text": "大臣们都想不出办法。七岁的曹冲说：我有办法！",
-      "narration": "大臣们你看看我，我看看你，都想不出办法。这时候，七岁的曹冲站出来说：我有办法！",
-      "illustration": "none"
-    },
-    {
-      "id": "s4",
-      "title": "水痕说话了",
-      "text": "把大象换成石头，装到同一条水痕，石头有多重，大象就有多重。",
-      "narration": "曹冲让人把大象牵上船，在船身刻下水痕。再换成石头，装到同一条水痕。石头的重量，就是大象的重量！",
+      "title": "有多重？",
+      "text": "它到底有多重呢？",
+      "narration": "曹操想知道：它到底有多重呢？",
       "illustration": "none"
     }
   ],
   "keyMoment": {
-    "beatId": "s3",
-    "question": "抬不动、也没有这么大的秤，怎么才能知道大象有多重？",
+    "beatId": "s2",
+    "question": "抬不动，秤也秤不起，怎么才能知道大象有多重？",
     "options": [
       {
-        "id": "a",
-        "text": "把大象切成一块一块再称",
+        "id": "cut",
+        "text": "把大象切成一块一块",
         "isCanonical": false,
-        "hint": "大象是活的呀，曹操可舍不得。"
-      },
-      {
-        "id": "b",
-        "text": "把大象换成石头，装到同一条水痕",
-        "isCanonical": true,
         "hint": ""
       },
       {
-        "id": "c",
-        "text": "用眼睛看一看，猜一猜",
-        "isCanonical": false,
-        "hint": "猜出来的数字可不算数哦。"
+        "id": "boat",
+        "text": "换成石头，装到同一条水痕",
+        "isCanonical": true,
+        "hint": ""
       }
     ],
-    "reveal": "曹冲的办法是：把大象换成石头。石头和大象让船沉得一样深，重量就一样。"
+    "reveal": "石头和大象让船沉得一样深，重量就一样。"
   },
   "misconceptions": [
     "大象太重了所以称不了",
@@ -106,7 +86,7 @@
         "为了做记号找船"
       ],
       "answer": 1,
-      "explanation": "水痕是“大象有多重”的记号，石头装到同一个位置，就一样重。"
+      "explanation": "水痕就是“大象有多重”的记号。"
     },
     {
       "id": "q3",
@@ -122,30 +102,35 @@
     }
   ],
   "game": {
-    "template": "balance",
+    "template": "substitution",
     "levelScript": {
-      "prompt": "往船上搬石头，让船沉到和大象一样的水痕。",
-      "targetWeight": 3000,
+      "heavy": {
+        "weight": 3000
+      },
       "capacity": 3600,
       "tolerance": 100,
       "stones": [
         {
           "id": "big",
-          "label": "大石头",
-          "value": 500
+          "value": 500,
+          "radius": 36
         },
         {
           "id": "mid",
-          "label": "中石头",
-          "value": 300
+          "value": 300,
+          "radius": 26
         },
         {
           "id": "small",
-          "label": "小石头",
-          "value": 100
+          "value": 100,
+          "radius": 17
         }
       ],
-      "hintText": "看看水痕：还差一点点……"
+      "hints": {
+        "tooLight": "再加几块石头",
+        "tooHeavy": "拿掉一块试试",
+        "stuck": "让水痕回到水面"
+      }
     }
   }
 }

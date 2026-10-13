@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
+  // preview.spec.ts 必须跑真实产物，见 playwright.preview.config.ts
+  testIgnore: 'preview.spec.ts',
   timeout: 90_000,
   expect: { timeout: 20_000 },
   fullyParallel: false,

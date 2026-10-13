@@ -1,7 +1,7 @@
 import type { AllusionContent } from '@chags/content';
 
 export type TemplateId =
-  | 'story' | 'balance' | 'quiz' | 'match' | 'order' | 'drag'
+  | 'story' | 'substitution' | 'quiz' | 'match' | 'order' | 'drag'
   | 'board' | 'timing' | 'react' | 'branch' | 'build' | 'grow';
 
 export interface GameManifest {
