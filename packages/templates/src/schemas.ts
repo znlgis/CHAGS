@@ -83,7 +83,8 @@ export const TapLevelSchema = z
     targetValue: z.number().positive(),
     /** tap 模式 = 每次点击的增量；hold 模式 = 每秒的增量 */
     stepValue: z.number().positive(),
-    unit: z.string().min(1).max(3),
+    // 计数气泡宽度自适应，英文单位（stones / baskets）会略长
+    unit: z.string().min(1).max(8),
     /** 视觉阻力：越大，后半程越显得吃力 */
     resistance: z.number().min(0).max(1.5),
     hint: z.string().min(1).max(24),

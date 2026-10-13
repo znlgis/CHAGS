@@ -1,0 +1,88 @@
+{
+  "title": "Yugong Moves the Mountains",
+  "dynasty": "Warring States",
+  "era": "Warring States · Parable",
+  "figures": [
+    "Yugong",
+    "Zhisou"
+  ],
+  "source": {
+    "book": "Liezi, Questions of Tang",
+    "quote": "Though I die, my sons will live; sons beget grandsons, grandsons beget sons, sons beget more sons, sons beget more grandsons — generation after generation without end, while the mountains grow no taller. Why should they not be levelled?"
+  },
+  "moral": "I cannot finish it, but my sons and their sons can — the mountains will not grow taller.",
+  "keywords": [
+    "Generations",
+    "Digging",
+    "Never stopping"
+  ],
+  "story": [
+    {
+      "title": "Two Mountains",
+      "text": "Two mountains stood in front of Yugong's house. Going out meant a long detour.",
+      "narration": "The mountains Taihang and Wangwu blocked Yugong's door. A single trip out meant days of walking around them."
+    },
+    {
+      "title": "Level the Mountains",
+      "text": "Ninety-year-old Yugong said: let us level them together.",
+      "narration": "Yugong, ninety years old, called his family together: these mountains have blocked us for generations. Let us level them — shall we?"
+    }
+  ],
+  "keyMoment": {
+    "question": "Zhisou laughed: you are almost ninety — can you really finish?",
+    "options": [
+      {
+        "text": "I can't finish, so never mind",
+        "hint": ""
+      },
+      {
+        "text": "I can't finish, but my sons and their sons will — the mountains don't grow",
+        "hint": ""
+      }
+    ],
+    "reveal": "Generation after generation without end, while the mountains grow no taller — the mountain cannot grow, but people go on."
+  },
+  "misconceptions": [
+    "If one person can't finish it, don't start",
+    "You are too old to do anything"
+  ],
+  "quiz": [
+    {
+      "question": "Which two mountains stood in front of Yugong's house?",
+      "options": [
+        "Taihang and Wangwu",
+        "Taishan and Huashan",
+        "Huangshan and Lushan"
+      ],
+      "explanation": "Taihang and Wangwu blocked the way out."
+    },
+    {
+      "question": "How did Yugong answer Zhisou's laughter?",
+      "options": [
+        "I can't finish, but my sons and grandsons will, generation after generation",
+        "Then I will stop digging",
+        "I will ask someone else to dig"
+      ],
+      "explanation": "The mountains will not grow taller, but people go on generation after generation."
+    },
+    {
+      "question": "Which of these is most like Yugong moving the mountains?",
+      "options": [
+        "Reading a page a day and finishing a thick book in a year",
+        "Staying up all night to finish the book",
+        "Leaving the book because it is too hard"
+      ],
+      "explanation": "What one person cannot finish can be done slowly, and carried on."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "unit": "baskets",
+          "hint": "Tap to keep digging"
+        }
+      }
+    ]
+  }
+}

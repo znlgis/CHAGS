@@ -43,5 +43,34 @@ export async function dragDesign(
   await page.mouse.up();
 }
 
+/** 按住不放：夸父要一直按着跑 */
+export async function holdDesign(
+  page: Page,
+  x: number,
+  y: number,
+  ms: number,
+): Promise<void> {
+  const p = await toScreen(page, x, y);
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
+  await page.waitForTimeout(ms);
+  await page.mouse.up();
+}
+
+/** 连点若干次（间隔可调），用于精卫 / 愚公这种连点玩法 */
+export async function tapDesign(
+  page: Page,
+  x: number,
+  y: number,
+  times: number,
+  gapMs = 130,
+): Promise<void> {
+  const p = await toScreen(page, x, y);
+  for (let i = 0; i < times; i += 1) {
+    await page.mouse.click(p.x, p.y);
+    await page.waitForTimeout(gapMs);
+  }
+}
+
 export const events = (page: Page): Promise<string[]> =>
   page.evaluate(() => window.__chags?.events ?? []);

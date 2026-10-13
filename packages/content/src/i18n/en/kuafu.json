@@ -1,0 +1,87 @@
+{
+  "title": "Kuafu Chases the Sun",
+  "dynasty": "Primordial",
+  "era": "Primordial · Myth",
+  "figures": [
+    "Kuafu"
+  ],
+  "source": {
+    "book": "Classic of Mountains and Seas, Northern Lands Beyond the Sea",
+    "quote": "Kuafu raced the sun. Thirsty, he drank the Yellow River and the Wei, and when those were not enough he set off for the great marsh, but died of thirst on the way. His staff, cast aside, became a grove of peach trees."
+  },
+  "moral": "He never caught the sun, but his staff grew into a grove of peach trees.",
+  "keywords": [
+    "Chasing the sun",
+    "Running",
+    "Peach grove"
+  ],
+  "story": [
+    {
+      "title": "The Giant Kuafu",
+      "text": "A giant named Kuafu decided to catch the sun.",
+      "narration": "Long ago there was a giant called Kuafu. He watched the sun rise and set, and said: I will catch it."
+    },
+    {
+      "title": "On and On",
+      "text": "He ran over mountains and rivers, all the way to where the sun goes down.",
+      "narration": "Kuafu strode on, over mountain after mountain and river after river. When he was thirsty he drank the Yellow River and the Wei dry, and ran on."
+    }
+  ],
+  "keyMoment": {
+    "question": "The sun runs so fast — should he keep chasing?",
+    "options": [
+      {
+        "text": "He can't catch it, so sit down and rest",
+        "hint": ""
+      },
+      {
+        "text": "He can't catch it, and chases it anyway",
+        "hint": ""
+      }
+    ],
+    "reveal": "He reached the place where the sun goes down. When he fell, his staff grew into a grove of peach trees."
+  },
+  "misconceptions": [
+    "If you can't catch it, don't chase it",
+    "Kuafu left nothing behind"
+  ],
+  "quiz": [
+    {
+      "question": "What was Kuafu chasing?",
+      "options": [
+        "The sun",
+        "The moon",
+        "A deer"
+      ],
+      "explanation": "He meant to catch the sun that rose and set each day."
+    },
+    {
+      "question": "What did his staff become after he fell?",
+      "options": [
+        "A grove of peach trees",
+        "A great river",
+        "A high mountain"
+      ],
+      "explanation": "The staff he cast aside became a grove of peach trees."
+    },
+    {
+      "question": "Which of these is most like Kuafu chasing the sun?",
+      "options": [
+        "Practising football every day even though it is hard",
+        "Mastering it in one go",
+        "Switching to something easier"
+      ],
+      "explanation": "Whether he catches it is one thing; whether he keeps chasing is another."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "unit": "li",
+          "hint": "Hold to run"
+        }
+      }
+    ]
+  }
+}

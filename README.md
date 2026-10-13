@@ -63,7 +63,34 @@ Phaser 是共享 chunk，只在进入游戏时加载。
 |---|---|---|
 | ![十日](docs/screenshots/35-houyi-ten-suns.png) | ![瞄准](docs/screenshots/36-houyi-aiming.png) | ![返绿](docs/screenshots/37-houyi-nine.png) |
 
-### 四、盘古开天辟地（神话 · 创造与化身）
+### 四、精卫填海（神话 · 微小的坚持）
+
+点一下，精卫就衔一块石头飞过海面投下去。**它很小，海很大** —— 这种不成比例，正是这个典故的分量。
+填到最后，海上浮起一小片陆地，它还在飞。
+
+| 一只小鸟，一片大海 | 填到一半 | 海上多了块陆地 |
+|---|---|---|
+| ![起手](docs/screenshots/41-jingwei-start.png) | ![一半](docs/screenshots/42-jingwei-half.png) | ![小岛](docs/screenshots/43-jingwei-island.png) |
+
+### 五、夸父追日（神话 · 奔跑）
+
+**按住就跑**，松手就慢下来，太阳越跑越远。追到河渭时停下喝一口，再接着追。
+他没能追上太阳 —— 但结局画面里没有他，只有一片开花的桃林。
+
+| 一直追 | 河渭喝水 | 手杖化成的桃林 |
+|---|---|---|
+| ![奔跑](docs/screenshots/45-kuafu-running.png) | ![喝水](docs/screenshots/46-kuafu-drinking.png) | ![桃林](docs/screenshots/47-kuafu-peach.png) |
+
+### 六、愚公移山（寓言 · 传承）
+
+点一下挖一担。挖到三成，**河曲智叟出现**，抱着胳膊摇头嘲笑；
+挖到六成，愚公老了，**把锄头交给下一代** —— 画面上的挖山人从一代变成两代、三代。
+
+| 两座大山 | 智叟来了 | 子子孙孙 |
+|---|---|---|
+| ![大山](docs/screenshots/49-yugong-mountains.png) | ![智叟](docs/screenshots/50-yugong-zhisou.png) | ![三代](docs/screenshots/52-yugong-done.png) |
+
+### 七、盘古开天辟地（神话 · 创造与化身）
 
 五段式，由三个模板 + 一个专属场景拼成：
 

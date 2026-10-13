@@ -47,6 +47,13 @@ export interface TapConfig {
   drawFinale?: (g: Phaser.GameObjects.Graphics, stage: TapStageMetrics) => void;
   /** 里程碑：游戏接管，处理完调用 api.resume() 继续 */
   onMilestone?: (id: string, api: TapMilestoneApi) => void;
+  /**
+   * 每帧回调。给需要持续动画的游戏用：
+   * 精卫的鸟一直在飞、夸父的太阳一直在跑 —— 都不该只在"数值变化"时才动。
+   */
+  onFrame?: (stage: TapStageMetrics, delta: number) => void;
+  /** 每次推进后回调：连点模式下"这一下做了什么" */
+  onAdvance?: (stage: TapStageMetrics) => void;
   finaleHoldMs?: number;
 }
 
@@ -103,7 +110,7 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
       }
 
       this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.step(delta),
+        this.tick(delta),
       );
 
       this.lastInputAt = this.ctx.services.now();
@@ -125,21 +132,25 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
       this.cameras.main.shake(60, 0.0015);
     }
 
-    private step(delta: number): void {
-      if (this.finished || this.paused) return;
+    /** 每帧：推进（长按模式）→ 让游戏动起来 → 重画 */
+    private tick(delta: number): void {
+      if (this.finished) return;
 
-      if (cfg.level.mode === 'hold') {
-        if (!this.holding) return;
-        this.setValue(advanceHold(this.value, cfg.level, delta), false);
-        return;
+      if (!this.paused) {
+        if (cfg.level.mode === 'hold' && this.holding) {
+          this.setValue(advanceHold(this.value, cfg.level, delta), false);
+        } else if (cfg.level.mode === 'tap') {
+          // 连点模式下，长时间没动作就给点提示（图形为主，文字为辅）
+          this.idleMs += delta;
+          if (this.idleMs > 6500 && !this.hintShown) {
+            this.hintShown = true;
+            this.showHint(cfg.level.hint);
+          }
+        }
       }
 
-      // 连点模式下，长时间没动作就给点提示（图形为主，文字为辅）
-      this.idleMs += delta;
-      if (this.idleMs > 6500 && !this.hintShown) {
-        this.hintShown = true;
-        this.showHint(cfg.level.hint);
-      }
+      cfg.onFrame?.(this.metrics(false), delta);
+      this.redraw();
     }
 
     private setValue(next: number, fromTap: boolean): void {
@@ -157,7 +168,8 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
         this.hand = null;
       }
 
-      this.redraw();
+      const stage = this.metrics(false);
+      cfg.onAdvance?.(stage);
       this.fireMilestones();
       if (isTapComplete(this.value, cfg.level)) this.complete();
     }
@@ -182,7 +194,10 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
       const text = this.counterText;
       const pill = this.counterPill;
       if (!text || !pill) return;
-      text.setText(this.value + ' ' + cfg.level.unit);
+      // 每帧都会重画，但计数只在数值变化时才动（避免每帧重建文字纹理）。
+      // 必须取整：长按模式按时间累加，直接显示会冒出 814.967999999994 这种小数。
+      const label = Math.round(this.value) + ' ' + cfg.level.unit;
+      if (text.text !== label) text.setText(label);
       const w = text.width + 76;
       const h = text.height + 36;
       pill.clear();
@@ -217,6 +232,8 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
     private complete(): void {
       if (this.finished) return;
       this.finished = true;
+      // 先刷新一次画面：完成后 tick 会提前返回，否则计数会停在上一次的值
+      this.redraw();
       this.ctx.emit('beat:enter', { beatId: 'complete' });
       this.sfx('complete');
       this.cameras.main.flash(320, 255, 250, 220);

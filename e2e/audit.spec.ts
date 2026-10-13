@@ -1,5 +1,5 @@
-import { test } from '@playwright/test';
-import { clickDesign, dragDesign } from './helpers';
+import { expect, test } from '@playwright/test';
+import { clickDesign, dragDesign, events, holdDesign, tapDesign } from './helpers';
 import { SUB, SUB_PILES } from '../packages/templates/src/layout';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +22,31 @@ const place = panguJson.game.stages[1]!.levelScript as {
 };
 
 const BOAT = { x: SUB.boatX, y: 600 };
+
+/** 五个新典故：手动走一遍看版面，再用 autoplay 直接冲到典故卡 */
+const NEW_GAMES: { id: string; taps?: number; hold?: number; shoot?: number }[] = [
+  { id: 'nuwa' },
+  { id: 'houyi', shoot: 3 },
+  { id: 'jingwei', taps: 12 },
+  { id: 'kuafu', hold: 2400 },
+  { id: 'yugong', taps: 12 },
+];
+
+const nuwaScript = JSON.parse(
+  readFileSync(
+    fileURLToPath(new URL('../packages/content/src/allusions/nuwa.json', import.meta.url)),
+    'utf8',
+  ),
+) as { game: { stages: { levelScript: { slots: { id: string; x: number; y: number }[]; orbs: { slotId: string; x: number; y: number }[] } }[] } };
+const nuwaPlace = nuwaScript.game.stages[0]!.levelScript;
+
+const houyiScript = JSON.parse(
+  readFileSync(
+    fileURLToPath(new URL('../packages/content/src/allusions/houyi.json', import.meta.url)),
+    'utf8',
+  ),
+) as { game: { stages: { levelScript: { targets: { x: number; y: number }[] } }[] } };
+const houyiTargets = houyiScript.game.stages[0]!.levelScript.targets;
 const LOCALES = ['zh-CN', 'en'] as const;
 
 for (const locale of LOCALES) {
@@ -109,5 +134,94 @@ for (const locale of LOCALES) {
     await page.screenshot({ path: out + '/16-reveal.png' });
     await page.waitForTimeout(3000);
     await page.screenshot({ path: out + '/17-card.png' });
+  });
+}
+for (const locale of LOCALES) {
+  test('audit ' + locale + ' — 五个新典故（版面 + 典故卡）', async ({ page }) => {
+    test.setTimeout(600_000);
+    await page.setViewportSize({ width: 430, height: 932 });
+    const out = '.scratch/i18n-audit/' + locale;
+
+    // 每次都用不同的查询参数打开。
+    // 只改 hash 的导航不会重新加载页面，window.__chags.events 会跨游戏残留 ——
+    // 上一个游戏留下的 card:unlocked 会让下一个游戏的循环一进去就跳过。
+    let nav = 0;
+    const open = (id: string, autoplay = false) => {
+      nav += 1;
+      return page.goto(
+        '/?lang=' + locale + '&r=' + nav + (autoplay ? '&autoplay=1' : '') + '#/play/' + id,
+      );
+    };
+
+    for (const game of NEW_GAMES) {
+      // 一、手动走一遍：故事 → 玩法 → 玩到一半
+      await open(game.id);
+      await page.waitForSelector('canvas');
+      await page.waitForTimeout(700);
+      await page.screenshot({ path: out + '/' + game.id + '-1-story.png' });
+
+      await clickDesign(page, 375, 900);
+      await page.waitForTimeout(350);
+      await clickDesign(page, 375, 900);
+      await page.waitForTimeout(700);
+      await page.screenshot({ path: out + '/' + game.id + '-2-play.png' });
+
+      if (game.id === 'nuwa') {
+        const orb = nuwaPlace.orbs[0]!;
+        const slot = nuwaPlace.slots.find((s) => s.id === orb.slotId)!;
+        await dragDesign(page, { x: orb.x, y: orb.y }, { x: slot.x, y: slot.y });
+      }
+      if (game.taps) await tapDesign(page, 375, 1000, game.taps, 110);
+      if (game.hold) await holdDesign(page, 375, 1000, game.hold);
+      if (game.shoot) {
+        for (let i = 0; i < game.shoot; i += 1) {
+          const target = houyiTargets[i]!;
+          await dragDesign(page, { x: 340, y: 1030 }, { x: target.x, y: target.y });
+          await page.waitForTimeout(240);
+        }
+      }
+      await page.waitForTimeout(450);
+      await page.screenshot({ path: out + '/' + game.id + '-3-mid.png' });
+
+      // 二、手动玩到典故卡。
+      // 这里**不能**用 autoplay：自动通关下卡片只停 200ms 就被跳过了，截到的是典故馆。
+      // 也不能批量连点：卡片出现后剩下的几下正好把「收下」也点了，同样截不到卡片。
+      await open(game.id);
+      await page.waitForSelector('canvas');
+      await page.waitForTimeout(600);
+      await clickDesign(page, 375, 900);
+      await page.waitForTimeout(350);
+      await clickDesign(page, 375, 900);
+      await page.waitForTimeout(600);
+
+      if (game.id === 'nuwa') {
+        for (const orb of nuwaPlace.orbs) {
+          const slot = nuwaPlace.slots.find((s) => s.id === orb.slotId)!;
+          await dragDesign(page, { x: orb.x, y: orb.y }, { x: slot.x, y: slot.y });
+          await page.waitForTimeout(200);
+        }
+      } else if (game.id === 'houyi') {
+        for (let i = 0; i < 14; i += 1) {
+          if ((await events(page)).includes('card:unlocked')) break;
+          const target = houyiTargets[i % houyiTargets.length]!;
+          await dragDesign(page, { x: 340, y: 1030 }, { x: target.x, y: target.y });
+          await page.waitForTimeout(240);
+        }
+      } else if (game.hold) {
+        await holdDesign(page, 375, 1000, 3400);
+        await holdDesign(page, 375, 1000, 5200);
+      } else {
+        // 连点类：点一下查一次，卡片一出现就立刻停手
+        for (let i = 0; i < 80; i += 1) {
+          if ((await events(page)).includes('card:unlocked')) break;
+          await clickDesign(page, 375, 1000);
+          await page.waitForTimeout(110);
+        }
+      }
+
+      await expect.poll(() => events(page), { timeout: 120_000 }).toContain('card:unlocked');
+      await page.waitForTimeout(1600);
+      await page.screenshot({ path: out + '/' + game.id + '-4-card.png' });
+    }
   });
 }

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { clickDesign, dragDesign, events } from './helpers';
+import { clickDesign, dragDesign, events, holdDesign, tapDesign } from './helpers';
 import { REWARD, SUB, SUB_PILES } from '../packages/templates/src/layout';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -254,4 +254,83 @@ test('女娲补天 autoplay 全流程', async ({ page }) => {
   await page.goto('/?autoplay=1#/play/nuwa');
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('level:complete');
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+});
+test('精卫填海：连点投石，一块一块把海填出小岛', async ({ page }) => {
+  await page.goto('/#/play/jingwei');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(320);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:tap');
+
+  await tapDesign(page, 375, 1000, 32, 110);
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
+});
+
+test('精卫填海 autoplay 全流程', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/jingwei');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+});
+
+test('夸父追日：按住奔跑，追到河渭喝一口再接着追', async ({ page }) => {
+  await page.goto('/#/play/kuafu');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(320);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:tap');
+
+  // 跑到河渭（45%）：按住约 2.7 秒就到了
+  await holdDesign(page, 375, 1000, 3400);
+  // 停下喝一口 —— 松手之后再按下去
+  await page.waitForTimeout(200);
+  await holdDesign(page, 375, 1000, 5000);
+
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
+});
+
+test('夸父追日 autoplay 全流程（中途喝水不能卡死）', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/kuafu');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+});
+
+test('愚公移山：连点挖山，智叟与两次代际交接都能接着往下走', async ({ page }) => {
+  await page.goto('/#/play/yugong');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(320);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:tap');
+
+  // 30 担挖平，中途三个里程碑各要点一下才继续，所以多给一些
+  await tapDesign(page, 375, 1000, 44, 150);
+
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
+});
+
+test('愚公移山 autoplay 全流程（三个里程碑都不能卡死）', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/yugong');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+});
+test('中英双语下每个典故都能载入 —— 关卡数据在两种语言下都必须过 schema', async ({ page }) => {
+  // 英文的 unit 曾经写成 "baskets"，超出上限导致整个游戏打不开，而且构建期没拦住。
+  // 这条用例专门守它：只要 schema 校验失败，页面就不会出现 canvas。
+  const ids = ['caochong-elephant', 'pangu', 'nuwa', 'houyi', 'jingwei', 'kuafu', 'yugong'];
+  for (const locale of ['zh-CN', 'en'] as const) {
+    for (const id of ids) {
+      await page.goto('/?lang=' + locale + '#/play/' + id);
+      await expect(page.locator('canvas'), locale + ' / ' + id + ' 打不开').toBeVisible({
+        timeout: 15_000,
+      });
+      await page.waitForTimeout(180);
+    }
+  }
 });

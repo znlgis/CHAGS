@@ -19,7 +19,10 @@
     "@chags/game-pangu": "workspace:*",
     "@chags/i18n": "workspace:*",
     "@chags/game-houyi": "workspace:*",
-    "@chags/game-nuwa": "workspace:*"
+    "@chags/game-nuwa": "workspace:*",
+    "@chags/game-jingwei": "workspace:*",
+    "@chags/game-kuafu": "workspace:*",
+    "@chags/game-yugong": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

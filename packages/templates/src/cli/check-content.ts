@@ -103,6 +103,23 @@ for (const locale of LOCALES) {
         fail(allusion.id + ' 译文 ' + issue.path.join('.') + '：' + issue.message);
       }
     } else {
+      // 合并之后，每一段关卡脚本还要重新过一遍模板 schema。
+      // 只查内容 schema 是不够的：game.stages[].levelScript 在内容 schema 里是 unknown，
+      // 英文译文把 unit 写成 "baskets" 就绕过了所有检查，直到玩家打开游戏才报错。
+      for (const [index, stage] of merged.data.game.stages.entries()) {
+        const schema = templateSchemas[stage.template];
+        if (!schema) continue;
+        const result = schema.safeParse(stage.levelScript);
+        if (!result.success) {
+          for (const issue of result.error.issues) {
+            fail(
+              allusion.id + ' ' + locale + ' 玩法脚本[' + index + '] ' +
+                (issue.path.join('.') || '(根)') + '：' + issue.message,
+            );
+          }
+        }
+      }
+
       // 合并后仍含中文 = 有字段漏翻（新增字段时最容易漏）
       const leaks = findCjk(merged.data);
       if (leaks.length > 0) {

@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { clickDesign, dragDesign } from './helpers';
+import { clickDesign, dragDesign, holdDesign, tapDesign } from './helpers';
 import { REWARD, SUB, SUB_PILES } from '../packages/templates/src/layout';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -241,4 +241,73 @@ test('capture houyi screenshots', async ({ page }) => {
   }
   await page.waitForTimeout(400);
   await page.screenshot({ path: 'docs/screenshots/37-houyi-nine.png' });
+});
+test('capture jingwei screenshots', async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/jingwei');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'docs/screenshots/40-jingwei-story.png' });
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(400);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: 'docs/screenshots/41-jingwei-start.png' });
+
+  await tapDesign(page, 375, 1000, 16, 110);
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: 'docs/screenshots/42-jingwei-half.png' });
+
+  await tapDesign(page, 375, 1000, 18, 110);
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: 'docs/screenshots/43-jingwei-island.png' });
+});
+
+test('capture kuafu screenshots', async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/kuafu');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'docs/screenshots/44-kuafu-story.png' });
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(400);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: 'docs/screenshots/45-kuafu-running.png' });
+
+  // 跑到河渭，喝水那一刻
+  await holdDesign(page, 375, 1000, 3300);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'docs/screenshots/46-kuafu-drinking.png' });
+
+  await holdDesign(page, 375, 1000, 5200);
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/47-kuafu-peach.png' });
+});
+
+test('capture yugong screenshots', async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/yugong');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'docs/screenshots/48-yugong-story.png' });
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(400);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: 'docs/screenshots/49-yugong-mountains.png' });
+
+  // 挖到智叟出现：里程碑在 30%，3000 担的 30% 正好是第 9 下
+  await tapDesign(page, 375, 1000, 9, 130);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'docs/screenshots/50-yugong-zhisou.png' });
+
+  // 继续挖到第一次交接（60%）
+  await tapDesign(page, 375, 1000, 12, 130);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'docs/screenshots/51-yugong-handover.png' });
+
+  await tapDesign(page, 375, 1000, 26, 130);
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/52-yugong-done.png' });
 });
