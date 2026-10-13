@@ -37,11 +37,15 @@ jobs:
           [[ "$MAJOR" =~ ^[0-9]+$ ]] || MAJOR=0
           [[ "$MINOR" =~ ^[0-9]+$ ]] || MINOR=0
           [[ "$PATCH" =~ ^[0-9]+$ ]] || PATCH=0
+          CODE=$(( MAJOR * 10000 + MINOR * 100 + PATCH ))
+          # 安卓要求 versionCode >= 1。手动触发（0.0.0-dev）与 v0.0.0 都会算出 0，
+          # 直接构建会报 "versionCode is set to 0, but it should be a positive integer"。
+          if [ "$CODE" -lt 1 ]; then CODE=1; fi
           {
             echo "version=$VERSION"
-            echo "code=$(( MAJOR * 10000 + MINOR * 100 + PATCH ))"
+            echo "code=$CODE"
           } >> "$GITHUB_OUTPUT"
-          echo "版本：$VERSION（versionCode $(( MAJOR * 10000 + MINOR * 100 + PATCH ))）"
+          echo "版本：$VERSION（versionCode $CODE）"
 
   # ---------- 站点产物 + 质量门禁（只构建一次，两个平台共用同一份） ----------
   web:
