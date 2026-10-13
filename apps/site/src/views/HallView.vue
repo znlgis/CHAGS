@@ -1,20 +1,24 @@
 <script setup lang="ts">
-import { allusions } from '@chags/content';
+import { allusionsFor } from '@chags/content';
 import { computed } from 'vue';
 import { navigate } from '../router';
+import { useLocale } from '../stores/locale';
 import { useProgress } from '../stores/progress';
 
 const progress = useProgress();
-const list = computed(() => [...allusions].sort((a, b) => a.yearApprox - b.yearApprox));
+const i18n = useLocale();
+const list = computed(() =>
+  [...allusionsFor(i18n.locale)].sort((a, b) => a.yearApprox - b.yearApprox),
+);
 </script>
 
 <template>
   <section data-testid="hall" class="mx-auto max-w-3xl px-5 py-6">
-    <h1 class="text-2xl font-bold text-[#e0554a]">典故馆</h1>
+    <h1 class="text-2xl font-bold text-[#e0554a]">{{ i18n.t('hall.title') }}</h1>
     <p class="mt-1 text-sm text-[#6b5a49]">
-      已收集
+      {{ i18n.t('hall.collected') }}
       <span data-testid="collected-count" class="font-bold text-[#3d8f86]">{{ progress.collected }}</span>
-      / {{ list.length }} 个典故
+      / {{ list.length }} {{ i18n.t('hall.unit') }}
     </p>
 
     <ul class="mt-6 grid gap-4 sm:grid-cols-2">
@@ -29,8 +33,15 @@ const list = computed(() => [...allusions].sort((a, b) => a.yearApprox - b.yearA
             {{ '★'.repeat(progress.starsFor(allusion.id)) || '☆' }}
           </span>
         </div>
-        <p class="mt-1 text-xs text-[#8a7a66]">
-          {{ allusion.pinyin }} · {{ allusion.era }} · {{ allusion.ageRange[0] }}–{{ allusion.ageRange[1] }} 岁
+        <p class="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#8a7a66]">
+          <span
+            class="rounded-full px-2 py-0.5"
+            :class="allusion.kind === 'myth' ? 'bg-[#efe4ff] text-[#6b4fa8]' : 'bg-[#e6f1ef] text-[#3d8f86]'"
+          >
+            {{ allusion.kind === 'myth' ? i18n.t('hall.myth') : i18n.t('hall.history') }}
+          </span>
+          <span>{{ allusion.pinyin }} · {{ allusion.era }}</span>
+          <span>{{ allusion.ageRange[0] }}–{{ allusion.ageRange[1] }} {{ i18n.t('hall.ages') }}</span>
         </p>
         <p class="mt-3 text-sm leading-relaxed text-[#5c4b3d]">{{ allusion.moral }}</p>
         <div class="mt-3 flex flex-wrap gap-1">
@@ -47,7 +58,7 @@ const list = computed(() => [...allusions].sort((a, b) => a.yearApprox - b.yearA
           :data-testid="'start-' + allusion.id"
           @click="navigate('/play/' + allusion.id)"
         >
-          开始玩
+          {{ i18n.t('hall.start') }}
         </button>
       </li>
     </ul>

@@ -1,4 +1,12 @@
-import { allusions } from '@chags/content';
+import {
+  AllusionSchema,
+  DEFAULT_LOCALE,
+  LOCALES,
+  allusions,
+  mergeLocalized,
+  patches,
+  validatePatch,
+} from '@chags/content';
 import { templateSchemas } from '../schemas';
 
 let errors = 0;
@@ -51,6 +59,37 @@ for (const allusion of allusions) {
       ' / ' + allusion.game.stages.length + ' 段玩法：' +
       allusion.game.stages.map((s) => s.template).join(' → '),
   );
+}
+
+// ---------- 翻译体检：缺译文 / 结构对不上 / 译文超长，都在构建期拦下 ----------
+for (const locale of LOCALES) {
+  if (locale === DEFAULT_LOCALE) continue;
+  const table = patches[locale];
+  if (!table) {
+    fail('语言 ' + locale + ' 没有任何典故译文');
+    continue;
+  }
+  console.log('\n语言 ' + locale + '：');
+  for (const allusion of allusions) {
+    const patch = table[allusion.id];
+    if (patch === undefined) {
+      fail(allusion.id + ' 缺少 ' + locale + ' 译文');
+      continue;
+    }
+    const issues = validatePatch(allusion, patch);
+    for (const issue of issues) {
+      fail(allusion.id + ' 译文 ' + (issue.path || '(根)') + '：' + issue.message);
+    }
+    // 合并之后仍须通过内容 schema —— 译文太长同样会挡住
+    const merged = AllusionSchema.safeParse(mergeLocalized(allusion, patch));
+    if (!merged.success) {
+      for (const issue of merged.error.issues) {
+        fail(allusion.id + ' 译文 ' + issue.path.join('.') + '：' + issue.message);
+      }
+    } else {
+      console.log('  · ' + merged.data.title);
+    }
+  }
 }
 
 if (errors > 0) {

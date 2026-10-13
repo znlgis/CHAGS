@@ -23,7 +23,7 @@ export function createRewardScene(ctx: GameContext, cfg: RewardConfig): Phaser.T
     }
 
     create(): void {
-      this.drawBackdrop('典故卡');
+      this.drawBackdrop(this.tr('scene.reward'));
       this.ctx.emit('scene:enter', { scene: SCENE_KEYS.reward });
 
       const stars = starsFor(cfg.session);
@@ -49,11 +49,11 @@ export function createRewardScene(ctx: GameContext, cfg: RewardConfig): Phaser.T
         .setOrigin(0.5);
 
       this.add
-        .text(this.W / 2, y + 560, cfg.keywords.join(' · '), textStyle(34, CSS.teal, true))
+        .text(this.W / 2, y + 560, this.tr('reward.keywords') + '  ' + cfg.keywords.join(' · '), textStyle(34, CSS.teal, true))
         .setOrigin(0.5);
 
       this.add
-        .text(this.W / 2, y + 650, '出处 ' + cfg.source.book, textStyle(28, CSS.inkSoft))
+        .text(this.W / 2, y + 650, this.tr('reward.source') + ' ' + cfg.source.book, textStyle(28, CSS.inkSoft))
         .setOrigin(0.5);
       this.add
         .text(this.W / 2, y + 706, cfg.source.quote, {
@@ -63,7 +63,7 @@ export function createRewardScene(ctx: GameContext, cfg: RewardConfig): Phaser.T
         })
         .setOrigin(0.5);
 
-      this.addButton(REWARD.done.x, REWARD.done.y, '收下', () => this.done(), { color: THEME.red });
+      this.addButton(REWARD.done.x, REWARD.done.y, this.tr('reward.accept'), () => this.done(), { color: THEME.red });
 
       sparkleAt(this, this.W / 2, y + 236, THEME.gold, 8);
 

@@ -16,7 +16,8 @@
     "@chags/progress": "workspace:*",
     "pinia": "^4.0.3",
     "vue": "^3.5.44",
-    "@chags/game-pangu": "workspace:*"
+    "@chags/game-pangu": "workspace:*",
+    "@chags/i18n": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

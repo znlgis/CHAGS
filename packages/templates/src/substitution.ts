@@ -67,7 +67,7 @@ export function createSubstitutionScene(
     }
 
     create(): void {
-      this.drawBackdrop('试一试');
+      this.drawBackdrop(this.tr('scene.substitution'));
       this.ctx.emit('scene:enter', { scene: SCENE_KEYS.substitution });
       this.drag = createDragController(this);
       this.events.once('shutdown', () => {

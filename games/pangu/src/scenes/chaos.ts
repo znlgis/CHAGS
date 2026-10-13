@@ -39,7 +39,7 @@ export function createChaosScene(
       bg.fillRect(0, 0, this.W, this.H);
       bg.fillStyle(THEME.inkSoft, 1);
       bg.fillRect(0, 0, this.W, 150);
-      this.add.text(this.W / 2, 75, '开一开', textStyle(52, CSS.paper, true)).setOrigin(0.5).setDepth(1);
+      this.add.text(this.W / 2, 75, this.tr('scene.chaos'), textStyle(52, CSS.paper, true)).setOrigin(0.5).setDepth(1);
 
       // 蛋里翻滚的混沌：亮粒子与暗块搅在一起
       for (let i = 0; i < 22; i += 1) {

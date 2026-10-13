@@ -140,3 +140,40 @@ test('capture pangu screenshots', async ({ page }) => {
   await page.waitForTimeout(2400);
   await page.screenshot({ path: 'docs/screenshots/22-pangu-card.png' });
 });
+test('capture english screenshots', async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=en');
+  await page.waitForSelector('[data-testid="hall"]');
+  await page.screenshot({ path: 'docs/screenshots/23-en-hall.png' });
+
+  await page.getByTestId('start-pangu').click();
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'docs/screenshots/24-en-story.png' });
+
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(400);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(600);
+  for (let i = 0; i < 4; i += 1) {
+    await clickDesign(page, 375, 700);
+    await page.waitForTimeout(130);
+  }
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: 'docs/screenshots/25-en-push.png' });
+
+  for (let i = 0; i < 30; i += 1) {
+    await clickDesign(page, 375, 700);
+    await page.waitForTimeout(45);
+  }
+  await page.waitForTimeout(2600);
+  await page.screenshot({ path: 'docs/screenshots/26-en-place.png' });
+
+  for (const orb of panguPlaceScript.orbs) {
+    const slot = panguPlaceScript.slots.find((s) => s.id === orb.slotId)!;
+    await dragDesign(page, { x: orb.x, y: orb.y }, { x: slot.x, y: slot.y });
+    await page.waitForTimeout(200);
+  }
+  await page.waitForTimeout(2800);
+  await page.screenshot({ path: 'docs/screenshots/27-en-card.png' });
+});

@@ -51,7 +51,7 @@ export function createGrowScene(ctx: GameContext, cfg: GrowConfig): Phaser.Types
       bg.fillRect(0, 0, this.W, this.H);
       bg.fillStyle(THEME.inkSoft, 1);
       bg.fillRect(0, 0, this.W, 150);
-      this.add.text(this.W / 2, 75, '撑一撑', textStyle(52, CSS.paper, true)).setOrigin(0.5).setDepth(1);
+      this.add.text(this.W / 2, 75, this.tr('scene.grow'), textStyle(52, CSS.paper, true)).setOrigin(0.5).setDepth(1);
 
       this.world = this.add.graphics().setDepth(10);
       this.decorations = this.add.graphics().setDepth(12);

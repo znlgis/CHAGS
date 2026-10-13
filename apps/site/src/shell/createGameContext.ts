@@ -1,4 +1,5 @@
 import { getAllusion } from '@chags/content';
+import type { Locale } from '@chags/content';
 import type { DebugOptions, GameContext, GameEventMap, GameManifest } from '@chags/game-kit';
 import { recordDebugEvent } from './debug';
 import { platform } from './platform';
@@ -20,7 +21,7 @@ export function readDebugOptions(): DebugOptions | undefined {
   return options;
 }
 
-/** 事件细节：调试桥和 e2e 都靠它区分“哪一个场景 / 哪一个选择” */
+/** 事件细节：调试桥和 e2e 都靠它区分"哪一个场景 / 哪一个选择" */
 function detailOf<K extends keyof GameEventMap>(
   type: K,
   payload: GameEventMap[K],
@@ -34,9 +35,11 @@ function detailOf<K extends keyof GameEventMap>(
 export function createGameContext(
   manifest: GameManifest,
   container: HTMLElement,
+  locale: Locale,
   hooks: GameHostHooks,
 ): GameContext {
-  const content = getAllusion(manifest.id);
+  // 关键：交给游戏的是**已经翻译好**的内容，游戏本身不需要知道语言的存在
+  const content = getAllusion(manifest.id, locale);
   if (!content) throw new Error('找不到典故内容：' + manifest.id);
 
   return {
@@ -44,7 +47,7 @@ export function createGameContext(
     manifest,
     content,
     services: platform,
-    locale: 'zh-CN',
+    locale,
     reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     debug: readDebugOptions(),
     emit(type, payload) {

@@ -41,7 +41,7 @@ export function createStoryScene(
         return;
       }
       this.children.removeAll(true);
-      this.drawBackdrop('看故事');
+      this.drawBackdrop(this.tr('scene.story'));
       this.ctx.emit('beat:enter', { beatId: beat.id });
 
       // 插画面板

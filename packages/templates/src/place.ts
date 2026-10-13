@@ -222,7 +222,8 @@ export function createPlaceScene(ctx: GameContext, cfg: PlaceConfig): Phaser.Typ
       this.cameras.main.flash(320, 255, 250, 220);
       sparkleAt(this, this.W / 2, (PLACE.skyTop + PLACE.earthBottom) / 2, THEME.gold, 12);
       // 先让孩子看一眼"完整的世界"，再出现那句话 —— 别让文字挡住日月的点亮时刻
-      this.time.delayedCall(1400, () => this.showHint(cfg.reveal, 3200));
+      // 放在地面下缘：别挡住刚刚点亮的日月星辰（英文句子更长，气泡也更高）
+      this.time.delayedCall(1400, () => this.showHint(cfg.reveal, 3200, 1030));
       this.time.delayedCall(4200, () => this.scene.start(cfg.nextSceneKey));
     }
   };

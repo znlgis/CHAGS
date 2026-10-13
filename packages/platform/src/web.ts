@@ -1,5 +1,6 @@
+import { speechLang } from '@chags/game-kit';
 import type {
-  AudioBus, LifecycleBus, PlatformServices, ProgressStore, SaveData, SfxKey, Telemetry,
+  AudioBus, LifecycleBus, Locale, PlatformServices, ProgressStore, SaveData, SfxKey, Telemetry,
 } from '@chags/game-kit';
 import { emptySave, migrate } from '@chags/progress';
 
@@ -126,13 +127,17 @@ export function createWebAudioBus(): AudioBus {
     tone(freq: number, durationMs: number): void {
       tone(freq, durationMs / 1000, 0, 'triangle');
     },
-    speak(text: string): void {
+    speak(text: string, locale: Locale): void {
       if (muted || typeof speechSynthesis === 'undefined') return;
       speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'zh-CN';
-      utterance.rate = 0.9;
+      utterance.lang = speechLang(locale);
+      utterance.rate = locale === 'en' ? 0.95 : 0.9;
       utterance.pitch = 1.05;
+      // 切语言时优先挑该语言的嗓音，没有就用系统默认
+      const voices = speechSynthesis.getVoices();
+      const match = voices.find((v) => v.lang.toLowerCase().startsWith(locale === 'en' ? 'en' : 'zh'));
+      if (match) utterance.voice = match;
       speechSynthesis.speak(utterance);
     },
     stopSpeech(): void {

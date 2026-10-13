@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@chags/game-kit": "workspace:*",
-    "phaser": "^4.2.1"
+    "phaser": "^4.2.1",
+    "@chags/i18n": "workspace:*"
   }
 }

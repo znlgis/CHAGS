@@ -127,3 +127,34 @@ test('盘古 autoplay 全流程 + 进度落盘', async ({ page }) => {
   await page.reload();
   await expect(page.getByTestId('collected-count')).toHaveText('1');
 });
+test('中英文切换：界面与典故内容都跟着变，并且记得住选择', async ({ page }) => {
+  // ?lang=en 优先
+  await page.goto('/?lang=en');
+  await expect(page.getByTestId('hall')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Story Hall' })).toBeVisible();
+  await expect(page.getByText('Cao Chong Weighs the Elephant')).toBeVisible();
+  await expect(page.getByText('Pangu Splits Heaven and Earth')).toBeVisible();
+  await expect(page.getByTestId('start-pangu')).toHaveText('Play');
+
+  // 用英文内容玩一局，典故卡也应是英文
+  await page.goto('/?lang=en&autoplay=1#/play/pangu');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+  await page.getByTestId('nav-album').click();
+  await expect(page.getByTestId('album-card-pangu')).toContainText('Pangu Splits Heaven and Earth');
+  await expect(page.getByTestId('album-card-pangu')).toContainText('Source');
+
+  // 切回中文
+  await page.getByTestId('nav-lang').click();
+  await expect(page.getByRole('heading', { name: '我的典故图鉴' })).toBeVisible();
+
+  // 不带 ?lang= 重新进入（会回到典故馆）：应该记得刚才选的"中文"
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: '典故馆' })).toBeVisible();
+
+  // 再切到英文，同样记得住
+  await page.getByTestId('nav-lang').click();
+  await expect(page.getByRole('heading', { name: 'Story Hall' })).toBeVisible();
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Story Hall' })).toBeVisible();
+});

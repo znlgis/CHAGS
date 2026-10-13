@@ -4,6 +4,7 @@ import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import { navigate } from '../router';
 import { registry } from '../registry';
 import { createGameContext } from '../shell/createGameContext';
+import { useLocale } from '../stores/locale';
 import { useProgress } from '../stores/progress';
 
 const props = defineProps<{ gameId: string }>();
@@ -12,6 +13,7 @@ const host = ref<HTMLDivElement | null>(null);
 const mod = shallowRef<GameModule | null>(null);
 const error = ref<string | null>(null);
 const progress = useProgress();
+const i18n = useLocale();
 let disposed = false;
 
 function handleEvent<K extends keyof GameEventMap>(type: K, payload: GameEventMap[K]): void {
@@ -25,7 +27,7 @@ function handleEvent<K extends keyof GameEventMap>(type: K, payload: GameEventMa
 onMounted(async () => {
   const load = registry[props.gameId];
   if (!load) {
-    error.value = '找不到这个典故：' + props.gameId;
+    error.value = i18n.t('play.notFound') + props.gameId;
     return;
   }
   try {
@@ -33,7 +35,7 @@ onMounted(async () => {
     if (disposed || !host.value) return;
     mod.value = loaded;
     await loaded.mount(
-      createGameContext(loaded.manifest, host.value, {
+      createGameContext(loaded.manifest, host.value, i18n.locale, {
         onExit: () => navigate('/'),
         onEvent: handleEvent,
       }),

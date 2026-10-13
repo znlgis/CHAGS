@@ -1,4 +1,7 @@
-import type { AllusionContent } from '@chags/content';
+import type { AllusionContent, Locale } from '@chags/content';
+
+export type { Locale };
+export { speechLang } from '@chags/content';
 
 export type TemplateId =
   | 'story' | 'substitution' | 'grow' | 'place' | 'quiz' | 'match' | 'order' | 'drag'
@@ -72,7 +75,8 @@ export interface AudioBus {
   play(key: SfxKey): void;
   /** 指定音高的一声，用于"进度听得见"（例如天越撑越高，音调越高） */
   tone(freq: number, durationMs: number): void;
-  speak(text: string): void;
+  /** 语音：按当前语言朗读。将来的真人配音也按 locale 取不同音频文件 */
+  speak(text: string, locale: Locale): void;
   stopSpeech(): void;
   setMuted(muted: boolean): void;
   isMuted(): boolean;
@@ -115,7 +119,7 @@ export interface GameContext {
   manifest: GameManifest;
   content: AllusionContent;
   services: PlatformServices;
-  locale: 'zh-CN' | 'zh-TW';
+  locale: Locale;
   reducedMotion: boolean;
   debug?: DebugOptions;
   emit<K extends keyof GameEventMap>(type: K, payload: GameEventMap[K]): void;

@@ -18,9 +18,9 @@ export const SubstitutionLevelSchema = z
     tolerance: z.number().nonnegative(),
     stones: z.array(StoneSchema).min(1).max(4),
     hints: z.object({
-      tooLight: z.string().min(1).max(12),
-      tooHeavy: z.string().min(1).max(12),
-      stuck: z.string().min(1).max(12),
+      tooLight: z.string().min(1).max(24),
+      tooHeavy: z.string().min(1).max(24),
+      stuck: z.string().min(1).max(24),
     }),
   })
   .refine((l) => l.heavy.weight <= l.capacity, {
@@ -75,11 +75,11 @@ export const GrowLevelSchema = z
     /** 计数目标与每次点击的增量 */
     targetValue: z.number().positive(),
     stepValue: z.number().positive(),
-    unit: z.string().min(1).max(2),
+    unit: z.string().min(1).max(3),
     /** 视觉阻力：越大，后半程天空升得越慢（手感上"越来越吃力"） */
     resistance: z.number().min(0).max(1.5),
     /** 长时间没动作时的提示（尽量短） */
-    hint: z.string().min(1).max(12),
+    hint: z.string().min(1).max(24),
   })
   .refine((l) => l.endGap > l.startGap, {
     message: 'endGap 必须大于 startGap',

@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import type { GameContext, SfxKey } from '@chags/game-kit';
+import { createTranslator } from '@chags/i18n';
+import type { MessageKey, Translator } from '@chags/i18n';
 import { createHand, groundShadow, popIn, roundRect, shade } from './cartoon';
 import { CSS, THEME, textStyle } from './theme';
 
@@ -22,6 +24,7 @@ export interface ButtonOptions {
 export abstract class BaseScene extends Phaser.Scene {
   protected readonly ctx: GameContext;
   private hintPill: Phaser.GameObjects.Container | null = null;
+  private translator: Translator | null = null;
 
   protected constructor(key: string, ctx: GameContext) {
     super(key);
@@ -111,7 +114,7 @@ export abstract class BaseScene extends Phaser.Scene {
   }
 
   /** 卡住时才出现的提示气泡；文字尽量短 */
-  protected showHint(message: string, durationMs = 2800): void {
+  protected showHint(message: string, durationMs = 2800, y = 268): void {
     this.hintPill?.destroy(true);
     const label = this.add
       .text(0, 0, message, {
@@ -125,7 +128,7 @@ export abstract class BaseScene extends Phaser.Scene {
     const bg = this.add.graphics();
     roundRect(bg, -w / 2, -h / 2, w, h, h / 2, THEME.card, THEME.outline, 5);
 
-    const pill = this.add.container(this.W / 2, 268, [bg, label]).setDepth(950);
+    const pill = this.add.container(this.W / 2, y, [bg, label]).setDepth(950);
     this.hintPill = pill;
     popIn(this, pill);
     this.time.delayedCall(durationMs, () => {
@@ -172,8 +175,14 @@ export abstract class BaseScene extends Phaser.Scene {
     this.ctx.services.audio.play(key);
   }
 
+  /** 界面文案：典故本身的文字走 ctx.content，通用标签走这里 */
+  protected tr(key: MessageKey): string {
+    this.translator ??= createTranslator(this.ctx.locale);
+    return this.translator(key);
+  }
+
   protected speak(text: string): void {
-    this.ctx.services.audio.speak(text);
+    this.ctx.services.audio.speak(text, this.ctx.locale);
   }
 
   /** 场景开场淡入；尊重"减少动画"设置 */

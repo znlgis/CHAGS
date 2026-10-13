@@ -14,8 +14,8 @@ export const QuizQuestionSchema = z.object({
 export const StoryBeatSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
-  /** 屏幕上的一句话。刻意卡到 60 字：小朋友读不完长句 */
-  text: z.string().max(60),
+  /** 屏幕上的一句话。中日文卡得紧，英文天然更长，所以上限按英文给 */
+  text: z.string().max(90),
   narration: z.string().min(1),
   illustration: z.string().min(1).default('none'),
 });
@@ -61,7 +61,7 @@ export const AllusionSchema = z
     figures: z.array(z.string().min(1)).min(1),
     source: SourceSchema,
     /** 一句话寓意，孩子能听懂 */
-    moral: z.string().min(1).max(60),
+    moral: z.string().min(1).max(90),
     keywords: z.array(z.string().min(1)).min(2).max(6),
     ageRange: z.tuple([z.number().int(), z.number().int()]),
     story: z.array(StoryBeatSchema).min(2).max(6),
