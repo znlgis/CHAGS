@@ -261,8 +261,9 @@ jobs:
           files: files/*
           generate_release_notes: true
           draft: false
-          # 带 - 的 tag（如 v1.0.0-beta.1）标为预发布
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          # 注意：不要在这里传 prerelease —— with 的输入全是字符串，
+          # "false" 在 JS 里是 truthy，会把正式版本也标成预发布。
+          # 预发布标记由下一步显式纠正。
           body: |
             ## 下载
 
@@ -272,3 +273,16 @@ jobs:
             | Android | CHAGS-${{ needs.version.outputs.version }}-android.apk | 直接安装（需在设置里允许「安装未知来源的应用」） |
 
             版本 ${{ needs.version.outputs.version }} ｜ 内置中英文，可在应用内一键切换。
+
+      - name: 确认发布类型
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 带 - 的 tag（v1.0.0-beta.1）保持预发布；其余显式改回正式发布。
+          # 不这么做的话，上面的 action 会因为"字符串 false 是 truthy"而一律标成预发布。
+          if [[ "${GITHUB_REF_NAME}" == *-* ]]; then
+            echo "${GITHUB_REF_NAME} 带 - ，保持预发布"
+          else
+            gh release edit "${GITHUB_REF_NAME}" --prerelease=false
+            echo "${GITHUB_REF_NAME} 已确认为正式发布"
+          fi
