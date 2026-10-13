@@ -19,6 +19,7 @@ pnpm dev            # 开发服务器 http://127.0.0.1:5183
 pnpm verify         # typecheck + lint + test + content:check + build（提交前必须全绿）
 pnpm e2e            # Playwright 端到端（需先 npx playwright install chromium）
 pnpm e2e:dist       # 针对生产构建产物再跑一遍（验证 chunk 懒加载）
+pnpm audit:i18n     # 双语版面巡检：把两种语言下的每个画面截图到 .scratch/i18n-audit/
 ```
 
 调试直达链接：`/?autoplay=1#/play/caochong-elephant`（自动通关，用于无头验证）

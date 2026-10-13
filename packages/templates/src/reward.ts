@@ -15,7 +15,12 @@ export interface RewardConfig {
   session: SessionState;
 }
 
-/** 典故卡：把这一局变成一张可以收集、可以反复看的卡片 */
+/**
+ * 典故卡：把这一局变成一张可以收集、可以反复看的卡片。
+ *
+ * 版面必须**先量后排**：中文五六个字，英文可能三十个字母，
+ * 早期用固定纵坐标排，英文版直接糊成一团（标题出框、星星压住寓意、出处压在原文上）。
+ */
 export function createRewardScene(ctx: GameContext, cfg: RewardConfig): Phaser.Types.Scenes.SceneType {
   return class RewardScene extends BaseScene {
     constructor() {
@@ -27,45 +32,73 @@ export function createRewardScene(ctx: GameContext, cfg: RewardConfig): Phaser.T
       this.ctx.emit('scene:enter', { scene: SCENE_KEYS.reward });
 
       const stars = starsFor(cfg.session);
-      const { x, y, w, h } = REWARD.card;
+      const innerW = REWARD.cardW - REWARD.cardPad * 2;
 
-      const panel = this.add.graphics();
-      roundRect(panel, x, y, w, h, 46, THEME.card, THEME.outline, 7);
-      roundRect(panel, x + 12, y + 12, w - 24, h - 24, 36, THEME.card, THEME.gold, 5);
+      const block = (
+        content: string,
+        style: Phaser.Types.GameObjects.Text.TextStyle,
+        wrap = true,
+      ): Phaser.GameObjects.Text =>
+        this.add
+          .text(0, 0, content, {
+            ...style,
+            align: 'center',
+            wordWrap: wrap ? { width: innerW, useAdvancedWrap: true } : undefined,
+            lineSpacing: 10,
+          })
+          .setOrigin(0.5, 0);
 
-      this.add.text(this.W / 2, y + 74, cfg.title, textStyle(70, CSS.red, true)).setOrigin(0.5);
-      this.add.text(this.W / 2, y + 152, cfg.pinyin, textStyle(30, CSS.inkSoft)).setOrigin(0.5);
-      this.add
-        .text(this.W / 2, y + 236, '★'.repeat(stars) + '☆'.repeat(3 - stars), textStyle(58, CSS.gold, true))
-        .setOrigin(0.5);
+      // 顺序即版面顺序；换行宽度统一按卡片内宽，任何语言都不会出框
+      const blocks: Phaser.GameObjects.Text[] = [
+        block(cfg.title, textStyle(52, CSS.red, true)),
+        block(cfg.pinyin, textStyle(26, CSS.inkSoft), false),
+        block('★'.repeat(stars) + '☆'.repeat(3 - stars), textStyle(48, CSS.gold, true), false),
+        block(cfg.moral, textStyle(38, CSS.ink, true)),
+        block(this.tr('reward.keywords') + '  ' + cfg.keywords.join(' · '), textStyle(26, CSS.teal, true)),
+        block(this.tr('reward.source') + '  ' + cfg.source.book, textStyle(24, CSS.inkSoft)),
+        block(cfg.source.quote, textStyle(24, CSS.inkSoft)),
+      ];
+      const gapAfter = [20, 18, 24, 24, 12, 8, 0];
 
-      this.add
-        .text(this.W / 2, y + 350, cfg.moral, {
-          ...textStyle(46, CSS.ink, true),
-          align: 'center',
-          wordWrap: { width: w - 110, useAdvancedWrap: true },
-          lineSpacing: 14,
-        })
-        .setOrigin(0.5);
+      let contentH = 0;
+      blocks.forEach((item, index) => {
+        contentH += item.height + (gapAfter[index] ?? 0);
+      });
 
-      this.add
-        .text(this.W / 2, y + 560, this.tr('reward.keywords') + '  ' + cfg.keywords.join(' · '), textStyle(34, CSS.teal, true))
-        .setOrigin(0.5);
+      const available = REWARD.regionBottom - REWARD.regionTop;
+      const cardH = Math.min(contentH + REWARD.cardPad * 2, available);
+      // 内容实在放不下时整体等比缩小 —— 宁可小一点，也绝不重叠
+      const scale = Math.min(1, (cardH - REWARD.cardPad * 2) / Math.max(1, contentH));
+      const cardTop = REWARD.regionTop + Math.max(0, (available - cardH) / 2);
 
-      this.add
-        .text(this.W / 2, y + 650, this.tr('reward.source') + ' ' + cfg.source.book, textStyle(28, CSS.inkSoft))
-        .setOrigin(0.5);
-      this.add
-        .text(this.W / 2, y + 706, cfg.source.quote, {
-          ...textStyle(30, CSS.inkSoft),
-          align: 'center',
-          wordWrap: { width: w - 120, useAdvancedWrap: true },
-        })
-        .setOrigin(0.5);
+      const card = this.add.graphics().setDepth(0);
+      roundRect(card, REWARD.cardX, cardTop, REWARD.cardW, cardH, 46, THEME.card, THEME.outline, 7);
+      roundRect(
+        card,
+        REWARD.cardX + 12,
+        cardTop + 12,
+        REWARD.cardW - 24,
+        cardH - 24,
+        36,
+        THEME.card,
+        THEME.gold,
+        5,
+      );
 
-      this.addButton(REWARD.done.x, REWARD.done.y, this.tr('reward.accept'), () => this.done(), { color: THEME.red });
+      // 卡片是按实测高度后画的，所以文字必须抬到它上面
+      let cursor = cardTop + REWARD.cardPad;
+      blocks.forEach((item, index) => {
+        item.setScale(scale).setPosition(this.W / 2, cursor).setDepth(2);
+        cursor += (item.height + (gapAfter[index] ?? 0)) * scale;
+      });
 
-      sparkleAt(this, this.W / 2, y + 236, THEME.gold, 8);
+      // 按钮位置固定，自动化用例直接按坐标点
+      this.addButton(REWARD.done.x, REWARD.done.y, this.tr('reward.accept'), () => this.done(), {
+        color: THEME.red,
+      });
+
+      const starLine = blocks[2];
+      if (starLine) sparkleAt(this, this.W / 2, starLine.y + starLine.height / 2, THEME.gold, 8);
 
       const now = this.ctx.services.now();
       this.ctx.emit('card:unlocked', { allusionId: cfg.allusionId, cardId: cfg.allusionId });

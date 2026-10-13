@@ -19,6 +19,7 @@ pnpm dev            # dev server at http://127.0.0.1:5183
 pnpm verify         # typecheck + lint + test + content:check + build (must be green before committing)
 pnpm e2e            # Playwright end-to-end (run npx playwright install chromium first)
 pnpm e2e:dist       # same suite against the production build (verifies chunk lazy-loading)
+pnpm audit:i18n     # screenshot every screen in both languages into .scratch/i18n-audit/
 ```
 
 Handy debug links:

@@ -14,7 +14,8 @@
     "content:check": "tsx packages/templates/src/cli/check-content.ts",
     "e2e": "playwright test",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm content:check && pnpm build",
-    "e2e:dist": "playwright test --config playwright.preview.config.ts"
+    "e2e:dist": "playwright test --config playwright.preview.config.ts",
+    "audit:i18n": "playwright test --config playwright.audit.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -78,7 +78,13 @@ export const QUIZ = {
 } as const;
 
 // ---------- 典故卡 ----------
+/** 卡片高度按内容实测得出，所以这里只给宽度、内边距与可用区域 */
 export const REWARD = {
-  card: { x: 60, y: 230, w: 630, h: 830 },
+  cardX: 60,
+  cardW: 630,
+  cardPad: 48,
+  /** 卡片可用的纵向区间（下方给"收下"按钮留出位置） */
+  regionTop: 166,
+  regionBottom: 1120,
   done: { x: 375, y: 1190 },
 } as const;

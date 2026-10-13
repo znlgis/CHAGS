@@ -11,6 +11,22 @@ import { templateSchemas } from '../schemas';
 
 let errors = 0;
 
+/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了 */
+const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
+
+function findCjk(value: unknown, path = ''): string[] {
+  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
+  }
+  if (value !== null && typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
+      findCjk(item, path === '' ? key : path + '.' + key),
+    );
+  }
+  return [];
+}
+
 function fail(message: string): void {
   console.error('  ✗ ' + message);
   errors += 1;
@@ -87,7 +103,15 @@ for (const locale of LOCALES) {
         fail(allusion.id + ' 译文 ' + issue.path.join('.') + '：' + issue.message);
       }
     } else {
-      console.log('  · ' + merged.data.title);
+      // 合并后仍含中文 = 有字段漏翻（新增字段时最容易漏）
+      const leaks = findCjk(merged.data);
+      if (leaks.length > 0) {
+        fail(
+          allusion.id + ' 的 ' + locale + ' 版里还有中文，漏翻字段：' + leaks.join('、'),
+        );
+      } else {
+        console.log('  · ' + merged.data.title);
+      }
     }
   }
 }
