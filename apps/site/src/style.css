@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #17181d;
+  color: #17181d;
+  font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* 画布尺寸完全交给 Phaser 的 ScaleManager，这里只处理触屏行为 */
+.game-host canvas {
+  display: block;
+  touch-action: none;
+  margin: 0 auto;
+}

@@ -1,0 +1,35 @@
+{
+  "name": "chags",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.22.0",
+  "scripts": {
+    "dev": "pnpm --filter @chags/site dev",
+    "build": "pnpm --filter @chags/site build",
+    "preview": "pnpm --filter @chags/site preview",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "content:check": "tsx packages/templates/src/cli/check-content.ts",
+    "e2e": "playwright test",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm content:check && pnpm build",
+    "e2e:dist": "playwright test --config playwright.preview.config.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.0.0",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "eslint": "^10.12.0",
+    "eslint-plugin-vue": "^10.11.1",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.71.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4",
+    "vue-tsc": "^3.3.13"
+  }
+}
