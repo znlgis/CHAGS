@@ -8,6 +8,12 @@ if (hasReleaseKeystore) {
     keystorePropsFile.withInputStream { keystoreProps.load(it) }
 }
 
+// 版本号可由 CI 按 tag 注入（见 .github/workflows/release.yml）。
+// 必须在 android 块外先算好：写在 defaultConfig 里会被 Groovy 解析成
+// versionCode(x).toInteger()，即对 versionCode() 的返回值取整 —— 直接报 "Value is null"。
+def chagsVersionCode = (System.getenv("CHAGS_VERSION_CODE") ?: "1").toInteger()
+def chagsVersionName = System.getenv("CHAGS_VERSION_NAME") ?: "1.0"
+
 android {
     namespace = "com.chags.tales"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -15,8 +21,8 @@ android {
         applicationId "com.chags.tales"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode chagsVersionCode
+        versionName chagsVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

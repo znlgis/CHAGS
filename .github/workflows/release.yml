@@ -1,0 +1,240 @@
+name: Release
+
+# 打 tag 即发布：构建 Windows 便携 exe 与安卓 apk，挂到 GitHub Release
+on:
+  push:
+    tags:
+      - 'v*'
+  # 手动跑一次只出产物、不发 Release（用于验证流程）
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  # ---------- 解析版本号 ----------
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      code: ${{ steps.v.outputs.code }}
+    steps:
+      - id: v
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="0.0.0-dev"
+          fi
+          CORE="${VERSION%%-*}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CORE"
+          MAJOR=${MAJOR:-0}; MINOR=${MINOR:-0}; PATCH=${PATCH:-0}
+          # tag 名不规范时归零，别让算术炸掉
+          [[ "$MAJOR" =~ ^[0-9]+$ ]] || MAJOR=0
+          [[ "$MINOR" =~ ^[0-9]+$ ]] || MINOR=0
+          [[ "$PATCH" =~ ^[0-9]+$ ]] || PATCH=0
+          {
+            echo "version=$VERSION"
+            echo "code=$(( MAJOR * 10000 + MINOR * 100 + PATCH ))"
+          } >> "$GITHUB_OUTPUT"
+          echo "版本：$VERSION（versionCode $(( MAJOR * 10000 + MINOR * 100 + PATCH ))）"
+
+  # ---------- 站点产物 + 质量门禁（只构建一次，两个平台共用同一份） ----------
+  web:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: 质量门禁（类型 / lint / 单测 / 内容校验）
+        run: |
+          pnpm typecheck
+          pnpm lint
+          pnpm test
+          pnpm content:check
+
+      - name: 构建站点
+        run: pnpm --filter @chags/site build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: apps/site/dist
+          retention-days: 1
+
+  # ---------- Windows 便携 exe ----------
+  windows:
+    needs: [version, web]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: apps/site/dist
+      - name: 校验站点产物就位
+        shell: pwsh
+        run: |
+          if (-not (Test-Path apps/site/dist/index.html)) { throw "站点产物没就位：apps/site/dist/index.html 不存在" }
+          Get-ChildItem apps/site/dist -Recurse -File | Measure-Object | ForEach-Object { "站点文件数：$($_.Count)" }
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+
+      - name: 注入版本号
+        shell: pwsh
+        run: |
+          node -e "const fs=require('fs');const p='apps/desktop/src-tauri/tauri.conf.json';const c=JSON.parse(fs.readFileSync(p,'utf8'));c.version=process.argv[1];fs.writeFileSync(p,JSON.stringify(c,null,2));" "${{ needs.version.outputs.version }}"
+
+      - name: 构建便携 exe
+        working-directory: apps/desktop
+        run: pnpm exec tauri build --no-bundle
+
+      - name: 收集产物
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path out | Out-Null
+          Copy-Item apps/desktop/src-tauri/target/release/chags.exe "out/CHAGS-${{ needs.version.outputs.version }}-windows-x64-portable.exe"
+          Get-ChildItem out | ForEach-Object { "{0:N2} MB  {1}" -f ($_.Length/1MB), $_.Name }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: out/*.exe
+          retention-days: 7
+
+  # ---------- 安卓 apk ----------
+  android:
+    needs: [version, web]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      # Gradle 8.14 不支持 JDK 25，必须用 17–21
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: 安装 Android SDK 组件
+        run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: apps/site/dist
+      - name: 校验站点产物就位
+        run: test -f apps/site/dist/index.html || { echo "站点产物没就位"; exit 1; }
+
+      - name: 写入签名材料
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          cd apps/mobile/android
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > chags-release.keystore
+            {
+              echo "storeFile=chags-release.keystore"
+              echo "storePassword=$STORE_PASSWORD"
+              echo "keyAlias=$KEY_ALIAS"
+              echo "keyPassword=$KEY_PASSWORD"
+            } > keystore.properties
+            echo "已配置 Release 签名"
+          else
+            echo "::warning::未配置签名 Secrets（ANDROID_KEYSTORE_BASE64 等），本次将使用 debug 签名 —— 产物仍可安装，但不适合正式分发"
+          fi
+
+      - name: 构建 APK
+        working-directory: apps/mobile
+        env:
+          CHAGS_VERSION_NAME: ${{ needs.version.outputs.version }}
+          CHAGS_VERSION_CODE: ${{ needs.version.outputs.code }}
+        run: |
+          pnpm exec cap sync android
+          cd android
+          ./gradlew assembleRelease --no-daemon
+
+      - name: 校验签名
+        run: |
+          APK=apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+          $ANDROID_SDK_ROOT/build-tools/36.0.0/apksigner verify --print-certs "$APK" | head -4
+
+      - name: 收集产物
+        run: |
+          mkdir -p out
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk \
+             "out/CHAGS-${{ needs.version.outputs.version }}-android.apk"
+          ls -lh out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: out/*.apk
+          retention-days: 7
+
+  # ---------- 发 Release ----------
+  release:
+    needs: [version, windows, android]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: 整理发布文件
+        run: |
+          mkdir -p files
+          cp artifacts/windows-exe/*.exe files/
+          cp artifacts/android-apk/*.apk files/
+          ls -lh files
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          files: files/*
+          generate_release_notes: true
+          draft: false
+          # 带 - 的 tag（如 v1.0.0-beta.1）标为预发布
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          body: |
+            ## 下载
+
+            | 平台 | 文件 | 说明 |
+            |---|---|---|
+            | Windows | CHAGS-${{ needs.version.outputs.version }}-windows-x64-portable.exe | 便携版，**双击即玩，无需安装**（首次运行可能有 SmartScreen 提示，选「更多信息 → 仍要运行」） |
+            | Android | CHAGS-${{ needs.version.outputs.version }}-android.apk | 直接安装（需在设置里允许「安装未知来源的应用」） |
+
+            版本 ${{ needs.version.outputs.version }} ｜ 内置中英文，可在应用内一键切换。

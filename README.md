@@ -4,6 +4,8 @@ Chinese Historical Anecdotes Game Series —— 一个典故一个小游戏，�
 
 **中文** · [English](README.en.md) ｜ 应用内可一键切换中英文（界面 / 典故内容 / 语音全部跟随）
 
+![Release](https://github.com/znlgis/CHAGS/actions/workflows/release.yml/badge.svg)
+
 ## 技术栈
 
 Phaser 4.2（游戏）· Vue 3.5 + Pinia（外壳）· Vite 8 · TypeScript 5.9.3 · pnpm workspace · Vitest · Playwright

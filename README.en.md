@@ -4,6 +4,8 @@ One story, one small game — kids remember an anecdote by **playing** it, not b
 
 **English** · [中文](README.md) ｜ The app switches between Chinese and English in one tap (UI / story content / narration all follow).
 
+![Release](https://github.com/znlgis/CHAGS/actions/workflows/release.yml/badge.svg)
+
 ## Tech stack
 
 Phaser 4.2 (games) · Vue 3.5 + Pinia (shell) · Vite 8 · TypeScript 5.9.3 · pnpm workspace · Vitest · Playwright
