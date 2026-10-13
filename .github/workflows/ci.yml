@@ -1,0 +1,95 @@
+name: CI
+
+# 每次推送与 PR 都跑。
+# 之前的 release.yml 只在打 tag 时跑，而且**不包括端到端** ——
+# 也就是说玩法被改坏了也要等到发版那一刻才会发现。
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  # ---------- 静态检查与单测 ----------
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: 类型检查
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: 单元测试
+        run: pnpm test
+      - name: 内容校验（含中英译文与关卡脚本）
+        run: pnpm content:check
+      - name: 构建 + 体积守卫
+        run: pnpm build
+
+  # ---------- 端到端：真实浏览器里把每个典故玩一遍 ----------
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: 安装浏览器
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: 开发服务器端到端
+        run: pnpm e2e
+
+      - name: 生产构建产物端到端
+        run: pnpm e2e:dist
+
+      - name: 失败时保留报告
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
+
+  # ---------- 双语版面巡检：把每个画面截下来，人工扫一眼 ----------
+  audit:
+    # PR 上跑太慢（约 6 分钟），只在主干与手动触发时跑
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - name: 中英双语版面巡检
+        run: pnpm audit:i18n
+
+      - name: 上传巡检截图（人工过目）
+        uses: actions/upload-artifact@v4
+        with:
+          name: i18n-audit
+          path: .scratch/i18n-audit
+          retention-days: 14

@@ -26,13 +26,16 @@ describe('后羿射日 · 关卡数据', () => {
     }
   });
 
-  it('相邻太阳不会挤在一起（命中半径内只能有一个）', () => {
+  it('太阳之间留得开，视觉上不会糊成一团', () => {
+    // 注意：**不要求**两两距离大于 2*hitRadius。
+    // 箭会被弹道上先碰到的那个挡住，这是刻意的语义（见 aim.logic 的 firstHit），
+    // 实测最近一对相距 93.9 —— 只要不重叠到看不出是两个就行。
     const level = aimLevel(raw!);
     for (let i = 0; i < level.targets.length; i += 1) {
       for (let j = i + 1; j < level.targets.length; j += 1) {
         const a = level.targets[i]!;
         const b = level.targets[j]!;
-        expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(level.hitRadius);
+        expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(level.hitRadius * 1.4);
       }
     }
   });

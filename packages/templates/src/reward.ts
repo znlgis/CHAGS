@@ -51,14 +51,15 @@ export function createRewardScene(ctx: GameContext, cfg: RewardConfig): Phaser.T
       // 顺序即版面顺序；换行宽度统一按卡片内宽，任何语言都不会出框
       const blocks: Phaser.GameObjects.Text[] = [
         block(cfg.title, textStyle(52, CSS.red, true)),
-        block(cfg.pinyin, textStyle(26, CSS.inkSoft), false),
-        block('★'.repeat(stars) + '☆'.repeat(3 - stars), textStyle(48, CSS.gold, true), false),
+        block(cfg.pinyin, textStyle(28, CSS.inkSoft), false),
+        block('★'.repeat(stars) + '☆'.repeat(3 - stars), textStyle(48, CSS.goldDeep, true), false),
         block(cfg.moral, textStyle(38, CSS.ink, true)),
-        block(this.tr('reward.keywords') + '  ' + cfg.keywords.join(' · '), textStyle(26, CSS.teal, true)),
-        block(this.tr('reward.source') + '  ' + cfg.source.book, textStyle(24, CSS.inkSoft)),
-        block(cfg.source.quote, textStyle(24, CSS.inkSoft)),
+        block(this.tr('reward.keywords') + '  ' + cfg.keywords.join(' · '), textStyle(28, CSS.tealDeep, true)),
+        block(this.tr('reward.source') + '  ' + cfg.source.book, textStyle(28, CSS.inkSoft)),
+        block(cfg.source.quote, textStyle(28, CSS.inkSoft)),
       ];
-      const gapAfter = [20, 18, 24, 24, 12, 8, 0];
+      // 间距减半，把字号涨上去的这点空间腾回来（最坏的英文卡余量原本只剩 2%）
+      const gapAfter = [10, 9, 12, 12, 6, 4, 0];
 
       let contentH = 0;
       blocks.forEach((item, index) => {

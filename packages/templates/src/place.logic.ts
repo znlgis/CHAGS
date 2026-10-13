@@ -23,12 +23,18 @@ export function isCorrect(orb: PlaceOrb, slot: PlaceSlot): boolean {
   return orb.slotId === slot.id;
 }
 
+/** 同一个洞补两次不算两个 —— 按"补好的槽位数"去重计数 */
+function filledCount(level: PlaceLevel, placedSlotIds: string[]): number {
+  const wanted = new Set(level.slots.map((s) => s.id));
+  return new Set(placedSlotIds.filter((id) => wanted.has(id))).size;
+}
+
 export function isPlaceComplete(level: PlaceLevel, placedSlotIds: string[]): boolean {
-  return placedSlotIds.length >= level.slots.length;
+  return filledCount(level, placedSlotIds) >= level.slots.length;
 }
 
 export function placeProgress(level: PlaceLevel, placedSlotIds: string[]): number {
-  return level.slots.length === 0 ? 1 : placedSlotIds.length / level.slots.length;
+  return level.slots.length === 0 ? 1 : filledCount(level, placedSlotIds) / level.slots.length;
 }
 
 export function slotFor(level: PlaceLevel, orb: PlaceOrb): PlaceSlot | undefined {

@@ -38,6 +38,14 @@ export const CSS = {
   teal: '#3d8f86',
   gold: '#c98a1c',
   white: '#ffffff',
+  /**
+   * 深色版本，用于浅底上的文字与图标。
+   * 原始色放在浅底上对比度不够：红/纸 3.42:1、青/纸 3.48:1、金/卡 2.83:1，
+   * 都过不了 WCAG AA。下面这三个分别是 5.44 / 5.61 / 5.42。
+   */
+  redDeep: '#b03a31',
+  tealDeep: '#2c6b64',
+  goldDeep: '#8a5f10',
 } as const;
 
 export const FONT_STACK =

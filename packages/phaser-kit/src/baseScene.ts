@@ -159,7 +159,11 @@ export abstract class BaseScene extends Phaser.Scene {
     zone.once('destroy', () => {
       done = true;
     });
-    zone.once('pointerdown', () => {
+    // 连点保护：孩子连点两下时，第二下会落在**下一幕刚建好的**点击区上，
+    // 一屏故事就被整段跳过去了。给一个很短的输入锁，正常阅读完全感觉不到。
+    const armedAt = this.ctx.services.now() + 350;
+    zone.on('pointerdown', () => {
+      if (this.ctx.services.now() < armedAt) return;
       this.sfx('tap');
       finish();
     });

@@ -56,6 +56,7 @@ export function createSubstitutionScene(
     private markHand: Phaser.GameObjects.Graphics | null = null;
     private markZone: Phaser.GameObjects.Zone | null = null;
     private readout: Phaser.GameObjects.Text | null = null;
+    private readoutPill: Phaser.GameObjects.Graphics | null = null;
     private carved = false;
     private scaleTries = 0;
     private lastActionAt = 0;
@@ -544,10 +545,15 @@ export function createSubstitutionScene(
       this.cargo = [];
       this.relayout();
 
+      // 读数垫一层卡片底再写字。
+      // 这个位置正好落进水带（waterTop 620 → waterBottom 1080），
+      // 红字直压水面的对比度只有 1.48:1 —— 整局最高潮的数字几乎看不见。
+      this.readoutPill = this.add.graphics().setDepth(39);
       this.readout = this.add
         .text(SUB.scalePos.x, SUB.scalePos.y - 150, '0', textStyle(68, CSS.red, true))
         .setOrigin(0.5)
         .setDepth(40);
+      this.layoutReadout();
       popIn(this, this.readout);
 
       let acc = 0;
@@ -555,6 +561,7 @@ export function createSubstitutionScene(
         this.time.delayedCall(260 + i * 230, () => {
           acc += item.def.value;
           this.readout?.setText(String(acc));
+          this.layoutReadout();
           this.sfx('tap');
           sparkleAt(this, SUB.scalePos.x, SUB.scalePos.y - 70, THEME.gold, 2);
           this.drag?.remove(item.node);
@@ -562,6 +569,17 @@ export function createSubstitutionScene(
         });
       });
       this.time.delayedCall(260 + stones.length * 230 + 520, () => this.finishWeigh(acc));
+    }
+
+    /** 让卡片底跟着读数一起变宽 */
+    private layoutReadout(): void {
+      const pill = this.readoutPill;
+      const text = this.readout;
+      if (!pill || !text) return;
+      pill.clear();
+      const w = Math.max(190, text.width + 76);
+      const h = text.height + 30;
+      roundRect(pill, text.x - w / 2, text.y - h / 2, w, h, h / 2, THEME.card, THEME.outline, 6);
     }
 
     private finishWeigh(total: number): void {
@@ -572,6 +590,8 @@ export function createSubstitutionScene(
       // 读数收进等式里，避免两处重复出现同一个数字
       this.readout?.destroy();
       this.readout = null;
+      this.readoutPill?.destroy();
+      this.readoutPill = null;
 
       const y = SUB.equationY;
       const ghost = this.add.container(230, y).setDepth(40);
@@ -582,7 +602,8 @@ export function createSubstitutionScene(
 
       const eq = this.add.text(400, y, '=', textStyle(84, CSS.ink, true)).setOrigin(0.5).setDepth(40);
       const value = this.add
-        .text(560, y, String(total), textStyle(96, CSS.red, true))
+        // 答案数字原本用亮红，压在天空底上只有 2.92:1；深红是 4.05:1
+        .text(560, y, String(total), textStyle(96, CSS.redDeep, true))
         .setOrigin(0.5)
         .setDepth(40);
       popIn(this, eq, 160);

@@ -28,14 +28,14 @@ test('capture screenshots', async ({ page }) => {
   await page.screenshot({ path: 'docs/screenshots/02-story.png' });
 
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(520);
   await page.screenshot({ path: 'docs/screenshots/03-try-scale.png' });
 
   // 直接上秤 → 压垮
   await dragDesign(page, SUB.heavyHome, { x: SUB.scalePos.x, y: SUB.scalePos.y - 40 });
-  await page.waitForTimeout(320);
+  await page.waitForTimeout(520);
   await page.screenshot({ path: 'docs/screenshots/04-scale-fails.png' });
 
   // 上船 → 刻水痕
@@ -85,7 +85,7 @@ test('capture pangu screenshots', async ({ page }) => {
   await page.screenshot({ path: 'docs/screenshots/12-pangu-story.png' });
 
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await page.waitForTimeout(700);
   await page.screenshot({ path: 'docs/screenshots/13-chaos.png' });
@@ -152,7 +152,7 @@ test('capture english screenshots', async ({ page }) => {
   await page.screenshot({ path: 'docs/screenshots/24-en-story.png' });
 
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await page.waitForTimeout(600);
   for (let i = 0; i < 4; i += 1) {
@@ -193,7 +193,7 @@ test('capture nuwa screenshots', async ({ page }) => {
   await page.screenshot({ path: 'docs/screenshots/30-nuwa-story.png' });
 
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await page.waitForTimeout(600);
   await page.screenshot({ path: 'docs/screenshots/31-nuwa-holes.png' });
@@ -221,7 +221,7 @@ test('capture houyi screenshots', async ({ page }) => {
   await page.screenshot({ path: 'docs/screenshots/34-houyi-story.png' });
 
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await page.waitForTimeout(600);
   await page.screenshot({ path: 'docs/screenshots/35-houyi-ten-suns.png' });
@@ -249,7 +249,7 @@ test('capture jingwei screenshots', async ({ page }) => {
   await page.waitForTimeout(800);
   await page.screenshot({ path: 'docs/screenshots/40-jingwei-story.png' });
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await page.waitForTimeout(700);
   await page.screenshot({ path: 'docs/screenshots/41-jingwei-start.png' });
@@ -270,7 +270,7 @@ test('capture kuafu screenshots', async ({ page }) => {
   await page.waitForTimeout(800);
   await page.screenshot({ path: 'docs/screenshots/44-kuafu-story.png' });
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await page.waitForTimeout(700);
   await page.screenshot({ path: 'docs/screenshots/45-kuafu-running.png' });
@@ -292,7 +292,7 @@ test('capture yugong screenshots', async ({ page }) => {
   await page.waitForTimeout(800);
   await page.screenshot({ path: 'docs/screenshots/48-yugong-story.png' });
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await page.waitForTimeout(700);
   await page.screenshot({ path: 'docs/screenshots/49-yugong-mountains.png' });

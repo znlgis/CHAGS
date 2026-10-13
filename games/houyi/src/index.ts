@@ -1,27 +1,17 @@
 import { createTranslator } from '@chags/i18n';
-import type { GameContext, GameModule } from '@chags/game-kit';
-import { CSS, createPhaserGame, textStyle } from '@chags/phaser-kit';
-import {
-  SCENE_KEYS,
-  createAimScene,
-  createRewardScene,
-  createSessionState,
-  createStoryScene,
-} from '@chags/templates';
+import { CSS, textStyle } from '@chags/phaser-kit';
+import { SCENE_KEYS, createAimScene, defineGame } from '@chags/templates';
 import type { AimApi } from '@chags/templates';
 import type Phaser from 'phaser';
 import { drawArcher, drawBeat, drawScenery, drawSun } from './art';
 import { aimLevel } from './logic';
 import { manifest } from './manifest';
 
-let game: Phaser.Game | null = null;
-
-const gameModule: GameModule = {
+export default defineGame({
   manifest,
+  drawBeat,
 
-  async mount(ctx: GameContext): Promise<void> {
-    const level = aimLevel(ctx.content);
-    const session = createSessionState(ctx.services.now());
+  gameplay: (ctx, session) => {
     const t = createTranslator(ctx.locale);
 
     // 大地一开始被烤得焦黄；只剩一个太阳时转绿
@@ -84,15 +74,11 @@ const gameModule: GameModule = {
       }
     };
 
-    game = createPhaserGame(ctx, {
+    return {
+      entry: SCENE_KEYS.aim,
       scenes: [
-        createStoryScene(ctx, {
-          beats: ctx.content.story,
-          nextSceneKey: SCENE_KEYS.aim,
-          drawBeat,
-        }),
         createAimScene(ctx, {
-          level,
+          level: aimLevel(ctx.content),
           session,
           nextSceneKey: SCENE_KEYS.reward,
           titleKey: 'scene.shoot',
@@ -105,31 +91,7 @@ const gameModule: GameModule = {
           onHit: handleHit,
           finaleHoldMs: 2300,
         }),
-        createRewardScene(ctx, {
-          allusionId: ctx.content.id,
-          title: ctx.content.title,
-          pinyin: ctx.content.pinyin,
-          moral: ctx.content.moral,
-          keywords: ctx.content.keywords,
-          source: ctx.content.source,
-          session,
-        }),
       ],
-    });
+    };
   },
-
-  async unmount(): Promise<void> {
-    game?.destroy(true);
-    game = null;
-  },
-
-  pause(): void {
-    game?.loop.sleep();
-  },
-
-  resume(): void {
-    game?.loop.wake();
-  },
-};
-
-export default gameModule;
+});

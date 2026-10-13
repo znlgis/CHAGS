@@ -19,6 +19,9 @@ export const messages = {
     'album.empty': '还没有收集到典故卡，去典故馆玩一局吧！',
     'album.source': '出处',
 
+    'play.loadFailed': '这个典故暂时打不开',
+    'play.backToHall': '回典故馆',
+    'play.retry': '再试一次',
     'play.notFound': '找不到这个典故：',
 
     'scene.story': '看故事',
@@ -57,6 +60,9 @@ export const messages = {
     'album.empty': 'No cards yet — go and play one!',
     'album.source': 'Source',
 
+    'play.loadFailed': 'This story will not open',
+    'play.backToHall': 'Back to Stories',
+    'play.retry': 'Try again',
     'play.notFound': 'Story not found: ',
 
     'scene.story': 'The Story',

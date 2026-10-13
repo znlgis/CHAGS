@@ -79,7 +79,9 @@ export const QUIZ = {
 export const REWARD = {
   cardX: 60,
   cardW: 630,
-  cardPad: 48,
+  // 40 而不是 48：内边距小一点 → 换行宽度大一点 → 英文长句少折一行，
+  // 同时上下各多出 8px。字号提到 28 之后，最坏的英文卡余量只剩 2%。
+  cardPad: 40,
   /** 卡片可用的纵向区间（下方给"收下"按钮留出位置） */
   regionTop: 166,
   regionBottom: 1120,

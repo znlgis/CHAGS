@@ -14,6 +14,22 @@ const level: PlaceLevel = PlaceLevelSchema.parse({
   ],
 });
 
+describe('归位完成度', () => {
+  it('同一个洞补两次不算两个', () => {
+    expect(isPlaceComplete(level, ['sun', 'sun'])).toBe(false);
+    expect(placeProgress(level, ['sun', 'sun'])).toBe(0.5);
+  });
+
+  it('不认识的目标 id 不计入', () => {
+    expect(placeProgress(level, ['sun', '不是槽位'])).toBe(0.5);
+  });
+
+  it('两个都补好才算完成，进度封顶 1', () => {
+    expect(isPlaceComplete(level, ['sun', 'moon'])).toBe(true);
+    expect(placeProgress(level, ['sun', 'moon', 'moon'])).toBe(1);
+  });
+});
+
 describe('归位判定', () => {
   it('落在槽位上就算命中，且有宽容度', () => {
     expect(findSlotAt(170, 300, level)?.id).toBe('sun');

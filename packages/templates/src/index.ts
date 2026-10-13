@@ -8,6 +8,7 @@ export { findSlotAt, isCorrect, isPlaceComplete, placeProgress, slotFor } from '
 export * from './story';
 export * from './substitution';
 export * from './tap';
+export * from './defineGame';
 export * from './place';
 // clamp01 在几个模板里同名，这里显式再导出
  export { aimDirection, distanceToSegment, firstHit, projectionT, pullAmount } from './aim.logic';

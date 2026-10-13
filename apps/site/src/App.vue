@@ -30,7 +30,8 @@ onBeforeUnmount(() => {
 });
 
 function navClass(active: boolean): string {
-  return active ? 'bg-[#e0554a] text-[#fdf3dc]' : 'bg-[#4a3d31] text-[#fdf3dc]';
+  // 亮红配纸色只有 3.42:1，深红是 5.44:1
+  return active ? 'bg-[#b03a31] text-[#fdf3dc]' : 'bg-[#4a3d31] text-[#fdf3dc]';
 }
 </script>
 
@@ -40,13 +41,15 @@ function navClass(active: boolean): string {
       v-if="route.name !== 'play'"
       class="flex items-center justify-between gap-3 bg-[#3a2f26] px-5 py-4 text-[#fdf3dc]"
     >
-      <button class="text-left" @click="navigate('/')">
-        <span class="block text-lg font-bold">{{ i18n.t('app.title') }}</span>
-        <span class="block text-xs text-[#cbb9a0]">{{ i18n.t('app.subtitle') }}</span>
+      <button class="min-w-0 text-left" @click="navigate('/')">
+        <span class="block truncate text-lg font-bold">{{ i18n.t('app.title') }}</span>
+        <span class="hidden truncate text-sm text-[#cbb9a0] sm:block">
+          {{ i18n.t('app.subtitle') }}
+        </span>
       </button>
       <nav class="flex shrink-0 items-center gap-2 text-sm">
         <button
-          class="rounded-full px-4 py-2"
+          class="min-h-12 rounded-full px-4 py-3"
           :class="navClass(route.name === 'hall')"
           data-testid="nav-hall"
           @click="navigate('/')"
@@ -54,7 +57,7 @@ function navClass(active: boolean): string {
           {{ i18n.t('nav.hall') }}
         </button>
         <button
-          class="rounded-full px-4 py-2"
+          class="min-h-12 rounded-full px-4 py-3"
           :class="navClass(route.name === 'album')"
           data-testid="nav-album"
           @click="navigate('/album')"
@@ -62,7 +65,7 @@ function navClass(active: boolean): string {
           {{ i18n.t('nav.album') }}
         </button>
         <button
-          class="rounded-full bg-[#3d8f86] px-4 py-2"
+          class="min-h-12 rounded-full bg-[#2c6b64] px-4 py-3"
           data-testid="nav-lang"
           @click="i18n.toggle()"
         >

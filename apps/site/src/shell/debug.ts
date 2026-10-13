@@ -1,6 +1,8 @@
 export interface ChagsDebugBridge {
   events: string[];
   last: string | null;
+  /** 最近一次载入失败的技术详情（玩家看到的是人话，这一份留给开发与自动化） */
+  lastError?: string;
 }
 
 declare global {

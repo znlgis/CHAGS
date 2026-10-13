@@ -61,7 +61,7 @@ for (const locale of LOCALES) {
     await page.screenshot({ path: out + '/01-story.png' });
 
     await clickDesign(page, 375, 900);
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(520);
     await page.screenshot({ path: out + '/02-story2.png' });
     await clickDesign(page, 375, 900);
     await page.waitForTimeout(600);
@@ -97,7 +97,7 @@ for (const locale of LOCALES) {
     await page.screenshot({ path: out + '/09-story.png' });
 
     await clickDesign(page, 375, 900);
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(520);
     await page.screenshot({ path: out + '/10-story2.png' });
     await clickDesign(page, 375, 900);
     await page.waitForTimeout(700);
@@ -161,7 +161,7 @@ for (const locale of LOCALES) {
       await page.screenshot({ path: out + '/' + game.id + '-1-story.png' });
 
       await clickDesign(page, 375, 900);
-      await page.waitForTimeout(350);
+      await page.waitForTimeout(520);
       await clickDesign(page, 375, 900);
       await page.waitForTimeout(700);
       await page.screenshot({ path: out + '/' + game.id + '-2-play.png' });
@@ -190,7 +190,7 @@ for (const locale of LOCALES) {
       await page.waitForSelector('canvas');
       await page.waitForTimeout(600);
       await clickDesign(page, 375, 900);
-      await page.waitForTimeout(350);
+      await page.waitForTimeout(520);
       await clickDesign(page, 375, 900);
       await page.waitForTimeout(600);
 

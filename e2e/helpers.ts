@@ -1,9 +1,11 @@
 import type { Page } from '@playwright/test';
 import { DESIGN } from '../packages/templates/src/layout';
 
+import type { ChagsDebugBridge } from '../apps/site/src/shell/debug';
+
 declare global {
   interface Window {
-    __chags?: { events: string[]; last: string | null };
+    __chags?: ChagsDebugBridge;
   }
 }
 
@@ -74,3 +76,6 @@ export async function tapDesign(
 
 export const events = (page: Page): Promise<string[]> =>
   page.evaluate(() => window.__chags?.events ?? []);
+/** 页面上的技术错误（有就说明游戏没起来） */
+export const lastError = (page: Page): Promise<string | undefined> =>
+  page.evaluate(() => window.__chags?.lastError);

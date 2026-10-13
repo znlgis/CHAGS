@@ -2,10 +2,19 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { clickDesign, dragDesign, events, holdDesign, tapDesign } from './helpers';
 import { REWARD, SUB, SUB_PILES } from '../packages/templates/src/layout';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 interface StageScript { template: string; levelScript: unknown }
+
+/** 内容目录就是典故清单 —— 别再手抄一份，抄漏一个不会有任何测试发现 */
+function allAllusionIds(): string[] {
+  const dir = fileURLToPath(new URL('../packages/content/src/allusions', import.meta.url));
+  return readdirSync(dir)
+    .filter((name) => name.endsWith('.json'))
+    .map((name) => name.replace(/\.json$/, ''))
+    .sort();
+}
 
 /** Playwright 的 ESM 加载器不接受裸 JSON 导入，这里自己读 */
 function loadContent(id: string): { game: { stages: StageScript[] } } {
@@ -24,9 +33,10 @@ test('真实操作通关：拖大象上船 → 刻水痕 → 搬石头 → 称�
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
 
-  // 两幕故事：点哪都行
+  // 两幕故事：点哪都行。故事页有 350ms 输入锁（防连点跳页），第一下要等锁过去
+  await page.waitForTimeout(450);
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await expect.poll(() => events(page)).toContain('scene:enter:substitution');
 
@@ -85,9 +95,10 @@ test('盘古：点蛋 → 连点撑天 → 拖光球化身，真实操作通关'
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
 
-  // 两幕故事
+  // 两幕故事。故事页有 350ms 输入锁（防连点跳页），第一下要等锁过去
+  await page.waitForTimeout(450);
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(320);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await expect.poll(() => events(page)).toContain('scene:enter:chaos');
 
@@ -180,8 +191,11 @@ test('后羿射日：真实拖拽射箭，射九留一', async ({ page }) => {
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
 
+  // 故事页有 350ms 输入锁（防连点跳页），第一下要等锁过去
+  await page.waitForTimeout(450);
+
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(320);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await expect.poll(() => events(page)).toContain('scene:enter:aim');
 
@@ -203,8 +217,10 @@ test('后羿射日：把最后一个也射了，天黑之后太阳会自己回�
   await page.goto('/#/play/houyi');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
+  // 故事页有 350ms 输入锁（防连点跳页），第一下要等锁过去
+  await page.waitForTimeout(450);
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(320);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await expect.poll(() => events(page)).toContain('scene:enter:aim');
 
@@ -234,8 +250,11 @@ test('女娲补天：真实拖拽把五色石补进天上的洞', async ({ page 
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
 
+  // 故事页有 350ms 输入锁（防连点跳页），第一下要等锁过去
+  await page.waitForTimeout(450);
+
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(320);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await expect.poll(() => events(page)).toContain('scene:enter:place');
 
@@ -259,8 +278,10 @@ test('精卫填海：连点投石，一块一块把海填出小岛', async ({ pa
   await page.goto('/#/play/jingwei');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
+  // 故事页有 350ms 输入锁（防连点跳页），第一下要等锁过去
+  await page.waitForTimeout(450);
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(320);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await expect.poll(() => events(page)).toContain('scene:enter:tap');
 
@@ -279,13 +300,21 @@ test('夸父追日：按住奔跑，追到河渭喝一口再接着追', async ({
   await page.goto('/#/play/kuafu');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
+  // 故事页有 350ms 输入锁（防连点跳页），第一下要等锁过去
+  await page.waitForTimeout(450);
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(320);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await expect.poll(() => events(page)).toContain('scene:enter:tap');
 
   // 跑到河渭（45%）：按住约 2.7 秒就到了
   await holdDesign(page, 375, 1000, 3400);
+
+  // 里程碑必须发事件 —— 否则"暂停有没有生效"只能靠肉眼，把 pause 删掉都不会红。
+  // 顺序也很重要：到河边是**暂停**，不该直接通关。
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:milestone:river');
+  expect(await events(page)).not.toContain('level:complete');
+
   // 停下喝一口 —— 松手之后再按下去
   await page.waitForTimeout(200);
   await holdDesign(page, 375, 1000, 5000);
@@ -303,8 +332,10 @@ test('愚公移山：连点挖山，智叟与两次代际交接都能接着往�
   await page.goto('/#/play/yugong');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
+  // 故事页有 350ms 输入锁（防连点跳页），第一下要等锁过去
+  await page.waitForTimeout(450);
   await clickDesign(page, 375, 900);
-  await page.waitForTimeout(320);
+  await page.waitForTimeout(520);
   await clickDesign(page, 375, 900);
   await expect.poll(() => events(page)).toContain('scene:enter:tap');
 
@@ -312,6 +343,15 @@ test('愚公移山：连点挖山，智叟与两次代际交接都能接着往�
   await tapDesign(page, 375, 1000, 44, 150);
 
   await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
+
+  // 智叟先来，然后是两次代际交接，顺序与次数都要对
+  const seen = await events(page);
+  const marks = seen.filter((e) => e.startsWith('beat:enter:milestone:'));
+  expect(marks).toEqual([
+    'beat:enter:milestone:zhisou',
+    'beat:enter:milestone:gen-2',
+    'beat:enter:milestone:gen-3',
+  ]);
   await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
 });
 
@@ -323,7 +363,7 @@ test('愚公移山 autoplay 全流程（三个里程碑都不能卡死）', asyn
 test('中英双语下每个典故都能载入 —— 关卡数据在两种语言下都必须过 schema', async ({ page }) => {
   // 英文的 unit 曾经写成 "baskets"，超出上限导致整个游戏打不开，而且构建期没拦住。
   // 这条用例专门守它：只要 schema 校验失败，页面就不会出现 canvas。
-  const ids = ['caochong-elephant', 'pangu', 'nuwa', 'houyi', 'jingwei', 'kuafu', 'yugong'];
+  const ids = allAllusionIds();
   for (const locale of ['zh-CN', 'en'] as const) {
     for (const id of ids) {
       await page.goto('/?lang=' + locale + '#/play/' + id);

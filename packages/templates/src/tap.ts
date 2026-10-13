@@ -74,7 +74,8 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
     private fired: string[] = [];
     private lastInputAt = 0;
     private idleMs = 0;
-    private hintShown = false;
+    /** 长按模式下"已经按住多久"：用来决定小手什么时候才收起来 */
+    private heldMs = 0;
 
     constructor() {
       super(SCENE_KEYS.tap, ctx);
@@ -138,14 +139,21 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
 
       if (!this.paused) {
         if (cfg.level.mode === 'hold' && this.holding) {
+          this.heldMs += delta;
           this.setValue(advanceHold(this.value, cfg.level, delta), false);
-        } else if (cfg.level.mode === 'tap') {
-          // 连点模式下，长时间没动作就给点提示（图形为主，文字为辅）
-          this.idleMs += delta;
-          if (this.idleMs > 6500 && !this.hintShown) {
-            this.hintShown = true;
-            this.showHint(cfg.level.hint);
-          }
+        } else {
+          this.heldMs = 0;
+        }
+
+        // 长时间没有推进就给提示 —— **两种模式都要**。
+        // 之前这段只写在连点分支里，于是长按模式（夸父）永远不提示：
+        // 孩子只会点不会按的话，点一下只涨 30，要 60 下才满，而他完全不知道问题在哪。
+        this.idleMs += delta;
+        if (this.idleMs > 6000) {
+          this.idleMs = 0;
+          this.showHint(cfg.level.hint);
+          // 光有文字小朋友不一定看得懂，把小手找回来
+          this.updateHand(true);
         }
       }
 
@@ -153,19 +161,30 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
       this.redraw();
     }
 
+    /** 小手的显隐：会玩了就收起，卡住了再拿出来 */
+    private updateHand(show: boolean): void {
+      if (show && !this.hand) {
+        this.hand = createHand(this, this.W / 2, this.H - 230, 1.25);
+      } else if (!show && this.hand) {
+        this.hand.destroy();
+        this.hand = null;
+      }
+    }
+
     private setValue(next: number, fromTap: boolean): void {
       if (next === this.value) return;
       this.value = next;
-      this.idleMs = 0;
       this.idleMs = 0;
 
       if (fromTap) {
         this.ctx.services.audio.tone(300 + easedProgress(this.value, cfg.level) * 520, 90);
       }
-      if (!this.started) {
+
+      // 长按模式要按住一会儿才算"会了"。否则孩子按一下、小手立刻消失，
+      // 松手之后就再也看不到该怎么玩 —— 这正是夸父最容易卡住的地方。
+      if (!this.started && (cfg.level.mode === 'tap' || this.heldMs > 420)) {
         this.started = true;
-        this.hand?.destroy();
-        this.hand = null;
+        this.updateHand(false);
       }
 
       const stage = this.metrics(false);
@@ -212,6 +231,9 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
       const id = due[0];
       if (id === undefined) return;
       this.fired.push(id);
+      // 必须发事件：否则"暂停有没有生效、id 有没有接错"全靠肉眼看 ——
+      // 把 pause 删掉、把三条里程碑合成一条，所有测试都会绿。
+      this.ctx.emit('beat:enter', { beatId: 'milestone:' + id });
       if (!cfg.onMilestone) return;
 
       this.firing = true;

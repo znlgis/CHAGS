@@ -14,10 +14,10 @@ const list = computed(() =>
 
 <template>
   <section data-testid="hall" class="mx-auto max-w-3xl px-5 py-6">
-    <h1 class="text-2xl font-bold text-[#e0554a]">{{ i18n.t('hall.title') }}</h1>
+    <h1 class="text-2xl font-bold text-[#b03a31]">{{ i18n.t('hall.title') }}</h1>
     <p class="mt-1 text-sm text-[#6b5a49]">
       {{ i18n.t('hall.collected') }}
-      <span data-testid="collected-count" class="font-bold text-[#3d8f86]">{{ progress.collected }}</span>
+      <span data-testid="collected-count" class="font-bold text-[#2c6b64]">{{ progress.collected }}</span>
       / {{ list.length }} {{ i18n.t('hall.unit') }}
     </p>
 
@@ -29,14 +29,14 @@ const list = computed(() =>
       >
         <div class="flex items-baseline justify-between gap-2">
           <h2 class="text-xl font-bold">{{ allusion.title }}</h2>
-          <span class="text-lg text-[#c98a1c]">
+          <span class="text-lg text-[#8a5f10]">
             {{ '★'.repeat(progress.starsFor(allusion.id)) || '☆' }}
           </span>
         </div>
-        <p class="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#8a7a66]">
+        <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-[#6b5a49]">
           <span
             class="rounded-full px-2 py-0.5"
-            :class="allusion.kind === 'myth' ? 'bg-[#efe4ff] text-[#6b4fa8]' : 'bg-[#e6f1ef] text-[#3d8f86]'"
+            :class="allusion.kind === 'myth' ? 'bg-[#efe4ff] text-[#5b3f96]' : 'bg-[#e6f1ef] text-[#2c6b64]'"
           >
             {{ allusion.kind === 'myth' ? i18n.t('hall.myth') : i18n.t('hall.history') }}
           </span>
@@ -48,13 +48,13 @@ const list = computed(() =>
           <span
             v-for="keyword in allusion.keywords"
             :key="keyword"
-            class="rounded-full bg-[#e6f1ef] px-3 py-1 text-xs text-[#3d8f86]"
+            class="rounded-full bg-[#e6f1ef] px-3 py-1 text-sm text-[#2c6b64]"
           >
             {{ keyword }}
           </span>
         </div>
         <button
-          class="mt-4 w-full rounded-full bg-[#e0554a] px-4 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
+          class="mt-4 w-full rounded-full bg-[#b03a31] px-4 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
           :data-testid="'start-' + allusion.id"
           @click="navigate('/play/' + allusion.id)"
         >

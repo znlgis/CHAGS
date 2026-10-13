@@ -1,27 +1,14 @@
-import type { GameContext, GameModule } from '@chags/game-kit';
-import { createPhaserGame } from '@chags/phaser-kit';
-import {
-  SCENE_KEYS,
-  createRewardScene,
-  createSessionState,
-  createStoryScene,
-  createTapScene,
-} from '@chags/templates';
+import { SCENE_KEYS, createTapScene, defineGame } from '@chags/templates';
 import type { TapMilestoneApi } from '@chags/templates';
-import type Phaser from 'phaser';
 import { drawBeat, drawFinale, drawStage } from './art';
 import { tapLevel } from './logic';
 import { manifest } from './manifest';
 
-let game: Phaser.Game | null = null;
-
-const gameModule: GameModule = {
+export default defineGame({
   manifest,
+  drawBeat,
 
-  async mount(ctx: GameContext): Promise<void> {
-    const level = tapLevel(ctx.content);
-    const session = createSessionState(ctx.services.now());
-
+  gameplay: (ctx, session) => {
     let elapsed = 0;
     let generation = 1;
     let zhisou = false;
@@ -40,15 +27,11 @@ const gameModule: GameModule = {
       });
     };
 
-    game = createPhaserGame(ctx, {
+    return {
+      entry: SCENE_KEYS.tap,
       scenes: [
-        createStoryScene(ctx, {
-          beats: ctx.content.story,
-          nextSceneKey: SCENE_KEYS.tap,
-          drawBeat,
-        }),
         createTapScene(ctx, {
-          level,
+          level: tapLevel(ctx.content),
           session,
           nextSceneKey: SCENE_KEYS.reward,
           titleKey: 'scene.dig',
@@ -80,31 +63,7 @@ const gameModule: GameModule = {
           },
           finaleHoldMs: 3000,
         }),
-        createRewardScene(ctx, {
-          allusionId: ctx.content.id,
-          title: ctx.content.title,
-          pinyin: ctx.content.pinyin,
-          moral: ctx.content.moral,
-          keywords: ctx.content.keywords,
-          source: ctx.content.source,
-          session,
-        }),
       ],
-    });
+    };
   },
-
-  async unmount(): Promise<void> {
-    game?.destroy(true);
-    game = null;
-  },
-
-  pause(): void {
-    game?.loop.sleep();
-  },
-
-  resume(): void {
-    game?.loop.wake();
-  },
-};
-
-export default gameModule;
+});
