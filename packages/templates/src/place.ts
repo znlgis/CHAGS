@@ -25,6 +25,8 @@ export interface PlaceConfig {
   drawOrb: (g: Phaser.GameObjects.Graphics, kind: string) => void;
   /** 全部归位时说的那句话 */
   reveal: string;
+  /** 收尾表现（可选）：例如女娲补完天之后洒下五色霞光 */
+  drawFinale?: (g: Phaser.GameObjects.Graphics, placedIds: string[]) => void;
 }
 
 /**
@@ -223,6 +225,10 @@ export function createPlaceScene(ctx: GameContext, cfg: PlaceConfig): Phaser.Typ
       sparkleAt(this, this.W / 2, (PLACE.skyTop + PLACE.earthBottom) / 2, THEME.gold, 12);
       // 先让孩子看一眼"完整的世界"，再出现那句话 —— 别让文字挡住日月的点亮时刻
       // 放在地面下缘：别挡住刚刚点亮的日月星辰（英文句子更长，气泡也更高）
+      if (cfg.drawFinale) {
+        const finale = this.add.graphics().setDepth(40);
+        cfg.drawFinale(finale, [...this.placed]);
+      }
       this.time.delayedCall(1400, () => this.showHint(cfg.reveal, 3200, 1030));
       this.time.delayedCall(4200, () => this.scene.start(cfg.nextSceneKey));
     }

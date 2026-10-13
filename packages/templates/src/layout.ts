@@ -5,8 +5,9 @@ export const SCENE_KEYS = {
   story: 'story',
   chaos: 'chaos',
   substitution: 'substitution',
-  grow: 'grow',
+  tap: 'tap',
   place: 'place',
+  aim: 'aim',
   quiz: 'quiz',
   reward: 'reward',
 } as const;
@@ -46,13 +47,9 @@ export const SUB_PILES = [
 export const SUB_BOAT_DROP = { x: 400, y: 560, w: 600, h: 500 } as const;
 export const SUB_SCALE_DROP = { x: 606, y: 1108, w: 260, h: 300 } as const;
 
-// ---------- grow：把天和地撑开 ----------
-export const GROW = {
-  /** 天地的分界线：起始时天与地贴在这里 */
-  centerY: 640,
-  skyTop: 150,
-  earthBottom: 1334,
-  /** 计数气泡固定在底部，天地移动时它不动 */
+// ---------- tap：连点 / 长按推进（画面由各游戏自绘） ----------
+export const TAP = {
+  /** 计数气泡固定在底部，画面变化时它不动 */
   counterY: 1256,
 } as const;
 

@@ -43,7 +43,27 @@ Phaser 是共享 chunk，只在进入游戏时加载。
 |---|---|---|---|---|---|
 | ![绘本](docs/screenshots/02-story.png) | ![压垮](docs/screenshots/04-scale-fails.png) | ![刻痕](docs/screenshots/05-mark.png) | ![搬石头](docs/screenshots/06-substitute.png) | ![对上](docs/screenshots/07-matched.png) | ![称重](docs/screenshots/08-weighed.png) |
 
-### 二、盘古开天辟地（神话 · 创造与化身）
+### 二、女娲补天（神话 · 修补）
+
+天上破了五个洞，一个洞一种形状。把五色石拖进对应的洞里 —— **判定靠形状，不靠颜色**（色弱的孩子也能玩）。
+补完一个，天就亮一分；五个都补好，五色霞光洒向大地。
+
+| 天上五个洞 | 一块块补上 | 天补好了 |
+|---|---|---|
+| ![破洞](docs/screenshots/31-nuwa-holes.png) | ![补洞](docs/screenshots/32-nuwa-one.png) | ![补好](docs/screenshots/33-nuwa-mended.png) |
+
+### 三、后羿射日（神话 · 精准与分寸）
+
+拖出去瞄准，松手射箭。十个太阳烤焦了大地，但**不能全射下来**。
+
+射下九个之后，大地返绿、最后一个太阳变得温暖 —— 这时孩子如果把它也射了，**天会一下子黑下来**，
+太阳自己回来，屏幕上一句「要留一个太阳」。零惩罚，自己撞一次就懂了。
+
+| 十日并出 | 拉弓瞄准 | 射九留一 |
+|---|---|---|
+| ![十日](docs/screenshots/35-houyi-ten-suns.png) | ![瞄准](docs/screenshots/36-houyi-aiming.png) | ![返绿](docs/screenshots/37-houyi-nine.png) |
+
+### 四、盘古开天辟地（神话 · 创造与化身）
 
 五段式，由三个模板 + 一个专属场景拼成：
 

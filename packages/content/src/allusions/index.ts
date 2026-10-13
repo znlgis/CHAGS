@@ -1,5 +1,7 @@
 import raw from './caochong-elephant.json';
 import rawPangu from './pangu.json';
+import rawHouyi from './houyi.json';
+import rawNuwa from './nuwa.json';
 import { patchFor } from '../i18n';
 import { DEFAULT_LOCALE } from '../locale';
 import type { Locale } from '../locale';
@@ -12,6 +14,8 @@ import type { AllusionContent } from '../schema';
 export const allusions: AllusionContent[] = [
   AllusionSchema.parse(raw),
   AllusionSchema.parse(rawPangu),
+  AllusionSchema.parse(rawHouyi),
+  AllusionSchema.parse(rawNuwa),
 ];
 
 /** 取某个典故里指定模板的阶段脚本；缺了就早失败，别等玩到一半才发现 */

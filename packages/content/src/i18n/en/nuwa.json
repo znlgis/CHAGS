@@ -1,0 +1,102 @@
+{
+  "title": "Nuwa Mends the Sky",
+  "dynasty": "Primordial",
+  "era": "Primordial · Myth",
+  "figures": [
+    "Nuwa"
+  ],
+  "source": {
+    "book": "Huainanzi, Lanming",
+    "quote": "Nuwa smelted stones of five colours to mend the azure sky, and cut the legs of a great turtle to set up the four pillars."
+  },
+  "moral": "The sky was torn, so she mended it — one piece at a time.",
+  "keywords": [
+    "Five-coloured stones",
+    "Mending",
+    "Repair"
+  ],
+  "story": [
+    {
+      "title": "The Sky Is Torn",
+      "text": "Holes opened in the sky, and wind and rain poured through.",
+      "narration": "Long, long ago, great holes opened in the sky. Wind and rain poured down through them, and the people were cold and afraid."
+    },
+    {
+      "title": "Stones of Five Colours",
+      "text": "Nuwa smelted stones of five colours to mend the sky.",
+      "narration": "Nuwa smelted stones of five colours. She would fit them, one by one, into the holes in the sky."
+    }
+  ],
+  "keyMoment": {
+    "question": "How should the holes in the sky be mended?",
+    "options": [
+      {
+        "text": "Wait for them to heal by themselves",
+        "hint": ""
+      },
+      {
+        "text": "Smelt five-coloured stones and fit them in, one by one",
+        "hint": ""
+      }
+    ],
+    "reveal": "She smelted the stones of five colours and mended the sky, piece by piece."
+  },
+  "misconceptions": [
+    "The holes would close on their own",
+    "One big stone would be enough"
+  ],
+  "quiz": [
+    {
+      "question": "What did Nuwa use to mend the sky?",
+      "options": [
+        "Stones of five colours",
+        "Mud",
+        "Wood"
+      ],
+      "explanation": "She smelted stones of five colours and used them to fill the holes."
+    },
+    {
+      "question": "How did Nuwa mend the sky?",
+      "options": [
+        "All at once",
+        "One piece at a time",
+        "She asked someone else to do it"
+      ],
+      "explanation": "She filled the holes one by one, and the sky grew brighter with each."
+    },
+    {
+      "question": "Which of these is most like Nuwa mending the sky?",
+      "options": [
+        "Sewing up a hole in your clothes, stitch by stitch",
+        "Throwing the clothes away",
+        "Buying a new pair"
+      ],
+      "explanation": "Both repair what is torn, a little at a time."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "orbs": [
+            {
+              "speak": "The blue stone filled the round hole"
+            },
+            {
+              "speak": "The red stone filled the square hole"
+            },
+            {
+              "speak": "The yellow stone filled the pointed hole"
+            },
+            {
+              "speak": "The white stone filled the diamond hole"
+            },
+            {
+              "speak": "The purple stone filled the star-shaped hole"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

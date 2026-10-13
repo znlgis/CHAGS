@@ -9,8 +9,9 @@
     "./schemas": "./src/schemas.ts",
     "./session": "./src/session.ts",
     "./substitution.logic": "./src/substitution.logic.ts",
-    "./grow.logic": "./src/grow.logic.ts",
-    "./place.logic": "./src/place.logic.ts"
+    "./place.logic": "./src/place.logic.ts",
+    "./tap.logic": "./src/tap.logic.ts",
+    "./aim.logic": "./src/aim.logic.ts"
   },
   "scripts": {
     "test": "vitest run",
@@ -21,6 +22,7 @@
     "@chags/game-kit": "workspace:*",
     "@chags/phaser-kit": "workspace:*",
     "phaser": "^4.2.1",
-    "zod": "^4.6.7"
+    "zod": "^4.6.7",
+    "@chags/i18n": "workspace:*"
   }
 }

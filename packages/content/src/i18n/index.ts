@@ -1,6 +1,8 @@
 import type { Locale } from '../locale';
 import enCaochong from './en/caochong-elephant.json';
 import enPangu from './en/pangu.json';
+import enHouyi from './en/houyi.json';
+import enNuwa from './en/nuwa.json';
 
 /**
  * 典故内容的翻译补丁。结构镜像原文，只写需要翻译的字段。
@@ -10,6 +12,8 @@ export const patches: Partial<Record<Locale, Record<string, unknown>>> = {
   en: {
     'caochong-elephant': enCaochong,
     pangu: enPangu,
+    houyi: enHouyi,
+    nuwa: enNuwa,
   },
 };
 

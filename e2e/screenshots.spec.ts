@@ -177,3 +177,68 @@ test('capture english screenshots', async ({ page }) => {
   await page.waitForTimeout(2800);
   await page.screenshot({ path: 'docs/screenshots/27-en-card.png' });
 });
+const nuwaScript = loadContent('nuwa').game.stages[0]!.levelScript as unknown as {
+  slots: { id: string; x: number; y: number }[];
+  orbs: { id: string; slotId: string; x: number; y: number }[];
+};
+const houyiScript = loadContent('houyi').game.stages[0]!.levelScript as unknown as {
+  targets: { id: string; x: number; y: number }[];
+};
+
+test('capture nuwa screenshots', async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/nuwa');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'docs/screenshots/30-nuwa-story.png' });
+
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(400);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: 'docs/screenshots/31-nuwa-holes.png' });
+
+  const first = nuwaScript.orbs[0]!;
+  const firstSlot = nuwaScript.slots.find((s) => s.id === first.slotId)!;
+  await dragDesign(page, { x: first.x, y: first.y }, { x: firstSlot.x, y: firstSlot.y });
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'docs/screenshots/32-nuwa-one.png' });
+
+  for (const orb of nuwaScript.orbs.slice(1)) {
+    const slot = nuwaScript.slots.find((s) => s.id === orb.slotId)!;
+    await dragDesign(page, { x: orb.x, y: orb.y }, { x: slot.x, y: slot.y });
+    await page.waitForTimeout(220);
+  }
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'docs/screenshots/33-nuwa-mended.png' });
+});
+
+test('capture houyi screenshots', async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/houyi');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'docs/screenshots/34-houyi-story.png' });
+
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(400);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: 'docs/screenshots/35-houyi-ten-suns.png' });
+
+  // 拉弓瞄准的样子
+  await page.mouse.move(195, 720);
+  await page.mouse.down();
+  await page.mouse.move(260, 300, { steps: 10 });
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: 'docs/screenshots/36-houyi-aiming.png' });
+  await page.mouse.up();
+  await page.waitForTimeout(500);
+
+  for (const sun of houyiScript.targets.slice(0, 8)) {
+    await dragDesign(page, { x: 340, y: 1030 }, { x: sun.x, y: sun.y });
+    await page.waitForTimeout(200);
+  }
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: 'docs/screenshots/37-houyi-nine.png' });
+});

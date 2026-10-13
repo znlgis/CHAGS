@@ -64,30 +64,67 @@ export function canReach(
 }
 
 /**
- * grow 模板：持续发力让一件事长大（盘古撑天、愚公移山、铁杵磨针这类"坚持"）
+ * tap 模板：连点 / 长按推进一个进度。
+ *
+ * 关键设计：**画面完全交给游戏**（drawStage 回调）。
+ * 盘古撑天、精卫填海、愚公移山、夸父追日共用这一套循环与手感曲线，
+ * 但四段画面毫无关系 —— 这是"四个坚持类典故不像同一个游戏"的根本保证。
  */
-export const GrowLevelSchema = z
+export const TapMilestoneSchema = z.object({
+  /** 触发进度 0..1 */
+  at: z.number().min(0).max(1),
+  id: z.string().min(1),
+});
+
+export const TapLevelSchema = z
   .object({
-    /** 起手时上下两半的缝隙（设计像素） */
-    startGap: z.number().nonnegative(),
-    /** 撑开后的最大缝隙 */
-    endGap: z.number().positive(),
-    /** 计数目标与每次点击的增量 */
+    /** tap = 连点；hold = 长按持续发力（松手就停） */
+    mode: z.enum(['tap', 'hold']).default('tap'),
     targetValue: z.number().positive(),
+    /** tap 模式 = 每次点击的增量；hold 模式 = 每秒的增量 */
     stepValue: z.number().positive(),
     unit: z.string().min(1).max(3),
-    /** 视觉阻力：越大，后半程天空升得越慢（手感上"越来越吃力"） */
+    /** 视觉阻力：越大，后半程越显得吃力 */
     resistance: z.number().min(0).max(1.5),
-    /** 长时间没动作时的提示（尽量短） */
+    hint: z.string().min(1).max(24),
+    /** 可选里程碑：进度到达时触发一次（愚公的换代、智叟出现） */
+    milestones: z.array(TapMilestoneSchema).max(6).default([]),
+  })
+  .refine((l) => l.mode === 'hold' || Number.isInteger(l.targetValue / l.stepValue), {
+    message: 'tap 模式下 targetValue 必须是 stepValue 的整数倍，否则永远点不满',
+    path: ['stepValue'],
+  })
+  .refine((l) => new Set(l.milestones.map((m) => m.id)).size === l.milestones.length, {
+    message: '里程碑 id 不能重复',
+    path: ['milestones'],
+  });
+
+/**
+ * aim 模板：拉弓瞄准射击（后羿射日；可复用：纪昌学射、百步穿杨、惊弓之鸟）
+ */
+export const AimTargetSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  kind: z.string().min(1),
+});
+
+export const AimLevelSchema = z
+  .object({
+    targets: z.array(AimTargetSchema).min(2).max(12),
+    hitRadius: z.number().positive(),
+    arrowSpeed: z.number().positive(),
+    /** 射下几个算完成（后羿：10 个里射 9 个） */
+    goalCount: z.number().int().positive(),
     hint: z.string().min(1).max(24),
   })
-  .refine((l) => l.endGap > l.startGap, {
-    message: 'endGap 必须大于 startGap',
-    path: ['endGap'],
+  .refine((l) => l.goalCount < l.targets.length, {
+    message: 'goalCount 必须小于目标总数 —— 否则就没有"留一个"的余地了',
+    path: ['goalCount'],
   })
-  .refine((l) => Number.isInteger(l.targetValue / l.stepValue), {
-    message: 'targetValue 必须是 stepValue 的整数倍，否则永远点不满',
-    path: ['stepValue'],
+  .refine((l) => new Set(l.targets.map((t) => t.id)).size === l.targets.length, {
+    message: '目标 id 不能重复',
+    path: ['targets'],
   });
 
 export const PlaceSlotSchema = z.object({
@@ -139,7 +176,10 @@ export const PlaceLevelSchema = z
 
 export type StoneDef = z.infer<typeof StoneSchema>;
 export type SubstitutionLevel = z.infer<typeof SubstitutionLevelSchema>;
-export type GrowLevel = z.infer<typeof GrowLevelSchema>;
+export type TapMilestone = z.infer<typeof TapMilestoneSchema>;
+export type TapLevel = z.infer<typeof TapLevelSchema>;
+export type AimTarget = z.infer<typeof AimTargetSchema>;
+export type AimLevel = z.infer<typeof AimLevelSchema>;
 export type PlaceSlot = z.infer<typeof PlaceSlotSchema>;
 export type PlaceOrb = z.infer<typeof PlaceOrbSchema>;
 export type PlaceLevel = z.infer<typeof PlaceLevelSchema>;
@@ -147,6 +187,7 @@ export type PlaceLevel = z.infer<typeof PlaceLevelSchema>;
 /** 模板 id → 关卡脚本 schema。新增模板时在这里登记，content:check 自动生效。 */
 export const templateSchemas: Record<string, z.ZodType> = {
   substitution: SubstitutionLevelSchema,
-  grow: GrowLevelSchema,
+  tap: TapLevelSchema,
   place: PlaceLevelSchema,
+  aim: AimLevelSchema,
 };

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { clickDesign, dragDesign, events } from './helpers';
 import { REWARD, SUB, SUB_PILES } from '../packages/templates/src/layout';
 import { readFileSync } from 'node:fs';
@@ -13,6 +14,8 @@ function loadContent(id: string): { game: { stages: StageScript[] } } {
 }
 
 const panguJson = loadContent('pangu');
+const houyiJson = loadContent('houyi');
+const nuwaJson = loadContent('nuwa');
 
 const BOAT = { x: SUB.boatX, y: 600 };
 
@@ -93,7 +96,7 @@ test('盘古：点蛋 → 连点撑天 → 拖光球化身，真实操作通关'
     await clickDesign(page, 375, 700);
     await page.waitForTimeout(130);
   }
-  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('scene:enter:grow');
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('scene:enter:tap');
 
   // ② 连点 30 次，把天撑到一万八千年
   for (let i = 0; i < 30; i += 1) {
@@ -157,4 +160,98 @@ test('中英文切换：界面与典故内容都跟着变，并且记得住选�
   await expect(page.getByRole('heading', { name: 'Story Hall' })).toBeVisible();
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Story Hall' })).toBeVisible();
+});
+interface AimScript {
+  targets: { id: string; x: number; y: number }[];
+  goalCount: number;
+}
+
+const houyiAim = houyiJson.game.stages[0]!.levelScript as unknown as AimScript;
+const ARCHER = { x: 340, y: 1030 };
+
+/** 从后羿的位置朝目标拖出去，松手射箭 */
+async function shootAt(page: Page, target: { x: number; y: number }): Promise<void> {
+  await dragDesign(page, ARCHER, target);
+  await page.waitForTimeout(240);
+}
+
+test('后羿射日：真实拖拽射箭，射九留一', async ({ page }) => {
+  await page.goto('/#/play/houyi');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(320);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:aim');
+
+  // 从近到远射：箭会被前面的太阳挡住（这是刻意的"弹道上先碰到谁"语义），
+  // 先把近的射下来，后面的弹道才不会被动挡。
+  const byDistance = [...houyiAim.targets].sort(
+    (a, b) =>
+      Math.hypot(a.x - ARCHER.x, a.y - ARCHER.y) - Math.hypot(b.x - ARCHER.x, b.y - ARCHER.y),
+  );
+  for (const sun of byDistance.slice(0, houyiAim.goalCount)) {
+    await shootAt(page, { x: sun.x, y: sun.y });
+  }
+
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
+});
+
+test('后羿射日：把最后一个也射了，天黑之后太阳会自己回来（不会卡死）', async ({ page }) => {
+  await page.goto('/#/play/houyi');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(320);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:aim');
+
+  // 十个全射下来
+  for (const sun of houyiAim.targets) {
+    await shootAt(page, { x: sun.x, y: sun.y });
+  }
+
+  // 关键：走到天黑分支之后，仍然必须能通关，绝不能卡死
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('level:complete');
+});
+
+test('后羿射日 autoplay 全流程', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/houyi');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+});
+interface PlaceScript2 {
+  slots: { id: string; x: number; y: number }[];
+  orbs: { id: string; slotId: string; x: number; y: number }[];
+}
+
+const nuwaPlace = nuwaJson.game.stages[0]!.levelScript as unknown as PlaceScript2;
+
+test('女娲补天：真实拖拽把五色石补进天上的洞', async ({ page }) => {
+  await page.goto('/#/play/nuwa');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(320);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:place');
+
+  for (const orb of nuwaPlace.orbs) {
+    const slot = nuwaPlace.slots.find((s) => s.id === orb.slotId);
+    if (!slot) throw new Error('石头 ' + orb.id + ' 找不到对应的洞');
+    await dragDesign(page, { x: orb.x, y: orb.y }, { x: slot.x, y: slot.y });
+    await page.waitForTimeout(220);
+  }
+
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
+});
+
+test('女娲补天 autoplay 全流程', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/nuwa');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });

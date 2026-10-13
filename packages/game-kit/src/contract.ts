@@ -4,7 +4,7 @@ export type { Locale };
 export { speechLang } from '@chags/content';
 
 export type TemplateId =
-  | 'story' | 'substitution' | 'grow' | 'place' | 'quiz' | 'match' | 'order' | 'drag'
+  | 'story' | 'substitution' | 'tap' | 'place' | 'aim' | 'quiz' | 'match' | 'order' | 'drag'
   | 'board' | 'timing' | 'react' | 'branch' | 'build' | 'grow';
 
 export interface GameManifest {

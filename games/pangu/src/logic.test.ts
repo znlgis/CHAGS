@@ -1,8 +1,8 @@
 import { getAllusion } from '@chags/content';
-import { tapsNeeded } from '@chags/templates/grow.logic';
+import { tapsNeeded } from '@chags/templates/tap.logic';
 import { slotFor } from '@chags/templates/place.logic';
 import { describe, expect, it } from 'vitest';
-import { growLevel, placeLevel } from './logic';
+import { placeLevel, tapLevel } from './logic';
 
 describe('盘古开天辟地 · 关卡数据', () => {
   const raw = getAllusion('pangu');
@@ -13,8 +13,9 @@ describe('盘古开天辟地 · 关卡数据', () => {
   });
 
   it('撑天要 30 次点击，正好点满一万八千年', () => {
-    const level = growLevel(raw!);
+    const level = tapLevel(raw!);
     expect(level.targetValue).toBe(18000);
+    expect(level.mode).toBe('tap');
     expect(tapsNeeded(level)).toBe(30);
   });
 
@@ -50,13 +51,13 @@ describe('盘古开天辟地 · 关卡数据', () => {
     const broken = {
       ...raw!,
       game: {
-        template: 'grow',
+        template: 'tap',
         stages: [
-          { template: 'grow', levelScript: { ...(growLevel(raw!) as object), targetValue: 18500 } },
+          { template: 'tap', levelScript: { ...(tapLevel(raw!) as object), targetValue: 18500 } },
           raw!.game.stages[1]!,
         ],
       },
     };
-    expect(() => growLevel(broken)).toThrow();
+    expect(() => tapLevel(broken)).toThrow();
   });
 });

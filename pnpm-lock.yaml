@@ -87,9 +87,15 @@ importers:
       '@chags/game-caochong-elephant':
         specifier: workspace:*
         version: link:../../games/caochong-elephant
+      '@chags/game-houyi':
+        specifier: workspace:*
+        version: link:../../games/houyi
       '@chags/game-kit':
         specifier: workspace:*
         version: link:../../packages/game-kit
+      '@chags/game-nuwa':
+        specifier: workspace:*
+        version: link:../../games/nuwa
       '@chags/game-pangu':
         specifier: workspace:*
         version: link:../../games/pangu
@@ -136,6 +142,45 @@ importers:
       '@chags/progress':
         specifier: workspace:*
         version: link:../../packages/progress
+      '@chags/templates':
+        specifier: workspace:*
+        version: link:../../packages/templates
+      phaser:
+        specifier: ^4.2.1
+        version: 4.2.1
+
+  games/houyi:
+    dependencies:
+      '@chags/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@chags/game-kit':
+        specifier: workspace:*
+        version: link:../../packages/game-kit
+      '@chags/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
+      '@chags/phaser-kit':
+        specifier: workspace:*
+        version: link:../../packages/phaser-kit
+      '@chags/templates':
+        specifier: workspace:*
+        version: link:../../packages/templates
+      phaser:
+        specifier: ^4.2.1
+        version: 4.2.1
+
+  games/nuwa:
+    dependencies:
+      '@chags/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@chags/game-kit':
+        specifier: workspace:*
+        version: link:../../packages/game-kit
+      '@chags/phaser-kit':
+        specifier: workspace:*
+        version: link:../../packages/phaser-kit
       '@chags/templates':
         specifier: workspace:*
         version: link:../../packages/templates
@@ -214,6 +259,9 @@ importers:
       '@chags/game-kit':
         specifier: workspace:*
         version: link:../game-kit
+      '@chags/i18n':
+        specifier: workspace:*
+        version: link:../i18n
       '@chags/phaser-kit':
         specifier: workspace:*
         version: link:../phaser-kit

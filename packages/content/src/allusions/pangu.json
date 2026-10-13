@@ -108,18 +108,18 @@
     }
   ],
   "game": {
-    "template": "grow",
+    "template": "tap",
     "stages": [
       {
-        "template": "grow",
+        "template": "tap",
         "levelScript": {
-          "startGap": 40,
-          "endGap": 700,
+          "mode": "tap",
           "targetValue": 18000,
           "stepValue": 600,
           "unit": "年",
           "resistance": 0.35,
-          "hint": "点一点，把天撑高"
+          "hint": "点一点，把天撑高",
+          "milestones": []
         }
       },
       {
