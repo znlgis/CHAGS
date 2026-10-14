@@ -120,7 +120,9 @@ export abstract class BaseScene extends Phaser.Scene {
       .text(0, 0, message, {
         ...textStyle(32, CSS.ink, true),
         align: 'center',
-        wordWrap: { width: this.W - 260, useAdvancedWrap: true },
+        // 570 而不是 490：提示语里有长句（"想明白了就不怕 —— 天是积起来的气……"），
+        // 窄了会把句号挤成孤零零的第三行
+        wordWrap: { width: this.W - 180, useAdvancedWrap: true },
       })
       .setOrigin(0.5);
     const w = label.width + 64;
@@ -142,9 +144,18 @@ export abstract class BaseScene extends Phaser.Scene {
     });
   }
 
-  /** 点哪都行 —— 用小手代替“下一步”按钮 */
-  protected tapToContinue(onDone: () => void): void {
-    const hand = createHand(this, this.W / 2, this.H - 150, 1.15);
+  /**
+   * 点哪都行 —— 用小手代替“下一步”按钮。
+   * 小手默认在底部；正文很长时（英文天然更长）由调用方给一个更靠下的位置，
+   * 否则它会压住最后一行字 —— 双语巡检里看得一清二楚。
+   */
+  protected tapToContinue(onDone: () => void, handAt?: { x?: number; y?: number }): void {
+    const hand = createHand(
+      this,
+      handAt?.x ?? this.W / 2,
+      handAt?.y ?? this.H - 150,
+      1.15,
+    );
     const zone = this.add
       .zone(this.W / 2, this.H / 2, this.W, this.H)
       .setInteractive({ useHandCursor: true });

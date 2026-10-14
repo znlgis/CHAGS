@@ -1,0 +1,183 @@
+{
+  "id": "qiren",
+  "title": "杞人忧天",
+  "pinyin": "qǐ rén yōu tiān",
+  "kind": "history",
+  "dynasty": "战国",
+  "era": "战国·寓言",
+  "yearApprox": -350,
+  "figures": [
+    "杞人"
+  ],
+  "source": {
+    "book": "《列子·天瑞》",
+    "quote": "杞国有人忧天地崩坠，身亡所寄，废寝食者。……其人舍然大喜，晓之者亦舍然大喜。"
+  },
+  "moral": "怕，是因为还没想明白；想明白了，就不怕了。",
+  "keywords": [
+    "担心",
+    "想明白",
+    "睡得着"
+  ],
+  "ageRange": [
+    7,
+    10
+  ],
+  "story": [
+    {
+      "id": "s1",
+      "title": "吃不下，睡不着",
+      "text": "杞国有个人，怕天塌、怕地陷，饭也吃不下，觉也睡不着。",
+      "narration": "杞国有个人，成天担心天会塌下来、地会陷下去。他愁得吃不下饭、睡不着觉，人也一天天瘦了。",
+      "illustration": "none"
+    },
+    {
+      "id": "s2",
+      "title": "有人来告诉他",
+      "text": "有人来告诉他：天是积起来的气，地是积起来的土。",
+      "narration": "有位好心人来看他，一样一样说给他听：天，是积起来的气；地，是积起来的土。想明白了，他一下子就轻松了。",
+      "illustration": "none"
+    }
+  ],
+  "keyMoment": {
+    "beatId": "s1",
+    "question": "天真的会塌下来吗？",
+    "options": [
+      {
+        "id": "fall",
+        "text": "天就悬在头上，说塌就会塌",
+        "isCanonical": false,
+        "hint": ""
+      },
+      {
+        "id": "air",
+        "text": "天是积起来的气，不会塌下来",
+        "isCanonical": true,
+        "hint": ""
+      },
+      {
+        "id": "hide",
+        "text": "躲进屋里，不看天就不怕了",
+        "isCanonical": false,
+        "hint": ""
+      }
+    ],
+    "reveal": "想明白了就不怕 —— 天是积起来的气，地是积起来的土。"
+  },
+  "misconceptions": [
+    "天说塌就会塌下来",
+    "怕就是胆小，该笑话他"
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "kind": "recall",
+      "question": "杞国人为什么吃不下饭、睡不着觉？",
+      "options": [
+        "他担心天会塌、地会陷",
+        "他丢了一件东西",
+        "他要搬到别处去"
+      ],
+      "answer": 0,
+      "explanation": "他怕天塌地陷，怕得饭也吃不下、觉也睡不着。"
+    },
+    {
+      "id": "q2",
+      "kind": "recall",
+      "question": "有人告诉他，天和地是什么？",
+      "options": [
+        "天是积起来的气，地是积起来的土",
+        "天是一块大石头，地是一块大木板",
+        "天和地都是空的"
+      ],
+      "answer": 0,
+      "explanation": "天是积气，地是积土 —— 说清楚了，他心里就松了。"
+    },
+    {
+      "id": "q3",
+      "kind": "transfer",
+      "question": "下面哪一个是「想明白了就不怕」？",
+      "options": [
+        "怕黑，就把灯打开看一看——房间还是原来那样",
+        "怕黑，就一直闭着眼睛不去看",
+        "怕黑，就不许别人提黑"
+      ],
+      "answer": 0,
+      "explanation": "怕，常常是因为还没弄明白；看一眼、问一问，就明白了。"
+    }
+  ],
+  "game": {
+    "template": "place",
+    "stages": [
+      {
+        "template": "place",
+        "levelScript": {
+          "slots": [
+            {
+              "id": "slot-sky",
+              "x": 200,
+              "y": 245,
+              "kind": "sky",
+              "radius": 82
+            },
+            {
+              "id": "slot-ground",
+              "x": 550,
+              "y": 245,
+              "kind": "ground",
+              "radius": 82
+            },
+            {
+              "id": "slot-suns",
+              "x": 200,
+              "y": 530,
+              "kind": "suns",
+              "radius": 82
+            },
+            {
+              "id": "slot-stars",
+              "x": 550,
+              "y": 530,
+              "kind": "stars",
+              "radius": 82
+            }
+          ],
+          "orbs": [
+            {
+              "id": "orb-air",
+              "slotId": "slot-sky",
+              "x": 105,
+              "y": 1226,
+              "kind": "air",
+              "speak": "天，是积起来的气。"
+            },
+            {
+              "id": "orb-soil",
+              "slotId": "slot-ground",
+              "x": 285,
+              "y": 1226,
+              "kind": "soil",
+              "speak": "地，是积起来的土。"
+            },
+            {
+              "id": "orb-sunmoon",
+              "slotId": "slot-suns",
+              "x": 465,
+              "y": 1226,
+              "kind": "sunmoon",
+              "speak": "日月星辰，也是积气里会发光的。"
+            },
+            {
+              "id": "orb-meteor",
+              "slotId": "slot-stars",
+              "x": 645,
+              "y": 1226,
+              "kind": "meteor",
+              "speak": "就算星星掉下来，也伤不到人。"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

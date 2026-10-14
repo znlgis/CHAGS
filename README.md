@@ -30,9 +30,9 @@ pnpm dist:apk       # 打包安卓 apk（直接安装）
 
 ## 当前进度
 
-两个典故已完整跑通，`pnpm verify` 全绿，端到端 **6 项通过**（每部游戏都有真实鼠标操作的通关用例）。
-首屏 shell **60.6 KB gzip**（不含 Phaser）；两部游戏各自的业务 chunk 只有 3 KB / 7 KB，
-Phaser 是共享 chunk，只在进入游戏时加载。
+**十二个典故**全部跑通，`pnpm verify` 全绿，端到端里每部游戏都有真实鼠标操作的通关用例。
+首屏 shell 仍然很小（不含 Phaser）；每部游戏自己的业务 chunk 只有几 KB，
+Phaser 是共享 chunk，只在进入游戏时加载 —— 具体数字看 `pnpm size`。
 
 ### 一、曹冲称象（信史 · 等量代换）
 
@@ -105,10 +105,72 @@ Phaser 是共享 chunk，只在进入游戏时加载。
 |---|---|---|---|---|
 | ![混沌](docs/screenshots/13-chaos.png) | ![裂缝](docs/screenshots/14-cracked.png) | ![撑天](docs/screenshots/17-sky-high.png) | ![归位](docs/screenshots/19-sun-placed.png) | ![成形](docs/screenshots/20-world-complete.png) |
 
+### 八、神农尝百草（传说 · 先尝后分）
+
+六株草摆在田垄上，每株草都顶着一个问号 —— **不尝一口，就不知道它是什么**。
+把草拖到神农嘴边，他尝过之后，草上会多出一枚小牌子：能吃、能治病，还是不能吃；
+牌子上的图案和木牍上的一模一样，不用认字。
+
+没尝过就往木牍上放？草会被送回嘴边先尝一口 —— 不判错、不扣分。想分类，先自己试一口。
+
+| 不知道是什么 | 先尝一口 | 分进木牍 |
+|---|---|---|
+| ![问号](docs/screenshots/54-shennong-unknown.png) | ![尝](docs/screenshots/55-shennong-tasting.png) | ![分类](docs/screenshots/56-shennong-sorted.png) |
+
+尝到毒草只是皱皱眉头、冒会儿金星，喝口水就过去了 —— **有毒的也要记下来**，别人就不用再尝。
+
+### 九、大禹治水（传说 · 堵不如疏）
+
+先让他亲手"堵"一次：点一下加一筐土，堤高一寸，水也涨一寸（涨得慢一点点，看起来真的有用）。
+点到第十下，水漫过堤顶 —— **堤垮了**。
+
+然后才给他"疏"：手指在洪水上划出一条河道，水顺着走，水位一格格退下去，露出来的地上长出绿苗。
+三段河道，每划完一段，他就路过一次家门口 —— 窗里亮着灯，他都没有进去。
+
+| 一筐一筐筑堤 | 水漫过堤顶 | 划出一条河道 |
+|---|---|---|
+| ![筑堤](docs/screenshots/58-dayu-dike.png) | ![决口](docs/screenshots/59-dayu-breach.png) | ![疏](docs/screenshots/60-dayu-channel.png) |
+
+### 十、太公钓鱼（信史 · 等）
+
+一屏渭水，主线只有一件事：**等**。
+太阳在画面上方慢慢走，就是进度条；天边极远处的车马，一点一点近。
+
+换弯钩、加鱼饵、换地方 —— 点了就得多等一会儿（最多三次，永远不会等不到头），而且**永远钓不到鱼**。
+水下的鱼群游来游去，直钩悬在水面之上三尺。等文王到了跟前，要自己把直钩收起来 —— 不然这一场白等。
+
+| 直钩悬在水上三尺 | 点他，听一句 | 点了诱惑 |
+|---|---|---|
+| ![等](docs/screenshots/62-taigong-waiting.png) | ![说话](docs/screenshots/63-taigong-listener.png) | ![诱惑](docs/screenshots/64-taigong-tempted.png) |
+
+### 十一、烽火戏诸侯（信史 · 信用）
+
+点一次火，火光一座座传向天边，诸侯的兵马赶来，**她笑了**。
+信任有三格：点一次，少一格。第二次来的兵马少了一半，走的时候有人在摇头；第三次，**他们连城门都没到**。
+
+第四次点火是真的 —— 天边真的起了烟。火光还是传了出去，**一个人也没有来**。
+孩子是自己把信任点完的，全篇没有一句说教；出处注明"后世学者多存疑"，教训落在信用上，不落在褒姒身上。
+
+| 夜里的烽火 | 火光传向天边 | 她笑了 | 一个人也没来 |
+|---|---|---|---|
+| ![夜](docs/screenshots/66-fenghuo-night.png) | ![点火](docs/screenshots/67-fenghuo-relay.png) | ![笑](docs/screenshots/68-fenghuo-laugh.png) | ![没人来](docs/screenshots/69-fenghuo-nobody.png) |
+
+### 十二、杞人忧天（寓言 · 想明白）
+
+他头顶飘着四个担忧泡泡：天会塌、地会陷、日月会掉、星星会坠。
+托盘里是四个"想明白"：一团气、一块土、日月、一颗小石子。
+
+拖过去，泡泡里演一小段"看一看"（气托着鸟和云、跺一跺脚土地稳稳的、太阳落下第二天又升起来、流星掉下来只是小石子），
+泡泡「啵」地破掉，屋里亮一点。四个都破了，黑云散开，他在星光下睡着 —— **怕，是因为还没想明白**。
+
+| 四个担忧 | 想通一个 | 睡着了 |
+|---|---|---|
+| ![担忧](docs/screenshots/71-qiren-worries.png) | ![破掉](docs/screenshots/72-qiren-one-less.png) | ![睡着](docs/screenshots/73-qiren-asleep.png) |
+
 ## 设计原则：少写字，多动手
 
-两部游戏加起来，屏幕上出现的教学文字只有开场那两句话。其余全靠图形、动画、音效与语音。
-孩子是「做」出这个办法，而不是被告知。
+十二部游戏加起来，屏幕上几乎没有教学文字：开场的两句话，加上卡住时才出现的一句短提示。
+其余全靠图形、动画、音效与语音。孩子是「做」出这个办法，而不是被告知。
 
 ## 目录结构
 
@@ -116,13 +178,15 @@ Phaser 是共享 chunk，只在进入游戏时加载。
 apps/site                  Vue 3.5 外壳：典故馆 / 游戏宿主 / 图鉴
 packages/game-kit          契约层（GameModule / GameContext / 事件），不含 Phaser
 packages/content           典故数据 + zod schema
-packages/templates         玩法模板：story / balance / quiz / reward
+packages/templates         玩法模板：story / substitution / tap / place / aim / sort / trace / wait / quiz / reward
 packages/phaser-kit        Phaser 启动器、主题、基础场景
 packages/platform          Web 实现：IndexedDB / WebAudio / TTS / 生命周期
 packages/progress          存档、复习调度（纯函数，可单测）
 games/caochong-elephant    曹冲称象（等量代换：substitution 模板）
-games/pangu                盘古开天辟地（撑天 grow + 化身 place + 专属开蛋场景）
-e2e                        Playwright 冒烟
+games/pangu                盘古开天辟地（撑天 tap + 化身 place + 专属开蛋场景）
+games/houyi / nuwa / jingwei / kuafu / yugong   后羿射日 / 女娲补天 / 精卫填海 / 夸父追日 / 愚公移山
+games/shennong / dayu / taigong / fenghuo / qiren  神农尝百草 / 大禹治水 / 太公钓鱼 / 烽火戏诸侯 / 杞人忧天
+e2e                        Playwright 冒烟 + 真实操作 + 截图
 ```
 
 ## 三条架构铁律

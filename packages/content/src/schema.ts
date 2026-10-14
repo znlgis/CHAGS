@@ -50,8 +50,8 @@ export const GameStageSchema = z.object({
 export const AllusionSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9-]+$/, 'id 只能是小写字母、数字与连字符'),
-    /** 信史 or 神话：历史长卷要分开呈现（神话落在最左端） */
-    kind: z.enum(['history', 'myth']).default('history'),
+    /** 信史 / 神话 / 传说：历史长卷要分开呈现（神话落在最左端） */
+    kind: z.enum(['history', 'myth', 'legend']).default('history'),
     title: z.string().min(1),
     pinyin: z.string().min(1),
     dynasty: z.string().min(1),

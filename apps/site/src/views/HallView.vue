@@ -7,6 +7,16 @@ import { useProgress } from '../stores/progress';
 
 const progress = useProgress();
 const i18n = useLocale();
+
+/** 三种定性各有各的徽章：神话 / 传说 / 信史 */
+const kindLabel = (kind: string): string =>
+  i18n.t(kind === 'myth' ? 'hall.myth' : kind === 'legend' ? 'hall.legend' : 'hall.history');
+const kindClass = (kind: string): string =>
+  kind === 'myth'
+    ? 'bg-[#efe4ff] text-[#5b3f96]'
+    : kind === 'legend'
+      ? 'bg-[#fdeccd] text-[#8a5f10]'
+      : 'bg-[#e6f1ef] text-[#2c6b64]';
 const list = computed(() =>
   [...allusionsFor(i18n.locale)].sort((a, b) => a.yearApprox - b.yearApprox),
 );
@@ -36,9 +46,9 @@ const list = computed(() =>
         <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-[#6b5a49]">
           <span
             class="rounded-full px-2 py-0.5"
-            :class="allusion.kind === 'myth' ? 'bg-[#efe4ff] text-[#5b3f96]' : 'bg-[#e6f1ef] text-[#2c6b64]'"
+            :class="kindClass(allusion.kind)"
           >
-            {{ allusion.kind === 'myth' ? i18n.t('hall.myth') : i18n.t('hall.history') }}
+            {{ kindLabel(allusion.kind) }}
           </span>
           <span>{{ allusion.pinyin }} · {{ allusion.era }}</span>
           <span>{{ allusion.ageRange[0] }}–{{ allusion.ageRange[1] }} {{ i18n.t('hall.ages') }}</span>

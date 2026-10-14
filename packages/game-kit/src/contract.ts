@@ -5,7 +5,8 @@ export { speechLang } from '@chags/content';
 
 export type TemplateId =
   | 'story' | 'substitution' | 'tap' | 'place' | 'aim' | 'quiz' | 'match' | 'order' | 'drag'
-  | 'board' | 'timing' | 'react' | 'branch' | 'build' | 'grow';
+  | 'board' | 'timing' | 'react' | 'branch' | 'build' | 'grow'
+  | 'sort' | 'trace' | 'wait' | 'beacon';
 
 export interface GameManifest {
   id: string;

@@ -1,0 +1,122 @@
+{
+  "title": "Shennong Tastes a Hundred Herbs",
+  "dynasty": "Primordial",
+  "era": "Primordial · Legend",
+  "figures": [
+    "Shennong",
+    "Yan Emperor"
+  ],
+  "source": {
+    "book": "Huainanzi, Xiuwu Xun",
+    "quote": "Shennong first taught the people to sow the five grains... he tasted the flavour of a hundred herbs and the sweetness or bitterness of spring water, so that the people would know what to avoid and what to take. In those days he met seventy poisons in a single day."
+  },
+  "moral": "He tasted each plant and wrote it down — that is how we know what cures us.",
+  "keywords": [
+    "Tasting herbs",
+    "Writing it down",
+    "Medicine"
+  ],
+  "story": [
+    {
+      "title": "Nobody Knew What to Eat",
+      "text": "Long ago people ate wild fruit and hunted; the wrong plant made them ill.",
+      "narration": "Long, long ago people gathered wild fruit, dug up roots and hunted. Nobody knew which plants could be eaten and which could cure — eat the wrong one and you fell ill."
+    },
+    {
+      "title": "One Bite at a Time",
+      "text": "Shennong walked into the hills with a basket and tasted every plant himself.",
+      "narration": "A man called Shennong went into the hills with a bamboo basket. Every plant he tasted himself: how it tasted, what it did to him — he wrote it all down, one by one."
+    }
+  ],
+  "keyMoment": {
+    "question": "How can you tell whether a plant is poisonous?",
+    "options": [
+      {
+        "text": "Let someone else taste it first",
+        "hint": ""
+      },
+      {
+        "text": "Taste it yourself and write it down",
+        "hint": ""
+      },
+      {
+        "text": "Never go near a plant you do not know",
+        "hint": ""
+      }
+    ],
+    "reveal": "He tasted, so he knew; he wrote it down, so nobody else had to."
+  },
+  "misconceptions": [
+    "A poisonous plant is useless, so tasting it changes nothing",
+    "If a wild berry looks pretty, it is safe to eat"
+  ],
+  "quiz": [
+    {
+      "question": "Why did Shennong taste a hundred herbs?",
+      "options": [
+        "To learn what can be eaten and what can cure",
+        "To find the tastiest fruit",
+        "To count how many plants there are"
+      ],
+      "explanation": "He wanted to find out what can be eaten, what can cure, and what must be left alone."
+    },
+    {
+      "question": "What did Shennong do when a plant tasted poisonous?",
+      "options": [
+        "He wrote it down and told everyone not to eat it",
+        "He threw it away and pretended he had not tasted it",
+        "He let someone else taste it too"
+      ],
+      "explanation": "Poison is knowledge too: write it down and nobody else will eat it by mistake."
+    },
+    {
+      "question": "You see berries you do not recognise. What is closest to Shennong’s way?",
+      "options": [
+        "Ask a grown-up, and leave them alone",
+        "Eat one because it looks nice",
+        "Pick them and share them with your friends"
+      ],
+      "explanation": "Shennong tasted every plant so that everyone else would not have to. You do not need that risk — ask a grown-up first."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "bins": [
+            {
+              "label": "Can eat"
+            },
+            {
+              "label": "Medicine"
+            },
+            {
+              "label": "Do not eat"
+            }
+          ],
+          "items": [
+            {
+              "speak": "A grain stalk. You can eat it."
+            },
+            {
+              "speak": "A wild berry. You can eat it."
+            },
+            {
+              "speak": "Liquorice. Sweet — it eases a cough."
+            },
+            {
+              "speak": "Ginger. Hot — it warms you up."
+            },
+            {
+              "speak": "A toadstool. You must not eat it."
+            },
+            {
+              "speak": "Blue berries you do not know. You must not eat them."
+            }
+          ],
+          "hint": "Taste first, then sort"
+        }
+      }
+    ]
+  }
+}

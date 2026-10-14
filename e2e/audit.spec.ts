@@ -23,14 +23,45 @@ const place = panguJson.game.stages[1]!.levelScript as {
 
 const BOAT = { x: SUB.boatX, y: 600 };
 
-/** 五个新典故：手动走一遍看版面，再用 autoplay 直接冲到典故卡 */
-const NEW_GAMES: { id: string; taps?: number; hold?: number; shoot?: number }[] = [
-  { id: 'nuwa' },
+/** 其余十部典故：手动走一遍看版面，再用 autoplay 直接冲到典故卡 */
+/**
+ * driver = "怎么把这局玩到典故卡"。
+ * 第二辑的玩法不是连点（要尝、要划、要等），所以每部各给一个驱动方式；
+ * 没有 driver 的走默认的连点分支。
+ */
+type Driver = 'place' | 'sort' | 'trace' | 'wait' | 'beacon';
+
+const NEW_GAMES: {
+  id: string;
+  taps?: number;
+  hold?: number;
+  shoot?: number;
+  driver?: Driver;
+}[] = [
+  { id: 'nuwa', driver: 'place' },
   { id: 'houyi', shoot: 3 },
   { id: 'jingwei', taps: 12 },
   { id: 'kuafu', hold: 2400 },
   { id: 'yugong', taps: 12 },
+  // 第二辑
+  { id: 'shennong', driver: 'sort' },
+  { id: 'dayu', taps: 4, driver: 'trace' },
+  { id: 'taigong', driver: 'wait' },
+  { id: 'fenghuo', driver: 'beacon' },
+  { id: 'qiren', driver: 'place' },
 ];
+
+interface Point { x: number; y: number }
+/** 把一部典故的关卡脚本读出来（版面巡检要按真实坐标点） */
+function levelOf(id: string, stage = 0): Record<string, unknown> {
+  const path = fileURLToPath(
+    new URL('../packages/content/src/allusions/' + id + '.json', import.meta.url),
+  );
+  const json = JSON.parse(readFileSync(path, 'utf8')) as {
+    game: { stages: { levelScript: Record<string, unknown> }[] };
+  };
+  return json.game.stages[stage]!.levelScript;
+}
 
 const nuwaScript = JSON.parse(
   readFileSync(
@@ -137,8 +168,8 @@ for (const locale of LOCALES) {
   });
 }
 for (const locale of LOCALES) {
-  test('audit ' + locale + ' — 五个新典故（版面 + 典故卡）', async ({ page }) => {
-    test.setTimeout(600_000);
+  test('audit ' + locale + ' — 其余十部典故（版面 + 典故卡）', async ({ page }) => {
+    test.setTimeout(1_200_000);
     await page.setViewportSize({ width: 430, height: 932 });
     const out = '.scratch/i18n-audit/' + locale;
 
@@ -200,6 +231,70 @@ for (const locale of LOCALES) {
           await dragDesign(page, { x: orb.x, y: orb.y }, { x: slot.x, y: slot.y });
           await page.waitForTimeout(200);
         }
+      } else if (game.id === 'qiren') {
+        // 归位：四个"想明白"送回四个担忧泡泡
+        const level = levelOf('qiren') as { orbs: ({ slotId: string } & Point)[]; slots: ({ id: string } & Point)[] };
+        for (const orb of level.orbs) {
+          const slot = level.slots.find((s) => s.id === orb.slotId)!;
+          await dragDesign(page, { x: orb.x, y: orb.y }, { x: slot.x, y: slot.y });
+          await page.waitForTimeout(220);
+        }
+      } else if (game.id === 'shennong') {
+        // 先尝后分：每株草先送到嘴边，再放进它该去的木牍
+        const level = levelOf('shennong') as {
+          probe: Point;
+          items: ({ binId: string } & Point)[];
+          bins: ({ id: string } & Point)[];
+        };
+        for (const item of level.items) {
+          if ((await events(page)).includes('card:unlocked')) break;
+          await dragDesign(page, { x: item.x, y: item.y }, { x: level.probe.x, y: level.probe.y });
+          await page.waitForTimeout(1800);
+          const bin = level.bins.find((b) => b.id === item.binId)!;
+          await dragDesign(page, { x: item.x, y: item.y }, { x: bin.x, y: bin.y });
+          await page.waitForTimeout(300);
+        }
+      } else if (game.id === 'dayu') {
+        // 堵到决口，再一段一段把河道划出来
+        const level = levelOf('dayu', 1) as {
+          segments: { start: Point; anchors: Point[]; end: Point }[];
+        };
+        for (let i = 0; i < 12; i += 1) {
+          await clickDesign(page, 375, 1000);
+          await page.waitForTimeout(140);
+        }
+        await page.waitForTimeout(3200);
+        for (const segment of level.segments) {
+          let from = segment.start;
+          for (const point of [...segment.anchors, segment.end]) {
+            await dragDesign(page, from, point);
+            from = point;
+            await page.waitForTimeout(260);
+          }
+        }
+      } else if (game.id === 'fenghuo') {
+        // 点四次火：三次戏弄 + 一次真的
+        const level = levelOf('fenghuo') as { towers: Point[] };
+        const tower = level.towers[0]!;
+        for (let round = 0; round < 4; round += 1) {
+          await clickDesign(page, tower.x, tower.y);
+          for (let i = 0; i < 40; i += 1) {
+            const seen = await events(page);
+            if (seen.includes('card:unlocked')) break;
+            if (seen.includes('beat:enter:ready:' + (round + 1)) || seen.includes('beat:enter:smoke')) break;
+            await page.waitForTimeout(300);
+          }
+          await page.waitForTimeout(200);
+        }
+      } else if (game.id === 'taigong') {
+        // 等满 45 秒（不加诱惑），他来了就把直钩收起来
+        const level = levelOf('taigong') as { finale: Point };
+        for (let i = 0; i < 200; i += 1) {
+          const seen = await events(page);
+          if (seen.includes('card:unlocked') || seen.includes('beat:enter:wait:arrived')) break;
+          await page.waitForTimeout(500);
+        }
+        await clickDesign(page, level.finale.x, level.finale.y);
       } else if (game.id === 'houyi') {
         for (let i = 0; i < 14; i += 1) {
           if ((await events(page)).includes('card:unlocked')) break;

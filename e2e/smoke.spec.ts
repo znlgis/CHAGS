@@ -360,6 +360,164 @@ test('愚公移山 autoplay 全流程（三个里程碑都不能卡死）', asyn
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('level:complete');
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });
+// ---------------- 第二辑：神农 / 杞人 / 烽火 ----------------
+
+test('神农尝百草：没尝过就分不了类，会被送回嘴边先尝一口', async ({ page }) => {
+  await page.goto('/#/play/shennong');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+  await page.waitForTimeout(450);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:sort');
+
+  // 甘草还没尝过就拖到"有毒别吃"上：不算错，会被送回嘴边尝一口
+  await dragDesign(page, { x: 600, y: 630 }, { x: 605, y: 1128 });
+  await expect.poll(() => events(page), { timeout: 15_000 }).toContain('beat:enter:taste:liquorice');
+  expect(await events(page)).not.toContain('beat:enter:liquorice');
+
+  // 等它飞回原位、带着"尝过"的牌子，再拖到"能治病"上才算数
+  await page.waitForTimeout(2600);
+  await dragDesign(page, { x: 600, y: 630 }, { x: 375, y: 1128 });
+  await expect.poll(() => events(page), { timeout: 15_000 }).toContain('beat:enter:liquorice');
+});
+
+test('神农尝百草 autoplay 全流程（六株草先尝后分）', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/shennong');
+  await expect.poll(() => events(page), { timeout: 90_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+});
+
+test('杞人忧天：把"想明白"送到担忧上，泡泡就破了', async ({ page }) => {
+  await page.goto('/#/play/qiren');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+  await page.waitForTimeout(450);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:place');
+
+  await dragDesign(page, { x: 105, y: 1226 }, { x: 200, y: 245 });
+  await expect.poll(() => events(page), { timeout: 15_000 }).toContain('beat:enter:slot-sky');
+});
+
+test('杞人忧天 autoplay 全流程', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/qiren');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+});
+
+test('烽火戏诸侯：三次点火把信用用完，真的来了一个人也没来', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto('/#/play/fenghuo');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+  await page.waitForTimeout(450);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:beacon');
+
+  // 第一次：火光传向天边，诸侯赶来，她笑了
+  await clickDesign(page, 250, 840);
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:relay:1');
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:laugh:1');
+
+  // 第二、三次：信任一格一格用完（每轮约 6 秒）
+  await expect.poll(() => events(page), { timeout: 30_000 }).toContain('beat:enter:ready:1');
+  await clickDesign(page, 250, 840);
+  await expect.poll(() => events(page), { timeout: 30_000 }).toContain('beat:enter:laugh:2');
+  await expect.poll(() => events(page), { timeout: 30_000 }).toContain('beat:enter:ready:2');
+  await clickDesign(page, 250, 840);
+  await expect.poll(() => events(page), { timeout: 30_000 }).toContain('beat:enter:laugh:3');
+  // 信用用完：天边真的起了烟
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:smoke');
+
+  // 第四次点火是真的 —— 火光还是传了出去，什么也没有回来
+  await clickDesign(page, 250, 840);
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:relay:4');
+  await expect.poll(() => events(page), { timeout: 30_000 }).toContain('beat:enter:empty');
+});
+
+test('烽火戏诸侯 autoplay 全流程', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/fenghuo');
+  await expect.poll(() => events(page), { timeout: 90_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+});
+
+test('大禹治水：先堵到决口，再划三段河道（真实操作，三次路过家门都不卡）', async ({ page }) => {
+  const trace = loadContent('dayu').game.stages[1]!.levelScript as {
+    segments: { start: { x: number; y: number }; anchors: { x: number; y: number }[]; end: { x: number; y: number } }[];
+  };
+  test.setTimeout(150_000);
+  await page.goto('/#/play/dayu');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+  await page.waitForTimeout(450);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:tap');
+
+  // 堵：点满十下，堤垮，水冲回来，然后进入"疏"
+  await tapDesign(page, 375, 1000, 11, 150);
+  await expect.poll(() => events(page), { timeout: 30_000 }).toContain('scene:enter:trace');
+
+  // 疏：一段一段划过去（每一段结束都有"路过家门"的演出）
+  for (const segment of trace.segments) {
+    let from = segment.start;
+    for (const point of [...segment.anchors, segment.end]) {
+      await dragDesign(page, from, point);
+      from = point;
+      await page.waitForTimeout(180);
+    }
+  }
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
+});
+
+test('大禹治水 autoplay 全流程（决口 → 三段河道 → 三过家门）', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/dayu');
+  await expect.poll(() => events(page), { timeout: 120_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+});
+
+test('太公钓鱼：点了诱惑要多等，但永远等得到 —— 等到文王，收起直钩', async ({ page }) => {
+  const level = loadContent('taigong').game.stages[0]!.levelScript as {
+    temptations: { id: string; x: number; y: number }[];
+    finale: { x: number; y: number };
+  };
+  const bend = level.temptations[0]!;
+  test.setTimeout(180_000);
+  await page.goto('/#/play/taigong');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+  await page.waitForTimeout(450);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:wait');
+
+  // 诱惑：不算错，只是把日影往后推一点
+  await clickDesign(page, bend.x, bend.y);
+  await expect.poll(() => events(page), { timeout: 15_000 }).toContain('beat:enter:tempt:bend');
+  expect(await events(page), '点了诱惑不该直接通关').not.toContain('level:complete');
+
+  // 主线仍然只有一件事：等（45 秒 + 5 秒延后）
+  await expect.poll(() => events(page), { timeout: 120_000 }).toContain('beat:enter:wait:arrived');
+  // 等到之后要做最后一件事：把直钩收起来
+  await clickDesign(page, level.finale.x, level.finale.y);
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
+});
+
+test('太公钓鱼 autoplay 全流程（等待被压缩，仍然走完整条线）', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/taigong');
+  await expect.poll(() => events(page), { timeout: 90_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+});
+
 test('中英双语下每个典故都能载入 —— 关卡数据在两种语言下都必须过 schema', async ({ page }) => {
   // 英文的 unit 曾经写成 "baskets"，超出上限导致整个游戏打不开，而且构建期没拦住。
   // 这条用例专门守它：只要 schema 校验失败，页面就不会出现 canvas。

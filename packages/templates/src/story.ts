@@ -60,11 +60,12 @@ export function createStoryScene(
       const art = this.add.graphics();
       cfg.drawBeat?.(art, index, STORY_ART);
 
+      let textBottom = STORY_TEXT_Y;
       if (beat.text.length > 0) {
         this.add
           .text(this.W / 2, STORY_TITLE_Y, beat.title, textStyle(58, CSS.red, true))
           .setOrigin(0.5);
-        this.add
+        const body = this.add
           .text(this.W / 2, STORY_TEXT_Y, beat.text, {
             ...textStyle(44, CSS.ink, true),
             align: 'center',
@@ -72,10 +73,16 @@ export function createStoryScene(
             lineSpacing: 14,
           })
           .setOrigin(0.5, 0);
+        textBottom = body.y + body.height;
       }
 
       if (!this.autoplay) this.speak(beat.narration);
-      this.tapToContinue(() => this.showBeat(index + 1));
+      // 小手跟在正文下面；实在放不下（很长的英文句子）就挪到右下角
+      const below = Math.max(this.H - 150, textBottom + 64);
+      this.tapToContinue(
+        () => this.showBeat(index + 1),
+        below <= this.H - 72 ? { y: below } : { x: this.W - 104, y: this.H - 104 },
+      );
     }
   };
 }

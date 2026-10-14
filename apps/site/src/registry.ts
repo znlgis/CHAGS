@@ -12,4 +12,9 @@ export const registry: Record<string, () => Promise<{ default: GameModule }>> = 
   jingwei: () => import('@chags/game-jingwei'),
   kuafu: () => import('@chags/game-kuafu'),
   yugong: () => import('@chags/game-yugong'),
+  shennong: () => import('@chags/game-shennong'),
+  qiren: () => import('@chags/game-qiren'),
+  fenghuo: () => import('@chags/game-fenghuo'),
+  taigong: () => import('@chags/game-taigong'),
+  dayu: () => import('@chags/game-dayu'),
 };

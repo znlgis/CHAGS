@@ -1,0 +1,97 @@
+{
+  "title": "Yu Tames the Flood",
+  "dynasty": "Xia",
+  "era": "Xia · Legend",
+  "figures": [
+    "Yu the Great",
+    "Gun"
+  ],
+  "source": {
+    "book": "Mencius, Teng Wen Gong I",
+    "quote": "Yu dredged the nine rivers, guided the Ji and Ta rivers, and led them all into the sea."
+  },
+  "moral": "A bank cannot hold the water back — give it a road to the sea.",
+  "keywords": [
+    "Guide, not block",
+    "Open a channel",
+    "Down to the sea"
+  ],
+  "story": [
+    {
+      "title": "The Flood Comes",
+      "text": "The flood drowned the fields, so the people fled to the hills.",
+      "narration": "That year the flood drowned the fields and washed the crops away. The people carried their children up into the hills and watched the water rise, day after day."
+    },
+    {
+      "title": "A Road for the Water",
+      "text": "Gun blocked the water with earth and failed. Yu said: give the water a road.",
+      "narration": "Yu's father Gun tried to block the flood with earth. The banks grew higher, but after nine years the water still won. Yu said: water runs downhill, so let us give it a road. Instead of blocking it, he opened channels. The Records of the Grand Historian say he was away thirteen years, and passed his own door three times without going in."
+    }
+  ],
+  "keyMoment": {
+    "question": "The water is huge. What can be done?",
+    "options": [
+      {
+        "text": "Build the banks even higher",
+        "hint": ""
+      },
+      {
+        "text": "Give it a road to the sea",
+        "hint": ""
+      },
+      {
+        "text": "Move everyone to the far hills",
+        "hint": ""
+      }
+    ],
+    "reveal": "You can block one place, not every place. Water runs downhill — give it a road."
+  },
+  "misconceptions": [
+    "Water can only be blocked, so the higher the bank the safer",
+    "Gun's nine years of earth banks were completely wasted"
+  ],
+  "quiz": [
+    {
+      "question": "Why did Gun's earth banks fail for nine years?",
+      "options": [
+        "Water can be blocked in one place, but not everywhere",
+        "His banks were not high enough",
+        "He did not ask anyone for help"
+      ],
+      "explanation": "The water came round and over. Blocking alone could not stop it."
+    },
+    {
+      "question": "What did Yu do to tame the flood?",
+      "options": [
+        "He opened channels and led the water to the sea",
+        "He built the bank up to the sky",
+        "He kept the water standing in the fields"
+      ],
+      "explanation": "He did not block it; he opened a way and let the water run downhill."
+    },
+    {
+      "question": "The kitchen drain is blocked. What is closest to Yu's way?",
+      "options": [
+        "Push harder and plug the water in",
+        "Find the blockage and open a way through",
+        "Leave it and wait for the water to go away"
+      ],
+      "explanation": "Blocking only makes more water pile up; find the way out and clear a path."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "unit": "baskets",
+          "hint": "Tap to raise the dike"
+        }
+      },
+      {
+        "levelScript": {
+          "hint": "Drag a way to the sea"
+        }
+      }
+    ]
+  }
+}

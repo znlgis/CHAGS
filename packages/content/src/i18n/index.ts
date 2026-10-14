@@ -6,6 +6,11 @@ import enNuwa from './en/nuwa.json';
 import enJingwei from './en/jingwei.json';
 import enKuafu from './en/kuafu.json';
 import enYugong from './en/yugong.json';
+import enShennong from './en/shennong.json';
+import enQiren from './en/qiren.json';
+import enFenghuo from './en/fenghuo.json';
+import enTaigong from './en/taigong.json';
+import enDayu from './en/dayu.json';
 
 /**
  * 典故内容的翻译补丁。结构镜像原文，只写需要翻译的字段。
@@ -20,6 +25,11 @@ export const patches: Partial<Record<Locale, Record<string, unknown>>> = {
     jingwei: enJingwei,
     kuafu: enKuafu,
     yugong: enYugong,
+    shennong: enShennong,
+    qiren: enQiren,
+    fenghuo: enFenghuo,
+    taigong: enTaigong,
+    dayu: enDayu,
   },
 };
 

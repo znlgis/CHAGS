@@ -1,0 +1,107 @@
+{
+  "title": "The Grand Duke Goes Fishing",
+  "dynasty": "Late Shang – Early Zhou",
+  "era": "Late Shang – Early Zhou",
+  "figures": [
+    "Jiang Ziya",
+    "King Wen of Zhou"
+  ],
+  "source": {
+    "book": "Records of the Grand Historian, House of Qi",
+    "quote": "Lü Shang had once been poor and was now old; he fished in order to seek out the Earl of the West of Zhou."
+  },
+  "moral": "He let the small fish swim by, because he was waiting for someone worth waiting for.",
+  "keywords": [
+    "Waiting",
+    "Straight hook",
+    "The willing one"
+  ],
+  "story": [
+    {
+      "title": "Nobody Would Use Him",
+      "text": "Late in the Shang dynasty, an able old man with white hair still had no one to serve.",
+      "narration": "Late in the Shang dynasty there lived an able old man named Jiang Ziya. His hair had turned white, yet nobody would give him a post, and he had to get by on his own."
+    },
+    {
+      "title": "The Willing One",
+      "text": "At the Wei River he fished with a straight hook, no bait, three feet above the water.",
+      "narration": "He fished in the Wei River. Legend says his hook was straight, with no bait, and it hung three feet above the water. People laughed at him, and he said: “The willing one will come.” Later storytellers turned it into the saying “Grand Duke Jiang fishes — the willing one takes the hook.”"
+    }
+  ],
+  "keyMoment": {
+    "question": "Why use a straight hook and no bait?",
+    "options": [
+      {
+        "text": "He was afraid of hurting the small fish",
+        "hint": ""
+      },
+      {
+        "text": "The one he was fishing for was not a fish",
+        "hint": ""
+      },
+      {
+        "text": "He did not know how to bend a hook",
+        "hint": ""
+      }
+    ],
+    "reveal": "His hook was straight because he was waiting for someone who would come by choice."
+  },
+  "misconceptions": [
+    "A straight hook only means poor skill — bend it and the fish will come",
+    "If nobody comes, you should move on; waiting is a waste of time"
+  ],
+  "quiz": [
+    {
+      "question": "How did Jiang Ziya fish in the Wei River?",
+      "options": [
+        "With a straight hook and no bait",
+        "With a bent hook and tasty bait",
+        "With a big net instead of a rod"
+      ],
+      "explanation": "Legend says his hook was straight, with no bait, hanging three feet above the water — he was not fishing for fish."
+    },
+    {
+      "question": "In “the willing one takes the hook”, who is the willing one?",
+      "options": [
+        "Someone who comes of his own accord",
+        "A fish that wants to bite",
+        "A customer who wants to buy fish"
+      ],
+      "explanation": "He was waiting for someone who would come by choice — and in the end King Wen came himself."
+    },
+    {
+      "question": "You want a big fish, but small fish keep biting. What do you do?",
+      "options": [
+        "Let them go and keep waiting for the big one",
+        "Catch a basket of small fish first",
+        "Keep every small fish, let none go"
+      ],
+      "explanation": "The small fish were not what he wanted. He did not change his mind for them, and so he met the one worth waiting for."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "temptations": [
+            {
+              "line": "A bent hook catches nothing but fish."
+            },
+            {
+              "line": "The one I am fishing for is not a fish."
+            },
+            {
+              "line": "Move somewhere else, and the one I wait for will not find me here."
+            }
+          ],
+          "lines": [
+            "Not yet — the fish have not come.",
+            "There are fish down there. I do not watch them.",
+            "Whoever is willing will come on his own."
+          ],
+          "hint": "Just wait and watch."
+        }
+      }
+    ]
+  }
+}

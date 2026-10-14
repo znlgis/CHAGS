@@ -69,7 +69,7 @@ for (const allusion of allusions) {
   }
 
   console.log(
-    '  · ' + (allusion.kind === 'myth' ? '神话' : '信史') +
+    '  · ' + (allusion.kind === 'myth' ? '神话' : allusion.kind === 'legend' ? '传说' : '信史') +
       ' / ' + allusion.story.length + ' 幕故事' +
       ' / ' + allusion.quiz.length + ' 道复习题' +
       ' / ' + allusion.game.stages.length + ' 段玩法：' +

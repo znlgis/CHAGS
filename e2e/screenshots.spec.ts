@@ -285,6 +285,178 @@ test('capture kuafu screenshots', async ({ page }) => {
   await page.screenshot({ path: 'docs/screenshots/47-kuafu-peach.png' });
 });
 
+// ---------------- 第二辑：神农 / 大禹 / 太公 / 烽火 / 杞人 ----------------
+
+test('capture shennong screenshots', async ({ page }) => {
+  const level = loadContent('shennong').game.stages[0]!.levelScript as {
+    items: { id: string; x: number; y: number }[];
+    bins: { id: string; x: number; y: number }[];
+  };
+  const herb = level.items.find((i) => i.id === 'liquorice')!;
+  const cure = level.bins.find((b) => b.id === 'cure')!;
+
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/shennong');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/53-shennong-story.png' });
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/54-shennong-unknown.png' });
+
+  // 先尝一口：拖到嘴边
+  await dragDesign(page, { x: herb.x, y: herb.y }, { x: 375, y: 330 });
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: 'docs/screenshots/55-shennong-tasting.png' });
+  await page.waitForTimeout(2200);
+
+  // 尝过了，分进"能治病"的木牍
+  await dragDesign(page, { x: herb.x, y: herb.y }, { x: cure.x, y: cure.y });
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/56-shennong-sorted.png' });
+});
+
+test('capture dayu screenshots', async ({ page }) => {
+  const stages = loadContent('dayu').game.stages;
+  const trace = stages[1]!.levelScript as {
+    segments: { start: { x: number; y: number }; anchors: { x: number; y: number }[]; end: { x: number; y: number } }[];
+  };
+
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/dayu');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/57-dayu-story.png' });
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(800);
+
+  // 堵：一筐一筐往上筑，水也跟着涨
+  await tapDesign(page, 375, 1000, 6, 140);
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: 'docs/screenshots/58-dayu-dike.png' });
+
+  // 再点几下：堤垮，水冲回来
+  await tapDesign(page, 375, 1000, 5, 140);
+  await page.waitForTimeout(1600);
+  await page.screenshot({ path: 'docs/screenshots/59-dayu-breach.png' });
+  await page.waitForTimeout(2600);
+
+  // 疏：划出第一段河道
+  const first = trace.segments[0]!;
+  let from = first.start;
+  for (const point of [...first.anchors, first.end]) {
+    await dragDesign(page, from, point);
+    from = point;
+    await page.waitForTimeout(160);
+  }
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'docs/screenshots/60-dayu-channel.png' });
+});
+
+test('capture taigong screenshots', async ({ page }) => {
+  const level = loadContent('taigong').game.stages[0]!.levelScript as {
+    temptations: { id: string; x: number; y: number }[];
+    finale: { x: number; y: number };
+    listener: { x: number; y: number };
+  };
+  const bend = level.temptations[0]!;
+
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/taigong');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/61-taigong-story.png' });
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/62-taigong-waiting.png' });
+
+  // 点一下老人：听他说一句
+  await clickDesign(page, level.listener.x, level.listener.y);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'docs/screenshots/63-taigong-listener.png' });
+
+  // 点诱惑：日影退回一点，弯钩收起来
+  await clickDesign(page, bend.x, bend.y);
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: 'docs/screenshots/64-taigong-tempted.png' });
+});
+
+test('capture fenghuo screenshots', async ({ page }) => {
+  const level = loadContent('fenghuo').game.stages[0]!.levelScript as {
+    towers: { x: number; y: number }[];
+  };
+  const first = level.towers[0]!;
+
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/fenghuo');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/65-fenghuo-story.png' });
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(1000);
+  await page.screenshot({ path: 'docs/screenshots/66-fenghuo-night.png' });
+
+  // 点火：火光一座座传向天边
+  await clickDesign(page, first.x, first.y);
+  await page.waitForTimeout(1000);
+  await page.screenshot({ path: 'docs/screenshots/67-fenghuo-relay.png' });
+
+  // 诸侯赶来，她笑了
+  await page.waitForTimeout(3600);
+  await page.screenshot({ path: 'docs/screenshots/68-fenghuo-laugh.png' });
+
+  // 点到第三次，信用用完；第四次是真的，一个人也没来
+  await page.waitForTimeout(2400);
+  await clickDesign(page, first.x, first.y);
+  await page.waitForTimeout(6500);
+  await clickDesign(page, first.x, first.y);
+  await page.waitForTimeout(6500);
+  await clickDesign(page, first.x, first.y);
+  await page.waitForTimeout(5200);
+  await page.screenshot({ path: 'docs/screenshots/69-fenghuo-nobody.png' });
+});
+
+test('capture qiren screenshots', async ({ page }) => {
+  const level = loadContent('qiren').game.stages[0]!.levelScript as {
+    orbs: { id: string; x: number; y: number; slotId: string }[];
+    slots: { id: string; x: number; y: number }[];
+  };
+  const orb = level.orbs[0]!;
+  const slot = level.slots.find((s) => s.id === orb.slotId)!;
+
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/qiren');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/70-qiren-story.png' });
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/71-qiren-worries.png' });
+
+  await dragDesign(page, { x: orb.x, y: orb.y }, { x: slot.x, y: slot.y });
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: 'docs/screenshots/72-qiren-one-less.png' });
+
+  // 四个泡泡都破掉：黑云散开，他在星光下睡着
+  for (const rest of level.orbs.slice(1)) {
+    const target = level.slots.find((s) => s.id === rest.slotId)!;
+    await dragDesign(page, { x: rest.x, y: rest.y }, { x: target.x, y: target.y });
+    await page.waitForTimeout(320);
+  }
+  await page.waitForTimeout(2200);
+  await page.screenshot({ path: 'docs/screenshots/73-qiren-asleep.png' });
+});
+
 test('capture yugong screenshots', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
   await page.goto('/?lang=zh-CN#/play/yugong');

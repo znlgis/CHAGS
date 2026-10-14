@@ -8,6 +8,10 @@ export const SCENE_KEYS = {
   tap: 'tap',
   place: 'place',
   aim: 'aim',
+  sort: 'sort',
+  trace: 'trace',
+  wait: 'wait',
+  beacon: 'beacon',
   quiz: 'quiz',
   reward: 'reward',
 } as const;
@@ -15,8 +19,10 @@ export const SCENE_KEYS = {
 // ---------- 分幕绘本 ----------
 export const STORY_ART = { x: 55, y: 300, w: 640, h: 620 } as const;
 export const STORY_TITLE_Y = 205;
-export const STORY_TEXT_Y = 985;
-export const STORY_TEXT_WRAP = 560;
+/** 正文起始 y：往下留出小手的位置（英文更长的句子也不会被挡住） */
+export const STORY_TEXT_Y = 950;
+/** 正文换行宽度：44px 汉字一行 13 个字 —— 560 会排成 12/12/12/2，末行只剩标点 */
+export const STORY_TEXT_WRAP = 596;
 
 // ---------- 等量代换场景 ----------
 export const SUB = {
@@ -60,6 +66,38 @@ export const PLACE = {
   earthBottom: 1128,
   /** 归位宽容度：在槽位半径上再加这么多像素，小朋友不用对准 */
   dropForgive: 70,
+} as const;
+
+// ---------- sort：先尝后分 ----------
+export const SORT = {
+  /** 归位宽容度：和 place 一样，小朋友不用对准 */
+  dropForgive: 70,
+  /** 拿起东西时，该去的地方发光的光圈外扩 */
+  hintRing: 28,
+  /** 尝一口的默认时长 */
+  tasteMs: 1000,
+} as const;
+
+// ---------- trace：手指划出一条路 ----------
+export const TRACE = {
+  /** 河道画多粗 */
+  channelWidth: 36,
+  /** 拿起手指时，下一处目标的提示光圈外扩 */
+  hintRing: 22,
+  /** 一笔划多久没进展就开始提示 */
+  idleMs: 9000,
+} as const;
+
+// ---------- wait：等 ----------
+export const WAIT = {
+  /** 诱惑按钮的命中半径：手指粗也能点得到 */
+  temptationRadius: 78,
+  /** 等到之后，一直不点"收钩"的兜底时间 —— 绝不会卡住 */
+  fallbackMs: 16000,
+  /** 无头验证时把等待压缩成几分之一 */
+  autoplayFactor: 7,
+  /** 多久没动静就给提示 */
+  idleMs: 9000,
 } as const;
 
 // ---------- 复习小考验（复习模式用，首次通关不出现） ----------

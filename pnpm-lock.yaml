@@ -87,6 +87,12 @@ importers:
       '@chags/game-caochong-elephant':
         specifier: workspace:*
         version: link:../../games/caochong-elephant
+      '@chags/game-dayu':
+        specifier: workspace:*
+        version: link:../../games/dayu
+      '@chags/game-fenghuo':
+        specifier: workspace:*
+        version: link:../../games/fenghuo
       '@chags/game-houyi':
         specifier: workspace:*
         version: link:../../games/houyi
@@ -105,6 +111,15 @@ importers:
       '@chags/game-pangu':
         specifier: workspace:*
         version: link:../../games/pangu
+      '@chags/game-qiren':
+        specifier: workspace:*
+        version: link:../../games/qiren
+      '@chags/game-shennong':
+        specifier: workspace:*
+        version: link:../../games/shennong
+      '@chags/game-taigong':
+        specifier: workspace:*
+        version: link:../../games/taigong
       '@chags/game-yugong':
         specifier: workspace:*
         version: link:../../games/yugong
@@ -151,6 +166,42 @@ importers:
       '@chags/progress':
         specifier: workspace:*
         version: link:../../packages/progress
+      '@chags/templates':
+        specifier: workspace:*
+        version: link:../../packages/templates
+      phaser:
+        specifier: ^4.2.1
+        version: 4.2.1
+
+  games/dayu:
+    dependencies:
+      '@chags/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@chags/game-kit':
+        specifier: workspace:*
+        version: link:../../packages/game-kit
+      '@chags/phaser-kit':
+        specifier: workspace:*
+        version: link:../../packages/phaser-kit
+      '@chags/templates':
+        specifier: workspace:*
+        version: link:../../packages/templates
+      phaser:
+        specifier: ^4.2.1
+        version: 4.2.1
+
+  games/fenghuo:
+    dependencies:
+      '@chags/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@chags/game-kit':
+        specifier: workspace:*
+        version: link:../../packages/game-kit
+      '@chags/phaser-kit':
+        specifier: workspace:*
+        version: link:../../packages/phaser-kit
       '@chags/templates':
         specifier: workspace:*
         version: link:../../packages/templates
@@ -234,6 +285,60 @@ importers:
         version: 4.2.1
 
   games/pangu:
+    dependencies:
+      '@chags/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@chags/game-kit':
+        specifier: workspace:*
+        version: link:../../packages/game-kit
+      '@chags/phaser-kit':
+        specifier: workspace:*
+        version: link:../../packages/phaser-kit
+      '@chags/templates':
+        specifier: workspace:*
+        version: link:../../packages/templates
+      phaser:
+        specifier: ^4.2.1
+        version: 4.2.1
+
+  games/qiren:
+    dependencies:
+      '@chags/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@chags/game-kit':
+        specifier: workspace:*
+        version: link:../../packages/game-kit
+      '@chags/phaser-kit':
+        specifier: workspace:*
+        version: link:../../packages/phaser-kit
+      '@chags/templates':
+        specifier: workspace:*
+        version: link:../../packages/templates
+      phaser:
+        specifier: ^4.2.1
+        version: 4.2.1
+
+  games/shennong:
+    dependencies:
+      '@chags/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@chags/game-kit':
+        specifier: workspace:*
+        version: link:../../packages/game-kit
+      '@chags/phaser-kit':
+        specifier: workspace:*
+        version: link:../../packages/phaser-kit
+      '@chags/templates':
+        specifier: workspace:*
+        version: link:../../packages/templates
+      phaser:
+        specifier: ^4.2.1
+        version: 4.2.1
+
+  games/taigong:
     dependencies:
       '@chags/content':
         specifier: workspace:*

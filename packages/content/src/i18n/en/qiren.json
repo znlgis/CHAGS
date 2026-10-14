@@ -1,0 +1,103 @@
+{
+  "title": "The Man of Qi Who Worried the Sky Would Fall",
+  "dynasty": "Warring States",
+  "era": "Warring States · Parable",
+  "figures": [
+    "the man of Qi"
+  ],
+  "source": {
+    "book": "Liezi, Heaven's Gifts",
+    "quote": "In Qi there was a man who worried that heaven and earth might fall and collapse, that he would have nowhere to rest, and he could not eat or sleep. ... The man was suddenly greatly relieved, and so was the one who explained it to him."
+  },
+  "moral": "Fear comes from not understanding yet; once you understand, you are not afraid.",
+  "keywords": [
+    "Worry",
+    "Understanding",
+    "Sleeping well"
+  ],
+  "story": [
+    {
+      "title": "No Appetite, No Sleep",
+      "text": "A man of Qi feared the sky would fall and the ground sink. He could not eat or sleep.",
+      "narration": "In the state of Qi there was a man who worried day and night that the sky would fall and the ground would sink. He was so worried that he could not eat and could not sleep, and he grew thin."
+    },
+    {
+      "title": "Someone Comes to Explain",
+      "text": "Someone came and told him: the sky is gathered air, the ground is gathered soil.",
+      "narration": "A kind man came to see him and explained it one thing at a time: the sky is gathered air; the ground is gathered soil. Once he understood, his heart felt light at once."
+    }
+  ],
+  "keyMoment": {
+    "question": "Will the sky really fall?",
+    "options": [
+      {
+        "text": "The sky hangs over our heads — it could fall at any moment",
+        "hint": ""
+      },
+      {
+        "text": "The sky is gathered air; it will not fall",
+        "hint": ""
+      },
+      {
+        "text": "Hide indoors and never look at the sky",
+        "hint": ""
+      }
+    ],
+    "reveal": "Understand it and you are not afraid — the sky is gathered air, the ground is gathered soil."
+  },
+  "misconceptions": [
+    "The sky could fall at any moment",
+    "Being afraid means you are a coward, and should be laughed at"
+  ],
+  "quiz": [
+    {
+      "question": "Why could the man of Qi not eat or sleep?",
+      "options": [
+        "He worried that the sky would fall and the ground would sink",
+        "He had lost something",
+        "He was moving to another place"
+      ],
+      "explanation": "He feared the sky would fall and the ground would sink, so he could not eat or sleep."
+    },
+    {
+      "question": "What did the man tell him the sky and the ground are?",
+      "options": [
+        "The sky is gathered air, and the ground is gathered soil",
+        "The sky is a big stone, and the ground is a big plank",
+        "Both the sky and the ground are empty"
+      ],
+      "explanation": "Sky is gathered air, ground is gathered soil — once it was explained, he felt relieved."
+    },
+    {
+      "question": "Which of these means \"understand it, and you are not afraid\"?",
+      "options": [
+        "Afraid of the dark, so you turn on the light and look — the room is just as it was",
+        "Afraid of the dark, so you keep your eyes shut and never look",
+        "Afraid of the dark, so nobody is allowed to mention the dark"
+      ],
+      "explanation": "Fear often comes from not understanding; look, ask, and you will understand."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "orbs": [
+            {
+              "speak": "The sky is gathered air."
+            },
+            {
+              "speak": "The ground is gathered soil."
+            },
+            {
+              "speak": "The sun, moon and stars are the shining parts of gathered air."
+            },
+            {
+              "speak": "Even if a star falls down, it cannot hurt anyone."
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
