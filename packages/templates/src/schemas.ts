@@ -108,6 +108,26 @@ export const AimTargetSchema = z.object({
   x: z.number(),
   y: z.number(),
   kind: z.string().min(1),
+  /** 可选：这个目标自己的命中半径（百步穿杨：越远的那片柳叶越小） */
+  radius: z.number().positive().optional(),
+});
+
+/**
+ * 距离阶梯（百步穿杨）：一档一档往后退。
+ * 只有"当前这一档"的靶子可以射；射中了要自己点木牌往后退，下一片叶子才露面。
+ */
+export const AimRungSchema = z.object({
+  id: z.string().min(1),
+  /** 这一档射哪一个 target */
+  targetId: z.string().min(1),
+  /** 脚下木牌上的距离（十步 / 三十步 / …… / 百步），双语可译 */
+  label: z.string().min(1).max(12),
+});
+
+export const AimLadderSchema = z.object({
+  rungs: z.array(AimRungSchema).min(2).max(6),
+  /** "再退十步"的木牌：点它才往后退一档 */
+  advance: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
 });
 
 export const AimLevelSchema = z
@@ -117,12 +137,34 @@ export const AimLevelSchema = z
     arrowSpeed: z.number().positive(),
     /** 射下几个算完成（后羿：10 个里射 9 个） */
     goalCount: z.number().int().positive(),
+    /** 可选：距离阶梯（有了它就没有"留一个"的语义，而是一档一档射上去） */
+    ladder: AimLadderSchema.optional(),
     hint: z.string().min(1).max(24),
   })
-  .refine((l) => l.goalCount < l.targets.length, {
+  .refine((l) => l.ladder !== undefined || l.goalCount < l.targets.length, {
     message: 'goalCount 必须小于目标总数 —— 否则就没有"留一个"的余地了',
     path: ['goalCount'],
   })
+  .refine((l) => l.ladder === undefined || l.goalCount <= l.targets.length, {
+    message: 'goalCount 比目标总数还多',
+    path: ['goalCount'],
+  })
+  .refine(
+    (l) => l.ladder === undefined || new Set(l.ladder.rungs.map((r) => r.id)).size === l.ladder.rungs.length,
+    { message: '阶梯每一档的 id 不能重复', path: ['ladder', 'rungs'] },
+  )
+  .refine(
+    (l) =>
+      l.ladder === undefined ||
+      new Set(l.ladder.rungs.map((r) => r.targetId)).size === l.ladder.rungs.length,
+    { message: '一个靶子只能出现在一档里', path: ['ladder', 'rungs'] },
+  )
+  .refine(
+    (l) =>
+      l.ladder === undefined ||
+      l.ladder.rungs.every((rung) => l.targets.some((t) => t.id === rung.targetId)),
+    { message: '有阶梯指向了不存在的靶子', path: ['ladder', 'rungs'] },
+  )
   .refine((l) => new Set(l.targets.map((t) => t.id)).size === l.targets.length, {
     message: '目标 id 不能重复',
     path: ['targets'],
@@ -347,11 +389,231 @@ export const BeaconLevelSchema = z
     path: ['towers'],
   });
 
+/**
+ * mark 模板：在会动的世界上做记号（刻舟求剑；可复用：荆人涉澭、郑人买履、守株待兔）
+ *
+ * 关键设计：**记号刻在哪个参照系上，结果完全不同**。
+ * 船会漂走（drifts: true），岸上的树、水面的浮标不会动（drifts: false）——
+ * 判定就是"记号此刻在世界里的位置"和剑的位置差多少。
+ */
+export const MarkSurfaceSchema = z.object({
+  id: z.string().min(1),
+  /** 怎么画由游戏包决定：boat / tree / rock / buoy */
+  kind: z.string().min(1),
+  /** 刻记号的地方（世界坐标，船帮会随船漂移） */
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 这个面会不会跟着船走：船帮 = true，岸上的树 / 水面的浮标 = false */
+  drifts: z.boolean(),
+  /** 刻下去时的一句旁白（双语可译） */
+  speak: z.string().min(1),
+});
+
+export const MarkLevelSchema = z
+  .object({
+    /** 剑落水的地方：从头到尾不动，而且一直在画面里 */
+    sword: z.object({
+      x: z.number(),
+      y: z.number(),
+      radius: z.number().positive(),
+    }),
+    surfaces: z.array(MarkSurfaceSchema).min(2).max(4),
+    /** 船从落剑处漂到岸边要多久（无头验证下自动缩短） */
+    driftMs: z.number().positive(),
+    /** 漂多远 —— 刻在船上的记号，误差就是它 */
+    driftDistance: z.number().positive(),
+    /** 捞空时说的那句话 */
+    missLine: z.string().min(1).max(48),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => l.surfaces.some((s) => s.drifts) && l.surfaces.some((s) => !s.drifts), {
+    message: '至少要有一个"会漂走"的面和一个"不动"的面，否则这一关没有可比较的选择',
+    path: ['surfaces'],
+  })
+  .refine((l) => new Set(l.surfaces.map((s) => s.id)).size === l.surfaces.length, {
+    message: '面的 id 不能重复',
+    path: ['surfaces'],
+  })
+  .refine(
+    (l) => l.surfaces.filter((s) => s.drifts).every((s) => Math.abs(s.x - l.sword.x) <= l.sword.radius),
+    {
+      message: '会漂走的面必须一开始就压在剑落水的位置上 —— 否则刻它连"一开始是对的"都做不到',
+      path: ['surfaces'],
+    },
+  );
+
+/**
+ * split 模板：总量不变，换个分法（朝三暮四；可复用：不患寡而患不均、二桃杀三士）
+ *
+ * 关键设计：**总数守恒看得见**。七颗东西串在一条绳上，只有中间那块木牌在移动 ——
+ * 谁都看得出"没有人加、没有人减"。观众只看其中一头，于是换了说法就换了脸色。
+ */
+export const SplitBinSchema = z.object({
+  id: z.string().min(1),
+  /** 怎么画由游戏包决定：morning / evening */
+  kind: z.string().min(1),
+  /** 这一头在画面上的位置（标签画在它下面） */
+  x: z.number(),
+  y: z.number(),
+  /** 短标签（双语可译） */
+  label: z.string().min(1).max(8),
+});
+
+export const SplitLevelSchema = z
+  .object({
+    total: z.number().int().min(2).max(12),
+    /** 绳子的两头：bins[0] 是左（第一种分法），bins[1] 是右 */
+    bins: z.array(SplitBinSchema).length(2),
+    /** 开局的分法：左边几颗（原文是朝三暮四 → 3） */
+    initialLeft: z.number().int().min(0),
+    /** 每一头至少留几颗才算分好 —— 一侧清空不算"分好了" */
+    minPerSide: z.number().int().min(0).max(3).default(1),
+    /** 观众只看其中一头：够这个数就高兴 */
+    audience: z.object({
+      watchedBinId: z.string().min(1),
+      happyAt: z.number().int().positive(),
+      happyLine: z.string().min(1).max(48),
+      angryLine: z.string().min(1).max(48),
+      /** 可选：有一头被分空时说的那句话（只陈述，不评价） */
+      greedyLine: z.string().min(1).max(48).optional(),
+    }),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => l.audience.happyAt <= l.total, {
+    message: '高兴的门槛比总数还大 —— 那观众永远不会高兴',
+    path: ['audience', 'happyAt'],
+  })
+  .refine((l) => l.bins.some((b) => b.id === l.audience.watchedBinId), {
+    message: '观众看的那个盘子不存在',
+    path: ['audience', 'watchedBinId'],
+  })
+  .refine((l) => l.initialLeft >= 0 && l.initialLeft <= l.total, {
+    message: '开局的分法超出了总数',
+    path: ['initialLeft'],
+  })
+  .refine((l) => l.minPerSide * 2 <= l.total, {
+    message: '每一头都要留 minPerSide 颗，但总数不够分',
+    path: ['minPerSide'],
+  })
+  .refine((l) => l.bins[0]!.x < l.bins[1]!.x, {
+    message: '绳子的左端必须在右端左边 —— 否则"左边几颗"的算法会反掉',
+    path: ['bins'],
+  })
+  .refine((l) => l.bins[0]!.y === l.bins[1]!.y, {
+    message: '两头必须落在同一条绳子上（y 相同）',
+    path: ['bins'],
+  })
+  .refine((l) => l.audience.happyAt >= l.minPerSide && l.total - l.audience.happyAt >= l.minPerSide, {
+    message: '按观众的高兴门槛去分，会有一头不够 minPerSide —— 这一关分不出"两边都留着"的答案',
+    path: ['audience', 'happyAt'],
+  });
+
+/**
+ * burrow 模板：预留退路（狡兔三窟；可复用：曲突徙薪、未雨绸缪、居安思危）
+ *
+ * 关键设计：**退路要几条，是被危险的数量逼出来的**。
+ * 危险一次会同时守住 blocks 个洞口 —— 洞口比它多一个，兔子就还有路走。
+ * "三窟"不是文案说的，是关卡数据里那条最凶的危险（blocks: 2）逼出来的。
+ */
+export const BurrowSpotSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 怎么画由游戏包决定：草丛 / 土坡 / 石头下 */
+  kind: z.string().min(1),
+});
+
+export const BurrowWaveSchema = z.object({
+  id: z.string().min(1),
+  /** 这一次危险会同时守住几个洞口 */
+  blocks: z.number().int().min(1).max(4),
+  /** 危险来的时候说的一句话（双语可译） */
+  speak: z.string().min(1).max(48),
+});
+
+export const BurrowLevelSchema = z
+  .object({
+    spots: z.array(BurrowSpotSchema).min(2).max(4),
+    /** 每个洞要挖几下才算通 */
+    digsNeeded: z.number().int().min(1).max(6),
+    waves: z.array(BurrowWaveSchema).min(1).max(3),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.spots.map((s) => s.id)).size === l.spots.length, {
+    message: '土坡的 id 不能重复',
+    path: ['spots'],
+  })
+  .refine((l) => new Set(l.waves.map((w) => w.id)).size === l.waves.length, {
+    message: '危险的 id 不能重复',
+    path: ['waves'],
+  })
+  .refine((l) => Math.max(...l.waves.map((w) => w.blocks)) < l.spots.length, {
+    message: '有危险一次堵住的洞口数不少于洞口总数 —— 这一局无论怎么挖都躲不过去',
+    path: ['waves'],
+  });
+
+/**
+ * butcher 关卡（庖丁解牛专用）：
+ * 场景本身留在游戏包里（像烽火 beacon、盘古 chaos 一样），但**数据在这里登记** ——
+ * 双语内容校验、schema 体检都会覆盖到它。
+ */
+export const ButcherPieceSchema = z.object({
+  id: z.string().min(1),
+  /** 怎么画由游戏包决定：head / neck / ribs / foreleg … */
+  kind: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  w: z.number().positive(),
+  h: z.number().positive(),
+  /** 顺着这条缝推出去的方向：0 = 向右，90 = 向下（屏幕坐标） */
+  grooveDeg: z.number(),
+  /** 抓取半径：手指落在这一块上才算抓住 */
+  radius: z.number().positive(),
+});
+
+export const ButcherLinesSchema = z.object({
+  /** 第一刀（砍在骨头上）时说的话 */
+  first: z.string().min(1).max(48),
+  /** 缝亮起来时说的话 */
+  grain: z.string().min(1).max(48),
+  /** 最后几块不给提示时说的话 */
+  free: z.string().min(1).max(48),
+  /** 结局念的原文 */
+  end: z.string().min(1).max(64),
+});
+
+export const ButcherLevelSchema = z
+  .object({
+    pieces: z.array(ButcherPieceSchema).min(4).max(10),
+    /** 第一段允许乱砍几下（每砍一下刀口多一个缺口） */
+    blindCuts: z.number().int().min(1).max(3).default(1),
+    /** 最后几块不给提示 —— "以神遇而不以目视" */
+    blindTail: z.number().int().min(0).max(4).default(2),
+    lines: ButcherLinesSchema,
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.pieces.map((p) => p.id)).size === l.pieces.length, {
+    message: '骨块的 id 不能重复',
+    path: ['pieces'],
+  })
+  .refine((l) => l.blindTail < l.pieces.length - 1, {
+    message: '不给提示的那几块太多了 —— 至少要留一块给"缝亮着"的那一段',
+    path: ['blindTail'],
+  })
+  .refine((l) => new Set(l.pieces.map((p) => p.grooveDeg)).size >= 4, {
+    message: '每一块的缝方向太雷同了 —— 那就不是"顺着缝走刀"，而是重复同一个动作',
+    path: ['pieces'],
+  });
+
 export type StoneDef = z.infer<typeof StoneSchema>;
 export type SubstitutionLevel = z.infer<typeof SubstitutionLevelSchema>;
 export type TapMilestone = z.infer<typeof TapMilestoneSchema>;
 export type TapLevel = z.infer<typeof TapLevelSchema>;
 export type AimTarget = z.infer<typeof AimTargetSchema>;
+export type AimRung = z.infer<typeof AimRungSchema>;
+export type AimLadder = z.infer<typeof AimLadderSchema>;
 export type AimLevel = z.infer<typeof AimLevelSchema>;
 export type PlaceSlot = z.infer<typeof PlaceSlotSchema>;
 export type PlaceOrb = z.infer<typeof PlaceOrbSchema>;
@@ -367,6 +629,16 @@ export type TraceLevel = z.infer<typeof TraceLevelSchema>;
 export type SortBin = z.infer<typeof SortBinSchema>;
 export type SortItem = z.infer<typeof SortItemSchema>;
 export type SortLevel = z.infer<typeof SortLevelSchema>;
+export type MarkSurface = z.infer<typeof MarkSurfaceSchema>;
+export type MarkLevel = z.infer<typeof MarkLevelSchema>;
+export type SplitBin = z.infer<typeof SplitBinSchema>;
+export type SplitLevel = z.infer<typeof SplitLevelSchema>;
+export type BurrowSpot = z.infer<typeof BurrowSpotSchema>;
+export type BurrowWave = z.infer<typeof BurrowWaveSchema>;
+export type BurrowLevel = z.infer<typeof BurrowLevelSchema>;
+export type ButcherPiece = z.infer<typeof ButcherPieceSchema>;
+export type ButcherLines = z.infer<typeof ButcherLinesSchema>;
+export type ButcherLevel = z.infer<typeof ButcherLevelSchema>;
 
 /** 模板 id → 关卡脚本 schema。新增模板时在这里登记，content:check 自动生效。 */
 export const templateSchemas: Record<string, z.ZodType> = {
@@ -378,4 +650,8 @@ export const templateSchemas: Record<string, z.ZodType> = {
   trace: TraceLevelSchema,
   wait: WaitLevelSchema,
   beacon: BeaconLevelSchema,
+  mark: MarkLevelSchema,
+  split: SplitLevelSchema,
+  burrow: BurrowLevelSchema,
+  butcher: ButcherLevelSchema,
 };

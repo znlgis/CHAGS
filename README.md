@@ -30,7 +30,7 @@ pnpm dist:apk       # 打包安卓 apk（直接安装）
 
 ## 当前进度
 
-**十二个典故**全部跑通，`pnpm verify` 全绿，端到端里每部游戏都有真实鼠标操作的通关用例。
+**十七个典故**全部跑通，`pnpm verify` 全绿，端到端里每部游戏都有真实鼠标操作的通关用例。
 首屏 shell 仍然很小（不含 Phaser）；每部游戏自己的业务 chunk 只有几 KB，
 Phaser 是共享 chunk，只在进入游戏时加载 —— 具体数字看 `pnpm size`。
 
@@ -167,9 +167,59 @@ Phaser 是共享 chunk，只在进入游戏时加载 —— 具体数字看 `pnp
 |---|---|---|
 | ![担忧](docs/screenshots/71-qiren-worries.png) | ![破掉](docs/screenshots/72-qiren-one-less.png) | ![睡着](docs/screenshots/73-qiren-asleep.png) |
 
+### 十三、刻舟求剑（寓言 · 参照系）
+
+坐船过江，剑掉进水里。**剑一直在画面里，船一直在走** —— 全篇就靠这一个画面讲道理。
+先照故事里的做法，在船帮上刻一道痕：船一漂，刻痕跟着船走，从记号处下水，只摸到水草。
+船回到上游，这次可以刻在岸边的树上、或者在水面丢一个浮标 —— 不会动的地方，才找得到剑。
+
+| 刻在船帮上 | 船漂走了，剑还在上游 | 改刻在树上，捞到了 |
+|---|---|---|
+| ![刻本](docs/screenshots/74-kezhou-story.png) | ![漂走](docs/screenshots/75-kezhou-drifted.png) | ![捞到](docs/screenshots/76-kezhou-found.png) |
+
+### 十四、朝三暮四（寓言 · 说法与实质）
+
+七颗橡子串在一条绷直的草绳上，动的只有中间那块木牌。
+"早上三颗、晚上四颗" —— 猴子炸毛；把木牌挪一格，"朝四暮三" —— 猴子立刻欢呼。
+绳子上一直写着 **3 + 4 = 7**，怎么挪都是七颗：换的是说法，不是橡子。
+
+| 朝三暮四，猴子在闹 | 挪一格，猴子就笑了 |
+|---|---|
+| ![闹](docs/screenshots/78-zhaosanmusi-angry.png) | ![笑](docs/screenshots/79-zhaosanmusi-happy.png) |
+
+### 十五、狡兔三窟（信史 · 留后路）
+
+草地上三个土坡，点一下就挖一铲。挖通一个洞，狐狸就来了 —— 一个洞口被守住，兔子就出不去。
+再挖一个，躲得过狐狸；可猎人和老鹰一起来，守住两个洞口，还是不够。
+**"三窟"不是文案说的，是被危险的数目逼出来的**（关卡数据里最凶的那一次守两个洞口）。
+
+| 一个洞，被狐狸守住 | 三窟已就 |
+|---|---|
+| ![一窟](docs/screenshots/81-jiaotu-one-burrow.png) | ![三窟](docs/screenshots/82-jiaotu-three-burrows.png) |
+
+### 十六、百步穿杨（信史 · 练）
+
+柳树上挂着五片柳叶，**自己一步一步往后退**：十步、三十步、五十步、八十步、百步。
+越远叶子越小，判定也跟着变小；射中的叶子上留一个洞，再退十步。
+（与后羿共用同一套拉弓手势，但一个在夜空射太阳、一个在白天柳林练柳叶 —— 这一部的主题是"练"）
+
+| 十步 | 百步穿杨 |
+|---|---|
+| ![十步](docs/screenshots/84-yangyouji-ten-paces.png) | ![百步](docs/screenshots/85-yangyouji-hundred-paces.png) |
+
+### 十七、庖丁解牛（寓言 · 顺着缝）
+
+第一刀砍在骨头上，"当"一声，刀口多一个缺口 —— 先自己撞一次。
+缝亮起来了：抓住一块，**顺着缝的方向推出去**，"咔"地滑开；最后两块不给提示，凭记住的结构自己推。
+结局是一张完整的骨架，和一把十九年如新的刀。
+
+| 第一刀，缺口 | 顺着缝解开 |
+|---|---|
+| ![第一刀](docs/screenshots/87-paoding-first-cut.png) | ![骨架](docs/screenshots/88-paoding-skeleton.png) |
+
 ## 设计原则：少写字，多动手
 
-十二部游戏加起来，屏幕上几乎没有教学文字：开场的两句话，加上卡住时才出现的一句短提示。
+十七部游戏加起来，屏幕上几乎没有教学文字：开场的两句话，加上卡住时才出现的一句短提示。
 其余全靠图形、动画、音效与语音。孩子是「做」出这个办法，而不是被告知。
 
 ## 目录结构
@@ -178,7 +228,7 @@ Phaser 是共享 chunk，只在进入游戏时加载 —— 具体数字看 `pnp
 apps/site                  Vue 3.5 外壳：典故馆 / 游戏宿主 / 图鉴
 packages/game-kit          契约层（GameModule / GameContext / 事件），不含 Phaser
 packages/content           典故数据 + zod schema
-packages/templates         玩法模板：story / substitution / tap / place / aim / sort / trace / wait / quiz / reward
+packages/templates         玩法模板：story / substitution / tap / place / aim / sort / trace / wait / mark / split / burrow / butcher / quiz / reward
 packages/phaser-kit        Phaser 启动器、主题、基础场景
 packages/platform          Web 实现：IndexedDB / WebAudio / TTS / 生命周期
 packages/progress          存档、复习调度（纯函数，可单测）
@@ -186,6 +236,7 @@ games/caochong-elephant    曹冲称象（等量代换：substitution 模板）
 games/pangu                盘古开天辟地（撑天 tap + 化身 place + 专属开蛋场景）
 games/houyi / nuwa / jingwei / kuafu / yugong   后羿射日 / 女娲补天 / 精卫填海 / 夸父追日 / 愚公移山
 games/shennong / dayu / taigong / fenghuo / qiren  神农尝百草 / 大禹治水 / 太公钓鱼 / 烽火戏诸侯 / 杞人忧天
+games/kezhou / zhaosanmusi / jiaotu / yangyouji / paoding  刻舟求剑 / 朝三暮四 / 狡兔三窟 / 百步穿杨 / 庖丁解牛
 e2e                        Playwright 冒烟 + 真实操作 + 截图
 ```
 

@@ -1,0 +1,107 @@
+{
+  "title": "Three in the Morning, Four at Night",
+  "dynasty": "Warring States",
+  "era": "Warring States · Parable",
+  "figures": [
+    "the monkey keeper",
+    "the monkeys"
+  ],
+  "source": {
+    "book": "Zhuangzi, On the Equality of Things",
+    "quote": "The monkey keeper was handing out acorns. He said: 'Three in the morning, four at night.' The monkeys all flew into a rage. 'Then four in the morning and three at night,' he said, and the monkeys were all delighted. Nothing in name or reality was lost, yet joy and anger were put to use — that too is the way of things."
+  },
+  "moral": "The wording changed, but not one acorn was added — do not be talked around.",
+  "keywords": [
+    "Wording",
+    "The same amount",
+    "Think it through"
+  ],
+  "story": [
+    {
+      "title": "Not Enough Acorns",
+      "text": "The keeper said: three acorns in the morning, four at night.",
+      "narration": "In the state of Song there was a man who kept monkeys. His acorns were running short, so he had to be careful. He told the monkeys: three acorns in the morning, four at night."
+    },
+    {
+      "title": "The Wording Changed",
+      "text": "Then four in the morning and three at night — and the monkeys were delighted.",
+      "narration": "The monkeys leapt up in anger at once. He changed his words immediately: then four in the morning and three at night. The monkeys were delighted and settled down."
+    }
+  ],
+  "keyMoment": {
+    "question": "Three in the morning and four at night, or four in the morning and three at night — what is the difference?",
+    "options": [
+      {
+        "text": "One more in the morning, so the monkeys are happy",
+        "hint": "And where did that evening acorn go?"
+      },
+      {
+        "text": "Seven either way — not one acorn more",
+        "hint": ""
+      },
+      {
+        "text": "The monkeys cannot count, so they were talked around",
+        "hint": "They simply watched the morning tray."
+      }
+    ],
+    "reveal": "The wording changed, and the monkeys were delighted. But not one acorn on the tree was added."
+  },
+  "misconceptions": [
+    "Changing the wording makes more of a thing",
+    "More in the morning means truly more"
+  ],
+  "quiz": [
+    {
+      "question": "What did the monkeys do when the keeper said three in the morning and four at night?",
+      "options": [
+        "They all leapt up in anger",
+        "They all lay down delighted",
+        "They said nothing at all"
+      ],
+      "answer": 0,
+      "explanation": "Hearing only three in the morning, they all leapt up in anger."
+    },
+    {
+      "question": "After the change to four in the morning and three at night, did the total number of acorns change?",
+      "options": [
+        "No, still seven",
+        "It went up",
+        "It went down"
+      ],
+      "answer": 0,
+      "explanation": "Three plus four, four plus three — seven either way. What changed was the wording, not the acorns."
+    },
+    {
+      "question": "Mum says 'homework first, then cartoons'; you say 'cartoons first, then homework'. Does the homework get smaller?",
+      "options": [
+        "Yes, smaller",
+        "No — both still have to be done",
+        "Only if the cartoons are short"
+      ],
+      "answer": 1,
+      "explanation": "The order changed, but not one task disappeared — just like the seven acorns."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "bins": [
+            {
+              "label": "morning"
+            },
+            {
+              "label": "night"
+            }
+          ],
+          "audience": {
+            "happyLine": "Four in the morning! Four in the morning!",
+            "angryLine": "Only three?",
+            "greedyLine": "The morning is happy, but the evening has none."
+          },
+          "hint": "Slide the marker"
+        }
+      }
+    ]
+  }
+}

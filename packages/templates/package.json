@@ -11,7 +11,10 @@
     "./substitution.logic": "./src/substitution.logic.ts",
     "./place.logic": "./src/place.logic.ts",
     "./tap.logic": "./src/tap.logic.ts",
-    "./aim.logic": "./src/aim.logic.ts"
+    "./aim.logic": "./src/aim.logic.ts",
+    "./mark.logic": "./src/mark.logic.ts",
+    "./split.logic": "./src/split.logic.ts",
+    "./burrow.logic": "./src/burrow.logic.ts"
   },
   "scripts": {
     "test": "vitest run",

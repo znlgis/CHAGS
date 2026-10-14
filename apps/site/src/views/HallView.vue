@@ -8,15 +8,25 @@ import { useProgress } from '../stores/progress';
 const progress = useProgress();
 const i18n = useLocale();
 
-/** 三种定性各有各的徽章：神话 / 传说 / 信史 */
+/** 四种定性各有各的徽章：神话 / 传说 / 信史 / 寓言 */
 const kindLabel = (kind: string): string =>
-  i18n.t(kind === 'myth' ? 'hall.myth' : kind === 'legend' ? 'hall.legend' : 'hall.history');
+  i18n.t(
+    kind === 'myth'
+      ? 'hall.myth'
+      : kind === 'legend'
+        ? 'hall.legend'
+        : kind === 'fable'
+          ? 'hall.fable'
+          : 'hall.history',
+  );
 const kindClass = (kind: string): string =>
   kind === 'myth'
     ? 'bg-[#efe4ff] text-[#5b3f96]'
     : kind === 'legend'
       ? 'bg-[#fdeccd] text-[#8a5f10]'
-      : 'bg-[#e6f1ef] text-[#2c6b64]';
+      : kind === 'fable'
+        ? 'bg-[#fdeaea] text-[#b03a31]'
+        : 'bg-[#e6f1ef] text-[#2c6b64]';
 const list = computed(() =>
   [...allusionsFor(i18n.locale)].sort((a, b) => a.yearApprox - b.yearApprox),
 );

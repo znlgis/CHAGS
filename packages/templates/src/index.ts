@@ -21,6 +21,23 @@ export { applyTemptation, effectiveDuration, isWaitDone, lineAt, waitProgress, w
 export * from './wait';
 // clamp01 在几个模板里同名，这里显式再导出
  export { aimDirection, distanceToSegment, firstHit, projectionT, pullAmount } from './aim.logic';
+// aim 的阶梯（百步穿杨）用的辅助：找当前这一档的靶子
+export { rungFor, rungTarget } from './aim.logic';
+// clamp01 / mood 在几个模板里同名，这里显式取名再导出
+export {
+  driftOffset, foundWith, hintSurface, markResult, reachSword, surfaceAt, surfaceWorldX,
+} from './mark.logic';
+export * from './mark';
+export {
+  clampLeft, countsFor, dividerX, happyLeft, isGreedy, isSplitSolved, leftFromX, mood,
+  moodLine, splitState, stepToward, watchedCount,
+} from './split.logic';
+export * from './split';
+export {
+  digState, escapeRoute, isBurrowOpen, neededBurrows, nextSpotToDig, openBurrows, spotAt,
+  waveResult,
+} from './burrow.logic';
+export * from './burrow';
 export * from './aim';
 export * from './quiz';
 export * from './reward';

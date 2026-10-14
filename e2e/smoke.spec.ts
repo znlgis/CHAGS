@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { clickDesign, dragDesign, events, holdDesign, tapDesign } from './helpers';
 import { REWARD, SUB, SUB_PILES } from '../packages/templates/src/layout';
+import { archerAt } from '../games/yangyouji/src/layout';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -531,4 +532,216 @@ test('中英双语下每个典故都能载入 —— 关卡数据在两种语言
       await page.waitForTimeout(180);
     }
   }
+});
+test('刻舟求剑：刻在船帮上一定捞空，改刻在岸上就捞到了', async ({ page }) => {
+  const level = loadContent('kezhou').game.stages[0]!.levelScript as {
+    surfaces: { id: string; x: number; y: number }[];
+  };
+  const boat = level.surfaces.find((s) => s.id === 'boat')!;
+  const tree = level.surfaces.find((s) => s.id === 'tree')!;
+  test.setTimeout(120_000);
+
+  await page.goto('/#/play/kezhou');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+  await page.waitForTimeout(450);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:mark');
+
+  // ① 照故事里的做法：刻在船帮上
+  await clickDesign(page, boat.x, boat.y);
+  await expect.poll(() => events(page)).toContain('beat:enter:mark:carve:boat');
+  // 船漂走 → 从记号处下水 → 只摸到水草
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('beat:enter:mark:result:miss');
+  expect(await events(page), '捞空不是通关').not.toContain('level:complete');
+
+  // ② 船回到上游，这次刻在岸边的树上
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:mark:retry');
+  await page.waitForTimeout(1600);
+  await clickDesign(page, tree.x, tree.y);
+  await expect.poll(() => events(page)).toContain('beat:enter:mark:carve:tree');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('beat:enter:mark:result:found');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
+});
+
+test('刻舟求剑 autoplay 全流程（先刻船帮捞空一次，再从岸上捞到）', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/kezhou');
+  await expect.poll(() => events(page), { timeout: 90_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+});
+
+test('朝三暮四：挪一格就从发怒变高兴，绳上一直是七颗', async ({ page }) => {
+  const level = loadContent('zhaosanmusi').game.stages[0]!.levelScript as {
+    total: number;
+    initialLeft: number;
+    bins: { id: string; x: number; y: number }[];
+  };
+  const left = level.bins[0]!;
+  const right = level.bins[1]!;
+  const gap = (right.x - left.x) / level.total;
+  test.setTimeout(120_000);
+
+  await page.goto('/#/play/zhaosanmusi');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+  await page.waitForTimeout(450);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:split');
+
+  // 开局朝三暮四：猴子在闹，还没通关
+  expect(await events(page)).not.toContain('split:mood:happy');
+  expect(await events(page)).not.toContain('level:complete');
+
+  // 把木牌往右挪一格：早上三颗 → 四颗
+  await dragDesign(
+    page,
+    { x: left.x + gap * level.initialLeft, y: left.y },
+    { x: left.x + gap * (level.initialLeft + 1), y: left.y },
+  );
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:split:mood:happy');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
+  // 只是换了分法，没有把一头分空
+  expect(await events(page)).not.toContain('beat:enter:split:greedy');
+});
+
+test('朝三暮四 autoplay 全流程（一步一格挪到让猴子高兴）', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/zhaosanmusi');
+  await expect.poll(() => events(page), { timeout: 90_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+});
+test('狡兔三窟：一个洞被狐狸守住，挖到三窟才躲得过', async ({ page }) => {
+  const level = loadContent('jiaotu').game.stages[0]!.levelScript as {
+    spots: { id: string; x: number; y: number }[];
+  };
+  const dig = async (spot: { x: number; y: number }): Promise<void> => {
+    for (let i = 0; i < 3; i += 1) {
+      await clickDesign(page, spot.x, spot.y);
+      await page.waitForTimeout(220);
+    }
+  };
+  test.setTimeout(180_000);
+
+  await page.goto('/#/play/jiaotu');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+  await page.waitForTimeout(450);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:burrow');
+
+  // 只挖一个洞：狐狸一来就把它守住
+  await dig(level.spots[0]!);
+  await expect.poll(() => events(page), { timeout: 30_000 }).toContain('beat:enter:burrow:open:left');
+  await expect.poll(() => events(page), { timeout: 30_000 }).toContain('beat:enter:burrow:wave:fox:trapped');
+  expect(await events(page), '被守住不是通关').not.toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 30_000 }).toContain('beat:enter:burrow:passed:fox:trapped');
+
+  // 第二个洞：躲得过狐狸；可猎人和老鹰一起来，两个洞口还是不够
+  await dig(level.spots[1]!);
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('beat:enter:burrow:wave:fox:safe');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('beat:enter:burrow:wave:hunter:trapped');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('beat:enter:burrow:passed:hunter:trapped');
+
+  // 第三个洞：三窟已就
+  await dig(level.spots[2]!);
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('beat:enter:burrow:wave:hunter:safe');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
+});
+
+test('狡兔三窟 autoplay 全流程（一窟被堵 → 三窟脱身）', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/jiaotu');
+  await expect.poll(() => events(page), { timeout: 120_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+});
+
+test('百步穿杨：一档一档往后退，五片柳叶全中', async ({ page }) => {
+  const level = loadContent('yangyouji').game.stages[0]!.levelScript as {
+    targets: { id: string; x: number; y: number }[];
+    ladder: { rungs: { id: string; targetId: string }[]; advance: { x: number; y: number } };
+  };
+  test.setTimeout(180_000);
+
+  await page.goto('/#/play/yangyouji');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+  await page.waitForTimeout(450);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:aim');
+
+  for (let rung = 0; rung < level.ladder.rungs.length; rung += 1) {
+    const target = level.targets.find((t) => t.id === level.ladder.rungs[rung]!.targetId)!;
+    await dragDesign(page, archerAt(rung), { x: target.x, y: target.y });
+    await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:hit-' + target.id);
+    if (rung < level.ladder.rungs.length - 1) {
+      // 射中了要自己把木牌往后挪一档，下一片叶子才露面
+      await clickDesign(page, level.ladder.advance.x, level.ladder.advance.y);
+      await expect.poll(() => events(page), { timeout: 20_000 }).toContain(
+        'beat:enter:aim:advance:' + (rung + 1),
+      );
+    }
+  }
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
+});
+
+test('百步穿杨 autoplay 全流程（五档一档一档练上去）', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/yangyouji');
+  await expect.poll(() => events(page), { timeout: 120_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+});
+test('庖丁解牛：先砍一刀留下缺口，再顺着缝一块块推出去', async ({ page }) => {
+  const level = loadContent('paoding').game.stages[0]!.levelScript as {
+    pieces: { id: string; x: number; y: number; grooveDeg: number }[];
+  };
+  /** 顺势拖一段（端点夹回画布里，别把手指拖到画布外面去） */
+  const pushAlong = async (piece: { x: number; y: number; grooveDeg: number }): Promise<void> => {
+    const rad = (piece.grooveDeg * Math.PI) / 180;
+    const to = {
+      x: Math.min(720, Math.max(30, piece.x + Math.cos(rad) * 170)),
+      y: Math.min(1300, Math.max(190, piece.y + Math.sin(rad) * 170)),
+    };
+    await dragDesign(page, { x: piece.x, y: piece.y }, to);
+  };
+  test.setTimeout(180_000);
+
+  await page.goto('/#/play/paoding');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('session:start');
+  await page.waitForTimeout(450);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page)).toContain('scene:enter:butcher');
+
+  // 第一刀砍在骨头上：刀口多一个缺口（不失败、不扣分）
+  await clickDesign(page, 375, 700);
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:butcher:blind:1');
+  expect(await events(page), '砍一刀不是通关').not.toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:butcher:phase:grain');
+
+  // 顺着每一块的缝推出去
+  for (const piece of level.pieces) {
+    await pushAlong(piece);
+    await expect.poll(() => events(page), { timeout: 20_000 }).toContain(
+      'beat:enter:butcher:open:' + piece.id,
+    );
+  }
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
+});
+
+test('庖丁解牛 autoplay 全流程（先撞一次，再顺缝解完）', async ({ page }) => {
+  await page.goto('/?autoplay=1#/play/paoding');
+  await expect.poll(() => events(page), { timeout: 120_000 }).toContain('level:complete');
+  await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });

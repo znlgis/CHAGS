@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { clickDesign, dragDesign, events, holdDesign, tapDesign } from './helpers';
+import { archerAt } from '../games/yangyouji/src/layout';
 import { SUB, SUB_PILES } from '../packages/templates/src/layout';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -29,7 +30,9 @@ const BOAT = { x: SUB.boatX, y: 600 };
  * 第二辑的玩法不是连点（要尝、要划、要等），所以每部各给一个驱动方式；
  * 没有 driver 的走默认的连点分支。
  */
-type Driver = 'place' | 'sort' | 'trace' | 'wait' | 'beacon';
+type Driver =
+  | 'place' | 'sort' | 'trace' | 'wait' | 'beacon'
+  | 'mark' | 'split' | 'burrow' | 'practice' | 'butcher';
 
 const NEW_GAMES: {
   id: string;
@@ -49,6 +52,12 @@ const NEW_GAMES: {
   { id: 'taigong', driver: 'wait' },
   { id: 'fenghuo', driver: 'beacon' },
   { id: 'qiren', driver: 'place' },
+  // 第三辑
+  { id: 'kezhou', driver: 'mark' },
+  { id: 'zhaosanmusi', driver: 'split' },
+  { id: 'jiaotu', driver: 'burrow' },
+  { id: 'yangyouji', driver: 'practice' },
+  { id: 'paoding', driver: 'butcher' },
 ];
 
 interface Point { x: number; y: number }
@@ -169,7 +178,7 @@ for (const locale of LOCALES) {
 }
 for (const locale of LOCALES) {
   test('audit ' + locale + ' — 其余十部典故（版面 + 典故卡）', async ({ page }) => {
-    test.setTimeout(1_200_000);
+    test.setTimeout(1_800_000);
     await page.setViewportSize({ width: 430, height: 932 });
     const out = '.scratch/i18n-audit/' + locale;
 
@@ -201,6 +210,37 @@ for (const locale of LOCALES) {
         const orb = nuwaPlace.orbs[0]!;
         const slot = nuwaPlace.slots.find((s) => s.id === orb.slotId)!;
         await dragDesign(page, { x: orb.x, y: orb.y }, { x: slot.x, y: slot.y });
+      }
+      if (game.id === 'kezhou') {
+        const level = levelOf('kezhou') as { surfaces: Point[] };
+        await clickDesign(page, level.surfaces[0]!.x, level.surfaces[0]!.y);
+        await page.waitForTimeout(1800);
+      }
+      if (game.id === 'zhaosanmusi') {
+        const level = levelOf('zhaosanmusi') as { total: number; initialLeft: number; bins: Point[] };
+        const gap = (level.bins[1]!.x - level.bins[0]!.x) / level.total;
+        await dragDesign(
+          page,
+          { x: level.bins[0]!.x + gap * level.initialLeft, y: level.bins[0]!.y },
+          { x: level.bins[0]!.x + gap * (level.initialLeft + 1), y: level.bins[0]!.y },
+        );
+      }
+      if (game.id === 'jiaotu') {
+        const level = levelOf('jiaotu') as { spots: Point[] };
+        for (let i = 0; i < 3; i += 1) {
+          await clickDesign(page, level.spots[0]!.x, level.spots[0]!.y);
+          await page.waitForTimeout(180);
+        }
+        await page.waitForTimeout(1200);
+      }
+      if (game.id === 'yangyouji') {
+        const level = levelOf('yangyouji') as { targets: Point[] };
+        await dragDesign(page, archerAt(0), { x: level.targets[0]!.x, y: level.targets[0]!.y });
+        await page.waitForTimeout(600);
+      }
+      if (game.id === 'paoding') {
+        await clickDesign(page, 375, 700);
+        await page.waitForTimeout(1800);
       }
       if (game.taps) await tapDesign(page, 375, 1000, game.taps, 110);
       if (game.hold) await holdDesign(page, 375, 1000, game.hold);
@@ -295,6 +335,79 @@ for (const locale of LOCALES) {
           await page.waitForTimeout(500);
         }
         await clickDesign(page, level.finale.x, level.finale.y);
+      } else if (game.id === 'kezhou') {
+        // 刻在船帮上 → 捞空 → 回到上游 → 改刻在岸边的树上
+        const level = levelOf('kezhou') as { surfaces: ({ id: string } & Point)[] };
+        const boat = level.surfaces.find((s) => s.id === 'boat')!;
+        const tree = level.surfaces.find((s) => s.id === 'tree')!;
+        await clickDesign(page, boat.x, boat.y);
+        for (let i = 0; i < 80; i += 1) {
+          if ((await events(page)).includes('beat:enter:mark:retry')) break;
+          await page.waitForTimeout(400);
+        }
+        await page.waitForTimeout(1700);
+        await clickDesign(page, tree.x, tree.y);
+      } else if (game.id === 'zhaosanmusi') {
+        // 木牌往右挪一格：朝三暮四 → 朝四暮三
+        const level = levelOf('zhaosanmusi') as { total: number; initialLeft: number; bins: Point[] };
+        const gap = (level.bins[1]!.x - level.bins[0]!.x) / level.total;
+        await dragDesign(
+          page,
+          { x: level.bins[0]!.x + gap * level.initialLeft, y: level.bins[0]!.y },
+          { x: level.bins[0]!.x + gap * (level.initialLeft + 1), y: level.bins[0]!.y },
+        );
+      } else if (game.id === 'jiaotu') {
+        // 一个洞一个洞地挖，每挖通一个就等这一趟危险过去
+        const level = levelOf('jiaotu') as { spots: Point[] };
+        const passed = async (): Promise<number> =>
+          (await events(page)).filter((e) => e.startsWith('beat:enter:burrow:passed')).length;
+        for (const spot of level.spots) {
+          if ((await events(page)).includes('card:unlocked')) break;
+          const before = await passed();
+          for (let i = 0; i < 3; i += 1) {
+            await clickDesign(page, spot.x, spot.y);
+            await page.waitForTimeout(240);
+          }
+          for (let i = 0; i < 60; i += 1) {
+            if ((await events(page)).includes('card:unlocked')) break;
+            if ((await passed()) > before) break;
+            await page.waitForTimeout(300);
+          }
+        }
+      } else if (game.id === 'yangyouji') {
+        // 一档一档：射中 → 退十步 → 再射
+        const level = levelOf('yangyouji') as {
+          targets: ({ id: string } & Point)[];
+          ladder: { rungs: { targetId: string }[]; advance: Point };
+        };
+        for (let rung = 0; rung < level.ladder.rungs.length; rung += 1) {
+          if ((await events(page)).includes('card:unlocked')) break;
+          const target = level.targets.find((t) => t.id === level.ladder.rungs[rung]!.targetId)!;
+          await dragDesign(page, archerAt(rung), { x: target.x, y: target.y });
+          await page.waitForTimeout(600);
+          if (rung < level.ladder.rungs.length - 1) {
+            await clickDesign(page, level.ladder.advance.x, level.ladder.advance.y);
+            await page.waitForTimeout(500);
+          }
+        }
+      } else if (game.id === 'paoding') {
+        // 先砍一刀，再顺着每一块的缝推出去
+        const level = levelOf('paoding') as { pieces: ({ id: string; grooveDeg: number } & Point)[] };
+        await clickDesign(page, 375, 700);
+        await page.waitForTimeout(2000);
+        for (const piece of level.pieces) {
+          if ((await events(page)).includes('card:unlocked')) break;
+          const rad = (piece.grooveDeg * Math.PI) / 180;
+          await dragDesign(
+            page,
+            { x: piece.x, y: piece.y },
+            {
+              x: Math.min(720, Math.max(30, piece.x + Math.cos(rad) * 170)),
+              y: Math.min(1300, Math.max(190, piece.y + Math.sin(rad) * 170)),
+            },
+          );
+          await page.waitForTimeout(240);
+        }
       } else if (game.id === 'houyi') {
         for (let i = 0; i < 14; i += 1) {
           if ((await events(page)).includes('card:unlocked')) break;

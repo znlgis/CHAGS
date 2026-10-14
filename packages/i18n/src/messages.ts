@@ -15,6 +15,7 @@ export const messages = {
     'hall.myth': '神话',
     'hall.legend': '传说',
     'hall.history': '信史',
+    'hall.fable': '寓言',
 
     'album.title': '我的典故图鉴',
     'album.empty': '还没有收集到典故卡，去典故馆玩一局吧！',
@@ -42,6 +43,12 @@ export const messages = {
     'scene.wait': '等一等',
     'scene.beacon': '点一点',
     'scene.worry': '想一想',
+    'scene.mark': '刻一刻',
+    'scene.split': '分一分',
+    'scene.burrow': '凿一凿',
+    'scene.practice': '练一练',
+    'scene.butcher': '游一游',
+    'aim.stepBack': '再退十步',
     'scene.reward': '典故卡',
     'sort.tasteFirst': '先尝一口',
 
@@ -64,6 +71,7 @@ export const messages = {
     'hall.myth': 'Myth',
     'hall.legend': 'Legend',
     'hall.history': 'History',
+    'hall.fable': 'Fable',
 
     'album.title': 'My Story Cards',
     'album.empty': 'No cards yet — go and play one!',
@@ -91,6 +99,12 @@ export const messages = {
     'scene.wait': 'Wait',
     'scene.beacon': 'Light It',
     'scene.worry': 'Think It Through',
+    'scene.mark': 'Mark It',
+    'scene.split': 'Split It',
+    'scene.burrow': 'Dig a Burrow',
+    'scene.practice': 'Practise',
+    'scene.butcher': 'Glide the Blade',
+    'aim.stepBack': 'Ten paces back',
     'scene.reward': 'Story Card',
     'sort.tasteFirst': 'Taste it first',
 

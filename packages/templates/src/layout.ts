@@ -12,6 +12,10 @@ export const SCENE_KEYS = {
   trace: 'trace',
   wait: 'wait',
   beacon: 'beacon',
+  mark: 'mark',
+  split: 'split',
+  burrow: 'burrow',
+  butcher: 'butcher',
   quiz: 'quiz',
   reward: 'reward',
 } as const;
@@ -98,6 +102,48 @@ export const WAIT = {
   autoplayFactor: 7,
   /** 多久没动静就给提示 */
   idleMs: 9000,
+} as const;
+
+// ---------- mark：在会动的世界上做记号 ----------
+export const MARK = {
+  /** 刻记号的命中宽容度：手指粗也能刻到 */
+  carveForgive: 70,
+  /** 刻完之后多久开船（给孩子看一眼自己刻的记号） */
+  carveHoldMs: 1200,
+  /** 下水捞一趟的时长 */
+  diveMs: 1400,
+  /** 捞空之后，船回到上游、记号清掉的停顿 */
+  retryHoldMs: 1800,
+  /** 无头验证时把漂船压成几分之一 */
+  autoplayFactor: 7,
+  /** 多久没动静就把小手放到船帮上 */
+  idleMs: 6000,
+} as const;
+
+// ---------- split：总量不变，换个分法 ----------
+export const SPLIT = {
+  /** 木牌（分界）的命中半径 */
+  dividerRadius: 86,
+  /** 猴子看完新分法的反应时间 */
+  reactMs: 900,
+  /** 多久没动静就把小手放到木牌上 */
+  idleMs: 8000,
+} as const;
+
+// ---------- burrow：预留退路 ----------
+export const BURROW = {
+  /** 土坡的命中宽容度 */
+  digForgive: 60,
+  /** 挖一铲之后，危险出现的停顿（让孩子看清自己挖了几个洞） */
+  firstWaveDelayMs: 1400,
+  /** 危险守在洞口 / 从洞口脱身的一次演出 */
+  dangerMs: 2400,
+  /** 两次危险之间的呼吸 */
+  gapMs: 1400,
+  /** 无头验证时把这些演出压成几分之一 */
+  autoplayFactor: 5,
+  /** 多久没动静就把小手放到还没挖的土坡上 */
+  idleMs: 7000,
 } as const;
 
 // ---------- 复习小考验（复习模式用，首次通关不出现） ----------

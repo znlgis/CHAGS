@@ -10,6 +10,11 @@ import rawQiren from './qiren.json';
 import rawFenghuo from './fenghuo.json';
 import rawTaigong from './taigong.json';
 import rawDayu from './dayu.json';
+import rawKezhou from './kezhou.json';
+import rawZhaosanmusi from './zhaosanmusi.json';
+import rawJiaotu from './jiaotu.json';
+import rawYangyouji from './yangyouji.json';
+import rawPaoding from './paoding.json';
 import { patchFor } from '../i18n';
 import { DEFAULT_LOCALE } from '../locale';
 import type { Locale } from '../locale';
@@ -32,6 +37,11 @@ export const allusions: AllusionContent[] = [
   AllusionSchema.parse(rawFenghuo),
   AllusionSchema.parse(rawTaigong),
   AllusionSchema.parse(rawDayu),
+  AllusionSchema.parse(rawKezhou),
+  AllusionSchema.parse(rawZhaosanmusi),
+  AllusionSchema.parse(rawJiaotu),
+  AllusionSchema.parse(rawYangyouji),
+  AllusionSchema.parse(rawPaoding),
 ];
 
 /** 取某个典故里指定模板的阶段脚本；缺了就早失败，别等玩到一半才发现 */

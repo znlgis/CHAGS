@@ -27,7 +27,12 @@
     "@chags/game-qiren": "workspace:*",
     "@chags/game-dayu": "workspace:*",
     "@chags/game-taigong": "workspace:*",
-    "@chags/game-fenghuo": "workspace:*"
+    "@chags/game-fenghuo": "workspace:*",
+    "@chags/game-kezhou": "workspace:*",
+    "@chags/game-zhaosanmusi": "workspace:*",
+    "@chags/game-jiaotu": "workspace:*",
+    "@chags/game-yangyouji": "workspace:*",
+    "@chags/game-paoding": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

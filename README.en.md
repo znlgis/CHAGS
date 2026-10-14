@@ -178,9 +178,66 @@ The bubble pops, the room brightens — and when all four are gone the dark clou
 |---|---|---|
 | ![worries](docs/screenshots/71-qiren-worries.png) | ![popped](docs/screenshots/72-qiren-one-less.png) | ![asleep](docs/screenshots/73-qiren-asleep.png) |
 
+### 13. Marking the Boat for a Lost Sword (fable · frames of reference)
+
+A man crosses the river and his sword falls in. **The sword never leaves the screen and the boat never
+stops moving** — the whole idea is carried by that one picture. Carve a mark on the boat's side, the way
+the story does: the boat drifts, the mark drifts with it, and diving where the mark is finds only weeds.
+Back upstream, the child can mark the tree on the bank, or drop a float on the water — a mark on
+something that stays put is the one that works.
+
+| Carved on the boat | Drifted, sword still upstream | Marked on the tree — found |
+|---|---|---|
+| ![carve](docs/screenshots/74-kezhou-story.png) | ![drift](docs/screenshots/75-kezhou-drifted.png) | ![found](docs/screenshots/76-kezhou-found.png) |
+
+### 14. Three in the Morning, Four at Night (fable · wording and substance)
+
+Seven acorns are strung on a taut rope; only the little divider in the middle moves.
+"Three in the morning, four at night" — the monkeys erupt. Slide the divider one place: "four in the
+morning, three at night" — and they cheer. The rope always reads **3 + 4 = 7**: the wording changed,
+not one acorn did.
+
+| Three and four: uproar | One place over: delight |
+|---|---|
+| ![angry](docs/screenshots/78-zhaosanmusi-angry.png) | ![happy](docs/screenshots/79-zhaosanmusi-happy.png) |
+
+### 15. The Cunning Rabbit's Three Burrows (history · a way out)
+
+Three mounds in the meadow; a tap digs one spadeful. Open one burrow and the fox arrives — one guarded
+entrance and the rabbit cannot get out. A second burrow outwits the fox; but the fox and the hawk come
+together and watch two entrances, which is still not enough. **The third burrow is forced by the number
+of dangers in the level data**, not by a line of text.
+
+| One burrow, the fox at the door | Three burrows |
+|---|---|
+| ![one](docs/screenshots/81-jiaotu-one-burrow.png) | ![three](docs/screenshots/82-jiaotu-three-burrows.png) |
+
+### 16. A Hundred Paces Through a Willow Leaf (history · practice)
+
+Five willow leaves hang on the tree, and the child **steps back by themselves**: ten paces, thirty,
+fifty, eighty, a hundred. The farther the leaf, the smaller it is drawn — and the smaller the hit
+radius. Each hit leaves a hole in a leaf; then step back again. (Same bow gesture as Houyi, but one
+shoots suns in the night sky and the other practises on leaves in a sunlit grove — this one is about
+practice.)
+
+| Ten paces | A hundred paces |
+|---|---|
+| ![ten](docs/screenshots/84-yangyouji-ten-paces.png) | ![hundred](docs/screenshots/85-yangyouji-hundred-paces.png) |
+
+### 17. Cook Ding Carves an Ox (fable · follow the seam)
+
+The first cut lands on bone: a clang, and the blade gains a nick — the child finds that out first-hand.
+Then the seams light up: grab a piece and **push along the seam** and it slides free with a click. The
+last two pieces are given no hint at all. The ending is a whole skeleton — and a knife still like new
+after nineteen years.
+
+| The first cut | Opened along the seams |
+|---|---|
+| ![cut](docs/screenshots/87-paoding-first-cut.png) | ![skeleton](docs/screenshots/88-paoding-skeleton.png) |
+
 ## Design principle: fewer words, more doing
 
-Across all twelve stories there is almost no teaching text on screen: the two opening lines of a story,
+Across all seventeen stories there is almost no teaching text on screen: the two opening lines of a story,
 and one short hint that only appears if the child is stuck. Everything else is shape, motion, sound and
 speech. Kids **work out** the idea instead of being told it.
 
@@ -204,7 +261,7 @@ apps/site                  Vue 3.5 shell: hall / game host / album, language swi
 packages/game-kit          Contracts (GameModule / GameContext / events). No Phaser.
 packages/content           Story data + zod schemas + translations
 packages/i18n              UI message catalogs (zh-CN / en)
-packages/templates         Gameplay templates: story / substitution / tap / place / aim / sort / trace / wait / quiz / reward
+packages/templates         Gameplay templates: story / substitution / tap / place / aim / sort / trace / wait / mark / split / burrow / butcher / quiz / reward
 packages/phaser-kit        Phaser bootstrap, cartoon drawing primitives, drag controller, base scene
 packages/platform          Web services: IndexedDB / WebAudio / TTS / lifecycle
 packages/progress          Save file, migration, spaced-repetition scheduling (pure functions)

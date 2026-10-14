@@ -11,6 +11,11 @@ import enQiren from './en/qiren.json';
 import enFenghuo from './en/fenghuo.json';
 import enTaigong from './en/taigong.json';
 import enDayu from './en/dayu.json';
+import enKezhou from './en/kezhou.json';
+import enZhaosanmusi from './en/zhaosanmusi.json';
+import enJiaotu from './en/jiaotu.json';
+import enYangyouji from './en/yangyouji.json';
+import enPaoding from './en/paoding.json';
 
 /**
  * 典故内容的翻译补丁。结构镜像原文，只写需要翻译的字段。
@@ -30,6 +35,11 @@ export const patches: Partial<Record<Locale, Record<string, unknown>>> = {
     fenghuo: enFenghuo,
     taigong: enTaigong,
     dayu: enDayu,
+    kezhou: enKezhou,
+    zhaosanmusi: enZhaosanmusi,
+    jiaotu: enJiaotu,
+    yangyouji: enYangyouji,
+    paoding: enPaoding,
   },
 };
 

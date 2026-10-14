@@ -1,5 +1,7 @@
 import { test } from '@playwright/test';
-import { clickDesign, dragDesign, holdDesign, tapDesign } from './helpers';
+import { expect } from '@playwright/test';
+import { clickDesign, dragDesign, events, holdDesign, tapDesign } from './helpers';
+import { archerAt } from '../games/yangyouji/src/layout';
 import { REWARD, SUB, SUB_PILES } from '../packages/templates/src/layout';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -482,4 +484,196 @@ test('capture yugong screenshots', async ({ page }) => {
   await tapDesign(page, 375, 1000, 26, 130);
   await page.waitForTimeout(900);
   await page.screenshot({ path: 'docs/screenshots/52-yugong-done.png' });
+});
+// ---------------- 第三辑：刻舟求剑 / 朝三暮四 / 狡兔三窟 / 百步穿杨 / 庖丁解牛 ----------------
+
+test('capture kezhou screenshots', async ({ page }) => {
+  const level = loadContent('kezhou').game.stages[0]!.levelScript as {
+    surfaces: { id: string; x: number; y: number }[];
+  };
+  const boat = level.surfaces.find((s) => s.id === 'boat')!;
+  const tree = level.surfaces.find((s) => s.id === 'tree')!;
+
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/kezhou');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/74-kezhou-story.png' });
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(900);
+
+  // 刻在船帮上 → 船一漂，刻痕就跟着走（剑还在上游的水底 —— 这张就是签名画面）
+  await clickDesign(page, boat.x, boat.y);
+  await page.waitForTimeout(5900);
+  await page.screenshot({ path: 'docs/screenshots/75-kezhou-drifted.png' });
+
+  // 回到上游，改刻在岸边的树上 → 捞到剑
+  await page.waitForTimeout(4200);
+  await clickDesign(page, tree.x, tree.y);
+  await page.waitForTimeout(7600);
+  await page.screenshot({ path: 'docs/screenshots/76-kezhou-found.png' });
+});
+
+test('capture zhaosanmusi screenshots', async ({ page }) => {
+  const level = loadContent('zhaosanmusi').game.stages[0]!.levelScript as {
+    total: number;
+    initialLeft: number;
+    bins: { x: number; y: number }[];
+  };
+  const gap = (level.bins[1]!.x - level.bins[0]!.x) / level.total;
+  const divider = (left: number) => ({ x: level.bins[0]!.x + gap * left, y: level.bins[0]!.y });
+
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/zhaosanmusi');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/77-zhaosanmusi-story.png' });
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(900);
+
+  // 朝三暮四：猴子全在闹
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: 'docs/screenshots/78-zhaosanmusi-angry.png' });
+
+  // 木牌挪一格：朝四暮三 —— 绳上还是那七颗，猴子却笑了（签名画面）。
+  // 拖一次不一定抓得到（手指粗细、落点差几像素），所以按事件确认，最多再试两次。
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if ((await events(page)).includes('beat:enter:split:mood:happy')) break;
+    await dragDesign(page, divider(level.initialLeft), divider(level.initialLeft + 1));
+    await page.waitForTimeout(500);
+  }
+  await expect.poll(() => events(page), { timeout: 15_000 }).toContain('beat:enter:split:mood:happy');
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: 'docs/screenshots/79-zhaosanmusi-happy.png' });
+});
+
+test('capture jiaotu screenshots', async ({ page }) => {
+  const level = loadContent('jiaotu').game.stages[0]!.levelScript as {
+    spots: { x: number; y: number }[];
+  };
+  const dig = async (spot: { x: number; y: number }): Promise<void> => {
+    for (let i = 0; i < 3; i += 1) {
+      await clickDesign(page, spot.x, spot.y);
+      await page.waitForTimeout(220);
+    }
+  };
+  const waitFor = async (needle: string, tries = 100): Promise<void> => {
+    for (let i = 0; i < tries; i += 1) {
+      if ((await events(page)).includes(needle)) return;
+      await page.waitForTimeout(200);
+    }
+  };
+
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/jiaotu');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/80-jiaotu-story.png' });
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(900);
+
+  // 只有一个洞：狐狸一守，它就出不去
+  await dig(level.spots[0]!);
+  await waitFor('beat:enter:burrow:wave:fox:trapped');
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'docs/screenshots/81-jiaotu-one-burrow.png' });
+
+  // 挖到第二个洞躲过狐狸，再到第三个洞躲过猎人和老鹰（签名画面：从别的洞口出来）
+  await waitFor('beat:enter:burrow:passed:fox:trapped');
+  await dig(level.spots[1]!);
+  await waitFor('beat:enter:burrow:passed:hunter:trapped');
+  await dig(level.spots[2]!);
+  await waitFor('beat:enter:burrow:wave:hunter:safe');
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: 'docs/screenshots/82-jiaotu-three-burrows.png' });
+});
+
+test('capture yangyouji screenshots', async ({ page }) => {
+  const level = loadContent('yangyouji').game.stages[0]!.levelScript as {
+    targets: { id: string; x: number; y: number }[];
+    ladder: { rungs: { targetId: string }[]; advance: { x: number; y: number } };
+  };
+  const rungs = level.ladder.rungs;
+  const targetOf = (rung: number) =>
+    level.targets.find((t) => t.id === rungs[rung]!.targetId)!;
+  const waitFor = async (needle: string, tries = 40): Promise<void> => {
+    for (let i = 0; i < tries; i += 1) {
+      if ((await events(page)).includes(needle)) return;
+      await page.waitForTimeout(200);
+    }
+  };
+
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/yangyouji');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/83-yangyouji-story.png' });
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(900);
+
+  // 十步：最近、最大的一片柳叶
+  const first = targetOf(0);
+  await dragDesign(page, archerAt(0), { x: first.x, y: first.y });
+  await waitFor('beat:enter:hit-' + first.id);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'docs/screenshots/84-yangyouji-ten-paces.png' });
+
+  // 一档一档退到百步，一箭穿过那片最小的叶子（签名画面）
+  for (let rung = 0; rung < rungs.length - 1; rung += 1) {
+    await clickDesign(page, level.ladder.advance.x, level.ladder.advance.y);
+    await waitFor('beat:enter:aim:advance:' + (rung + 1));
+    const target = targetOf(rung + 1);
+    await dragDesign(page, archerAt(rung + 1), { x: target.x, y: target.y });
+    await waitFor('beat:enter:hit-' + target.id);
+    await page.waitForTimeout(400);
+  }
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'docs/screenshots/85-yangyouji-hundred-paces.png' });
+});
+
+test('capture paoding screenshots', async ({ page }) => {
+  const level = loadContent('paoding').game.stages[0]!.levelScript as {
+    pieces: { id: string; x: number; y: number; grooveDeg: number }[];
+  };
+  const pushAlong = async (piece: { x: number; y: number; grooveDeg: number }): Promise<void> => {
+    const rad = (piece.grooveDeg * Math.PI) / 180;
+    await dragDesign(
+      page,
+      { x: piece.x, y: piece.y },
+      {
+        x: Math.min(720, Math.max(30, piece.x + Math.cos(rad) * 170)),
+        y: Math.min(1300, Math.max(190, piece.y + Math.sin(rad) * 170)),
+      },
+    );
+    await page.waitForTimeout(240);
+  };
+
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?lang=zh-CN#/play/paoding');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/86-paoding-story.png' });
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(520);
+  await clickDesign(page, 375, 900);
+  await page.waitForTimeout(900);
+
+  // 第一刀砍在骨头上：刀口多了一个缺口
+  await clickDesign(page, 375, 700);
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: 'docs/screenshots/87-paoding-first-cut.png' });
+
+  // 顺着缝一块块推出去，最后只剩一张骨架和一把好刀（签名画面）
+  await page.waitForTimeout(1400);
+  for (const piece of level.pieces) await pushAlong(piece);
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/88-paoding-skeleton.png' });
 });

@@ -56,11 +56,13 @@ export function firstHit(
   to: AimPoint,
   targets: readonly AimTargetPoint[],
   radius: number,
+  /** 可选：每个目标自己的命中半径（百步穿杨：越远的那片柳叶越小） */
+  radiusOf?: (target: AimTargetPoint) => number,
 ): string | null {
   let best: string | null = null;
   let bestT = Number.POSITIVE_INFINITY;
   for (const target of targets) {
-    if (distanceToSegment(target, from, to) > radius) continue;
+    if (distanceToSegment(target, from, to) > (radiusOf ? radiusOf(target) : radius)) continue;
     const t = projectionT(target, from, to);
     if (t < bestT) {
       best = target.id;
@@ -68,4 +70,19 @@ export function firstHit(
     }
   }
   return best;
+}
+/** 距离阶梯：第 index 档（越界返回 undefined） */
+export function rungFor<T extends { id: string }>(
+  rungs: readonly T[],
+  index: number,
+): T | undefined {
+  return rungs[index];
+}
+
+/** 距离阶梯：某一档对应的靶子 id */
+export function rungTarget(
+  rungs: readonly { targetId: string }[],
+  index: number,
+): string | undefined {
+  return rungs[index]?.targetId;
 }
