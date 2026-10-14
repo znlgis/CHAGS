@@ -76,6 +76,9 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
     private idleMs = 0;
     /** 长按模式下"已经按住多久"：用来决定小手什么时候才收起来 */
     private heldMs = 0;
+    /** 这一次按住的起点（墙钟 + 那一刻的数值），松手后重新记 */
+    private holdStartedAt = 0;
+    private holdStartValue = 0;
 
     constructor() {
       super(SCENE_KEYS.tap, ctx);
@@ -101,6 +104,11 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
         // 长按：松手就停，会有"追不上"的紧张感
         this.input.on('pointerdown', () => {
           this.holding = true;
+          // 记下起点，之后**按墙钟时间**算进度，不再累加帧间隔。
+          // Phaser 在帧率低时会钳制 delta，慢机器上"按住 6 秒"累积不到 6 秒的进度 ——
+          // 而旧安卓手机正是目标用户。CI 上就是卡在这里：按住 3.4 秒到不了 45%。
+          this.holdStartedAt = this.ctx.services.now();
+          this.holdStartValue = this.value;
         });
         this.input.on('pointerup', () => {
           this.holding = false;
@@ -139,8 +147,8 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
 
       if (!this.paused) {
         if (cfg.level.mode === 'hold' && this.holding) {
-          this.heldMs += delta;
-          this.setValue(advanceHold(this.value, cfg.level, delta), false);
+          this.heldMs = this.ctx.services.now() - this.holdStartedAt;
+          this.setValue(advanceHold(this.holdStartValue, cfg.level, this.heldMs), false);
         } else {
           this.heldMs = 0;
         }
