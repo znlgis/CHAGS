@@ -277,11 +277,16 @@ jobs:
       - name: 确认发布类型
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 这个 job 没有 checkout（只下载构建产物），而 gh 需要知道是哪个仓库 ——
+          # 不给它就会去跑 git remote，然后报 "not a git repository"。
+          GH_REPO: ${{ github.repository }}
         run: |
           # 带 - 的 tag（v1.0.0-beta.1）保持预发布；其余显式改回正式发布。
           # 不这么做的话，上面的 action 会因为"字符串 false 是 truthy"而一律标成预发布。
           if [[ "${GITHUB_REF_NAME}" == *-* ]]; then
-            echo "${GITHUB_REF_NAME} 带 - ，保持预发布"
+            # 带 - 的 tag（v1.0.0-beta.1）：action 那边没传 prerelease（默认正式），这里补标
+            gh release edit "${GITHUB_REF_NAME}" --prerelease
+            echo "${GITHUB_REF_NAME} 已标为预发布"
           else
             gh release edit "${GITHUB_REF_NAME}" --prerelease=false
             echo "${GITHUB_REF_NAME} 已确认为正式发布"
