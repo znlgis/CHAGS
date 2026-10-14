@@ -135,31 +135,36 @@ export function createButcherScene(ctx: GameContext, cfg: ButcherConfig): Phaser
 
     /** 第一刀：砍在骨头上，刀口多一个缺口 —— 这就是"所见无非牛者" */
     private blindCut(x: number, y: number): void {
-      if (this.busy || this.finished) return;
+      if (this.finished) return;
       this.nicks = Math.min(cfg.level.blindCuts, this.nicks + 1);
       this.sfx('wrong');
       this.cameras.main.shake(180, 0.006);
       sparkleAt(this, x, y, THEME.stone, 5);
       this.speak(cfg.level.lines.first);
       this.ctx.emit('beat:enter', { beatId: 'butcher:blind:' + this.nicks });
-      this.redraw();
-      if (this.nicks < cfg.level.blindCuts) return;
-      this.busy = true;
-      const wait = this.autoplay ? 320 : 1400;
-      this.time.delayedCall(wait, () => this.startGrain());
+      if (this.nicks < cfg.level.blindCuts) {
+        this.redraw();
+        return;
+      }
+      // 砍完这一刀立刻进第二段：**中间不留"点了没反应"的空档**。
+      // 上一版在这里停了 1.4 秒，慢机器上孩子的下一次拖拽会被整个吞掉
+      // （CI 的双语巡检就是这么挂的：第一块骨头永远推不开）。
+      this.startGrain();
     }
 
-    /** 缝亮起来了：刀口也磨好了 */
+    /** 缝亮起来了：刀口也磨好了。不停机 —— 只有那句旁白晚一点念 */
     private startGrain(): void {
-      if (this.finished) return;
+      if (this.finished || this.phase === 'grain') return;
       this.phase = 'grain';
       this.nicks = 0;
       this.busy = false;
       this.idleMs = 0;
       this.sfx('correct');
       sparkleAt(this, KNIFE.x, KNIFE.y, THEME.gold, 6);
-      this.speak(cfg.level.lines.grain);
       this.ctx.emit('beat:enter', { beatId: 'butcher:phase:grain' });
+      this.time.delayedCall(this.autoplay ? 300 : 1500, () => {
+        if (!this.finished) this.speak(cfg.level.lines.grain);
+      });
       this.redraw();
     }
 

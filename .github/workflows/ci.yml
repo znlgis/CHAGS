@@ -74,9 +74,10 @@ jobs:
 
   # ---------- 双语版面巡检：把每个画面截下来，人工扫一眼 ----------
   audit:
-    # PR 上跑太慢（约 6 分钟），只在主干与手动触发时跑
+    # PR 上跑太慢（17 部 × 2 语言，约 30 分钟），只在主干与手动触发时跑
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -90,7 +91,10 @@ jobs:
       - name: 中英双语版面巡检
         run: pnpm audit:i18n
 
+      # 失败时更要看：卡在哪一屏，截图里就是。之前没写 if: always()，
+      # 一挂就什么都拿不到 —— 而"挂在哪"恰恰是巡检最需要回答的
       - name: 上传巡检截图（人工过目）
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: i18n-audit

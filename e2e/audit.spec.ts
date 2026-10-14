@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { clickDesign, dragDesign, events, holdDesign, tapDesign } from './helpers';
 import { archerAt } from '../games/yangyouji/src/layout';
 import { SUB, SUB_PILES } from '../packages/templates/src/layout';
@@ -88,6 +89,54 @@ const houyiScript = JSON.parse(
 ) as { game: { stages: { levelScript: { targets: { x: number; y: number }[] } }[] } };
 const houyiTargets = houyiScript.game.stages[0]!.levelScript.targets;
 const LOCALES = ['zh-CN', 'en'] as const;
+
+/**
+ * 巡检是"给画面截图"用的，不该因为一次点击没抓住就整轮失败。
+ * 这几个小工具都按**事件**判断有没有真的做到，最多重试几次。
+ */
+async function waitEvent(
+  page: Page,
+  needle: string,
+  tries = 60,
+  gap = 400,
+): Promise<boolean> {
+  for (let i = 0; i < tries; i += 1) {
+    if ((await events(page)).includes(needle)) return true;
+    await page.waitForTimeout(gap);
+  }
+  return false;
+}
+
+/** 点到这个事件出现为止（挖洞、点火这类"点一下推一格"的玩法都靠它） */
+async function tapUntil(
+  page: Page,
+  x: number,
+  y: number,
+  needle: string,
+  tries = 5,
+  gap = 260,
+): Promise<void> {
+  for (let i = 0; i < tries; i += 1) {
+    if ((await events(page)).includes(needle)) return;
+    await clickDesign(page, x, y);
+    await page.waitForTimeout(gap);
+  }
+}
+
+/** 拖到这块/这一箭真的成了为止 */
+async function dragUntil(
+  page: Page,
+  from: Point,
+  to: Point,
+  needle: string,
+  tries = 4,
+): Promise<void> {
+  for (let i = 0; i < tries; i += 1) {
+    if ((await events(page)).includes(needle)) return;
+    await dragDesign(page, from, to);
+    await page.waitForTimeout(320);
+  }
+}
 
 for (const locale of LOCALES) {
   const out = '.scratch/i18n-audit/' + locale;
@@ -192,6 +241,10 @@ for (const locale of LOCALES) {
         '/?lang=' + locale + '&r=' + nav + (autoplay ? '&autoplay=1' : '') + '#/play/' + id,
       );
     };
+
+    // 单个典故没走完不算"整轮巡检失败"：记下来继续跑，
+    // 这样后面的截图照旧产出，失败信息也点名到具体是哪一部。
+    const unfinished: string[] = [];
 
     for (const game of NEW_GAMES) {
       // 一、手动走一遍：故事 → 玩法 → 玩到一半
@@ -340,34 +393,29 @@ for (const locale of LOCALES) {
         const level = levelOf('kezhou') as { surfaces: ({ id: string } & Point)[] };
         const boat = level.surfaces.find((s) => s.id === 'boat')!;
         const tree = level.surfaces.find((s) => s.id === 'tree')!;
-        await clickDesign(page, boat.x, boat.y);
-        for (let i = 0; i < 80; i += 1) {
-          if ((await events(page)).includes('beat:enter:mark:retry')) break;
-          await page.waitForTimeout(400);
-        }
+        await tapUntil(page, boat.x, boat.y, 'beat:enter:mark:carve:boat', 3);
+        await waitEvent(page, 'beat:enter:mark:retry', 80, 400);
         await page.waitForTimeout(1700);
-        await clickDesign(page, tree.x, tree.y);
+        await tapUntil(page, tree.x, tree.y, 'beat:enter:mark:carve:tree', 3, 400);
       } else if (game.id === 'zhaosanmusi') {
         // 木牌往右挪一格：朝三暮四 → 朝四暮三
         const level = levelOf('zhaosanmusi') as { total: number; initialLeft: number; bins: Point[] };
         const gap = (level.bins[1]!.x - level.bins[0]!.x) / level.total;
-        await dragDesign(
+        await dragUntil(
           page,
           { x: level.bins[0]!.x + gap * level.initialLeft, y: level.bins[0]!.y },
           { x: level.bins[0]!.x + gap * (level.initialLeft + 1), y: level.bins[0]!.y },
+          'beat:enter:split:mood:happy',
         );
       } else if (game.id === 'jiaotu') {
         // 一个洞一个洞地挖，每挖通一个就等这一趟危险过去
-        const level = levelOf('jiaotu') as { spots: Point[] };
+        const level = levelOf('jiaotu') as { spots: ({ id: string } & Point)[] };
         const passed = async (): Promise<number> =>
           (await events(page)).filter((e) => e.startsWith('beat:enter:burrow:passed')).length;
         for (const spot of level.spots) {
           if ((await events(page)).includes('card:unlocked')) break;
           const before = await passed();
-          for (let i = 0; i < 3; i += 1) {
-            await clickDesign(page, spot.x, spot.y);
-            await page.waitForTimeout(240);
-          }
+          await tapUntil(page, spot.x, spot.y, 'beat:enter:burrow:open:' + spot.id, 6, 240);
           for (let i = 0; i < 60; i += 1) {
             if ((await events(page)).includes('card:unlocked')) break;
             if ((await passed()) > before) break;
@@ -383,30 +431,34 @@ for (const locale of LOCALES) {
         for (let rung = 0; rung < level.ladder.rungs.length; rung += 1) {
           if ((await events(page)).includes('card:unlocked')) break;
           const target = level.targets.find((t) => t.id === level.ladder.rungs[rung]!.targetId)!;
-          await dragDesign(page, archerAt(rung), { x: target.x, y: target.y });
-          await page.waitForTimeout(600);
+          await dragUntil(page, archerAt(rung), { x: target.x, y: target.y }, 'beat:enter:hit-' + target.id);
           if (rung < level.ladder.rungs.length - 1) {
-            await clickDesign(page, level.ladder.advance.x, level.ladder.advance.y);
-            await page.waitForTimeout(500);
+            await tapUntil(
+              page,
+              level.ladder.advance.x,
+              level.ladder.advance.y,
+              'beat:enter:aim:advance:' + (rung + 1),
+              4,
+              400,
+            );
           }
         }
       } else if (game.id === 'paoding') {
-        // 先砍一刀，再顺着每一块的缝推出去
+        // 先砍一刀（缝立刻亮起来，中间没有"点了没反应"的空档），再顺着每一块的缝推出去
         const level = levelOf('paoding') as { pieces: ({ id: string; grooveDeg: number } & Point)[] };
-        await clickDesign(page, 375, 700);
-        await page.waitForTimeout(2000);
+        await tapUntil(page, 375, 700, 'beat:enter:butcher:phase:grain', 3, 400);
         for (const piece of level.pieces) {
           if ((await events(page)).includes('card:unlocked')) break;
           const rad = (piece.grooveDeg * Math.PI) / 180;
-          await dragDesign(
+          await dragUntil(
             page,
             { x: piece.x, y: piece.y },
             {
               x: Math.min(720, Math.max(30, piece.x + Math.cos(rad) * 170)),
               y: Math.min(1300, Math.max(190, piece.y + Math.sin(rad) * 170)),
             },
+            'beat:enter:butcher:open:' + piece.id,
           );
-          await page.waitForTimeout(240);
         }
       } else if (game.id === 'houyi') {
         for (let i = 0; i < 14; i += 1) {
@@ -427,9 +479,15 @@ for (const locale of LOCALES) {
         }
       }
 
-      await expect.poll(() => events(page), { timeout: 120_000 }).toContain('card:unlocked');
+      try {
+        await expect.poll(() => events(page), { timeout: 120_000 }).toContain('card:unlocked');
+      } catch (error) {
+        unfinished.push(game.id + '：' + String((error as Error).message).split('\n')[0]);
+      }
       await page.waitForTimeout(1600);
       await page.screenshot({ path: out + '/' + game.id + '-4-card.png' });
     }
+
+    expect(unfinished, '这些典故没能走到典故卡 —— 它们的 -2/-3/-4 截图就是卡住的样子').toEqual([]);
   });
 }
