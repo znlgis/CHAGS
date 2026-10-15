@@ -88,9 +88,9 @@ jobs:
     # PR 上跑太慢（17 部 × 2 语言，约 30 分钟），只在主干与手动触发时跑
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    # 两个语言 ×（三十六计 10 分钟 + 典故 3 分钟）—— 60 分钟会中途掐断，
-    # 而掐断时连 if: always() 的截图都传不上来，巡检最需要的证据反而丢了
-    timeout-minutes: 120
+    # 巡检本身约 50–60 分钟（两个语言 × 18 个用例）；上限给足余量，
+    # 因为被 job 级掐断时连 if: always() 的截图都传不上来，而"挂在哪一屏"正是巡检要回答的
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

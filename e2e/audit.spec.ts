@@ -494,11 +494,16 @@ for (const locale of LOCALES) {
 }
 
 /**
- * 三十六计（第 1–30 计，五辑逐条列在 STRATAGEMS 里）：双语版面 + **卡面**。
+ * 三十六计（第 1–36 计，六辑逐条列在 STRATAGEMS 里）：双语版面 + **卡面**。
  *
  * 卡面走 `?autoplay=1&card=hold`：自动通关照跑，但停在典故卡上
  * （见 DebugOptions.cardHold）—— 自动通关下卡片只停 200ms，不这样拍不到卡面，
  * 而卡面恰恰是英文长标题最容易溢出的地方（"Make a Noise in the East, Attack in the West"）。
+ *
+ * **按辑拆成六个用例**（每辑 6 条计策）。一条用例跑 36 条计策时，在 CI 的冷 Vite 上
+ * 10 分钟根本不够：2026-10-15 的 CI 就是这么红的 —— 两个语言各超时一次，
+ * 报 `page.waitForSelector: Test timeout of 600000ms exceeded`。
+ * 拆开之后单条上限 30 分钟留足余量，而且某一辑挂了不会把后面五辑的截图一起吞掉。
  */
 const STRATAGEMS: [string, string][] = [
   ['mantian-guohai', 'ruse'],
@@ -544,13 +549,28 @@ const STRATAGEMS: [string, string][] = [
   ['zou-weishang', 'trace'],
 ];
 
+/** 六套各一条用例：每辑 6 计 */
+const STRATAGEM_SETS: [string, string][][] = [
+  STRATAGEMS.slice(0, 6),
+  STRATAGEMS.slice(6, 12),
+  STRATAGEMS.slice(12, 18),
+  STRATAGEMS.slice(18, 24),
+  STRATAGEMS.slice(24, 30),
+  STRATAGEMS.slice(30, 36),
+];
+const SET_NAMES = [
+  '胜战计 1–6', '敌战计 7–12', '攻战计 13–18', '混战计 19–24', '并战计 25–30', '败战计 31–36',
+];
+
 for (const locale of LOCALES) {
-  test('audit ' + locale + ' — 三十六计（第 1–36 计：版面 + 卡面）', async ({ page }) => {
-    test.setTimeout(600_000);
+  STRATAGEM_SETS.forEach((set, setIndex) => {
+    test('audit ' + locale + ' — 三十六计 ' + SET_NAMES[setIndex] + '（版面 + 卡面）', async ({ page }) => {
+    // 6 条计策 × 2 次页面加载：CI 上约 8–10 分钟，留到 30 分钟
+    test.setTimeout(30 * 60_000);
     await page.setViewportSize({ width: 430, height: 932 });
     const out = '.scratch/i18n-audit/' + locale;
 
-    for (const [id, scene] of STRATAGEMS) {
+    for (const [id, scene] of set) {
       // 一、故事第一幕 → 玩法第一屏（story=instant 只是不等旁白，两幕仍要自己翻）
       await page.goto('/?lang=' + locale + '&r=' + id + '&story=instant#/play/' + id);
       await page.waitForSelector('canvas');
@@ -572,5 +592,6 @@ for (const locale of LOCALES) {
       await clickDesign(page, REWARD.done.x, REWARD.done.y);
       await expect.poll(() => events(page), { timeout: 20_000 }).toContain('session:exit');
     }
+    });
   });
 }
