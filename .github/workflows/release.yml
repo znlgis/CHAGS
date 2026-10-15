@@ -8,8 +8,8 @@ on:
   # 手动跑一次只出产物、不发 Release（用于验证流程）
   workflow_dispatch:
     inputs:
-      allow_unsigned_android:
-        description: '没有配置 Android 签名 Secrets 时也构建 APK（仅供流程验证，产物不可分发）'
+      require_signed_apk:
+        description: '没有签名 Secrets 就直接失败（默认：用 debug 密钥签一个能直接装到手机上的 APK）'
         type: boolean
         default: false
 
@@ -140,6 +140,9 @@ jobs:
   android:
     needs: [version, web]
     runs-on: ubuntu-latest
+    outputs:
+      # release（正式密钥）/ debug（没配 Secrets 时的兜底，能装但不能覆盖正式版）
+      signature: ${{ steps.sign.outputs.kind }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -194,7 +197,15 @@ jobs:
       - name: 校验站点产物就位
         run: test -f apps/site/dist/index.html || { echo "站点产物没就位"; exit 1; }
 
+      # 签名策略：**默认能装就行**。
+      # 这个项目只做"自己手机装一个"，不上架应用商店，所以没有正式密钥时用 debug 密钥签
+      # （apps/mobile/android/app/build.gradle 里 hasReleaseKeystore 为假时就是这条路），
+      # 产物可以直接安装。代价写在 docs/打包与分发.md：debug 密钥每次构建可能都不一样，
+      # 手机上装新版若报签名冲突，得先卸载旧版（卸载会清掉本地存档）。
+      # 想要"以后能直接覆盖安装、存档不丢"，用 pnpm keystore 生成一次密钥并配成 Secrets，
+      # 本步骤会自动改走正式签名；勾 require_signed_apk 则可以在没有 Secrets 时直接失败。
       - name: 写入签名材料
+        id: sign
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -211,15 +222,15 @@ jobs:
               echo "keyAlias=$KEY_ALIAS"
               echo "keyPassword=$KEY_PASSWORD"
             } > keystore.properties
-            echo "已配置 Release 签名"
-          elif [ "${{ inputs.allow_unsigned_android }}" = "true" ]; then
-            echo "::warning::未配置签名 Secrets，但勾选了 allow_unsigned_android —— 本次用 debug 签名，产物仅供验证，不可分发给用户"
-          else
-            # debug 签名的"正式版"一旦被用户装上，就再也无法用正式密钥覆盖安装（签名不一致，
-            # 安卓直接拒绝安装）。宁可这一步失败，也不要发一个装不了升级包的版本出去。
-            echo "::error::未配置 Android 签名 Secrets（ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASSWORD / ANDROID_KEY_ALIAS / ANDROID_KEY_PASSWORD）。"
-            echo "::error::只想验证打包流程的话，请手动触发本工作流并勾选 allow_unsigned_android。"
+            echo "kind=release" >> "$GITHUB_OUTPUT"
+            echo "已配置 Release 签名（正式密钥）"
+          elif [ "${{ inputs.require_signed_apk }}" = "true" ]; then
+            echo "::error::勾选了 require_signed_apk，但没有配置 ANDROID_KEYSTORE_* Secrets。"
+            echo "::error::请先 pnpm keystore 生成密钥并配好 Secrets，或取消勾选。"
             exit 1
+          else
+            echo "kind=debug" >> "$GITHUB_OUTPUT"
+            echo "::warning::没有配置签名 Secrets —— 本次用 debug 密钥签名。APK 可以直接装到手机上；但 debug 密钥可能每次构建都不同，装新版若报'签名不一致'，先卸载旧版再装（卸载会清掉本地存档）。想要能覆盖安装：pnpm keystore 生成密钥后配成 Secrets，详见 docs/打包与分发.md。"
           fi
 
       - name: 构建 APK
@@ -250,11 +261,13 @@ jobs:
           echo "$CERTS" | head -4
           # 签名者是不是 debug 证书，比"有没有签名"更要紧：debug 签名同样能通过 verify
           if echo "$CERTS" | grep -q 'CN=Android Debug'; then
-            if [ "${{ inputs.allow_unsigned_android }}" != "true" ]; then
-              echo "::error::APK 是 debug 签名，不能作为正式版本发布"
+            if [ "${{ steps.sign.outputs.kind }}" = "release" ]; then
+              echo "::error::配了正式签名 Secrets，产出的却是 debug 签名 —— 检查 keystore.properties 与 build.gradle"
               exit 1
             fi
-            echo "::warning::按 allow_unsigned_android 允许了 debug 签名"
+            echo "::notice::这是 debug 签名的 APK：可以直接装到手机上（不上架完全够用），但不要拿去分发；若与手机上已装版本的签名不同，需要先卸载旧版"
+          else
+            echo "::notice::已用正式密钥签名，可以直接覆盖安装旧版本"
           fi
 
       - name: 收集产物
@@ -308,6 +321,8 @@ jobs:
             | Android | CHAGS-${{ needs.version.outputs.version }}-android.apk | 直接安装（需在设置里允许「安装未知来源的应用」） |
 
             版本 ${{ needs.version.outputs.version }} ｜ 内置中英文，可在应用内一键切换。
+
+            ${{ needs.android.outputs.signature == 'debug' && '⚠️ 本次 APK 用 **debug 密钥**签名（仓库没有配置签名 Secrets）：可以直接安装使用。若手机上已装过旧版且提示「签名不一致」，请先卸载旧版再装（卸载会清掉本地存档）。想要以后能直接覆盖安装、存档不丢：本地跑 pnpm keystore 生成密钥并配成 GitHub Secrets，见 docs/打包与分发.md。' || '✅ 本次 APK 用**正式密钥**签名，可以直接覆盖安装旧版本。' }}
 
       - name: 确认发布类型
         env:

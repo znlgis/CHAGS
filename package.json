@@ -18,6 +18,7 @@
     "e2e:dist": "playwright test --config playwright.preview.config.ts",
     "audit:i18n": "playwright test --config playwright.audit.config.ts",
     "icons": "python scripts/make-icons.py",
+    "keystore": "node scripts/make-keystore.mjs",
     "dist:win": "pnpm --filter @chags/site build && pnpm --filter @chags/desktop build",
     "dist:apk": "pnpm --filter @chags/site build && pnpm --filter @chags/mobile build",
     "size": "node scripts/check-size.mjs"

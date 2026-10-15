@@ -25,9 +25,15 @@ pnpm e2e            # Playwright end-to-end (run npx playwright install chromium
 pnpm e2e:dist       # same suite against the production build (verifies chunk lazy-loading)
 pnpm audit:i18n     # screenshot every screen in both languages into .scratch/i18n-audit/
 pnpm icons          # regenerate the app icons (needs Python + Pillow; only when icons change)
+pnpm keystore       # generate an Android signing key (optional — see docs/打包与分发.md §4)
 pnpm dist:win       # portable Windows exe (double-click to play, no install; size: see the build output)
 pnpm dist:apk       # Android APK (sideload)
 ```
+
+> Android signing: **you do not need a release key to build an installable APK.** Both the local
+> build and CI fall back to a debug signature, which installs fine on your own phone. Run
+> `pnpm keystore` only when you want future builds to install straight over the old one
+> (keeping saves) and to configure the four GitHub Secrets.
 
 Handy debug links:
 

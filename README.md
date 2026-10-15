@@ -25,9 +25,13 @@ pnpm e2e            # Playwright 端到端（需先 npx playwright install chrom
 pnpm e2e:dist       # 针对生产构建产物再跑一遍（验证 chunk 懒加载）
 pnpm audit:i18n     # 双语版面巡检：把两种语言下的每个画面截图到 .scratch/i18n-audit/
 pnpm icons          # 重新生成应用图标（需要 Python + Pillow；只在改图标时用）
+pnpm keystore       # 生成安卓签名密钥（可选：不生成也能打包，见 docs/打包与分发.md §4）
 pnpm dist:win       # 打包 Windows 便携 exe（双击即玩，不用安装；体积以产物为准）
 pnpm dist:apk       # 打包安卓 apk（直接安装）
 ```
+
+> 安卓签名：**没有正式密钥也能打包**。本地与 CI 都会退回 debug 签名，APK 直接能装到自己手机上；
+> 只有"以后想直接覆盖安装、存档不丢"时才需要 `pnpm keystore` 生成一次密钥并配成 Secrets。
 
 调试直达链接：`/?autoplay=1#/play/caochong-elephant`（自动通关，用于无头验证）、
 `/?lang=en`（强制英文，与分享链接、自动化测试用的是同一个开关）
