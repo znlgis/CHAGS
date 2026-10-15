@@ -50,4 +50,11 @@ export const registry: Record<string, () => Promise<{ default: GameModule }>> = 
   'guanmen-zhuozei': () => import('@chags/game-guanmen-zhuozei'),
   'yuanjiao-jingong': () => import('@chags/game-yuanjiao-jingong'),
   'jiadao-faguo': () => import('@chags/game-jiadao-faguo'),
+  // 三十六计 · 第五辑（并战计 25–30）
+  'touliang-huanzhu': () => import('@chags/game-touliang-huanzhu'),
+  'zhisang-mahuai': () => import('@chags/game-zhisang-mahuai'),
+  'jiachi-budian': () => import('@chags/game-jiachi-budian'),
+  'shangwu-chouti': () => import('@chags/game-shangwu-chouti'),
+  'shushang-kaihua': () => import('@chags/game-shushang-kaihua'),
+  'fanke-weizhu': () => import('@chags/game-fanke-weizhu'),
 };

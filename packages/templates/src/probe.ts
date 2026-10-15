@@ -9,6 +9,13 @@ import {
 import type { ProbeState } from './probe.logic';
 import type { ProbeFigure, ProbeLevel, ProbePatch } from './schemas';
 import type { SessionState } from './session';
+// hint（指桑骂槐）：判定与类型另起一段引入 —— 老模式那几行一个字没改
+import {
+  HINT_TIMING, hintProgress, hintPropAt, hintStart, isHintDone, knockHint, nextHintProp,
+  wrongKnocks,
+} from './probe.logic';
+import type { ProbeHintState } from './probe.logic';
+import type { ProbeHintLevel } from './schemas';
 
 /**
  * 试探模板自己的布局与手感常量 —— 不挤进 layout.ts：
@@ -97,7 +104,15 @@ export interface ProbeConfig {
  * - **提示给在点上**：小手从来只指"最外圈那一丛"（打草惊蛇要避免先动中间）与
  *   "下一个该试的身影"；点错了马上再指一次，绝不让孩子对着屏幕干瞪眼。
  */
-export function createProbeScene(ctx: GameContext, cfg: ProbeConfig): Phaser.Types.Scenes.SceneType {
+/**
+ * knock（打草惊蛇）/ spot（擒贼擒王）那条路：**一行没改**，
+ * 只是从 createProbeScene 里挪成了一个具名函数；hint（指桑骂槐）那一半在文件末尾另起一段，
+ * 由 mode 分派（见 createProbeScene）。
+ */
+function createKnockSpotProbeScene(
+  ctx: GameContext,
+  cfg: ProbeConfig,
+): Phaser.Types.Scenes.SceneType {
   return class ProbeScene extends BaseScene {
     private level: ProbeLevel = cfg.level;
     private state: ProbeState = probeStart();
@@ -528,4 +543,388 @@ export function createProbeScene(ctx: GameContext, cfg: ProbeConfig): Phaser.Typ
       if (figure !== undefined) this.pressSpot(figure.x, figure.y);
     }
   };
+}
+
+/* ---------------- probe 扩展：hint（第 26 计 · 指桑骂槐） ---------------- */
+
+/**
+ * hint 的手感常量 —— 时间的那几个（stepMs / knockMs / finaleHoldMs…）来自 probe.logic，
+ * 单测、画面与无头验证用的是同一份。
+ */
+export const PROBE_HINT = {
+  ...HINT_TIMING,
+  /** 点的宽容度：桑、槐、钟、鼓都是巴掌大的东西，手指粗也点得到 */
+  tapForgive: 48,
+  /** 小手放在东西下面多少 */
+  handDrop: 34,
+  /** 提示光圈比东西大多少 */
+  ringPad: 22,
+  /** 点空时那圈涟漪亮多久 */
+  rippleMs: 700,
+} as const;
+
+/** 交给游戏画的 hint 一帧（每帧一份新的） */
+export interface ProbeHintStageState {
+  /** 这一局过了多久（墙钟，从开局算起）—— 他往前走的那几步按它插值 */
+  elapsedMs: number;
+  /** 敲对了几步（他要走 steps 步） */
+  progress: number;
+  /** 一共要走几步 */
+  steps: number;
+  /** 敲错了几次 —— 复盘用，不扣星、不结束 */
+  wrongKnocks: number;
+  /** 敲过的东西（按敲的先后，重复的不记） */
+  knocked: string[];
+  /** 刚敲的是哪一样 / 什么时候敲的（画面据此演"他有没有反应"） */
+  lastKnock: string | null;
+  lastKnockAtMs: number;
+  /** 刚敲的那一样是不是他听得懂的（他往前走一步 / 他没反应） */
+  lastWasWanted: boolean;
+  /** 点空了几次：只是复盘用，不扣星也不结束 */
+  misses: number;
+  /** 他自己做出了正确的选择 */
+  done: boolean;
+}
+
+export interface ProbeHintConfig {
+  level: ProbeHintLevel;
+  session: SessionState;
+  nextSceneKey: string;
+  /** 顶栏上的名字；不传就用内容自己的标题 */
+  title?: string;
+  /** 这个世界：院子、桑槐钟鼓、等着听的那个人（画一次） */
+  drawWorld: (g: Phaser.GameObjects.Graphics, level: ProbeHintLevel) => void;
+  /** 每帧重画：哪一样敲过了、他走到第几步了 */
+  drawStage: (
+    g: Phaser.GameObjects.Graphics,
+    state: ProbeHintStageState,
+    level: ProbeHintLevel,
+  ) => void;
+  /** 收尾：他自己做出了正确的选择之后的样子 */
+  drawFinale?: (
+    g: Phaser.GameObjects.Graphics,
+    state: ProbeHintStageState,
+    level: ProbeHintLevel,
+  ) => void;
+  /** 打赢之后念的那句话（关键抉择点的揭晓语） */
+  reveal?: string;
+  finaleHoldMs?: number;
+}
+
+/**
+ * 指桑骂槐：不能点名 —— 敲**对**的那样东西，该听懂的人自己往前走一步。
+ *
+ * 三条刻意的设计：
+ * - **判定全在 probe.logic 里**：敲的这样东西是不是他听得懂的、走了几步、敲错几笔，
+ *   单测与画面用的是同一份函数（无头验证也走同一条 knockHint）。
+ * - **零惩罚**：敲错了只是"记一笔"（wrongKnocks +1）——不扣星、不结束、不锁操作；
+ *   孩子可以放心地一样一样试过去。
+ * - **提示给在点上**：小手从头到尾只指"他听得懂的那一样"；敲一下之后马上再指一次 ——
+ *   孩子试错的时候，画面不会跟着乱。
+ */
+function createHintProbeScene(
+  ctx: GameContext,
+  cfg: ProbeHintConfig,
+): Phaser.Types.Scenes.SceneType {
+  return class ProbeHintScene extends BaseScene {
+    private level: ProbeHintLevel = cfg.level;
+    private state: ProbeHintState = hintStart();
+    private startedAt = 0;
+    private finished = false;
+    private idleMs = 0;
+    private misses = 0;
+    /** 刚敲的那一下是什么时候（画面据此演"他往前走了一步 / 他没反应"） */
+    private lastKnockAt = -1;
+    private lastWasWanted = false;
+    private worldGfx: Phaser.GameObjects.Graphics | null = null;
+    private stageGfx: Phaser.GameObjects.Graphics | null = null;
+    private markGfx: Phaser.GameObjects.Graphics | null = null;
+    private finaleGfx: Phaser.GameObjects.Graphics | null = null;
+    private ring: Phaser.GameObjects.Graphics | null = null;
+    private hand: Phaser.GameObjects.Graphics | null = null;
+
+    constructor() {
+      super(SCENE_KEYS.probe, ctx);
+    }
+
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.probe });
+      this.level = cfg.level;
+      this.state = hintStart();
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      this.markGfx = this.add.graphics().setDepth(60);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
+        this.onPress(pointer.x, pointer.y),
+      );
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.showHint(cfg.level.hint, 3000, PROBE_HINT.hintY);
+        this.time.delayedCall(PROBE_HINT.introHandMs, () => this.pointAtNext());
+      }
+    }
+
+    private now(): number {
+      return Math.max(0, this.ctx.services.now() - this.startedAt);
+    }
+
+    // ---------------- 每一帧 ----------------
+
+    private tick(delta: number): void {
+      this.redraw(this.now());
+      if (this.finished) return;
+      // 卡住了：把关卡自己的那句话再亮一遍，并指一指"他听得懂的那一样"
+      this.idleMs += delta;
+      if (this.idleMs >= PROBE_HINT.idleMs) {
+        this.idleMs = 0;
+        this.showHint(this.level.hint, 2600, PROBE_HINT.hintY);
+        this.pointAtNext();
+      }
+    }
+
+    private redraw(t: number): void {
+      const stage = this.stageState(t);
+      if (this.stageGfx) {
+        this.stageGfx.clear();
+        cfg.drawStage(this.stageGfx, stage, this.level);
+      }
+      this.drawMarks(stage);
+      if (this.finished && this.finaleGfx) {
+        this.finaleGfx.clear();
+        cfg.drawFinale?.(this.finaleGfx, stage, this.level);
+      }
+    }
+
+    private stageState(t: number): ProbeHintStageState {
+      return {
+        elapsedMs: t,
+        progress: hintProgress(this.state),
+        steps: this.level.steps,
+        wrongKnocks: wrongKnocks(this.state),
+        knocked: [...this.state.knocked],
+        lastKnock: this.state.lastKnock,
+        lastKnockAtMs: this.lastKnockAt,
+        lastWasWanted: this.lastWasWanted,
+        misses: this.misses,
+        done: this.finished,
+      };
+    }
+
+    /**
+     * 模板自己画的那一点反馈：敲下去那一圈（敲对了是金的，敲错了是灰的）——
+     * 都是"刚才那一下发生了什么"，不额外写字（他往前走的走位由游戏画）。
+     */
+    private drawMarks(stage: ProbeHintStageState): void {
+      const g = this.markGfx;
+      if (!g) return;
+      g.clear();
+      const prop = this.level.props.find((item) => item.id === stage.lastKnock);
+      const since = stage.elapsedMs - stage.lastKnockAtMs;
+      if (prop === undefined || since < 0) return;
+      const span = stage.lastWasWanted ? PROBE_HINT.stepMs : PROBE_HINT.knockMs;
+      if (since > span) return;
+      const p = since / span;
+      const color = stage.lastWasWanted ? THEME.gold : THEME.inkSoft;
+      g.lineStyle(9, color, 0.9 * (1 - p));
+      g.strokeCircle(prop.x, prop.y, prop.radius + PROBE_HINT.ringPad + 46 * p);
+      if (!stage.lastWasWanted) return;
+      // 敲对了：外面再套一圈金光（"这一下他听进去了"）
+      g.lineStyle(5, THEME.gold, 0.5 * (1 - p));
+      g.strokeCircle(prop.x, prop.y, prop.radius + PROBE_HINT.ringPad + 84 * p);
+    }
+
+    // ---------------- 点 ----------------
+
+    private onPress(x: number, y: number): void {
+      if (this.finished) return;
+      this.idleMs = 0;
+      const prop = hintPropAt(this.level, x, y, PROBE_HINT.tapForgive);
+      if (prop === undefined) {
+        this.nothing(x, y);
+        return;
+      }
+      this.knockProp(prop);
+    }
+
+    /** 敲一样东西：敲对了，他往前走一步；敲别的只是没收获（零惩罚） */
+    private knockProp(prop: ProbePatch): void {
+      if (this.finished) return;
+      const before = this.state;
+      this.state = knockHint(this.level, this.state, prop.id);
+      if (this.state === before) {
+        // 他已经走够了（或者这样东西不存在）：这一下什么也不算
+        this.nothing(prop.x, prop.y);
+        return;
+      }
+      const t = this.now();
+      this.lastKnockAt = t;
+      this.lastWasWanted = this.state.lastWasWanted;
+      this.idleMs = 0;
+      this.hideHand();
+      this.ctx.emit('beat:enter', { beatId: 'probe:knock:' + prop.id });
+      if (this.state.lastWasWanted) {
+        // 他听懂了：往前走一步（走够 steps 步，他自己做出选择）
+        const step = hintProgress(this.state);
+        this.sfx('correct');
+        sparkleAt(this, prop.x, prop.y, THEME.gold, 6);
+        this.ctx.emit('beat:enter', { beatId: 'probe:step:' + step });
+        this.ctx.emit('choice:made', {
+          beatId: 'probe:hint',
+          choiceId: prop.id,
+          correct: true,
+          latencyMs: t,
+        });
+        cfg.session.total += 1;
+        cfg.session.correct += 1;
+        if (isHintDone(this.level, this.state)) {
+          this.finish();
+          return;
+        }
+      } else {
+        // 敲的不是他听得懂的那样：只是没收获 —— 记一笔，不扣星、不结束
+        this.sfx('tap');
+        this.ctx.emit('beat:enter', { beatId: 'probe:wrong:' + wrongKnocks(this.state) });
+        this.showHint(this.level.hint, 2200, PROBE_HINT.hintY);
+      }
+      const wait = this.state.lastWasWanted ? PROBE_HINT.stepMs : PROBE_HINT.knockMs;
+      this.time.delayedCall(wait, () => this.pointAtNext());
+    }
+
+    /** 点了空处：只是没收获 —— 不扣星、不结束、不锁操作 */
+    private nothing(x: number, y: number): void {
+      if (this.finished) return;
+      this.misses += 1;
+      this.idleMs = 0;
+      this.sfx('tap');
+      this.ripple(x, y, 44, THEME.inkSoft);
+      this.ctx.emit('beat:enter', { beatId: 'probe:miss:' + this.misses });
+      this.pointAtNext();
+    }
+
+    // ---------------- 收尾 ----------------
+
+    private finish(): void {
+      if (this.finished) return;
+      this.finished = true;
+      this.clearRing();
+      this.hideHand();
+      this.sfx('complete');
+      this.cameras.main.flash(320, 255, 250, 220);
+      sparkleAt(this, this.level.listener.x, this.level.listener.y, THEME.gold, 12);
+      this.ctx.emit('beat:enter', { beatId: 'probe:done' });
+      const reveal = cfg.reveal;
+      if (reveal !== undefined) {
+        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, PROBE_HINT.hintY));
+      }
+      this.time.delayedCall(cfg.finaleHoldMs ?? PROBE_HINT.finaleHoldMs, () =>
+        this.scene.start(cfg.nextSceneKey),
+      );
+    }
+
+    // ---------------- 小手与提示 ----------------
+
+    /** 把小手与光圈放到"他听得懂的那一样"上：敲一下之后就再指一次 */
+    private pointAtNext(): void {
+      if (this.finished) return;
+      const prop = nextHintProp(this.level, this.state);
+      if (prop === undefined) {
+        this.clearRing();
+        this.hideHand();
+        return;
+      }
+      this.clearRing();
+      const ring = this.add.graphics().setDepth(50);
+      ring.setPosition(prop.x, prop.y);
+      ring.lineStyle(9, THEME.gold, 0.95);
+      ring.strokeCircle(0, 0, prop.radius + PROBE_HINT.ringPad);
+      this.ring = ring;
+      this.tweens.add({
+        targets: ring,
+        scale: 1.14,
+        alpha: 0.4,
+        duration: 520,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      this.hideHand();
+      this.hand = createHand(this, prop.x, prop.y + prop.radius + PROBE_HINT.handDrop, 1.1);
+    }
+
+    private clearRing(): void {
+      if (!this.ring) return;
+      this.tweens.killTweensOf(this.ring);
+      this.ring.destroy();
+      this.ring = null;
+    }
+
+    private hideHand(): void {
+      if (!this.hand) return;
+      this.tweens.killTweensOf(this.hand);
+      this.hand.destroy();
+      this.hand = null;
+    }
+
+    private ripple(x: number, y: number, radius: number, color: number): void {
+      const g = tapRipple(this, x, y, radius, color);
+      this.time.delayedCall(PROBE_HINT.rippleMs, () => g.destroy());
+    }
+
+    // ---------------- 无头验证 ----------------
+
+    /**
+     * 无头验证：走的还是**真实操作同一条路** ——
+     * 隔一会儿敲一下"他听得懂的那一样"（走 onPress 与 knockHint 的判定），
+     * 走够 steps 步就进 reward。
+     */
+    private runAutoplay(): void {
+      this.time.addEvent({
+        delay: PROBE.autoplayStepMs,
+        loop: true,
+        callback: () => this.autoStep(),
+      });
+    }
+
+    private autoStep(): void {
+      if (this.finished) return;
+      const prop = nextHintProp(this.level, this.state);
+      if (prop === undefined) return;
+      this.onPress(prop.x, prop.y);
+    }
+  };
+}
+
+/**
+ * 指桑骂槐：两种玩法共用一个场景键（SCENE_KEYS.probe），按 level.mode 分派。
+ * - knock（打草惊蛇）/ spot（擒贼擒王）：敲草丛、试身影 —— 既有路径，一行未改；
+ * - hint（指桑骂槐）：不能点名，敲**对**的那样东西，该听懂的人自己往前走一步。
+ */
+// 两个重载 + 一个并集的实现：老模式的调用处（传的是内联箭头函数）由第一个重载
+// 做上下文类型推导，不用担心并集让回调参数变成 any —— 既有游戏包一行都不用改。
+export function createProbeScene(
+  ctx: GameContext,
+  cfg: ProbeConfig,
+): Phaser.Types.Scenes.SceneType;
+export function createProbeScene(
+  ctx: GameContext,
+  cfg: ProbeHintConfig,
+): Phaser.Types.Scenes.SceneType;
+export function createProbeScene(
+  ctx: GameContext,
+  cfg: ProbeConfig | ProbeHintConfig,
+): Phaser.Types.Scenes.SceneType {
+  if (cfg.level.mode === 'hint') return createHintProbeScene(ctx, cfg as ProbeHintConfig);
+  return createKnockSpotProbeScene(ctx, cfg as ProbeConfig);
 }

@@ -3,6 +3,7 @@ import type { GameContext, SfxKey } from '@chags/game-kit';
 import { createTranslator } from '@chags/i18n';
 import type { MessageKey, Translator } from '@chags/i18n';
 import { createHand, groundShadow, popIn, roundRect, shade } from './cartoon';
+import { isTapArmed } from './tapGuard';
 import { CSS, THEME, textStyle } from './theme';
 
 export interface ButtonOptions {
@@ -25,6 +26,8 @@ export abstract class BaseScene extends Phaser.Scene {
   protected readonly ctx: GameContext;
   private hintPill: Phaser.GameObjects.Container | null = null;
   private translator: Translator | null = null;
+  /** 上一次真的翻页的墙钟：连点保护从它起算（见 tapGuard） */
+  private lastAdvanceAt = Number.NEGATIVE_INFINITY;
 
   protected constructor(key: string, ctx: GameContext) {
     super(key);
@@ -168,6 +171,8 @@ export abstract class BaseScene extends Phaser.Scene {
     const finish = (): void => {
       if (done) return;
       done = true;
+      // 先记时间再回调：下一幕的点击区可能就在 onDone() 里同步建好
+      this.lastAdvanceAt = this.ctx.services.now();
       hand.destroy();
       zone.destroy();
       onDone();
@@ -176,10 +181,10 @@ export abstract class BaseScene extends Phaser.Scene {
       done = true;
     });
     // 连点保护：孩子连点两下时，第二下会落在**下一幕刚建好的**点击区上，
-    // 一屏故事就被整段跳过去了。给一个很短的输入锁，正常阅读完全感觉不到。
-    const armedAt = this.ctx.services.now() + 350;
+    // 一屏故事就被整段跳过去了。锁从**上一次翻页**起算，不是从建区起算 ——
+    // 从建区起算会把"刚听完就点"那一下正常点击一起吞掉（见 tapGuard）。
     zone.on('pointerdown', () => {
-      if (this.ctx.services.now() < armedAt) return;
+      if (!isTapArmed(this.ctx.services.now(), this.lastAdvanceAt)) return;
       this.sfx('tap');
       finish();
     });

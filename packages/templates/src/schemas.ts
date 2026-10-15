@@ -1343,6 +1343,205 @@ export const SwapLevelSchema = z
     path: ['spares'],
   });
 
+/* ---------------- swap 扩展：beam（偷梁换柱） ---------------- */
+
+/**
+ * 偷梁换柱：一排承重柱要换成新柱，外形要一模一样。
+ * 与 shell（金蝉脱壳）的差别：换一根要**按住干一会儿**，而检查者每隔 checkMs **清点**一次 ——
+ * 清点时正拆着的那根会被发现（那根的进度清零，零惩罚）。
+ */
+export const SwapBeamSchema = z
+  .object({
+    mode: z.literal('beam'),
+    posts: z.array(SwapPostSchema).min(3).max(6),
+    spares: z.array(SwapSpareSchema).min(3).max(6),
+    /** 换一根要按住多久 */
+    workMs: z.number().positive(),
+    /** 每隔多久清点一次 */
+    checkMs: z.number().positive(),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.posts.map((p) => p.id)).size === l.posts.length, {
+    message: '柱子的 id 不能重复',
+    path: ['posts'],
+  })
+  .refine((l) => l.posts.every((post) => l.spares.some((spare) => spare.kind === post.kind)), {
+    message: '有柱子找不到同 kind 的新柱 —— 这一关不可能全换好',
+    path: ['spares'],
+  })
+  .refine((l) => l.workMs < l.checkMs, {
+    message: '换一根比两次清点的间隔还久 —— 永远换不完',
+    path: ['workMs'],
+  });
+
+/* ---------------- probe 扩展：hint（指桑骂槐） ---------------- */
+
+/**
+ * 指桑骂槐：不能点名 —— 敲**对**那样东西，该听懂的人自己往前走一步。
+ */
+export const ProbeHintSchema = z
+  .object({
+    mode: z.literal('hint'),
+    props: z.array(ProbePatchSchema).min(3).max(5),
+    listener: z.object({
+      x: z.number(),
+      y: z.number(),
+      radius: z.number().positive(),
+      /** 他听得懂的那样东西的 kind */
+      wants: z.string().min(1),
+    }),
+    /** 要他走几步 */
+    steps: z.number().int().min(1).max(6),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.props.map((p) => p.id)).size === l.props.length, {
+    message: '东西的 id 不能重复',
+    path: ['props'],
+  })
+  .refine((l) => l.props.some((p) => p.has === l.listener.wants), {
+    message: '没有任何一样东西是他听得懂的 —— 这一关不可能过（has 就是这里的 kind）',
+    path: ['listener', 'wants'],
+  });
+
+/* ---------------- stillness 扩展：feign（假痴不癫） ---------------- */
+
+export const StillnessTestSchema = z.object({
+  id: z.string().min(1),
+  /** 试探多久：这段时间里任何点击都算露馅 */
+  testMs: z.number().positive(),
+  /** 试探之后的空档：这时候才能行动 */
+  gapMs: z.number().positive(),
+});
+
+/**
+ * 假痴不癫：对手一次次试探 —— 试探期**任何点击都算露馅**（记一笔，零惩罚）；
+ * 试探之间的空档里才能行动，推够 steps 步机会就成熟。
+ */
+export const StillnessFeignSchema = z
+  .object({
+    mode: z.literal('feign'),
+    tests: z.array(StillnessTestSchema).min(2).max(4),
+    action: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    steps: z.number().int().min(1).max(6),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.tests.map((t) => t.id)).size === l.tests.length, {
+    message: '每一次试探的 id 不能重复',
+    path: ['tests'],
+  });
+
+/* ---------------- siege 扩展：ladder（上屋抽梯） ---------------- */
+
+/**
+ * 上屋抽梯：先给方便 —— 按顺序把阶梯一级级搭好，对手顺着往上走；
+ * 等他到位，再把梯子抽掉。
+ */
+export const SiegeLadderSchema = z
+  .object({
+    mode: z.literal('ladder'),
+    rungs: z.array(z.object({ id: z.string().min(1), x: z.number(), y: z.number(), radius: z.number().positive() }))
+      .min(3)
+      .max(5),
+    /** 他要去的地方 */
+    bait: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    /** 抽梯的地方 */
+    ladder: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    /** 他沿梯往上走多久 */
+    climbMs: z.number().positive(),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.rungs.map((r) => r.id)).size === l.rungs.length, {
+    message: '阶梯的 id 不能重复',
+    path: ['rungs'],
+  });
+
+/* ---------------- show 扩展：borrow（树上开花） ---------------- */
+
+/**
+ * 树上开花：借现成的东西（树、城墙）把小队显得很大 ——
+ * 把手里的旗分配到支点上，支点各有各的容量与"显眼度"。
+ */
+export const ShowBorrowSchema = z
+  .object({
+    mode: z.literal('borrow'),
+    props: z
+      .array(
+        z.object({
+          id: z.string().min(1),
+          x: z.number(),
+          y: z.number(),
+          radius: z.number().positive(),
+          /** 这里最多挂几面 */
+          capacity: z.number().int().positive(),
+          /** 每面旗在这里顶多少"规模" */
+          weight: z.number().positive(),
+        }),
+      )
+      .min(2)
+      .max(4),
+    /** 手里一共几面旗 */
+    flags: z.number().int().positive(),
+    /** 规模到多少算成 */
+    needed: z.number().positive(),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.props.map((p) => p.id)).size === l.props.length, {
+    message: '支点的 id 不能重复',
+    path: ['props'],
+  })
+  .refine((l) => l.props.reduce((sum, p) => sum + p.capacity, 0) >= l.flags, {
+    message: '所有支点加起来也挂不下这些旗',
+    path: ['flags'],
+  })
+  .refine(
+    (l) => {
+      // 有解：把旗都挂到"每面顶得最多"的支点上，能到的最大规模
+      let left = l.flags;
+      let scale = 0;
+      for (const prop of [...l.props].sort((a, b) => b.weight - a.weight)) {
+        const used = Math.min(left, prop.capacity);
+        scale += used * prop.weight;
+        left -= used;
+      }
+      return scale >= l.needed;
+    },
+    { message: '怎么挂都到不了 needed —— 这一关不可能过', path: ['needed'] },
+  );
+
+/* ---------------- chain 扩展：step（反客为主） ---------------- */
+
+/**
+ * 反客为主：每一步都要**先被允许** —— 点 grant 求允许，允许只持续 grantMs；
+ * 在有效期内点下一个岗位才能接管，过期作废（重新求，零惩罚）。
+ */
+export const ChainStepSchema = z
+  .object({
+    mode: z.literal('step'),
+    posts: z
+      .array(
+        z.object({
+          id: z.string().min(1),
+          x: z.number(),
+          y: z.number(),
+          radius: z.number().positive(),
+          label: z.string().min(1).max(12),
+        }),
+      )
+      .min(3)
+      .max(5),
+    grant: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    grantMs: z.number().positive(),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.posts.map((p) => p.id)).size === l.posts.length, {
+    message: '岗位的 id 不能重复',
+    path: ['posts'],
+  })
+  .refine((l) => l.grantMs >= 600, {
+    message: '允许只持续 600ms 以内 —— 那就变成比手速了',
+    path: ['grantMs'],
+  });
+
 /* ---------------- chain：连环（假道伐虢） ---------------- */
 
 export const ChainGateSchema = z.object({
@@ -1471,6 +1670,13 @@ export const MatchupOrderLevelSchema = z
   });
 
 export type RuseShell = z.infer<typeof RuseShellSchema>;
+export type SwapBeamLevel = z.infer<typeof SwapBeamSchema>;
+export type ProbeHintLevel = z.infer<typeof ProbeHintSchema>;
+export type StillnessTest = z.infer<typeof StillnessTestSchema>;
+export type StillnessFeignLevel = z.infer<typeof StillnessFeignSchema>;
+export type SiegeLadderLevel = z.infer<typeof SiegeLadderSchema>;
+export type ShowBorrowLevel = z.infer<typeof ShowBorrowSchema>;
+export type ChainStepLevel = z.infer<typeof ChainStepSchema>;
 export type SwapPost = z.infer<typeof SwapPostSchema>;
 export type SwapSpare = z.infer<typeof SwapSpareSchema>;
 export type SwapLevel = z.infer<typeof SwapLevelSchema>;
@@ -1561,19 +1767,20 @@ export const templateSchemas: Record<string, z.ZodType> = {
   butcher: ButcherLevelSchema,
   ruse: RuseLevelSchema,
   // siege / matchup 第四辑长出了新模式：老模式那份 schema 一个字没改，这里按并集登记
-  siege: z.union([SiegeLevelSchema, SiegeSupportSchema, SiegeCloseSchema]),
+  siege: z.union([SiegeLevelSchema, SiegeSupportSchema, SiegeCloseSchema, SiegeLadderSchema]),
   // borrow 有两种模式：force（借刀杀人，既有）与 banner（借尸还魂）——
   // 两份 schema 分开写（force 那份一个字没改），这里按并集登记给构建期体检用。
   borrow: z.union([BorrowLevelSchema, BorrowBannerLevelSchema]),
-  stillness: StillnessLevelSchema,
+  stillness: z.union([StillnessLevelSchema, StillnessFeignSchema]),
   window: WindowLevelSchema,
-  show: ShowLevelSchema,
+  show: z.union([ShowLevelSchema, ShowBorrowSchema]),
   twoline: TwolineLevelSchema,
   read: ReadLevelSchema,
   matchup: z.union([MatchupLevelSchema, MatchupOrderLevelSchema]),
-  probe: ProbeLevelSchema,
+  probe: z.union([ProbeLevelSchema, ProbeHintSchema]),
   lure: LureLevelSchema,
   chase: ChaseLevelSchema,
-  swap: SwapLevelSchema,
-  chain: ChainLevelSchema,
+  // 第五辑给六个模板各加了一个模式：老模式那份 schema 一个字没改，这里按并集登记
+  swap: z.union([SwapLevelSchema, SwapBeamSchema]),
+  chain: z.union([ChainLevelSchema, ChainStepSchema]),
 };

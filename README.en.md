@@ -38,7 +38,7 @@ The collection's first-level structure is **groups**, defined in one place — `
 | Group | Games | Notes |
 |---|---|---|
 | 典故 `allusion` | **17** (all live) | One story, one game; sorted by year |
-| 三十六计 `stratagem` | **24** (Volumes 1–4: 1–6, 7–12, 13–18, 19–24) | Thirty-Six Stratagems, one game each; sorted by **stratagem number**, two more volumes to come |
+| 三十六计 `stratagem` | **30** (Volumes 1–5: 1–6, 7–12, 13–18, 19–24, 25–30) | Thirty-Six Stratagems, one game each; sorted by **stratagem number**, one more volume to come |
 
 The hall and the album render one section per group, and **a group with no content yet does not
 disappear**: it shows up as "coming soon".
@@ -53,7 +53,7 @@ has no default, so a stratagem can never be filed under "stories" by accident.
 ## Current status
 
 **Seventeen stories plus the first twenty-four stratagems** are playable. `pnpm verify` is green (typecheck,
-lint, 880 unit tests, content check, build, size) and every game has a headless playthrough in the
+lint, 1045 unit tests, content check, build, size) and every game has a headless playthrough in the
 end-to-end suite (`?autoplay=1` — a new template only counts once it implements `runAutoplay()`).
 
 The shell stays small: no Phaser, and no story or level-script content either. Each game's own
@@ -361,9 +361,34 @@ support / close, `window` gains stir, `matchup` gains order). When extending, th
 (`vital` / `fire` / `glimpse` / `pair`) keep their logic and tests untouched; the design note is
 [三十六计-第四辑方案.md](docs/三十六计-第四辑方案.md).
 
+## Thirty-Six Stratagems · Volume 5: the six Annexation Stratagems (25–30)
+
+| # | Stratagem | What the child actually does | Template |
+|---|---|---|---|
+| 25 | Replace the Beams with Rotten Timbers | Swap a row of load-bearing posts for **identical-looking** new ones; each takes a hold-to-work spell, and the inspector **calls the roll** every few seconds | `swap` (beam) |
+| 26 | Point at the Mulberry Tree While Cursing the Locust Tree | No naming names: mulberry, locust, bell, drum — knock the one he understands, and the man who should take the hint steps forward himself | `probe` (hint) |
+| 27 | Feign Madness, Keep Your Wits | The rival keeps testing you: **any tap during a test gives you away**, so only the gaps between tests let you push on | `stillness` (feign) |
+| 28 | Lure Him Up, Then Pull the Ladder | Give the convenience first: build the ladder rung by rung, watch him climb into place, then pull it away (pull early and he simply slides back) | `siege` (ladder) |
+| 29 | Blossoms on a Tree | Borrow the tree and the wall to hang flags: every prop holds so many and each flag counts for so much — reach the scale and it works | `show` (borrow) |
+| 30 | The Guest Becomes the Host | Every step must be **permitted first**: permission lasts only a moment, then expires and has to be asked for again — no hurrying | `chain` (step) |
+
+| Swap the beams | Take the hint | Feign madness |
+|---|---|---|
+| ![beams](docs/screenshots/116-stratagem-25-touliang.png) | ![hint](docs/screenshots/117-stratagem-26-zhisang.png) | ![madness](docs/screenshots/118-stratagem-27-jiachi.png) |
+
+| Pull the ladder | Blossoms on a tree | Guest becomes host |
+|---|---|---|
+| ![ladder](docs/screenshots/119-stratagem-28-shangwu.png) | ![blossoms](docs/screenshots/120-stratagem-29-shushang.png) | ![host](docs/screenshots/121-stratagem-30-fanke.png) |
+
+Volume 5 adds **no new templates**: each stratagem gains one mode on an existing template
+(`swap.beam` / `probe.hint` / `stillness.feign` / `siege.ladder` / `show.borrow` / `chain.step`).
+The older modes (`swap.shell` / `probe.knock`·`spot` / `stillness.bide` /
+`siege.vital`·`support`·`close` / `show.draw` / `chain.pass`) keep their logic and their existing
+tests untouched; the design note is [三十六计-第五辑方案.md](docs/三十六计-第五辑方案.md).
+
 ## Design principle: fewer words, more doing
 
-Across all forty-one games there is almost no teaching text on screen: the two opening lines of a story,
+Across all forty-seven games there is almost no teaching text on screen: the two opening lines of a story,
 and one short hint that appears when the level starts or when the child is stuck (tap the story page too early and it only says
 "Listen to the story first"). Everything else is shape, motion, sound and speech. Kids **work out** the idea
 instead of being told it.

@@ -1,0 +1,73 @@
+{
+  "figures": [
+    "Han Xin",
+    "Chen Yu"
+  ],
+  "story": [
+    {
+      "title": "Backs to the River",
+      "text": "Han Xin set his line with the river behind him. The Zhao army came out to chase.",
+      "narration": "Han Xin led his men out through the Jingxing pass and drew them up with the river at their backs. From far off the Zhao army laughed at him — with the water behind, there was nowhere to fall back to. So they left their camp empty and came out in full force after him.",
+      "illustration": "none"
+    },
+    {
+      "title": "Red Flags on the Rampart",
+      "text": "The riders sent ahead slipped into the empty camp and swapped every flag for a red one.",
+      "narration": "Han Xin had already sent two thousand light riders by a side road to watch the Zhao camp. The moment the whole Zhao army marched out, they rushed the empty camp and swapped the Zhao flags one after another for red Han flags. When the Zhao army turned and saw the ramparts covered in Han flags, they thought their leader had fallen, and their ranks fell apart.",
+      "illustration": "none"
+    }
+  ],
+  "keyMoment": {
+    "question": "The whole Zhao army has come out, and the camp stands empty. How do you use it?",
+    "options": [
+      {
+        "text": "Send the two thousand riders in to swap the flags",
+        "hint": ""
+      },
+      {
+        "text": "Turn about and meet him head-on",
+        "hint": "He has more men: fighting him head-on plays to his strength."
+      },
+      {
+        "text": "Pull back at once and hold your own camp",
+        "hint": "Pull back and he stops chasing — the easy way you gave him goes to waste."
+      }
+    ],
+    "reveal": "Give the easy way first, then name your terms — once he is up on the roof, the ladder comes away."
+  },
+  "misconceptions": [
+    "Giving the other side an easy way is always a loss",
+    "The faster you strike when armies meet, the better"
+  ],
+  "quiz": [
+    {
+      "question": "Which men did Han Xin send out early to watch the Zhao camp?",
+      "options": [
+        "Two thousand light riders",
+        "Ten thousand vanguard troops",
+        "His whole main force"
+      ],
+      "answer": 0,
+      "explanation": "The two thousand riders slipped into the empty camp and swapped the flags — when the Zhao army looked back at a camp full of Han flags, its ranks broke."
+    },
+    {
+      "question": "Your little cousin cannot reach the biscuits on the shelf and keeps fussing. What is better?",
+      "options": [
+        "Set a stool out so he can reach, and agree he takes just one",
+        "Lift him up and let him grab whatever he wants",
+        "Take the biscuits away so nobody has any"
+      ],
+      "answer": 0,
+      "explanation": "Give the easy way first (the stool), then name your terms (how many he takes) — that is where this stratagem really lands."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Wait till he is up, pull"
+        }
+      }
+    ]
+  }
+}

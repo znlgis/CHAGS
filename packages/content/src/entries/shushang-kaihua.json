@@ -1,0 +1,29 @@
+{
+  "id": "shushang-kaihua",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "树上开花",
+  "pinyin": "Shù shàng kāi huā",
+  "dynasty": "东汉",
+  "era": "东汉 · 建安十三年",
+  "yearApprox": 208,
+  "source": {
+    "book": "《三十六计·并战计》",
+    "chapter": "树上开花",
+    "quote": "借局布势，力小势大。鸿渐于陆，其羽可用为仪也。"
+  },
+  "moral": "借身边的势，让自己这边看起来更有底气。",
+  "keywords": [
+    "借势",
+    "壮胆",
+    "站住脚"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 29,
+    "set": 5
+  }
+}

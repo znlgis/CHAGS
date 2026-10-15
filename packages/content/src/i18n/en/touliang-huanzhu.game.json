@@ -1,0 +1,71 @@
+{
+  "figures": [
+    "Zhao Gao",
+    "Qin Er Shi"
+  ],
+  "story": [
+    {
+      "title": "The Deer in the Great Hall",
+      "text": "Zhao Gao led in a deer and told the whole court: this is a horse.",
+      "narration": "The Records of the Grand Historian tell it this way: Zhao Gao wanted to see who would say what he said. He led a deer into the hall and told Qin Er Shi and the whole court that it was a horse. Some said horse, some looked down and said nothing, and some honestly said deer."
+    },
+    {
+      "title": "Swap the Post That Matters",
+      "text": "He said nothing outright: he swapped the key posts one by one, and nobody could tell.",
+      "narration": "The great hall stands on a few posts. What Zhao Gao wanted was not words but the posts in the key places, swapped one at a time for ones that answered to him. The new posts looked exactly like the old, and stood just as straight. When the last one was in, the court found that every voice in the hall was his."
+    }
+  ],
+  "keyMoment": {
+    "question": "You must swap the posts that hold up the great hall. How do you keep it from showing?",
+    "options": [
+      {
+        "text": "Between counts, swap them one at a time and hold till each is set",
+        "hint": ""
+      },
+      {
+        "text": "Pull several down at once and put them all back together",
+        "hint": "While they are down the platform stands empty — anyone can see it."
+      },
+      {
+        "text": "Call a crowd over and swap them together",
+        "hint": "Too many voices: someone asks why before you finish."
+      }
+    ],
+    "reveal": "The one post that matters is swapped, the rest still stand — and nothing looks changed."
+  },
+  "misconceptions": [
+    "Replacing the beams just means carrying something away",
+    "Any post will do, as long as you swap it fast"
+  ],
+  "quiz": [
+    {
+      "question": "Why did Zhao Gao call the deer a horse in front of the court?",
+      "options": [
+        "To see who would say what he said",
+        "He really mistook it",
+        "He wanted to give the deer to the emperor"
+      ],
+      "answer": 0,
+      "explanation": "What he wanted was not the words but the answer: who would stand with him."
+    },
+    {
+      "question": "Your group built a paper bridge and must swap the piece that carries the most load, without the teacher seeing that the bridge changed. What is better?",
+      "options": [
+        "Find an identical piece and swap that one while nobody is looking",
+        "Take every paper stick apart and rebuild the bridge",
+        "Announce to the class that you are changing the material"
+      ],
+      "answer": 0,
+      "explanation": "Swap the one piece that matters and the bridge still looks like the same bridge — that is replacing the beams."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Hold on, beat the count"
+        }
+      }
+    ]
+  }
+}

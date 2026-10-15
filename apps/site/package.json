@@ -56,7 +56,13 @@
     "@chags/game-jinchan-tuoqiao": "workspace:*",
     "@chags/game-guanmen-zhuozei": "workspace:*",
     "@chags/game-yuanjiao-jingong": "workspace:*",
-    "@chags/game-jiadao-faguo": "workspace:*"
+    "@chags/game-jiadao-faguo": "workspace:*",
+    "@chags/game-touliang-huanzhu": "workspace:*",
+    "@chags/game-zhisang-mahuai": "workspace:*",
+    "@chags/game-jiachi-budian": "workspace:*",
+    "@chags/game-shangwu-chouti": "workspace:*",
+    "@chags/game-shushang-kaihua": "workspace:*",
+    "@chags/game-fanke-weizhu": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

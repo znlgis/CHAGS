@@ -1,0 +1,29 @@
+{
+  "id": "jiachi-budian",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "假痴不癫",
+  "pinyin": "Jiǎ chī bù diān",
+  "dynasty": "战国",
+  "era": "战国 · 周显王十四年",
+  "yearApprox": -355,
+  "source": {
+    "book": "《三十六计·并战计》",
+    "chapter": "假痴不癫",
+    "quote": "假作不知而实知，假作不为而实不可为，或将有所为。宁伪作不知不为，不伪作假知妄为。静不露机，云雷屯也。"
+  },
+  "moral": "该沉默的时候能忍住，机会才留得住。",
+  "keywords": [
+    "忍住",
+    "装糊涂",
+    "等时机"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 27,
+    "set": 5
+  }
+}

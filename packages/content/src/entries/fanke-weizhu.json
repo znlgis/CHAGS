@@ -1,0 +1,29 @@
+{
+  "id": "fanke-weizhu",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "反客为主",
+  "pinyin": "Fǎn kè wéi zhǔ",
+  "dynasty": "东汉",
+  "era": "东汉 · 建安十六年",
+  "yearApprox": 211,
+  "source": {
+    "book": "《三十六计·并战计》",
+    "chapter": "反客为主",
+    "quote": "乘隙插足，扼其主机，渐之进也。"
+  },
+  "moral": "一步一步来，急不得 —— 先站住脚，再把事情接下来。",
+  "keywords": [
+    "一步一步",
+    "慢慢接手",
+    "站住脚"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 30,
+    "set": 5
+  }
+}

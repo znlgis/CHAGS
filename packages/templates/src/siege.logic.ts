@@ -2,6 +2,8 @@ import { siegeGain } from './schemas';
 import type {
   SiegeCloseLevel, SiegeLevel, SiegeLog, SiegeSupportLevel, SiegeVital,
 } from './schemas';
+// ladder（上屋抽梯）：第五辑给 siege 加的第三个模式 —— 判定同样在这份文件里
+import type { SiegeLadderLevel } from './schemas';
 
 /**
  * 一扇门。
@@ -456,4 +458,198 @@ export function escapeExit(
     level.exits.filter((exit) => !closed.has(exit.id)),
     level,
   );
+}
+
+/* ---------------- ladder：上屋抽梯（第 28 计） ---------------- */
+
+/**
+ * 上屋抽梯（ladder）的账本：阶梯搭到第几级、他什么时候开始往上走、梯子抽没抽。
+ *
+ * 三条刻意的设计：
+ * - **先给方便**：一级一级按顺序搭（点一下搭一级），搭好了他才顺着往上走 ——
+ *   "给他一条路"这一步是孩子自己做的，不是过场动画。
+ * - **抽早了只是掉回来**：他还在爬的时候抽梯，他会掉回地面、**进度清零、要重新搭**
+ *   ——零惩罚，不扣星、不结束、不锁操作（就是要让"早了"这件事看得见）。
+ * - **到点了才抽得动**：他到位（ready）之后抽梯才算成；没搭完（building）点抽梯什么也不发生
+ *   （梯子还没架上，抽的是空气）。
+ *
+ * **不 import Phaser**：判定比画面重要得多。
+ */
+export type SiegeRung = SiegeLadderLevel['rungs'][number];
+
+export type LadderPhase = 'building' | 'climbing' | 'ready' | 'done';
+
+export interface LadderState {
+  /** 搭好的阶梯 id，按搭好的先后（就是关卡里的顺序） */
+  built: string[];
+  /** 他踏上第一级、开始往上走的时刻（最后一级搭好那一刻）；还没开始是 null */
+  climbingSinceMs: number | null;
+  /** 抽梯成功的时刻；null = 还没抽 */
+  pulledAtMs: number | null;
+  /** 抽早了：他掉回来过几回（零惩罚，只用来复盘） */
+  drops: number;
+  /** 这一局从哪一刻算起（墙钟，毫秒） */
+  startedAtMs: number;
+}
+
+export function ladderStart(level: SiegeLadderLevel, t = 0): LadderState {
+  void level;
+  return {
+    built: [],
+    climbingSinceMs: null,
+    pulledAtMs: null,
+    drops: 0,
+    startedAtMs: Math.max(0, t),
+  };
+}
+
+/** 这是哪一级阶梯（脚本里写了不存在的 id 就给 undefined，不抛） */
+export function rungById(level: SiegeLadderLevel, rungId: string): SiegeRung | undefined {
+  return level.rungs.find((rung) => rung.id === rungId);
+}
+
+/** 这一级搭了没有 */
+export function isRungBuilt(state: LadderState, rungId: string): boolean {
+  return state.built.includes(rungId);
+}
+
+/** 搭到第几级了（0 起） */
+export function builtCount(state: LadderState): number {
+  return state.built.length;
+}
+
+/** 全搭好了没有 —— 他就是在这一刻开始往上走的 */
+export function allRungsBuilt(level: SiegeLadderLevel, state: LadderState): boolean {
+  return level.rungs.every((rung) => isRungBuilt(state, rung.id));
+}
+
+/**
+ * 下一级该搭哪一级：**只认关卡里排的下一个**（跳级搭不了）。
+ * 全搭好了就是 undefined。
+ */
+export function nextRung(level: SiegeLadderLevel, state: LadderState): SiegeRung | undefined {
+  return level.rungs.find((rung) => !isRungBuilt(state, rung.id));
+}
+
+/**
+ * 搭一级：**只认下一级**。
+ * - 跳级搭、搭已经搭过的那一级、不认识的 id：原样返回（场景据此跳过重复的表演）；
+ * - 搭上最后一级：他立刻开始往上走（climbingSinceMs = 现在）。
+ */
+export function buildRung(
+  level: SiegeLadderLevel,
+  state: LadderState,
+  rungId: string,
+  t = 0,
+): LadderState {
+  if (state.pulledAtMs !== null) return state;
+  const expected = nextRung(level, state);
+  if (expected === undefined || expected.id !== rungId) return state;
+  const built = [...state.built, expected.id];
+  const complete = built.length >= level.rungs.length;
+  return {
+    ...state,
+    built,
+    // 他就是在最后一级搭上的那一刻抬脚的
+    climbingSinceMs: complete ? Math.max(0, t) : state.climbingSinceMs,
+  };
+}
+
+/** 他往上爬了多久（还没开始爬就是 0） */
+export function climbedMs(level: SiegeLadderLevel, state: LadderState, t: number): number {
+  if (state.pulledAtMs !== null) return level.climbMs;
+  if (state.climbingSinceMs === null) return 0;
+  return Math.max(0, Math.max(0, t) - state.climbingSinceMs);
+}
+
+/** 他爬到几分了（0..1）—— 画面按它把他往上挪 */
+export function climbRatio(level: SiegeLadderLevel, state: LadderState, t: number): number {
+  if (level.climbMs <= 0) return 1;
+  return Math.min(1, Math.max(0, climbedMs(level, state, t) / level.climbMs));
+}
+
+/** 搭了几成（0..1）—— 画面上的进度条按它画 */
+export function ladderProgress(level: SiegeLadderLevel, state: LadderState): number {
+  if (level.rungs.length === 0) return 1;
+  return builtCount(state) / level.rungs.length;
+}
+
+/**
+ * 此刻走到哪一步了：
+ * - 'building'：阶梯还没搭完（他站在下面等着）；
+ * - 'climbing'：搭好了，他正顺着往上走 —— 这时候抽梯 = 早了；
+ * - 'ready'：他到位了 —— 只有这时候抽梯才算成；
+ * - 'done'：梯子已经抽掉了，成了。
+ */
+export function ladderPhase(
+  level: SiegeLadderLevel,
+  state: LadderState,
+  t: number,
+): LadderPhase {
+  if (state.pulledAtMs !== null) return 'done';
+  if (!allRungsBuilt(level, state)) return 'building';
+  const since = Math.max(0, t) - (state.climbingSinceMs ?? 0);
+  return since >= level.climbMs ? 'ready' : 'climbing';
+}
+
+/**
+ * 抽梯：
+ * - 'ready' 之后 → 成了（pulledAtMs 记下来）；
+ * - 他还在爬（'climbing'）→ 他掉回地面：**进度清零、要重新搭**，只记一笔 drops（零惩罚）；
+ * - 还没搭完（'building'）→ 什么也不发生（梯子还没架上）；
+ * - 已经抽过了 → 原样返回。
+ */
+export function pullLadder(
+  level: SiegeLadderLevel,
+  state: LadderState,
+  t: number,
+): LadderState {
+  const phase = ladderPhase(level, state, t);
+  if (phase === 'done') return state;
+  if (phase === 'building') return state;
+  if (phase === 'climbing') {
+    // 早了：他从半截上滑回地面 —— 这不是"失败"，只是得重新搭一遍
+    return {
+      ...state,
+      built: [],
+      climbingSinceMs: null,
+      drops: state.drops + 1,
+    };
+  }
+  return { ...state, pulledAtMs: Math.max(0, t) };
+}
+
+/** 梯子抽掉了 = 他下不来了 = 这一关成了 */
+export function isLadderDone(state: LadderState): boolean {
+  return state.pulledAtMs !== null;
+}
+
+/** 手指落在哪一级阶梯上（拿最近的那一级）；forgive 让手指粗一点也点得到 */
+export function rungAt(
+  level: SiegeLadderLevel,
+  x: number,
+  y: number,
+  forgive = 0,
+): SiegeRung | undefined {
+  let best: SiegeRung | undefined;
+  let bestDist = Number.POSITIVE_INFINITY;
+  for (const rung of level.rungs) {
+    const dist = Math.hypot(x - rung.x, y - rung.y);
+    if (dist <= rung.radius + forgive && dist < bestDist) {
+      best = rung;
+      bestDist = dist;
+    }
+  }
+  return best;
+}
+
+/** 手指落在抽梯的地方（绳桩）上没有 */
+export function ladderAt(
+  level: SiegeLadderLevel,
+  x: number,
+  y: number,
+  forgive = 0,
+): boolean {
+  const { ladder } = level;
+  return Math.hypot(x - ladder.x, y - ladder.y) <= ladder.radius + forgive;
 }

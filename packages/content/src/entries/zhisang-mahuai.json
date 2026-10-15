@@ -1,0 +1,29 @@
+{
+  "id": "zhisang-mahuai",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "指桑骂槐",
+  "pinyin": "Zhǐ sāng mà huái",
+  "dynasty": "秦",
+  "era": "秦 · 二世初年",
+  "yearApprox": -209,
+  "source": {
+    "book": "《三十六计·并战计》",
+    "chapter": "指桑骂槐",
+    "quote": "大凌小者，警以诱之。刚中而应，行险而顺。"
+  },
+  "moral": "不点名、不硬顶 —— 换个说法，他自己就听进去了。",
+  "keywords": [
+    "换个说法",
+    "不点名",
+    "说给他听"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 26,
+    "set": 5
+  }
+}

@@ -422,3 +422,218 @@ describe('关门捉贼 · 抢在贼跑掉之前把出口关上', () => {
     expect(isExitClosed(close, state, 'west', 6200)).toBe(true);
   });
 });
+
+
+/* ---------------- 第 28 计 · 上屋抽梯（ladder） ---------------- */
+
+import { SiegeLadderSchema } from './schemas';
+import {
+  allRungsBuilt, buildRung, builtCount, climbRatio, climbedMs, isLadderDone, isRungBuilt,
+  ladderAt, ladderPhase, ladderProgress, ladderStart, nextRung, pullLadder, rungAt, rungById,
+} from './siege.logic';
+
+/** 与第 28 计的关卡一致：四级阶梯、他爬 3200 毫秒、顶上是诱饵、底下是抽梯的绳桩 */
+const ladder = SiegeLadderSchema.parse({
+  mode: 'ladder',
+  rungs: [
+    { id: 'r1', x: 237, y: 1129, radius: 52 },
+    { id: 'r2', x: 337, y: 933, radius: 52 },
+    { id: 'r3', x: 438, y: 738, radius: 52 },
+    { id: 'r4', x: 539, y: 542, radius: 52 },
+  ],
+  bait: { x: 640, y: 420, radius: 96 },
+  ladder: { x: 620, y: 1180, radius: 84 },
+  climbMs: 3200,
+  hint: '先搭梯子，等他上去再抽',
+});
+
+/** 把四级一级一级搭好（每级花 400 毫秒）；from 传进来就是从"掉回来之后"接着搭 */
+function buildAll(t0 = 0, from = ladderStart(ladder, 0)): ReturnType<typeof ladderStart> {
+  let state = from;
+  ladder.rungs.forEach((rung, index) => {
+    state = buildRung(ladder, state, rung.id, t0 + index * 400);
+  });
+  return state;
+}
+
+describe('上屋抽梯 · 一级一级地搭', () => {
+  it('开局一级都没搭，他还在下面等着', () => {
+    const start = ladderStart(ladder, 0);
+    expect(start.built).toEqual([]);
+    expect(builtCount(start)).toBe(0);
+    expect(ladderProgress(ladder, start)).toBe(0);
+    expect(allRungsBuilt(ladder, start)).toBe(false);
+    expect(ladderPhase(ladder, start, 0)).toBe('building');
+    expect(nextRung(ladder, start)?.id).toBe('r1');
+    expect(isLadderDone(start)).toBe(false);
+  });
+
+  it('只认下一级：跳级搭不了、搭过的再搭也不动（零惩罚）', () => {
+    const start = ladderStart(ladder, 0);
+    // 跳级：直接点第三级 —— 原样返回，一级也没搭上
+    expect(buildRung(ladder, start, 'r3', 100)).toBe(start);
+    expect(buildRung(ladder, start, 'r4', 100)).toBe(start);
+    // 不认识的 id 同样搭不了
+    expect(buildRung(ladder, start, 'nowhere', 100)).toBe(start);
+
+    const one = buildRung(ladder, start, 'r1', 100);
+    expect(one.built).toEqual(['r1']);
+    expect(isRungBuilt(one, 'r1')).toBe(true);
+    expect(nextRung(ladder, one)?.id).toBe('r2');
+    // 搭过的那一级再点：原样返回
+    expect(buildRung(ladder, one, 'r1', 500)).toBe(one);
+    // 挨着跳一级也不行
+    expect(buildRung(ladder, one, 'r3', 500)).toBe(one);
+    expect(builtCount(buildRung(ladder, one, 'r2', 500))).toBe(2);
+  });
+
+  it('搭建的过程：一级一级往上，搭到第几级就是几分', () => {
+    let state = ladderStart(ladder, 0);
+    ladder.rungs.forEach((rung, index) => {
+      state = buildRung(ladder, state, rung.id, index * 400);
+      expect(builtCount(state)).toBe(index + 1);
+      expect(ladderProgress(ladder, state)).toBeCloseTo((index + 1) / 4, 6);
+      // 没搭完之前他一直站在下面：这时候抽梯什么也不发生
+      if (index < ladder.rungs.length - 1) {
+        expect(ladderPhase(ladder, state, index * 400)).toBe('building');
+        expect(pullLadder(ladder, state, index * 400)).toBe(state);
+      }
+    });
+    expect(allRungsBuilt(ladder, state)).toBe(true);
+    expect(nextRung(ladder, state)).toBeUndefined();
+    expect(ladderProgress(ladder, state)).toBe(1);
+  });
+
+  it('最后一级搭上那一刻，他抬脚往上走：climbing → ready', () => {
+    const state = buildAll(0);
+    // 最后一级是在 1200 搭上的 —— 他就在那一刻开始爬
+    expect(state.climbingSinceMs).toBe(1200);
+    expect(ladderPhase(ladder, state, 1200)).toBe('climbing');
+    expect(ladderPhase(ladder, state, 4399)).toBe('climbing');
+    expect(ladderPhase(ladder, state, 4400)).toBe('ready');
+    // 爬到几分：按 climbMs 算
+    expect(climbRatio(ladder, state, 1200)).toBe(0);
+    expect(climbRatio(ladder, state, 2800)).toBeCloseTo(0.5, 6);
+    expect(climbRatio(ladder, state, 4400)).toBe(1);
+    expect(climbRatio(ladder, state, 9900)).toBe(1);
+    expect(climbedMs(ladder, state, 2800)).toBe(1600);
+    // 还没开始爬的时候是 0
+    expect(climbedMs(ladder, ladderStart(ladder, 0), 5000)).toBe(0);
+  });
+});
+
+describe('上屋抽梯 · 早了会掉回来', () => {
+  it('他还在爬的时候抽梯：他掉回地面、进度清零、要重新搭（零惩罚）', () => {
+    let state = buildAll(0);
+    const before = state;
+    state = pullLadder(ladder, state, 2000);
+    expect(state).not.toBe(before);
+    expect(state.drops).toBe(1);
+    expect(state.built).toEqual([]);
+    expect(state.climbingSinceMs).toBeNull();
+    expect(isLadderDone(state)).toBe(false);
+    // 掉回来之后又是"一级都没搭"，得从头搭
+    expect(ladderPhase(ladder, state, 2000)).toBe('building');
+    expect(nextRung(ladder, state)?.id).toBe('r1');
+    expect(ladderProgress(ladder, state)).toBe(0);
+  });
+
+  it('掉回来之后照样搭得成：重新搭四级 → 他到点 → 再抽才算成', () => {
+    let state = buildAll(0);
+    state = pullLadder(ladder, state, 2000);
+    state = buildAll(3000, state);
+    expect(state.drops).toBe(1);
+    expect(allRungsBuilt(ladder, state)).toBe(true);
+    expect(state.climbingSinceMs).toBe(4200);
+    expect(ladderPhase(ladder, state, 5000)).toBe('climbing');
+    // 又抽早了：再掉一回，账上记两笔
+    state = pullLadder(ladder, state, 5000);
+    expect(state.drops).toBe(2);
+    expect(state.built).toEqual([]);
+    // 第三次搭好、等到位、这下抽对了
+    state = buildAll(6000, state);
+    expect(ladderPhase(ladder, state, 10400)).toBe('ready');
+    state = pullLadder(ladder, state, 10400);
+    expect(isLadderDone(state)).toBe(true);
+    expect(state.pulledAtMs).toBe(10400);
+    expect(ladderPhase(ladder, state, 10400)).toBe('done');
+    expect(state.drops).toBe(2);
+  });
+
+  it('没搭完之前抽梯什么也不发生（梯子还没架上）', () => {
+    const one = buildRung(ladder, ladderStart(ladder, 0), 'r1', 0);
+    expect(pullLadder(ladder, one, 0)).toBe(one);
+    expect(pullLadder(ladder, one, 99999)).toBe(one);
+    expect(one.drops).toBe(0);
+    expect(isLadderDone(one)).toBe(false);
+  });
+
+  it('到位之后抽梯：成了；再抽原样返回（梯子已经没了）', () => {
+    let state = buildAll(0);
+    expect(ladderPhase(ladder, state, 4399)).toBe('climbing');
+    expect(isLadderDone(pullLadder(ladder, state, 4399))).toBe(false);
+    state = buildAll(0);
+    state = pullLadder(ladder, state, 4400);
+    expect(isLadderDone(state)).toBe(true);
+    expect(state.drops).toBe(0);
+    // 成了之后再抽：原样返回
+    expect(pullLadder(ladder, state, 5000)).toBe(state);
+    // 成了之后也搭不动了（这一局结束了）
+    expect(buildRung(ladder, state, 'r1', 5000)).toBe(state);
+  });
+});
+
+describe('上屋抽梯 · 手感与边界', () => {
+  it('手指落在哪一级阶梯上、有没有落在抽梯的绳桩上', () => {
+    expect(rungAt(ladder, 237, 1129, 56)?.id).toBe('r1');
+    expect(rungAt(ladder, 237, 1129, 0)?.id).toBe('r1');
+    expect(rungAt(ladder, 539, 542, 56)?.id).toBe('r4');
+    // 两道阶梯之间偏下那一边：取最近的那一级
+    expect(rungAt(ladder, 287, 1031, 0)).toBeUndefined();
+    expect(rungAt(ladder, 287, 1031, 120)?.id).toBe('r1');
+    // 绳桩与阶梯互不打扰：点在绳桩上不会碰到任何一级
+    expect(rungAt(ladder, ladder.ladder.x, ladder.ladder.y, 56)).toBeUndefined();
+    expect(ladderAt(ladder, 620, 1180)).toBe(true);
+    expect(ladderAt(ladder, 620, 1180, 40)).toBe(true);
+    expect(ladderAt(ladder, 150, 1180, 56)).toBe(false);
+    expect(ladderAt(ladder, 237, 1129, 0)).toBe(false);
+  });
+
+  it('每一级都点得到、而且互不重叠（手指粗也不会点到隔壁那级）', () => {
+    for (const rung of ladder.rungs) {
+      expect(rungAt(ladder, rung.x, rung.y, 40)?.id).toBe(rung.id);
+      expect(rungById(ladder, rung.id)).toBe(rung);
+    }
+    for (const a of ladder.rungs) {
+      for (const b of ladder.rungs) {
+        if (a.id === b.id) continue;
+        expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(2 * (a.radius + 40));
+      }
+    }
+    expect(rungById(ladder, 'nowhere')).toBeUndefined();
+  });
+
+  it('时钟只往一个方向走：t 比搭好那一刻还小，不算爬过', () => {
+    const state = buildAll(1000);
+    expect(state.climbingSinceMs).toBe(2200);
+    expect(climbedMs(ladder, state, 1000)).toBe(0);
+    expect(climbRatio(ladder, state, 1000)).toBe(0);
+    expect(ladderPhase(ladder, state, 1000)).toBe('climbing');
+    // 爬满 climbMs 才到位
+    expect(ladderPhase(ladder, state, 2200 + ladder.climbMs - 1)).toBe('climbing');
+    expect(ladderPhase(ladder, state, 2200 + ladder.climbMs)).toBe('ready');
+  });
+
+  it('schema 挡住重复的阶梯 id', () => {
+    expect(() =>
+      SiegeLadderSchema.parse({
+        ...ladder,
+        rungs: [
+          { id: 'r1', x: 237, y: 1129, radius: 52 },
+          { id: 'r1', x: 337, y: 933, radius: 52 },
+          { id: 'r2', x: 438, y: 738, radius: 52 },
+        ],
+      }),
+    ).toThrow();
+  });
+});

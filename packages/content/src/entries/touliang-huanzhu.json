@@ -1,0 +1,29 @@
+{
+  "id": "touliang-huanzhu",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "偷梁换柱",
+  "pinyin": "Tōu liáng huàn zhù",
+  "dynasty": "秦",
+  "era": "秦 · 二世三年",
+  "yearApprox": -207,
+  "source": {
+    "book": "《三十六计·并战计》",
+    "chapter": "偷梁换柱",
+    "quote": "频更其阵，抽其劲旅，待其自败，而后乘之。曳其轮也。"
+  },
+  "moral": "换掉关键的那一根，别的都还立着 —— 看上去什么都没变。",
+  "keywords": [
+    "换柱子",
+    "关键的一根",
+    "看不出来"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 25,
+    "set": 5
+  }
+}

@@ -14,8 +14,14 @@ import {
   supportStart,
 } from './siege.logic';
 import type { CloseState, SiegeExit, SiegeState, SupportState } from './siege.logic';
+// ladder（上屋抽梯）：第五辑给 siege 加的第三个模式 —— 判定同样在 siege.logic 里
+import {
+  allRungsBuilt, buildRung, builtCount, climbRatio, isLadderDone, ladderAt, ladderPhase,
+  ladderProgress, ladderStart, nextRung, pullLadder, rungAt,
+} from './siege.logic';
+import type { LadderPhase, LadderState, SiegeRung } from './siege.logic';
 import type {
-  SiegeCloseLevel, SiegeLevel, SiegeLog, SiegeSupportLevel, SiegeVital,
+  SiegeCloseLevel, SiegeLadderLevel, SiegeLevel, SiegeLog, SiegeSupportLevel, SiegeVital,
 } from './schemas';
 import type { SessionState } from './session';
 
@@ -144,6 +150,40 @@ export interface SiegeCloseMetrics {
   done: boolean;
 }
 
+/**
+ * ladder（上屋抽梯）每一帧交给游戏画的一切：
+ * 搭到第几级、他爬到哪儿、抽早了掉回来过几回。
+ */
+export interface SiegeLadderMetrics {
+  width: number;
+  height: number;
+  /** 这一局过了多久（墙钟，从开局算起）—— 他往上爬、尘土都按它摆 */
+  elapsedMs: number;
+  /** 搭好的阶梯 id（按搭好的先后） */
+  built: string[];
+  builtCount: number;
+  total: number;
+  /** 0..1：搭了几成 —— 画面上的进度条按它画 */
+  ratio: number;
+  /** building（还没搭完）/ climbing（他正往上走）/ ready（他到位了）/ done（梯子抽了） */
+  phase: LadderPhase;
+  /** 他爬到几分了（0..1）—— 画面按它把他往上挪 */
+  climbRatio: number;
+  /** 下一级该搭哪一级；全搭好了就是 null */
+  nextRungId: string | null;
+  /** 抽早了：他掉回来过几回（零惩罚，只用来复盘） */
+  drops: number;
+  /** 刚掉回来那一下是什么时候（画面按它演"从半截滑回地面"）；没掉过是 -1 */
+  droppedAtMs: number;
+  /** 掉回来那一下他爬到哪儿了（0..1）——下滑的起点 */
+  droppedFromRatio: number;
+  /** 刚到位的那一刻（画面按它演"站住了、回头一看"）；还没到位是 -1 */
+  readyAtMs: number;
+  /** 点空了几次：只是复盘用，不扣星也不结束 */
+  misses: number;
+  done: boolean;
+}
+
 export interface SiegeApi {
   scene: Phaser.Scene;
 }
@@ -203,8 +243,22 @@ export interface SiegeCloseConfig extends SiegeBaseConfig {
   drawCloseFinale?: (g: Phaser.GameObjects.Graphics, stage: SiegeCloseMetrics) => void;
 }
 
-/** 三个模式的配置合起来 —— createSiegeScene 按 level.mode 分派 */
-export type SiegeConfig = SiegeVitalConfig | SiegeSupportConfig | SiegeCloseConfig;
+/** ladder（第 28 计上屋抽梯）：先给方便 —— 一级级把梯子搭好，等他上去再抽掉 */
+export interface SiegeLadderConfig extends SiegeBaseConfig {
+  level: SiegeLadderLevel;
+  /** 整屏画面：营垒、梯子、往上爬的人、进度条都按 metrics 画 */
+  drawLadder: (g: Phaser.GameObjects.Graphics, stage: SiegeLadderMetrics) => void;
+  /** 搭上了一级（游戏可以让这一级真的架上去） */
+  onBuild?: (rung: SiegeRung, api: SiegeApi) => void;
+  /** 抽早了：他掉回来了（零惩罚，画面按 droppedAtMs 演他滑下来） */
+  onDrop?: (api: SiegeApi) => void;
+  /** 他下不来了的收尾表现 */
+  drawLadderFinale?: (g: Phaser.GameObjects.Graphics, stage: SiegeLadderMetrics) => void;
+}
+
+/** 四个模式的配置合起来 —— createSiegeScene 按 level.mode 分派 */
+export type SiegeConfig =
+  | SiegeVitalConfig | SiegeSupportConfig | SiegeCloseConfig | SiegeLadderConfig;
 
 /**
  * 打要害 / 抽支撑 / 断退路 —— 三个模式说的是同一句话：
@@ -220,6 +274,7 @@ export function createSiegeScene(
 ): Phaser.Types.Scenes.SceneType {
   if (isSupportConfig(cfg)) return createSiegeSupportScene(ctx, cfg);
   if (isCloseConfig(cfg)) return createSiegeCloseScene(ctx, cfg);
+  if (isLadderConfig(cfg)) return createSiegeLadderScene(ctx, cfg);
   return createSiegeVitalScene(ctx, cfg);
 }
 
@@ -234,6 +289,10 @@ function isSupportConfig(cfg: SiegeConfig): cfg is SiegeSupportConfig {
 
 function isCloseConfig(cfg: SiegeConfig): cfg is SiegeCloseConfig {
   return cfg.level.mode === 'close';
+}
+
+function isLadderConfig(cfg: SiegeConfig): cfg is SiegeLadderConfig {
+  return cfg.level.mode === 'ladder';
 }
 
 /**
@@ -1054,6 +1113,344 @@ function createSiegeCloseScene(
       const exit = nextExitToClose(cfg.level, this.state);
       if (exit === undefined) return;
       this.pressAt(exit.x, exit.y);
+    }
+  };
+}
+
+/* ---------------- ladder：上屋抽梯（第 28 计） ---------------- */
+
+/**
+ * 上屋抽梯自己的手感常量。**SIEGE 一个字没动** ——
+ * 搭梯、等人、抽梯的节拍与"推正面 / 抽柴 / 关门"完全不是一回事。
+ */
+export const LADDER = {
+  /** 点阶梯 / 点绳桩的命中宽容度：阶梯一级挨一级，比 siege 通用的那一份小一号 */
+  tapForgive: 40,
+  /** 他到位之后的那一下停顿（让孩子看清"他站上去了、回头看了一眼"） */
+  readyHoldMs: 700,
+  /** 无头验证：搭一级的节拍（够画面把上一级演完） */
+  autoplayStepMs: 420,
+} as const;
+
+/**
+ * 上屋抽梯：先给方便 —— 一级级把梯子搭好，他自己会顺着往上走；等他走到位，再把梯子抽掉。
+ *
+ * 四条刻意的设计：
+ * - **搭梯是孩子自己搭的**：点一下搭一级、**只认下一级**（跳级搭不上，零惩罚）；
+ *   搭完最后一级的那一刻，他才抬脚往上走 —— "先给方便"这一步看得见。
+ * - **抽早了只是掉回来**：他还在爬的时候抽梯，他会掉回地面、**进度清零、要重新搭**
+ *   ——零惩罚，不扣星、不结束、不锁操作；孩子自己就明白"早了不算数"。
+ * - **没搭完的时候点绳桩什么也不发生**：梯子还没架上，抽的是空气。
+ * - **他往上走的那一段，小手是收着的**：不该动手的时候不给提示 ——
+ *   提示给在**对的时候**（搭下一级 / 他到位了抽梯）。
+ */
+function createSiegeLadderScene(
+  ctx: GameContext,
+  cfg: SiegeLadderConfig,
+): Phaser.Types.Scenes.SceneType {
+  return class SiegeLadderScene extends BaseScene {
+    private state: LadderState = ladderStart(cfg.level, 0);
+    private startedAt = 0;
+    private finished = false;
+    private idleMs = 0;
+    private misses = 0;
+    private droppedAtMs = -1;
+    private droppedFromRatio = 0;
+    private readyAtMs = -1;
+    private lastPhase: LadderPhase | null = null;
+    private stageGfx: Phaser.GameObjects.Graphics | null = null;
+    private finaleGfx: Phaser.GameObjects.Graphics | null = null;
+    private ring: Phaser.GameObjects.Graphics | null = null;
+    private hand: Phaser.GameObjects.Graphics | null = null;
+    private stepTimer: Phaser.Time.TimerEvent | null = null;
+
+    constructor() {
+      super(SCENE_KEYS.siege, ctx);
+    }
+
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.siege });
+      this.startedAt = this.ctx.services.now();
+      this.state = ladderStart(cfg.level, 0);
+      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
+
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      this.redraw();
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
+        this.pressAt(pointer.x, pointer.y),
+      );
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+      this.onShutdownCleanup(() => {
+        this.stepTimer?.destroy();
+        this.stepTimer = null;
+      });
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.time.delayedCall(SIEGE.introHintMs, () => this.showHint(cfg.level.hint, 3000));
+        this.time.delayedCall(SIEGE.introHandMs, () => this.pointAtNext());
+      }
+    }
+
+    private now(): number {
+      return Math.max(0, this.ctx.services.now() - this.startedAt);
+    }
+
+    // ---------------- 点 ----------------
+
+    /** 手指落在阶梯上就搭它，落在绳桩上就抽梯，落在别处什么也不发生（零惩罚） */
+    private pressAt(x: number, y: number): void {
+      if (this.finished) return;
+      this.idleMs = 0;
+      const rung = rungAt(cfg.level, x, y, LADDER.tapForgive);
+      if (rung !== undefined) {
+        this.tapRung(rung);
+        return;
+      }
+      if (ladderAt(cfg.level, x, y, LADDER.tapForgive)) {
+        this.pullNow();
+        return;
+      }
+      this.nothing();
+    }
+
+    /** 搭一级：只认下一级 —— 跳级、搭过的、不认识的都原样返回，只提醒一句 */
+    private tapRung(rung: SiegeRung): void {
+      if (this.finished) return;
+      const before = this.state;
+      this.state = buildRung(cfg.level, this.state, rung.id, this.now());
+      if (this.state === before) {
+        this.showHint(cfg.level.hint, 2200);
+        return;
+      }
+      this.sfx('tap');
+      sparkleAt(this, rung.x, rung.y, THEME.wood, 5);
+      this.ctx.emit('beat:enter', { beatId: 'siege:ladder:rung:' + rung.id });
+      cfg.onBuild?.(rung, { scene: this });
+      this.clearRing();
+      this.hideHand();
+      this.redraw();
+      if (allRungsBuilt(cfg.level, this.state)) {
+        // 最后一级搭上了：他自己抬脚往上走 —— 这下要等
+        this.ctx.emit('beat:enter', { beatId: 'siege:ladder:climb' });
+        this.showHint(cfg.level.hint, 2200);
+      } else {
+        this.pointAtNext();
+      }
+    }
+
+    /** 抽梯：只有他到位之后才算成；早了他掉回来（零惩罚）；没搭完什么也不发生 */
+    private pullNow(): void {
+      if (this.finished) return;
+      const before = this.state;
+      const t = this.now();
+      const climbedTo = climbRatio(cfg.level, this.state, t);
+      this.state = pullLadder(cfg.level, this.state, t);
+      if (this.state === before) {
+        // 还没搭完（梯子还没架上）：抽的是空气 —— 提醒一句就完了
+        this.showHint(cfg.level.hint, 2200);
+        return;
+      }
+      if (isLadderDone(this.state)) {
+        this.ctx.emit('beat:enter', { beatId: 'siege:ladder:pull' });
+        this.finish();
+        return;
+      }
+      // 早了：他从半截上滑回地面 —— 进度清零、要重新搭（零惩罚）
+      this.droppedAtMs = t;
+      this.droppedFromRatio = climbedTo;
+      this.ctx.emit('beat:enter', { beatId: 'siege:ladder:drop:' + this.state.drops });
+      cfg.onDrop?.({ scene: this });
+      this.sfx('wrong');
+      this.cameras.main.shake(220, 0.004);
+      this.showHint(cfg.level.hint, 2600);
+      this.clearRing();
+      this.hideHand();
+      this.lastPhase = null;
+      this.redraw();
+    }
+
+    /** 点空了：只是没收获 —— 不扣星、不结束、不锁操作 */
+    private nothing(): void {
+      if (this.finished) return;
+      this.misses += 1;
+      this.sfx('tap');
+      this.ctx.emit('beat:enter', { beatId: 'siege:miss:' + this.misses });
+      this.showHint(cfg.level.hint, 2400);
+    }
+
+    // ---------------- 每一帧 ----------------
+
+    private tick(delta: number): void {
+      if (!this.finished) {
+        this.syncPhase();
+        this.idleMs += delta;
+        if (this.idleMs >= SIEGE.idleMs) {
+          this.idleMs = 0;
+          this.showHint(cfg.level.hint, 2600);
+          this.pointAtNext();
+        }
+      }
+      this.redraw();
+    }
+
+    /** 他到位的那一刻：出声、亮一下、把小手放到绳桩上 */
+    private syncPhase(): void {
+      const t = this.now();
+      const phase = ladderPhase(cfg.level, this.state, t);
+      if (phase === this.lastPhase) return;
+      this.lastPhase = phase;
+      if (phase !== 'ready') return;
+      this.readyAtMs = t;
+      this.ctx.emit('beat:enter', { beatId: 'siege:ladder:ready' });
+      this.sfx('unlock');
+      this.cameras.main.flash(160, 255, 240, 200);
+      this.time.delayedCall(this.autoplay ? 120 : LADDER.readyHoldMs, () => {
+        if (this.finished) return;
+        this.showHint(cfg.level.hint, 2400);
+        this.pointAt(cfg.level.ladder.x, cfg.level.ladder.y, cfg.level.ladder.radius);
+      });
+    }
+
+    // ---------------- 画面 ----------------
+
+    private metrics(done: boolean): SiegeLadderMetrics {
+      const level = cfg.level;
+      const t = this.now();
+      const next = nextRung(level, this.state);
+      return {
+        width: this.W,
+        height: this.H,
+        elapsedMs: t,
+        built: [...this.state.built],
+        builtCount: builtCount(this.state),
+        total: level.rungs.length,
+        ratio: ladderProgress(level, this.state),
+        phase: ladderPhase(level, this.state, t),
+        climbRatio: climbRatio(level, this.state, t),
+        nextRungId: next?.id ?? null,
+        drops: this.state.drops,
+        droppedAtMs: this.droppedAtMs,
+        droppedFromRatio: this.droppedFromRatio,
+        readyAtMs: this.readyAtMs,
+        misses: this.misses,
+        done,
+      };
+    }
+
+    private redraw(): void {
+      if (!this.stageGfx) return;
+      this.stageGfx.clear();
+      cfg.drawLadder(this.stageGfx, this.metrics(this.finished));
+    }
+
+    /**
+     * 小手该指哪儿：
+     * - 还没搭完 → 下一级阶梯；
+     * - 他到位了 → 抽梯的绳桩；
+     * - 他正往上走 → **哪儿也不指**（这时候不该动手）。
+     */
+    private pointAtNext(): void {
+      if (this.finished) return;
+      const phase = ladderPhase(cfg.level, this.state, this.now());
+      if (phase === 'building') {
+        const rung = nextRung(cfg.level, this.state);
+        if (rung === undefined) return;
+        this.pointAt(rung.x, rung.y, rung.radius);
+        return;
+      }
+      if (phase === 'ready') {
+        this.pointAt(cfg.level.ladder.x, cfg.level.ladder.y, cfg.level.ladder.radius);
+      }
+    }
+
+    private pointAt(x: number, y: number, radius: number): void {
+      this.clearRing();
+      this.hideHand();
+      const ring = this.add.graphics().setDepth(50);
+      ring.setPosition(x, y);
+      ring.lineStyle(9, THEME.gold, 0.95);
+      ring.strokeCircle(0, 0, radius + 26);
+      this.ring = ring;
+      this.tweens.add({
+        targets: ring,
+        scale: 1.16,
+        alpha: 0.35,
+        duration: 520,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      this.hand = createHand(this, x, y + radius + 30, 1.15);
+    }
+
+    private clearRing(): void {
+      if (!this.ring) return;
+      this.tweens.killTweensOf(this.ring);
+      this.ring.destroy();
+      this.ring = null;
+    }
+
+    private hideHand(): void {
+      if (!this.hand) return;
+      this.tweens.killTweensOf(this.hand);
+      this.hand.destroy();
+      this.hand = null;
+    }
+
+    // ---------------- 收尾 ----------------
+
+    private finish(): void {
+      if (this.finished) return;
+      this.finished = true;
+      this.stepTimer?.destroy();
+      this.stepTimer = null;
+      this.clearRing();
+      this.hideHand();
+      this.sfx('complete');
+      this.cameras.main.flash(320, 255, 250, 220);
+      sparkleAt(this, cfg.level.bait.x, cfg.level.bait.y, THEME.gold, 12);
+      cfg.session.total += 1;
+      cfg.session.correct += 1;
+      this.ctx.emit('beat:enter', { beatId: 'siege:done' });
+      this.redraw();
+      if (this.finaleGfx) cfg.drawLadderFinale?.(this.finaleGfx, this.metrics(true));
+      const reveal = cfg.reveal;
+      if (reveal !== undefined) {
+        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, cfg.revealY ?? 300));
+      }
+      this.time.delayedCall(cfg.finaleHoldMs ?? SIEGE.finaleHoldMs, () =>
+        this.scene.start(cfg.nextSceneKey),
+      );
+    }
+
+    // ---------------- 无头验证 ----------------
+
+    /** 与孩子走的是同一条路：按顺序搭上去，等他到位，再点绳桩（连命中判定都走一遍） */
+    private runAutoplay(): void {
+      this.stepTimer = this.time.addEvent({
+        delay: LADDER.autoplayStepMs,
+        loop: true,
+        callback: () => this.autoStep(),
+      });
+    }
+
+    private autoStep(): void {
+      if (this.finished) return;
+      const phase = ladderPhase(cfg.level, this.state, this.now());
+      if (phase === 'building') {
+        const rung = nextRung(cfg.level, this.state);
+        if (rung === undefined) return;
+        this.pressAt(rung.x, rung.y);
+        return;
+      }
+      if (phase === 'ready') this.pressAt(cfg.level.ladder.x, cfg.level.ladder.y);
     }
   };
 }

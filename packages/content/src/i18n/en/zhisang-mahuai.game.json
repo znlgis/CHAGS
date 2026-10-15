@@ -1,0 +1,71 @@
+{
+  "figures": [
+    "You Zhan",
+    "Qin Er Shi"
+  ],
+  "story": [
+    {
+      "title": "Lacquer the City Wall",
+      "text": "Qin Er Shi wanted the wall lacquered bright. His ministers said it cost too much.",
+      "narration": "The Records of the Grand Historian, in its chapter on jesters, tells it this way: Qin Er Shi had a new idea — to lacquer the whole city wall until it shone. His ministers told him what it would cost in money and in labour, and the more they said, the less he listened."
+    },
+    {
+      "title": "You Zhan Says: Splendid",
+      "text": "You Zhan said: lacquered smooth, no enemy could climb it. It would just need a roof.",
+      "narration": "You Zhan did not say it was a bad idea. He said: splendid! Lacquered slick, no attacker could get a handhold. Only, when it is done you would need a shed bigger than the wall to keep the sun off it — and where would anyone find a shed that size? Qin Er Shi laughed, and the wall was never lacquered."
+    }
+  ],
+  "keyMoment": {
+    "question": "Qin Er Shi is set on lacquering the wall and will hear no argument. What should You Zhan say?",
+    "options": [
+      {
+        "text": "Agree it is splendid, then point out the huge shed it would need",
+        "hint": ""
+      },
+      {
+        "text": "Say to his face that it wastes money, and count the cost line by line",
+        "hint": "The more right he is, the more it feels like a challenge."
+      },
+      {
+        "text": "Write a long memorial listing every reason against it",
+        "hint": "Every reason is sound, and the emperor will not even read it."
+      }
+    ],
+    "reveal": "No names, no head-on fight — say it another way, and he takes it in himself."
+  },
+  "misconceptions": [
+    "To be heard you have to say it louder and louder",
+    "Pointing at the mulberry just means talking behind someone's back"
+  ],
+  "quiz": [
+    {
+      "question": "How did You Zhan argue against lacquering the wall?",
+      "options": [
+        "He called it splendid, then pointed out the giant sun-shed it would need",
+        "He said to the emperor's face that it cost too much",
+        "He asked the ministers to present a joint memorial"
+      ],
+      "answer": 0,
+      "explanation": "He never said it was wrong: he laid out the difficulty, and the emperor laughed and changed his own mind."
+    },
+    {
+      "question": "The classmate next to you keeps twirling a pen and you cannot follow the lesson. What is better to say?",
+      "options": [
+        "After class: your trick looks great, but it makes me lose track",
+        "Shout in front of the whole class: stop twirling that pen!",
+        "Say nothing and move to the back row"
+      ],
+      "answer": 0,
+      "explanation": "Say it another way and he takes it in himself — speaking to the one who needs to hear beats speaking louder."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Knock the one he hears"
+        }
+      }
+    ]
+  }
+}

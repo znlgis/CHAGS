@@ -494,7 +494,7 @@ for (const locale of LOCALES) {
 }
 
 /**
- * 三十六计 · 第一辑（胜战计 1–6）：双语版面 + **卡面**。
+ * 三十六计（第 1–30 计，五辑逐条列在 STRATAGEMS 里）：双语版面 + **卡面**。
  *
  * 卡面走 `?autoplay=1&card=hold`：自动通关照跑，但停在典故卡上
  * （见 DebugOptions.cardHold）—— 自动通关下卡片只停 200ms，不这样拍不到卡面，
@@ -528,10 +528,17 @@ const STRATAGEMS: [string, string][] = [
   ['guanmen-zhuozei', 'siege'],
   ['yuanjiao-jingong', 'matchup'],
   ['jiadao-faguo', 'chain'],
+  // 第五辑（并战计 25–30）
+  ['touliang-huanzhu', 'swap'],
+  ['zhisang-mahuai', 'probe'],
+  ['jiachi-budian', 'stillness'],
+  ['shangwu-chouti', 'siege'],
+  ['shushang-kaihua', 'show'],
+  ['fanke-weizhu', 'chain'],
 ];
 
 for (const locale of LOCALES) {
-  test('audit ' + locale + ' — 三十六计第一辑（版面 + 卡面）', async ({ page }) => {
+  test('audit ' + locale + ' — 三十六计（第 1–30 计：版面 + 卡面）', async ({ page }) => {
     test.setTimeout(600_000);
     await page.setViewportSize({ width: 430, height: 932 });
     const out = '.scratch/i18n-audit/' + locale;

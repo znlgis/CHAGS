@@ -56,6 +56,12 @@ import rawJinchan from './jinchan-tuoqiao.game.json';
 import rawGuanmen from './guanmen-zhuozei.game.json';
 import rawYuanjiao from './yuanjiao-jingong.game.json';
 import rawJiadao from './jiadao-faguo.game.json';
+import rawTouliang from './touliang-huanzhu.game.json';
+import rawZhisang from './zhisang-mahuai.game.json';
+import rawJiachi from './jiachi-budian.game.json';
+import rawShangwu from './shangwu-chouti.game.json';
+import rawShushang from './shushang-kaihua.game.json';
+import rawFanke from './fanke-weizhu.game.json';
 
 /**
  * **详情层**：故事 / 关键抉择 / 复习题 / 误解 / 关卡脚本。
@@ -106,6 +112,12 @@ export const entryDetails: Record<string, EntryDetail> = {
   'guanmen-zhuozei': EntryDetailSchema.parse(rawGuanmen),
   'yuanjiao-jingong': EntryDetailSchema.parse(rawYuanjiao),
   'jiadao-faguo': EntryDetailSchema.parse(rawJiadao),
+  'touliang-huanzhu': EntryDetailSchema.parse(rawTouliang),
+  'zhisang-mahuai': EntryDetailSchema.parse(rawZhisang),
+  'jiachi-budian': EntryDetailSchema.parse(rawJiachi),
+  'shangwu-chouti': EntryDetailSchema.parse(rawShangwu),
+  'shushang-kaihua': EntryDetailSchema.parse(rawShushang),
+  'fanke-weizhu': EntryDetailSchema.parse(rawFanke),
 };
 
 /** 完整条目：摘要 + 详情（两条记录合并之后再过一次完整 schema） */

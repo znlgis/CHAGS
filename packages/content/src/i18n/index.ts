@@ -40,6 +40,12 @@ import enJinchan from './en/jinchan-tuoqiao.json';
 import enGuanmen from './en/guanmen-zhuozei.json';
 import enYuanjiao from './en/yuanjiao-jingong.json';
 import enJiadao from './en/jiadao-faguo.json';
+import enTouliang from './en/touliang-huanzhu.json';
+import enZhisang from './en/zhisang-mahuai.json';
+import enJiachi from './en/jiachi-budian.json';
+import enShangwu from './en/shangwu-chouti.json';
+import enShushang from './en/shushang-kaihua.json';
+import enFanke from './en/fanke-weizhu.json';
 
 /**
  * 典故内容的翻译补丁。结构镜像原文，只写需要翻译的字段。
@@ -88,6 +94,12 @@ export const patches: Partial<Record<Locale, Record<string, unknown>>> = {
     'guanmen-zhuozei': enGuanmen,
     'yuanjiao-jingong': enYuanjiao,
     'jiadao-faguo': enJiadao,
+    'touliang-huanzhu': enTouliang,
+    'zhisang-mahuai': enZhisang,
+    'jiachi-budian': enJiachi,
+    'shangwu-chouti': enShangwu,
+    'shushang-kaihua': enShushang,
+    'fanke-weizhu': enFanke,
   },
 };
 

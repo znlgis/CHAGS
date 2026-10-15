@@ -1,4 +1,4 @@
-import type { StillnessBeat, StillnessLevel } from './schemas';
+import type { StillnessBeat, StillnessFeignLevel, StillnessLevel, StillnessTest } from './schemas';
 
 /**
  * 忍：最难的动作是不动。
@@ -181,6 +181,190 @@ export function effectiveLevel(
       ...beat,
       drumMs: scale(beat.drumMs),
       windowMs: scale(beat.windowMs),
+    })),
+  };
+}
+
+/* ---------------- feign：假痴不癫（第 27 计） ---------------- */
+
+/**
+ * 假痴不癫（feign）的账本：对手一次次来**试探**，试探期里任何一下点击都算露馅
+ * （记一笔 slip —— **零惩罚**：不扣星、不结束、不锁操作，接着忍就是）；
+ * 试探之间的**空档**里点一下，才推进一步；推够 `steps` 步，机会就成熟了。
+ *
+ * 三条刻意的设计：
+ * - **时间轴就是关卡数据**：每一次试探（testMs）之后跟着一个空档（gapMs），
+ *   位置是累积算出来的 —— 场景把墙钟喂进来，单测直接喂数字，用的是同一份判定。
+ * - **试探期的点击不是"错误"，是"忍不住"**：只记一笔账。
+ *   孩子自己会发现：忍住那几秒，空档一来，一步就顶上去了。
+ * - **空档有几个，就能推几步**：`tests` 有几个空档就最多推几步（本辑 steps = 3）——
+ *   想推满就得每一次试探都忍住。
+ *
+ * **不 import Phaser**：判定比画面重要得多。
+ */
+export type FeignPhase = 'test' | 'gap' | 'done';
+
+export interface FeignPhaseInfo {
+  /** 此刻是哪一次试探；整条时间轴走完了就是 null */
+  testId: string | null;
+  phase: FeignPhase;
+}
+
+/** 一局里攒下来的东西：推了几步、露馅几次 —— 两个数都不带惩罚 */
+export interface FeignState {
+  /** 空档里行动了几次 */
+  progress: number;
+  /** 试探期露馅了几次（零惩罚，只用来复盘 —— 这一计最好看的一笔账） */
+  slips: number;
+  /** 每一次露馅是在哪一次试探上 */
+  slipTestIds: string[];
+  /** 推够 steps 步了 */
+  done: boolean;
+}
+
+/** 一次试探在时间轴上的位置（关卡数据里只写时长，位置是累积出来的） */
+export interface FeignSlot {
+  test: StillnessTest;
+  index: number;
+  /** 试探从这儿开始：这段时间里任何点击都算露馅 */
+  testStartMs: number;
+  /** 试探结束、空档从这儿开始：这时候才能行动 */
+  gapStartMs: number;
+  /** 空档结束（下一次试探开始；最后一次就是整局结束） */
+  endMs: number;
+}
+
+/** 无头验证时每一段至少留这么久，否则空档短得点都点不到 */
+export const FEIGN_MIN_PHASE_MS = 240;
+
+export function feignStart(): FeignState {
+  return { progress: 0, slips: 0, slipTestIds: [], done: false };
+}
+
+export function feignTimeline(level: StillnessFeignLevel): FeignSlot[] {
+  let cursor = 0;
+  return level.tests.map((test, index) => {
+    const testStartMs = cursor;
+    const gapStartMs = testStartMs + test.testMs;
+    const endMs = gapStartMs + test.gapMs;
+    cursor = endMs;
+    return { test, index, testStartMs, gapStartMs, endMs };
+  });
+}
+
+/** 试探一轮走完总共多久 */
+export function feignTotalMs(level: StillnessFeignLevel): number {
+  const slots = feignTimeline(level);
+  return slots.length === 0 ? 0 : slots[slots.length - 1]!.endMs;
+}
+
+/** 此刻落在哪一次试探上（试探或它后面的空档）；走完了就是 null */
+export function feignSlotAt(level: StillnessFeignLevel, t: number): FeignSlot | null {
+  const ms = Math.max(0, t);
+  return feignTimeline(level).find((slot) => ms < slot.endMs) ?? null;
+}
+
+/**
+ * 此刻是"他正盯着"还是"他走开了"。
+ * 试探期 = test，空档 = gap，一轮走完 = done（出手什么也不算，要重开一轮）。
+ */
+export function feignPhaseAt(level: StillnessFeignLevel, t: number): FeignPhaseInfo {
+  const slot = feignSlotAt(level, t);
+  if (!slot) return { testId: null, phase: 'done' };
+  return {
+    testId: slot.test.id,
+    phase: Math.max(0, t) < slot.gapStartMs ? 'test' : 'gap',
+  };
+}
+
+/** 此刻是不是空档（画面上"可以悄悄动手了"的那圈光用它） */
+export function feignCanAct(level: StillnessFeignLevel, t: number): boolean {
+  return feignPhaseAt(level, t).phase === 'gap';
+}
+
+/**
+ * 动了一下手：
+ * - 试探期 → 只记一笔 slip（**零惩罚**，不打断、不结束、不锁操作）；
+ * - 空档期 → progress 加一，推够 steps 就是成了；
+ * - 一轮走完（done）→ 什么也不记（重开一轮就是了）。
+ */
+export function tapActionFeign(
+  level: StillnessFeignLevel,
+  state: FeignState,
+  t: number,
+): FeignState {
+  if (state.done) return state;
+  const info = feignPhaseAt(level, t);
+  if (info.phase === 'test') {
+    return {
+      ...state,
+      slips: state.slips + 1,
+      slipTestIds: [...state.slipTestIds, info.testId ?? ''],
+    };
+  }
+  if (info.phase === 'gap') {
+    const progress = Math.min(level.steps, state.progress + 1);
+    return { ...state, progress, done: progress >= level.steps };
+  }
+  return state;
+}
+
+/** 推够 steps 步 = 机会成熟了 */
+export function isFeignDone(state: FeignState): boolean {
+  return state.done;
+}
+
+/** 0..1：推了几成（画面上的进度条按它画） */
+export function feignProgress(level: StillnessFeignLevel, state: FeignState): number {
+  if (level.steps <= 0) return 1;
+  return Math.min(1, Math.max(0, state.progress / level.steps));
+}
+
+/** 手指落在"悄悄动手"的地方上（宽容度让小朋友不用对准） */
+export function hitFeignAction(
+  x: number,
+  y: number,
+  level: StillnessFeignLevel,
+  forgive = 0,
+): boolean {
+  const { action } = level;
+  return Math.hypot(x - action.x, y - action.y) <= action.radius + forgive;
+}
+
+/** 此刻距离这一段结束还有多久（空档快关了，画面上会有反应） */
+export function feignRemainingMs(level: StillnessFeignLevel, t: number): number {
+  const slot = feignSlotAt(level, t);
+  if (!slot) return 0;
+  return Math.max(0, slot.endMs - Math.max(0, t));
+}
+
+/** 这一刻走到这一段的几分了（0..1）—— 灯笼扫过来的光按它推 */
+export function feignPhaseProgress(level: StillnessFeignLevel, t: number): number {
+  const slot = feignSlotAt(level, t);
+  if (!slot) return 1;
+  const ms = Math.max(0, t);
+  if (ms < slot.gapStartMs) {
+    const span = slot.gapStartMs - slot.testStartMs;
+    return span <= 0 ? 1 : Math.min(1, Math.max(0, (ms - slot.testStartMs) / span));
+  }
+  const span = slot.endMs - slot.gapStartMs;
+  return span <= 0 ? 1 : Math.min(1, Math.max(0, (ms - slot.gapStartMs) / span));
+}
+
+/** 无头验证：把试探与空档都压成几分之一 —— 但每一段都留得下点得到 */
+export function effectiveFeignLevel(
+  level: StillnessFeignLevel,
+  autoplay: boolean,
+  factor = 5,
+): StillnessFeignLevel {
+  if (!autoplay || factor <= 1) return level;
+  const scale = (ms: number): number => Math.max(FEIGN_MIN_PHASE_MS, Math.round(ms / factor));
+  return {
+    ...level,
+    tests: level.tests.map((test) => ({
+      ...test,
+      testMs: scale(test.testMs),
+      gapMs: scale(test.gapMs),
     })),
   };
 }

@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { ProbeKnockSchema, ProbeSpotSchema } from './schemas';
+import { ProbeHintSchema, ProbeKnockSchema, ProbeSpotSchema } from './schemas';
+import type { ProbeHintLevel } from './schemas';
 import {
+  // probe 扩展：hint（指桑骂槐）—— 老模式的那一串一个字没改，只是多了一行
+  HINT_TIMING, hintProgress, hintPropAt, hintPropById, hintStart, hintStepsLeft, isHintDone,
+  isWantedProp, knockHint, listenerStep, nextHintProp, wantedKind, wrongKnocks,
   PROBE_TIMING, canCross, cross, crossablePatches, figureAt, hasSnake, isFigureTried, isKingFigure,
   isKnockDone, isKnocked, isSpotDone, isSpooked, knock, knockOrder, nextFigureToShoot, nextKnockStep,
   nextPatchToKnock, patchById, probeAt, probeStart, remainingFigures, shoot,
 } from './probe.logic';
-import type { KnockLevel, ProbeState, SpotLevel } from './probe.logic';
+import type { KnockLevel, ProbeHintState, ProbeState, SpotLevel } from './probe.logic';
 
 /** 第 13 计 · 打草惊蛇：五丛草，两处有蛇，敲到蛇就搅乱它周围一片 */
 const knockLevel = ProbeKnockSchema.parse({
@@ -420,3 +424,204 @@ describe('无头验证：一局真的走得完（照场景 runAutoplay 的同一
     expect(shot.crossed).toBeNull();
   });
 });
+
+/* ---------------- probe 扩展：hint（第 26 计 · 指桑骂槐） ---------------- */
+
+/**
+ * 第 26 计 · 指桑骂槐：桑 / 槐 / 钟 / 鼓 四样东西，二世听得懂的是鼓。
+ *
+ * 关卡脚本里的 `has` 在这个模式下就是"这样东西的类别"（字段名沿用老模式那个，
+ * 它本来就是"这一样是什么"）：`has: 'snake'` 的那一样就是他听得懂的。
+ */
+const hintLevel = ProbeHintSchema.parse({
+  mode: 'hint',
+  props: [
+    { id: 'mulberry', x: 105, y: 620, radius: 76, has: 'clear' },
+    { id: 'ash', x: 285, y: 620, radius: 76, has: 'clear' },
+    { id: 'bell', x: 465, y: 620, radius: 76, has: 'clear' },
+    { id: 'drum', x: 645, y: 620, radius: 76, has: 'snake' },
+  ],
+  listener: { x: 375, y: 1010, radius: 80, wants: 'snake' },
+  steps: 3,
+  hint: '敲对了，他自己往前走',
+});
+
+/** 无头验证：照场景 runAutoplay 的同一条路 —— 敲"他听得懂的那一样"，一步接一步 */
+function runHintAutoplay(level: ProbeHintLevel, steps: string[]): ProbeHintState {
+  let state = hintStart();
+  for (let i = 0; i < 20 && !isHintDone(level, state); i += 1) {
+    const prop = nextHintProp(level, state);
+    if (prop === undefined) break;
+    steps.push(prop.id);
+    state = knockHint(level, state, prop.id);
+  }
+  return state;
+}
+
+describe('指桑骂槐：敲对了，他自己往前走', () => {
+  it('敲到他听得懂的那一样：他往前走一步（进度 +1）', () => {
+    const state = hintStart();
+    expect(hintProgress(state)).toBe(0);
+    expect(isHintDone(hintLevel, state)).toBe(false);
+    expect(isWantedProp(hintLevel, 'drum')).toBe(true);
+    expect(isWantedProp(hintLevel, 'bell')).toBe(false);
+    expect(wantedKind(hintLevel)).toBe('snake');
+
+    const once = knockHint(hintLevel, state, 'drum');
+    expect(hintProgress(once)).toBe(1);
+    expect(wrongKnocks(once)).toBe(0);
+    expect(once.lastKnock).toBe('drum');
+    expect(once.lastWasWanted).toBe(true);
+    expect(hintStepsLeft(hintLevel, once)).toBe(2);
+    expect(listenerStep(hintLevel, once)).toBe(1);
+    expect(isHintDone(hintLevel, once)).toBe(false);
+  });
+
+  it('走够 steps 步 = 他自己做出了正确的选择（这一关成了）', () => {
+    let state = hintStart();
+    for (let i = 0; i < hintLevel.steps; i += 1) {
+      expect(isHintDone(hintLevel, state)).toBe(false);
+      state = knockHint(hintLevel, state, 'drum');
+    }
+    expect(hintProgress(state)).toBe(hintLevel.steps);
+    expect(isHintDone(hintLevel, state)).toBe(true);
+    expect(hintStepsLeft(hintLevel, state)).toBe(0);
+    expect(listenerStep(hintLevel, state)).toBe(hintLevel.steps);
+    expect(nextHintProp(hintLevel, state)).toBeUndefined();
+  });
+
+  it('敲错只记一笔：进度不动、不结束、不扣星（零惩罚）', () => {
+    let state = hintStart();
+    for (const id of ['mulberry', 'ash', 'bell']) {
+      state = knockHint(hintLevel, state, id);
+    }
+    expect(hintProgress(state)).toBe(0);
+    expect(wrongKnocks(state)).toBe(3);
+    expect(state.lastWasWanted).toBe(false);
+    expect(isHintDone(hintLevel, state)).toBe(false);
+    // 同一样再敲：账照记，还是零惩罚
+    state = knockHint(hintLevel, state, 'bell');
+    expect(wrongKnocks(state)).toBe(4);
+    expect(hintProgress(state)).toBe(0);
+    // 敲错多少下都不影响走不走得完：接着敲对的那一样，照样一步不少
+    state = knockHint(hintLevel, state, 'drum');
+    state = knockHint(hintLevel, state, 'mulberry'); // 中间再敲错一次也不怕
+    state = knockHint(hintLevel, state, 'drum');
+    state = knockHint(hintLevel, state, 'drum');
+    expect(isHintDone(hintLevel, state)).toBe(true);
+    expect(wrongKnocks(state)).toBe(5);
+  });
+
+  it('敲过的记下来（重复的不算新的一样），但账目只有"几步 + 敲错几次"', () => {
+    let state = hintStart();
+    state = knockHint(hintLevel, state, 'ash');
+    state = knockHint(hintLevel, state, 'ash');
+    state = knockHint(hintLevel, state, 'drum');
+    expect(state.knocked).toEqual(['ash', 'drum']);
+    expect(hintProgress(state)).toBe(1);
+    expect(wrongKnocks(state)).toBe(2);
+  });
+
+  it('他已经走够了之后：再敲什么都不会变（原样返回）', () => {
+    let done = hintStart();
+    for (let i = 0; i < hintLevel.steps; i += 1) done = knockHint(hintLevel, done, 'drum');
+    expect(isHintDone(hintLevel, done)).toBe(true);
+    expect(knockHint(hintLevel, done, 'drum')).toBe(done);
+    expect(knockHint(hintLevel, done, 'mulberry')).toBe(done);
+    expect(hintProgress(knockHint(hintLevel, done, 'mulberry'))).toBe(hintLevel.steps);
+  });
+
+  it('脚本里没有这一样（写错 id）：什么都没发生，也不抛', () => {
+    const state = hintStart();
+    expect(knockHint(hintLevel, state, 'ghost')).toBe(state);
+    expect(hintPropById(hintLevel, 'ghost')).toBeUndefined();
+    expect(hintPropById(hintLevel, 'drum')?.has).toBe('snake');
+    expect(state.knocked).toEqual([]);
+    expect(wrongKnocks(state)).toBe(0);
+  });
+
+  it('点选：圆心与边缘都算，最近的那一样优先', () => {
+    expect(hintPropAt(hintLevel, 105, 620, 0)?.id).toBe('mulberry');
+    expect(hintPropAt(hintLevel, 105 + 76, 620, 0)?.id).toBe('mulberry');
+    expect(hintPropAt(hintLevel, 105 + 77, 620, 0)).toBeUndefined();
+    expect(hintPropAt(hintLevel, 105, 620 + 100, 44)?.id).toBe('mulberry'); // 宽容度
+    expect(hintPropAt(hintLevel, 375, 240, 60)).toBeUndefined();
+    // 两样之间的中间那条线上，拿最近的那一样
+    expect(hintPropAt(hintLevel, 196, 620, 44)?.id).toBe('ash');
+    expect(hintPropAt(hintLevel, 194, 620, 44)?.id).toBe('mulberry');
+  });
+});
+
+describe('指桑骂槐：schema 与边界', () => {
+  it('至少要有一样是他听得懂的 —— 不然这一关不可能过（schema 当场拒掉）', () => {
+    expect(() =>
+      ProbeHintSchema.parse({
+        ...hintLevel,
+        listener: { ...hintLevel.listener, wants: 'ghost' },
+      }),
+    ).toThrow();
+  });
+
+  it('三到五样东西都合法；两样、六样、重名都不许', () => {
+    const prop = (id: string): { id: string; x: number; y: number; radius: number; has: 'snake' } =>
+      ({ id, x: 100, y: 620, radius: 60, has: 'snake' });
+    expect(() =>
+      ProbeHintSchema.parse({ ...hintLevel, props: [prop('a'), prop('b')] }),
+    ).toThrow();
+    expect(() =>
+      ProbeHintSchema.parse({ ...hintLevel, props: [prop('a'), prop('b'), prop('c'), prop('d'), prop('e'), prop('f')] }),
+    ).toThrow();
+    expect(() =>
+      ProbeHintSchema.parse({ ...hintLevel, props: [prop('a'), prop('b'), prop('a')] }),
+    ).toThrow();
+    expect(
+      ProbeHintSchema.parse({
+        ...hintLevel,
+        props: [prop('a'), prop('b'), prop('c'), prop('d'), prop('e')],
+      }).props,
+    ).toHaveLength(5);
+  });
+
+  it('steps 一步到六步都合法，零步与七步不许；提示语不许太长', () => {
+    expect(() => ProbeHintSchema.parse({ ...hintLevel, steps: 0 })).toThrow();
+    expect(() => ProbeHintSchema.parse({ ...hintLevel, steps: 7 })).toThrow();
+    expect(ProbeHintSchema.parse({ ...hintLevel, steps: 1 }).steps).toBe(1);
+    expect(ProbeHintSchema.parse({ ...hintLevel, steps: 6 }).steps).toBe(6);
+    expect(() => ProbeHintSchema.parse({ ...hintLevel, hint: '太长的提示语'.repeat(6) })).toThrow();
+  });
+
+  it('无头验证：一步一步走过去，正好敲 steps 次（与真实操作同一条路）', () => {
+    const steps: string[] = [];
+    const state = runHintAutoplay(hintLevel, steps);
+    expect(steps).toEqual(['drum', 'drum', 'drum']);
+    expect(isHintDone(hintLevel, state)).toBe(true);
+    expect(hintProgress(state)).toBe(hintLevel.steps);
+    // 一次也没敲错：无头验证敲的永远是"他听得懂的那一样"
+    expect(wrongKnocks(state)).toBe(0);
+    expect(state.knocked).toEqual(['drum']);
+  });
+
+  it('时间常量：一次一步看得清，走完一局远在 e2e 的等待之内', () => {
+    expect(HINT_TIMING.stepMs).toBeGreaterThanOrEqual(HINT_TIMING.knockMs);
+    expect(hintLevel.steps * HINT_TIMING.stepMs + HINT_TIMING.finaleHoldMs).toBeLessThan(30_000);
+  });
+
+  it('两个账本互不干扰：敲东西不会动到老模式（knock / spot）的账', () => {
+    const hint = knockHint(hintLevel, knockHint(hintLevel, hintStart(), 'drum'), 'ash');
+    expect(hintProgress(hint)).toBe(1);
+    expect(wrongKnocks(hint)).toBe(1);
+    // 老模式的账本一个字没改：敲草丛还是敲草丛，试身影还是试身影
+    const knocked = knock(knockLevel, probeStart(), 'a');
+    expect(knocked.knocked).toEqual(['a']);
+    expect(knocked.crossed).toBeNull();
+    const tried = shoot(spotLevel, probeStart(), 'f1');
+    expect(tried.tried).toEqual(['f1']);
+    expect(tried.king).toBeNull();
+    expect(isFigureTried(tried, 'f1')).toBe(true);
+    // hint 的账本里没有老模式的那几个字段（各记各的）
+    expect(Object.keys(hintStart()).sort()).toEqual(
+      ['knocked', 'lastKnock', 'lastWasWanted', 'progress', 'wrongKnocks'],
+    );
+  });
+});
+

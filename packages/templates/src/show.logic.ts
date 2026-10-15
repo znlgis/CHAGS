@@ -1,4 +1,4 @@
-import type { ShowLevel, ShowSlot } from './schemas';
+import type { ShowBorrowLevel, ShowLevel, ShowSlot } from './schemas';
 
 /**
  * 造势（show）的纯判定：从什么都没有开始，把一个**不存在的东西**维持住。
@@ -175,6 +175,186 @@ export function slotAt(level: ShowLevel, x: number, y: number, forgive = 0): Sho
     const dist = Math.hypot(x - slot.x, y - slot.y);
     if (dist <= slot.radius + forgive && dist < bestDist) {
       best = slot;
+      bestDist = dist;
+    }
+  }
+  return best;
+}
+
+/* ---------------- borrow：树上开花（第 29 计） ---------------- */
+
+/**
+ * 树上开花：借现成的东西（树、城墙）把小队显得很大。
+ *
+ * 与 draw（无中生有）的差别在**账本不一样**：draw 的账是时间 —— 一笔只管 fadeMs，
+ * 手一停影就淡；borrow 的账是**分配** —— 手里几面旗，挂到哪几个支点上。
+ * 每面旗在它上面顶多少"规模"由支点决定（weight），每个支点最多挂几面也写死了（capacity）——
+ * 所以这一关切的是"把旗放到最显眼的地方去"，而不是手快。
+ *
+ * 三条刻意的设计：
+ * - **可以随时撤下来重挂**：挂错、挂满、想换一处 —— unassignFlag 只是把旗拿回手里，
+ *   不扣星、不结束（unhangs 只记一笔，用来复盘）。
+ * - **挂不下就是挂不下**：超出容量 / 手里没旗了 / 没这个支点 —— assignFlag 原样返回，零惩罚。
+ * - **规模是算出来的**：每个支点上的旗数 × 它的 weight 求和，到 needed 就算成；
+ *   画面上的规模条与这一份判定用的是同一个数。
+ */
+export type ShowBorrowProp = ShowBorrowLevel['props'][number];
+
+/** 一局里攒下来的东西：哪几个支点上挂着几面旗 —— 没有一样是惩罚 */
+export interface BorrowState {
+  /** 支点 id → 上面挂着几面旗（没挂过就没有这一项） */
+  hanging: Record<string, number>;
+  /** 一共挂上过几面（复盘用，不惩罚） */
+  hangs: number;
+  /** 一共撤下过几面 —— 撤下来重挂是这一关该做的事，不扣分 */
+  unhangs: number;
+}
+
+/** 开一局：旗都在手里，一个支点上也还没挂 */
+export function borrowStart(): BorrowState {
+  return { hanging: {}, hangs: 0, unhangs: 0 };
+}
+
+/** 这是哪一个支点（脚本里写了不存在的 id 就给 undefined，不抛） */
+export function propById(level: ShowBorrowLevel, propId: string): ShowBorrowProp | undefined {
+  return level.props.find((prop) => prop.id === propId);
+}
+
+/** 这个支点上挂着几面旗（没挂过 = 0） */
+export function flagCountAt(state: BorrowState, propId: string): number {
+  return Math.max(0, state.hanging[propId] ?? 0);
+}
+
+/** 已经挂出去几面旗 */
+export function flagsUsed(level: ShowBorrowLevel, state: BorrowState): number {
+  return level.props.reduce((sum, prop) => sum + flagCountAt(state, prop.id), 0);
+}
+
+/** 手里还剩几面旗 */
+export function flagsLeft(level: ShowBorrowLevel, state: BorrowState): number {
+  return Math.max(0, level.flags - flagsUsed(level, state));
+}
+
+/** 这个支点此刻能不能再挂一面（还有旗、而且没挂满） */
+export function canHangAt(level: ShowBorrowLevel, state: BorrowState, propId: string): boolean {
+  const prop = propById(level, propId);
+  if (prop === undefined) return false;
+  if (flagsLeft(level, state) <= 0) return false;
+  return flagCountAt(state, propId) < prop.capacity;
+}
+
+/**
+ * 往这个支点上挂一面旗。
+ * 挂不下（挂满了 / 手里一面不剩 / 没这个支点）就**原样返回** —— 零惩罚，只是没进展。
+ */
+export function assignFlag(level: ShowBorrowLevel, state: BorrowState, propId: string): BorrowState {
+  if (!canHangAt(level, state, propId)) return state;
+  return {
+    ...state,
+    hanging: { ...state.hanging, [propId]: flagCountAt(state, propId) + 1 },
+    hangs: state.hangs + 1,
+  };
+}
+
+/**
+ * 从这个支点上撤下一面旗 —— 旗回到手里，可以挂到别处去。
+ * 这里本来就没挂过（或者没这个支点）就原样返回：撤下重挂不扣分。
+ */
+export function unassignFlag(level: ShowBorrowLevel, state: BorrowState, propId: string): BorrowState {
+  if (propById(level, propId) === undefined) return state;
+  const count = flagCountAt(state, propId);
+  if (count <= 0) return state;
+  return {
+    ...state,
+    hanging: { ...state.hanging, [propId]: count - 1 },
+    unhangs: state.unhangs + 1,
+  };
+}
+
+/** 挂出来的规模：每个支点上的旗数 × 它每面顶多少 */
+export function scaleAt(level: ShowBorrowLevel, state: BorrowState): number {
+  return level.props.reduce((sum, prop) => sum + flagCountAt(state, prop.id) * prop.weight, 0);
+}
+
+/** 还差多少规模才够（够了 = 0）—— 提示与画面都用它 */
+export function scaleMissing(level: ShowBorrowLevel, state: BorrowState): number {
+  return Math.max(0, level.needed - scaleAt(level, state));
+}
+
+/** 规模到 needed 就算成 —— 可以随时撤下来重挂 */
+export function isBorrowDone(level: ShowBorrowLevel, state: BorrowState): boolean {
+  return scaleAt(level, state) + EPS >= level.needed;
+}
+
+/** 规模到了 needed 的几成（0..1，封顶 1）—— 画面上的规模条按它画 */
+export function borrowProgress(level: ShowBorrowLevel, state: BorrowState): number {
+  return Math.min(1, Math.max(0, scaleAt(level, state) / level.needed));
+}
+
+/**
+ * 接下来该往哪个支点上挂 —— 小手、提示与无头验证都用它：
+ * 先挂"每面旗顶得最多"的那个（weight 大的先挂满），并列时取关卡里靠前的。
+ * 手里没旗了、或者每个支点都挂满了，就返回 undefined。
+ */
+export function nextPropToHang(level: ShowBorrowLevel, state: BorrowState): ShowBorrowProp | undefined {
+  if (flagsLeft(level, state) <= 0) return undefined;
+  let best: ShowBorrowProp | undefined;
+  for (const prop of level.props) {
+    if (flagCountAt(state, prop.id) >= prop.capacity) continue;
+    if (best === undefined || prop.weight > best.weight) best = prop;
+  }
+  return best;
+}
+
+/**
+ * 该从哪个支点上撤一面下来：已经挂了旗的里面"每面顶得最少"的那一处
+ * （撤它最不心疼，换到显眼的地方去）。都没挂过就是 undefined。
+ */
+export function nextPropToFree(level: ShowBorrowLevel, state: BorrowState): ShowBorrowProp | undefined {
+  let best: ShowBorrowProp | undefined;
+  for (const prop of level.props) {
+    if (flagCountAt(state, prop.id) <= 0) continue;
+    if (best === undefined || prop.weight < best.weight) best = prop;
+  }
+  return best;
+}
+
+/**
+ * 接下来该动哪个支点：先挂旗（挂到最好的支点上），
+ * 手里的旗都挂出去了、规模还不够，就去撤"每面顶得最少"的那一处下来重挂。
+ */
+export function nextPropToTouch(level: ShowBorrowLevel, state: BorrowState): ShowBorrowProp | undefined {
+  return nextPropToHang(level, state) ?? nextPropToFree(level, state);
+}
+
+/**
+ * 把旗都挂到"每面顶得最多"的支点上，最多能到多少规模 ——
+ * 关卡数据是不是"有解"，构建期与单测都用它验（schemas.ts 的 refine 是同一个算法）。
+ */
+export function bestScale(level: ShowBorrowLevel): number {
+  let left = level.flags;
+  let scale = 0;
+  for (const prop of [...level.props].sort((a, b) => b.weight - a.weight)) {
+    const used = Math.min(left, prop.capacity);
+    scale += used * prop.weight;
+    left -= used;
+  }
+  return scale;
+}
+
+/** 手指落在哪个支点上（拿最近的那个）；forgive 让小朋友不用对准 */
+export function propAt(
+  level: ShowBorrowLevel,
+  x: number,
+  y: number,
+  forgive = 0,
+): ShowBorrowProp | undefined {
+  let best: ShowBorrowProp | undefined;
+  let bestDist = Number.POSITIVE_INFINITY;
+  for (const prop of level.props) {
+    const dist = Math.hypot(x - prop.x, y - prop.y);
+    if (dist <= prop.radius + forgive && dist < bestDist) {
+      best = prop;
       bestDist = dist;
     }
   }

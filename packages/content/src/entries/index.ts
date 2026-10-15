@@ -47,6 +47,12 @@ import rawJinchan from './jinchan-tuoqiao.json';
 import rawGuanmen from './guanmen-zhuozei.json';
 import rawYuanjiao from './yuanjiao-jingong.json';
 import rawJiadao from './jiadao-faguo.json';
+import rawTouliang from './touliang-huanzhu.json';
+import rawZhisang from './zhisang-mahuai.json';
+import rawJiachi from './jiachi-budian.json';
+import rawShangwu from './shangwu-chouti.json';
+import rawShushang from './shushang-kaihua.json';
+import rawFanke from './fanke-weizhu.json';
 
 /**
  * **摘要层**：大厅与图鉴要用的那一小部分（标题 / 拼音 / 年代 / 寓意 / 关键词 / 出处…）。
@@ -102,6 +108,12 @@ export const entrySummaries: EntrySummary[] = [
   EntrySummarySchema.parse(rawGuanmen),
   EntrySummarySchema.parse(rawYuanjiao),
   EntrySummarySchema.parse(rawJiadao),
+  EntrySummarySchema.parse(rawTouliang),
+  EntrySummarySchema.parse(rawZhisang),
+  EntrySummarySchema.parse(rawJiachi),
+  EntrySummarySchema.parse(rawShangwu),
+  EntrySummarySchema.parse(rawShushang),
+  EntrySummarySchema.parse(rawFanke),
 ];
 
 /** 把某条摘要翻译成目标语言（没有译文就原样返回） */

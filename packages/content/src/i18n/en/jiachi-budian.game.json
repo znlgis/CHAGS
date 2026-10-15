@@ -1,0 +1,73 @@
+{
+  "figures": [
+    "Sun Bin",
+    "Pang Juan"
+  ],
+  "story": [
+    {
+      "title": "Kept in Wei",
+      "text": "Pang Juan kept Sun Bin in Wei and had him watched day and night.",
+      "narration": "Sun Bin could not get away from Wei. Pang Juan kept him close, and set men to watch him day and night — to see whether he still planned to leave, or to think up plans for someone else.",
+      "illustration": "none"
+    },
+    {
+      "title": "He Played the Fool",
+      "text": "Sun Bin played the fool, and prepared quietly when no one was watching.",
+      "narration": "Sun Bin did not push back. Whoever came to test him, he answered nothing, and to every question he looked blank. Only in the short gaps after they walked away did he quietly note down the roads and the people of Wei. Later the envoy of Qi heard of him and carried him away to Qi in secret.",
+      "illustration": "none"
+    }
+  ],
+  "keyMoment": {
+    "question": "The Wei soldier is back, holding up his lantern in the doorway. What do you do?",
+    "options": [
+      {
+        "text": "Hold still, and wait until he walks away",
+        "hint": ""
+      },
+      {
+        "text": "Talk to him, so he stops wondering",
+        "hint": "One word gives you away — he is watching to see if you answer."
+      },
+      {
+        "text": "Move now, before he comes in",
+        "hint": "He is watching: the first move is the one he sees."
+      }
+    ],
+    "reveal": "Hold still when the time calls for silence — with nothing showing, that short gap is yours."
+  },
+  "misconceptions": [
+    "Playing the fool means telling lies",
+    "When a chance comes you must grab it at once, or it is gone"
+  ],
+  "quiz": [
+    {
+      "question": "How did Sun Bin keep the men who watched him from seeing anything?",
+      "options": [
+        "He played a blank-faced fool who understood nothing",
+        "He slipped out of Wei by night",
+        "He argued with Pang Juan face to face"
+      ],
+      "answer": 0,
+      "explanation": "He answered nothing and advised nothing, and prepared quietly in the gaps when no one was watching — holding still is the whole stratagem."
+    },
+    {
+      "question": "Your deskmate keeps looking back at your work, and you cannot get on with it. What is better?",
+      "options": [
+        "Finish this page quietly, and deal with it when he turns away",
+        "Glare back at him at once",
+        "Put your pen down and start chatting"
+      ],
+      "answer": 0,
+      "explanation": "The moment you cannot hold still is the moment things go wrong — do your own work first, and let that little stretch pass."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Wait till he looks away"
+        }
+      }
+    ]
+  }
+}

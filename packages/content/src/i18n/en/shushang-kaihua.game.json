@@ -1,0 +1,82 @@
+{
+  "figures": [
+    "Zhang Fei",
+    "Cao Cao"
+  ],
+  "story": [
+    {
+      "title": "One Man at the Bridge",
+      "text": "Cao’s army reaches the Changban bridge; Zhang Fei has only twenty riders left.",
+      "narration": "On the Changban slope everyone was pulling back south. Zhang Fei stayed behind with about twenty riders to hold the rear. He sent them into the woods behind the bridge with branches tied to their horses’ tails, to run back and forth. Then he stood alone at the bridge head, his spear across his body, and waited."
+    },
+    {
+      "title": "A Dust Cloud on Loan",
+      "text": "The dust in the woods made the other side think an army waited behind — they stopped.",
+      "narration": "The riders dragged the branches back and forth and a great cloud of dust rose in the woods. Far off, Cao’s army saw that dust, and saw the lone man standing steady at the bridge head, and took it for a hidden army. So they halted across the river and came no closer. The bridge head still held one man — but the show was borrowed from the woods and the dust."
+    }
+  ],
+  "keyMoment": {
+    "question": "You are Zhang Fei: the other side is many, and you have twenty riders. What do you do?",
+    "options": [
+      {
+        "text": "Have the riders drag branches in the woods, and take my stand on the bridge",
+        "hint": ""
+      },
+      {
+        "text": "Slip away quietly, so they never see how few we are",
+        "hint": "With so few of us they will follow — and the bridge is lost all the same."
+      },
+      {
+        "text": "Take the twenty riders and charge across the river",
+        "hint": "Twenty is too few to hold them — to look many, borrow what is around you."
+      }
+    ],
+    "reveal": "The blossoms on the tree are borrowed — borrow what is around you and your side looks strong."
+  },
+  "misconceptions": [
+    "With few people you can only hide — there is nothing else to do",
+    "To look strong you must really bring more people",
+    "Borrowing what is already there is only for show, and no use at all"
+  ],
+  "quiz": [
+    {
+      "question": "Why did Zhang Fei have branches tied to the horses’ tails?",
+      "options": [
+        "Dragging them raised dust, so the other side thought an army waited behind",
+        "To sweep the woods clean",
+        "To find some grass for the horses"
+      ],
+      "answer": 0,
+      "explanation": "Once the dust rose, the far bank believed an army was hidden there — that show was borrowed."
+    },
+    {
+      "question": "Why did Cao’s army stop across the river?",
+      "options": [
+        "They saw the dust, and the steady man at the bridge, and thought an army waited",
+        "There was no bridge, so they could not cross",
+        "It was dark and they could not see the road"
+      ],
+      "answer": 0,
+      "explanation": "What they saw was not a real army, but the show borrowed from the woods and the dust."
+    },
+    {
+      "question": "Your class sings in a choir, but fewer of you go on stage than the other classes. What is the steadiest plan?",
+      "options": [
+        "Get the clothes, props and line-up neat, so you stand together just as well",
+        "Fewer of us — so do not go on stage at all",
+        "Write down the names of classmates who did not come"
+      ],
+      "answer": 0,
+      "explanation": "Borrow what is there to hold up the show — like the dust Zhang Fei borrowed from the woods."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Hang flags, look bigger"
+        }
+      }
+    ]
+  }
+}

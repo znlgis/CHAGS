@@ -1,14 +1,29 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
-import { BaseScene, CSS, THEME, createHand, sparkleAt, tapRipple, textStyle } from '@chags/phaser-kit';
+import {
+  BaseScene, CSS, THEME, createHand, roundRect, shade, sparkleAt, tapRipple, textStyle,
+} from '@chags/phaser-kit';
 import { SCENE_KEYS } from './layout';
 import {
   CHAIN_TIMING, askPass, chainStart, chainStep, envoyHit, gateAt, gatesLeft, hasPass, homeHit,
   isGateTaken, isPassDone, nextGate, returnHome, takeGate, takenCount,
 } from './chain.logic';
 import type { ChainState } from './chain.logic';
-import type { ChainGate, ChainLevel } from './schemas';
+// 第 30 计反客为主（step）的判定：与 pass 的那几个并列，互不影响
+import {
+  CHAIN_STEP_TIMING, askGrant, grantHit, grantLeftMs, isGranted, isPostTaken, isStepDone, nextPost,
+  nextStep, postAt, stepStart, takeOver, takenPosts,
+} from './chain.logic';
+import type { StepState } from './chain.logic';
+import type { ChainGate, ChainLevel, ChainStepLevel } from './schemas';
+import type { ChainStepPost } from './chain.logic';
 import type { SessionState } from './session';
+
+/**
+ * step（反客为主）的岗位类型从逻辑层原样再导出一份：游戏包要用它给 `chainStepLevel()` 收窄返回类型，
+ * 画面上也要按它摆木牌（与 window.ts 导出 StirWindowLevel 是同一个做法）。
+ */
+export type { ChainStepPost };
 
 /**
  * 连环模板自己的布局与手感常量 —— 不挤进 layout.ts：
@@ -30,6 +45,27 @@ export const CHAIN = {
   labelDrop: 12,
   /** 进度槽（拿下几处关口）画在底部 */
   progress: { x: 150, y: 1256, w: 450, h: 38 },
+} as const;
+
+/**
+ * step（反客为主）那一半的节拍与画法常量 —— 节拍沿用 chain.logic 的 CHAIN_STEP_TIMING
+ * （单测、画面与无头验证共用同一份），这里只补这一屏的画法常量。
+ */
+export const CHAIN_STEP = {
+  ...CHAIN_STEP_TIMING,
+  /** 点的宽容度：岗位木牌不小，手指粗也点得到（与 pass 的关口同一个数） */
+  tapForgive: CHAIN.tapForgive,
+  /** 小手放在目标下面多少 / 提示光圈比目标大多少 / 涟漪亮多久 / 木牌离岗位多远 */
+  handDrop: CHAIN.handDrop,
+  ringPad: CHAIN.ringPad,
+  rippleMs: CHAIN.rippleMs,
+  labelDrop: CHAIN.labelDrop,
+  /** 求允许的那一处外面那圈比它大多少 */
+  grantRingPad: 26,
+  /** 允许的沙漏画在哪里（游戏包的 drawStage 用 chainStepGrantBar） */
+  grantBar: { x: 150, y: 1256, w: 450, h: 44 },
+  /** 进度槽（接手了几处岗位）画在顶部（游戏包的 drawStage 用 chainStepBar） */
+  progress: { x: 150, y: 196, w: 450, h: 38 },
 } as const;
 
 /** 交给游戏画的一切（每帧一份新的） */
@@ -80,7 +116,7 @@ export interface ChainConfig {
 }
 
 /**
- * 连环：先谈成"借路"，再**按顺序**取下沿途关口，最后回师。
+ * 连环（pass，第 24 计假道伐虢）：先谈成"借路"，再**按顺序**取下沿途关口，最后回师。
  *
  * 三条刻意的设计：
  * - **顺序就是这一关**：没借到路，一个关口也拿不了；前一个关口没拿下，后一个动不了。
@@ -89,8 +125,11 @@ export interface ChainConfig {
  *   不扣星、不结束、不锁操作；小手马上指出该动的下一处。
  * - **关口木牌上的字来自关卡脚本**（label 字段），双语由译文补丁给 ——
  *   模板不写死任何一句话。
+ *
+ * 这一段是 **pass 那条路（一行没改）**，只是从 createChainScene 里挪成了一个具名函数；
+ * step 那一半在文件末尾另起一段，由 mode 分派。
  */
-export function createChainScene(ctx: GameContext, cfg: ChainConfig): Phaser.Types.Scenes.SceneType {
+function createPassChainScene(ctx: GameContext, cfg: ChainConfig): Phaser.Types.Scenes.SceneType {
   return class ChainScene extends BaseScene {
     private level: ChainLevel = cfg.level;
     private state: ChainState = chainStart();
@@ -506,4 +545,522 @@ export function chainGateMark(
 ): 'next' | 'taken' | 'later' {
   if (isGateTaken(state, gateId)) return 'taken';
   return nextGate(level, state)?.id === gateId ? 'next' : 'later';
+}
+/* ---------------- step：反客为主（第 30 计） ---------------- */
+
+/**
+ * step（反客为主）每一帧交给游戏画的一切：接手到哪儿了、手里那张允许还剩多久。
+ * 画面完全由游戏决定（蜀道怎么画、队伍走到哪儿都是它的事），模板只管这一份数。
+ */
+export interface ChainStepMetrics {
+  width: number;
+  height: number;
+  /** 这一局过了多久（墙钟，从开局算起） */
+  elapsedMs: number;
+  /** 按顺序接手的岗位（id，按下手的先后） */
+  taken: string[];
+  takenCount: number;
+  total: number;
+  /** 下一个该接手的岗位；全接手了就是 null */
+  nextPost: ChainStepPost | null;
+  /** 此刻这张允许还剩多久（没求过 / 过期了 / 用掉了 = 0） */
+  grantLeftMs: number;
+  /** 允许一次持续多久（关卡脚本里的 grantMs）—— 沙漏按它画 */
+  grantMs: number;
+  /** 此刻允许还有效吗 */
+  granted: boolean;
+  /** 一共求了几次允许（复盘用，不惩罚） */
+  asks: number;
+  /** 允许过期作废过几次（零惩罚，只记一笔） */
+  lapses: number;
+  /** 刚接手的那个岗位 / 什么时候接手的（画一次"这里接手了"的强调） */
+  lastPostId: string | null;
+  lastPostAtMs: number;
+  /** 上一次"还轮不到这里 / 还没被允许"发生在什么时候（晃一下，不扣星） */
+  lastWrongAtMs: number;
+  /** 点空了几次：只是复盘用，不扣星也不结束 */
+  misses: number;
+  /** 这一局成了 */
+  done: boolean;
+}
+
+export interface ChainStepApi {
+  scene: Phaser.Scene;
+  stage: ChainStepMetrics;
+}
+
+/**
+ * step（反客为主）这一路的配置。与 pass 的 `ChainConfig` 是两份 ——
+ * pass 的字段一个字没动，多出来的这些只有 step 用得上。
+ */
+export interface ChainStepConfig {
+  level: ChainStepLevel;
+  session: SessionState;
+  nextSceneKey: string;
+  /** 顶栏上的名字；不传就用内容自己的标题 */
+  title?: string;
+  /** 这个世界：蜀道、关隘、城池与求允许的营帐（画一次） */
+  drawWorld: (g: Phaser.GameObjects.Graphics, level: ChainStepLevel) => void;
+  /** 每帧重画：队伍走到哪儿、岗位上的旗、允许的沙漏 */
+  drawStage: (
+    g: Phaser.GameObjects.Graphics,
+    stage: ChainStepMetrics,
+    level: ChainStepLevel,
+  ) => void;
+  /** 求到允许的那一下（画面让对面点个头、递上名帖） */
+  onGrant?: (api: ChainStepApi) => void;
+  /** 收尾：四个岗位都接手之后的样子 */
+  drawFinale?: (
+    g: Phaser.GameObjects.Graphics,
+    stage: ChainStepMetrics,
+    level: ChainStepLevel,
+  ) => void;
+  /** 打赢之后念的那句话（关键抉择点的揭晓语） */
+  reveal?: string;
+  finaleHoldMs?: number;
+}
+
+/** 进度槽：接手了几处岗位（0..total）—— 游戏包的 drawStage 用它（口径与判定同一份） */
+export function chainStepBar(
+  g: Phaser.GameObjects.Graphics,
+  level: ChainStepLevel,
+  taken: number,
+): void {
+  const { x, y, w, h } = CHAIN_STEP.progress;
+  roundRect(g, x, y, w, h, h / 2, shade(THEME.card, 0.96), THEME.outline, 5);
+  const total = Math.max(1, level.posts.length);
+  const fill = ((w - 12) * Math.min(Math.max(0, taken), total)) / total;
+  if (fill > 6) roundRect(g, x + 6, y + 6, fill, h - 12, (h - 12) / 2, THEME.teal, null, 0);
+}
+
+/** 允许的沙漏：这一次允许还剩多久 —— 游戏包的 drawStage 用它 */
+export function chainStepGrantBar(
+  g: Phaser.GameObjects.Graphics,
+  level: ChainStepLevel,
+  leftMs: number,
+): void {
+  const { x, y, w, h } = CHAIN_STEP.grantBar;
+  roundRect(g, x, y, w, h, h / 2, shade(THEME.card, 0.96), THEME.outline, 5);
+  const ratio = Math.min(1, Math.max(0, leftMs / level.grantMs));
+  const fill = (w - 12) * ratio;
+  if (fill > 6) roundRect(g, x + 6, y + 6, fill, h - 12, (h - 12) / 2, THEME.gold, null, 0);
+}
+
+/**
+ * 反客为主：每一步都要**先被允许**。
+ *
+ * 三条刻意的设计：
+ * - **一步一问**：允许是一次性的 —— 求一次允许，在有效期内接下一处岗位，
+ *   这次允许就用掉了，下一步要重新求。所以这一关的节奏是"求 → 接 → 再求"，
+ *   急不得（第 30 计的落点恰恰是"一步一步来"）。
+ * - **判定全在 chain.logic 里**：场景只把墙钟喂给 isGranted / takeOver，
+ *   单测与画面用的是同一份判定，不会跑偏。
+ * - **过期零惩罚**：允许过期只是没进展 —— 不扣星、不结束、不锁操作；
+ *   小手马上放回求允许的地方，重新求一次就好（lapses 只记一笔，用来复盘）。
+ */
+function createStepChainScene(
+  ctx: GameContext,
+  cfg: ChainStepConfig,
+): Phaser.Types.Scenes.SceneType {
+  return class ChainStepScene extends BaseScene {
+    private level: ChainStepLevel = cfg.level;
+    private state: StepState = stepStart();
+    private startedAt = 0;
+    private done = false;
+    private idleMs = 0;
+    private misses = 0;
+    private lapses = 0;
+    /** 手里这张允许还"活着"：过期的那一刻只记一笔，不重复记 */
+    private grantAlive = false;
+    private lastPostId: string | null = null;
+    private lastPostAt = -1;
+    private lastWrongAt = -1;
+    private worldGfx: Phaser.GameObjects.Graphics | null = null;
+    private stageGfx: Phaser.GameObjects.Graphics | null = null;
+    private markGfx: Phaser.GameObjects.Graphics | null = null;
+    private finaleGfx: Phaser.GameObjects.Graphics | null = null;
+    private labels: Phaser.GameObjects.Text[] = [];
+    private ring: Phaser.GameObjects.Graphics | null = null;
+    private hand: Phaser.GameObjects.Graphics | null = null;
+
+    constructor() {
+      super(SCENE_KEYS.chain, ctx);
+    }
+
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.chain });
+      this.level = cfg.level;
+      this.state = stepStart();
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      // 岗位木牌上的字：来自关卡脚本的 label（双语各一份），模板只负责摆位置
+      this.labels = this.level.posts.map((post) =>
+        this.add
+          .text(
+            post.x,
+            post.y + post.radius + CHAIN_STEP.labelDrop,
+            post.label,
+            textStyle(30, CSS.ink, true),
+          )
+          .setOrigin(0.5, 0)
+          .setDepth(45),
+      );
+      this.markGfx = this.add.graphics().setDepth(60);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
+        this.pressAt(pointer.x, pointer.y),
+      );
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.time.delayedCall(CHAIN_STEP.introHandMs, () => {
+          this.showHint(cfg.level.hint, 3000, CHAIN_STEP.hintY);
+          this.pointAtNext();
+        });
+      }
+    }
+
+    private now(): number {
+      return Math.max(0, this.ctx.services.now() - this.startedAt);
+    }
+
+    // ---------------- 每一帧 ----------------
+
+    private tick(delta: number): void {
+      const t = this.now();
+      if (!this.done) {
+        // 允许过期：作废就作废（零惩罚）—— 只记一笔，把小手放回求允许的地方
+        if (this.grantAlive && !isGranted(this.level, this.state, t)) {
+          this.grantAlive = false;
+          this.lapses += 1;
+          this.ctx.emit('beat:enter', { beatId: 'chain:lapse:' + this.lapses });
+          this.ctx.services.audio.tone(220, 180);
+          this.showHint(cfg.level.hint, 2200, CHAIN_STEP.hintY);
+          this.pointAtNext();
+        }
+        // 卡住了：把关卡自己的那句话再亮一遍，并指一指该动的地方
+        this.idleMs += delta;
+        if (this.idleMs >= CHAIN_STEP.idleMs) {
+          this.idleMs = 0;
+          this.showHint(this.level.hint, 2600, CHAIN_STEP.hintY);
+          this.pointAtNext();
+        }
+      }
+      this.redraw(t);
+    }
+
+    private redraw(t: number): void {
+      const stage = this.stageState(t);
+      if (this.stageGfx) {
+        this.stageGfx.clear();
+        cfg.drawStage(this.stageGfx, stage, this.level);
+      }
+      // 木牌上的字：接手了的那几处暗下去（一眼看出走到哪儿了）
+      this.labels.forEach((text, index) => {
+        const post = this.level.posts[index];
+        if (post === undefined) return;
+        const taken = isPostTaken(this.state, post.id);
+        text.setAlpha(taken ? 0.5 : 1);
+        text.setColor(taken ? CSS.tealDeep : CSS.ink);
+      });
+      this.drawMarks(stage);
+      if (this.done && this.finaleGfx) {
+        this.finaleGfx.clear();
+        cfg.drawFinale?.(this.finaleGfx, stage, this.level);
+      }
+    }
+
+    private stageState(t: number): ChainStepMetrics {
+      return {
+        width: this.W,
+        height: this.H,
+        elapsedMs: t,
+        taken: [...this.state.taken],
+        takenCount: takenPosts(this.state),
+        total: this.level.posts.length,
+        nextPost: nextPost(this.level, this.state) ?? null,
+        grantLeftMs: grantLeftMs(this.level, this.state, t),
+        grantMs: this.level.grantMs,
+        granted: isGranted(this.level, this.state, t),
+        asks: this.state.asks,
+        lapses: this.lapses,
+        lastPostId: this.lastPostId,
+        lastPostAtMs: this.lastPostAt,
+        lastWrongAtMs: this.lastWrongAt,
+        misses: this.misses,
+        done: this.done,
+      };
+    }
+
+    /**
+     * 模板自己画的那一点反馈：
+     * 刚接手的岗位往外扩的一圈金光、"还轮不到这里 / 还没被允许"的灰圈 ——
+     * 岗位本身的旗号（还没轮到 / 就是它 / 已经接手）由 drawStage 画。
+     */
+    private drawMarks(stage: ChainStepMetrics): void {
+      const g = this.markGfx;
+      if (!g) return;
+      g.clear();
+      const t = stage.elapsedMs;
+
+      const post = this.level.posts.find((item) => item.id === stage.lastPostId);
+      const since = t - stage.lastPostAtMs;
+      if (post !== undefined && since >= 0 && since <= CHAIN_STEP.takeoverMs) {
+        const p = since / CHAIN_STEP.takeoverMs;
+        g.lineStyle(10, THEME.gold, 0.9 * (1 - p));
+        g.strokeCircle(post.x, post.y, post.radius + 16 + 56 * p);
+        g.lineStyle(6, THEME.teal, 0.5 * (1 - p));
+        g.strokeCircle(post.x, post.y, post.radius + 44 + 74 * p);
+      }
+
+      if (stage.lastWrongAtMs >= 0 && t - stage.lastWrongAtMs <= 460) {
+        const p = (t - stage.lastWrongAtMs) / 460;
+        const wrong = stage.nextPost ?? this.level.grant;
+        g.lineStyle(7, THEME.inkSoft, 0.5 * (1 - p));
+        g.strokeCircle(wrong.x, wrong.y, 56 + 90 * (1 - p));
+      }
+    }
+
+    // ---------------- 点 ----------------
+
+    private pressAt(x: number, y: number): void {
+      if (this.done) return;
+      this.idleMs = 0;
+      const post = postAt(this.level, x, y, CHAIN_STEP.tapForgive);
+      if (post !== undefined) {
+        this.pressPost(post);
+        return;
+      }
+      if (grantHit(this.level, x, y, CHAIN_STEP.tapForgive)) {
+        this.pressGrant();
+        return;
+      }
+      this.nothing(x, y);
+    }
+
+    /** 求允许（真实操作与无头验证同一条路）：允许从此刻起算，只持续关卡的 grantMs */
+    private pressGrant(): void {
+      if (this.done) return;
+      const t = this.now();
+      this.state = askGrant(this.state, t);
+      this.grantAlive = true;
+      this.idleMs = 0;
+      this.sfx('unlock');
+      sparkleAt(this, this.level.grant.x, this.level.grant.y, THEME.gold, 5);
+      this.ctx.emit('beat:enter', { beatId: 'chain:grant:' + this.state.asks });
+      cfg.onGrant?.({ scene: this, stage: this.stageState(t) });
+      this.pointAtNext();
+    }
+
+    /**
+     * 接手一处岗位：**只认"下一个岗位 + 允许有效"**。
+     * 没求允许 / 允许过期 / 跳着点 / 回头点已经接手的 —— 都是原样返回，零惩罚。
+     */
+    private pressPost(post: ChainStepPost): void {
+      if (this.done) return;
+      const t = this.now();
+      const before = this.state;
+      this.state = takeOver(this.level, this.state, post.id, t);
+      if (this.state === before) {
+        this.rejected(post.x, post.y, post.id);
+        return;
+      }
+      this.lastPostId = post.id;
+      this.lastPostAt = t;
+      this.grantAlive = false; // 这次允许用掉了：下一步要重新求
+      this.idleMs = 0;
+      this.sfx('correct');
+      sparkleAt(this, post.x, post.y, THEME.gold, 6);
+      this.ctx.emit('beat:enter', { beatId: 'chain:takeover:' + post.id });
+      this.ctx.emit('choice:made', {
+        beatId: 'chain:takeover',
+        choiceId: post.id,
+        correct: true,
+        latencyMs: t,
+      });
+      cfg.session.total += 1;
+      cfg.session.correct += 1;
+      this.hideHand();
+      this.redraw(t);
+      if (isStepDone(this.level, this.state)) {
+        this.finish();
+        return;
+      }
+      this.pointAtNext();
+    }
+
+    /** 还轮不到这里 / 还没被允许（零惩罚）：只是没进展，指一指该动的地方 */
+    private rejected(x: number, y: number, id: string): void {
+      this.lastWrongAt = this.now();
+      this.idleMs = 0;
+      this.sfx('tap');
+      this.ripple(x, y, 48, THEME.inkSoft);
+      this.ctx.emit('beat:enter', { beatId: 'chain:reject:' + id });
+      this.showHint(this.level.hint, 2200, CHAIN_STEP.hintY);
+      this.pointAtNext();
+    }
+
+    /** 点了空处：只是没收获 —— 不扣星、不结束 */
+    private nothing(x: number, y: number): void {
+      if (this.done) return;
+      this.misses += 1;
+      this.idleMs = 0;
+      this.sfx('tap');
+      this.ripple(x, y, 44, THEME.inkSoft);
+      this.ctx.emit('beat:enter', { beatId: 'chain:miss:' + this.misses });
+    }
+
+    // ---------------- 收尾 ----------------
+
+    private finish(): void {
+      if (this.done || !isStepDone(this.level, this.state)) return;
+      this.done = true;
+      this.clearRing();
+      this.hideHand();
+      this.sfx('complete');
+      this.cameras.main.flash(320, 255, 250, 220);
+      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
+      this.ctx.emit('beat:enter', { beatId: 'chain:done' });
+      this.ctx.emit('choice:made', {
+        beatId: 'chain:takeover',
+        choiceId: 'done',
+        correct: true,
+        latencyMs: this.now(),
+      });
+      this.redraw(this.now());
+      const reveal = cfg.reveal;
+      if (reveal !== undefined) {
+        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, CHAIN_STEP.hintY));
+      }
+      this.time.delayedCall(cfg.finaleHoldMs ?? CHAIN_STEP.finaleHoldMs, () =>
+        this.scene.start(cfg.nextSceneKey),
+      );
+    }
+
+    // ---------------- 小手与提示 ----------------
+
+    /** 把小手放到"该动的那一处"：先求允许；有允许了就接下下一个岗位 */
+    private pointAtNext(): void {
+      if (this.done) return;
+      const target = this.nextTarget();
+      if (target === null) {
+        this.clearRing();
+        this.hideHand();
+        return;
+      }
+      this.clearRing();
+      const ring = this.add.graphics().setDepth(50);
+      ring.setPosition(target.x, target.y);
+      ring.lineStyle(9, THEME.gold, 0.95);
+      ring.strokeCircle(0, 0, target.radius + target.pad);
+      this.ring = ring;
+      this.tweens.add({
+        targets: ring,
+        scale: 1.14,
+        alpha: 0.4,
+        duration: 520,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      this.hideHand();
+      this.hand = createHand(this, target.x, target.y + target.radius + CHAIN_STEP.handDrop, 1.1);
+    }
+
+    private nextTarget(): { x: number; y: number; radius: number; pad: number } | null {
+      const move = nextStep(this.level, this.state, this.now());
+      if (move === undefined) return null;
+      if (move.kind === 'grant') {
+        return {
+          x: this.level.grant.x,
+          y: this.level.grant.y,
+          radius: this.level.grant.radius,
+          pad: CHAIN_STEP.grantRingPad,
+        };
+      }
+      return {
+        x: move.post.x,
+        y: move.post.y,
+        radius: move.post.radius,
+        pad: CHAIN_STEP.ringPad,
+      };
+    }
+
+    private clearRing(): void {
+      if (!this.ring) return;
+      this.tweens.killTweensOf(this.ring);
+      this.ring.destroy();
+      this.ring = null;
+    }
+
+    private hideHand(): void {
+      if (!this.hand) return;
+      this.tweens.killTweensOf(this.hand);
+      this.hand.destroy();
+      this.hand = null;
+    }
+
+    private ripple(x: number, y: number, radius: number, color: number): void {
+      const g = tapRipple(this, x, y, radius, color);
+      this.time.delayedCall(CHAIN_STEP.rippleMs, () => g.destroy());
+    }
+
+    // ---------------- 无头验证 ----------------
+
+    /**
+     * 无头验证：求一次允许 → 在有效期内接下一处岗位 → 再求下一次 ——
+     * 与孩子走的是同一条路（连"点在哪一处"都走一遍命中判定）。
+     */
+    private runAutoplay(): void {
+      this.time.addEvent({
+        delay: CHAIN_STEP.autoplayStepMs,
+        loop: true,
+        callback: () => this.autoStep(),
+      });
+    }
+
+    private autoStep(): void {
+      if (this.done) return;
+      const move = nextStep(this.level, this.state, this.now());
+      if (move === undefined) return;
+      if (move.kind === 'grant') {
+        this.pressAt(this.level.grant.x, this.level.grant.y);
+        return;
+      }
+      this.pressAt(move.post.x, move.post.y);
+    }
+  };
+}
+
+/**
+ * 连环：两种玩法共用一个场景键（SCENE_KEYS.chain），按 level.mode 分派。
+ * - pass（假道伐虢）：借路 → 按顺序过关口 → 回师 —— 既有路径，一行未改；
+ * - step（反客为主）：求一次允许，在有效期内接下一处岗位 —— 一步一步来，急不得。
+ */
+// 两个重载 + 一个并集的实现：老模式的调用处（传的是内联箭头函数）由第一个重载
+// 做上下文类型推导，不用担心并集让回调参数变成 any —— 既有游戏包一行都不用改。
+export function createChainScene(
+  ctx: GameContext,
+  cfg: ChainConfig,
+): Phaser.Types.Scenes.SceneType;
+export function createChainScene(
+  ctx: GameContext,
+  cfg: ChainStepConfig,
+): Phaser.Types.Scenes.SceneType;
+export function createChainScene(
+  ctx: GameContext,
+  cfg: ChainConfig | ChainStepConfig,
+): Phaser.Types.Scenes.SceneType {
+  if (cfg.level.mode === 'step') return createStepChainScene(ctx, cfg as ChainStepConfig);
+  return createPassChainScene(ctx, cfg as ChainConfig);
 }

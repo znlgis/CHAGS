@@ -809,6 +809,13 @@ for (const [id, title] of [
   ['guanmen-zhuozei', '关门捉贼'],
   ['yuanjiao-jingong', '远交近攻'],
   ['jiadao-faguo', '假道伐虢'],
+  // 第五辑（并战计 25–30）
+  ['touliang-huanzhu', '偷梁换柱'],
+  ['zhisang-mahuai', '指桑骂槐'],
+  ['jiachi-budian', '假痴不癫'],
+  ['shangwu-chouti', '上屋抽梯'],
+  ['shushang-kaihua', '树上开花'],
+  ['fanke-weizhu', '反客为主'],
 ] as const) {
   test('三十六计 · ' + title + ' autoplay 全流程', async ({ page }) => {
     await page.goto('/?autoplay=1#/play/' + id);

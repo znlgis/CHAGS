@@ -179,3 +179,172 @@ describe('schema', () => {
     ).toThrow();
   });
 });
+
+
+/* ---------------- 第 27 计 · 假痴不癫（feign） ---------------- */
+
+import { StillnessFeignSchema } from './schemas';
+import {
+  FEIGN_MIN_PHASE_MS, effectiveFeignLevel, feignCanAct, feignPhaseAt, feignPhaseProgress,
+  feignProgress, feignRemainingMs, feignSlotAt, feignStart, feignTimeline, feignTotalMs,
+  hitFeignAction, isFeignDone, tapActionFeign,
+} from './stillness.logic';
+
+/** 假痴不癫的三次试探（与第 27 计的关卡一致）：试探 2600/2400/2200，空档 1800/1600/1600 */
+const feign = StillnessFeignSchema.parse({
+  mode: 'feign',
+  tests: [
+    { id: 't1', testMs: 2600, gapMs: 1800 },
+    { id: 't2', testMs: 2400, gapMs: 1600 },
+    { id: 't3', testMs: 2200, gapMs: 1600 },
+  ],
+  action: { x: 375, y: 1140, radius: 130 },
+  steps: 3,
+  hint: '他盯着的时候别动，走开再动手',
+});
+
+describe('假痴不癫 · 试探与空档的时间轴', () => {
+  it('一次试探接着一个空档：位置是累积出来的', () => {
+    const slots = feignTimeline(feign);
+    expect(slots.map((s) => s.testStartMs)).toEqual([0, 4400, 8400]);
+    expect(slots.map((s) => s.gapStartMs)).toEqual([2600, 6800, 10600]);
+    expect(slots.map((s) => s.endMs)).toEqual([4400, 8400, 12200]);
+    expect(feignTotalMs(feign)).toBe(12200);
+  });
+
+  it('试探期 = test，紧接着的空档 = gap，全走完 = done', () => {
+    expect(feignPhaseAt(feign, 0)).toEqual({ testId: 't1', phase: 'test' });
+    expect(feignPhaseAt(feign, 2599)).toEqual({ testId: 't1', phase: 'test' });
+    expect(feignPhaseAt(feign, 2600)).toEqual({ testId: 't1', phase: 'gap' });
+    expect(feignPhaseAt(feign, 4399)).toEqual({ testId: 't1', phase: 'gap' });
+    expect(feignPhaseAt(feign, 4400)).toEqual({ testId: 't2', phase: 'test' });
+    expect(feignPhaseAt(feign, 6800)).toEqual({ testId: 't2', phase: 'gap' });
+    expect(feignPhaseAt(feign, 8400)).toEqual({ testId: 't3', phase: 'test' });
+    expect(feignPhaseAt(feign, 10600)).toEqual({ testId: 't3', phase: 'gap' });
+    expect(feignPhaseAt(feign, 12200)).toEqual({ testId: null, phase: 'done' });
+    expect(feignPhaseAt(feign, 99999).phase).toBe('done');
+    expect(feignSlotAt(feign, 12200)).toBeNull();
+  });
+
+  it('只有空档里才是"可以动手"的时刻', () => {
+    expect(feignCanAct(feign, 1200)).toBe(false);
+    expect(feignCanAct(feign, 2600)).toBe(true);
+    expect(feignCanAct(feign, 10600)).toBe(true);
+    expect(feignCanAct(feign, 12200)).toBe(false);
+  });
+});
+
+describe('假痴不癫 · 试探期点只记 slip，空档期点才推进', () => {
+  it('试探期点一下：slip 记一笔，进度一步都不动（零惩罚）', () => {
+    let state = feignStart();
+    state = tapActionFeign(feign, state, 300);
+    expect(state.slips).toBe(1);
+    expect(state.slipTestIds).toEqual(['t1']);
+    expect(state.progress).toBe(0);
+    expect(isFeignDone(state)).toBe(false);
+    expect(feignProgress(feign, state)).toBe(0);
+
+    // 试探期连点三下：三笔账，进度仍然不动 —— 不扣星、不结束、不锁操作
+    state = tapActionFeign(feign, state, 900);
+    state = tapActionFeign(feign, state, 2500);
+    expect(state.slips).toBe(3);
+    expect(state.slipTestIds).toEqual(['t1', 't1', 't1']);
+    expect(state.progress).toBe(0);
+    expect(isFeignDone(state)).toBe(false);
+  });
+
+  it('空档期点一下：推进一步；三次试探都忍住，三次空档正好推满', () => {
+    let state = feignStart();
+    expect(feignPhaseAt(feign, 2700).phase).toBe('gap');
+    state = tapActionFeign(feign, state, 2700);
+    expect(state.progress).toBe(1);
+    expect(isFeignDone(state)).toBe(false);
+
+    // 第二次试探：没忍住，点了一下 —— 只记 slip，进度不退
+    state = tapActionFeign(feign, state, 5000);
+    expect(state.slips).toBe(1);
+    expect(state.progress).toBe(1);
+
+    state = tapActionFeign(feign, state, 7000);
+    expect(state.progress).toBe(2);
+    state = tapActionFeign(feign, state, 11000);
+    expect(state.progress).toBe(3);
+    expect(isFeignDone(state)).toBe(true);
+    expect(feignProgress(feign, state)).toBe(1);
+  });
+
+  it('空档里连点：进度封顶在 steps，不会推过头', () => {
+    let state = feignStart();
+    for (let i = 0; i < 6; i += 1) state = tapActionFeign(feign, state, 3000);
+    expect(state.progress).toBe(feign.steps);
+    expect(isFeignDone(state)).toBe(true);
+    expect(feignProgress(feign, state)).toBe(1);
+  });
+
+  it('已经成了之后再点：原样返回（不会把账算花）', () => {
+    let state = feignStart();
+    state = tapActionFeign(feign, state, 2700);
+    state = tapActionFeign(feign, state, 2700);
+    state = tapActionFeign(feign, state, 2700);
+    expect(isFeignDone(state)).toBe(true);
+    expect(tapActionFeign(feign, state, 3000)).toBe(state);
+    expect(tapActionFeign(feign, state, 5000)).toBe(state);
+  });
+
+  it('一轮走完之后再出手什么也不记（要重开一轮）', () => {
+    const state = tapActionFeign(feign, feignStart(), 13000);
+    expect(state.progress).toBe(0);
+    expect(state.slips).toBe(0);
+    expect(isFeignDone(state)).toBe(false);
+  });
+
+  it('时钟只往一个方向走：t 比 0 还小，算在第一次试探的开头', () => {
+    expect(feignPhaseAt(feign, -500)).toEqual({ testId: 't1', phase: 'test' });
+    const state = tapActionFeign(feign, feignStart(), -500);
+    expect(state.slips).toBe(1);
+    expect(state.progress).toBe(0);
+  });
+});
+
+describe('假痴不癫 · 手感与边界', () => {
+  it('手指落在"悄悄动手"的地方上，宽容度让小朋友不用对准', () => {
+    expect(hitFeignAction(375, 1140, feign)).toBe(true);
+    expect(hitFeignAction(375, 1320, feign)).toBe(false);
+    expect(hitFeignAction(375, 1320, feign, 60)).toBe(true);
+    expect(hitFeignAction(100, 1140, feign)).toBe(false);
+  });
+
+  it('剩余时间与分段进度：从试探走到空档，再走到整局结束', () => {
+    expect(feignRemainingMs(feign, 0)).toBe(4400);
+    expect(feignRemainingMs(feign, 4300)).toBe(100);
+    expect(feignRemainingMs(feign, 12200)).toBe(0);
+    expect(feignPhaseProgress(feign, 1300)).toBeCloseTo(0.5, 2);
+    expect(feignPhaseProgress(feign, 3500)).toBeCloseTo(0.5, 2);
+    expect(feignPhaseProgress(feign, 12200)).toBe(1);
+  });
+
+  it('无头验证把试探与空档都压成几分之一，但每一段都留得下点得到', () => {
+    const fast = effectiveFeignLevel(feign, true, 5);
+    expect(fast.tests.map((t) => t.testMs)).toEqual([520, 480, 440]);
+    expect(fast.tests.map((t) => t.gapMs)).toEqual([360, 320, 320]);
+    expect(StillnessFeignSchema.parse(fast)).toBeTruthy();
+    expect(fast.tests.every((t) => t.gapMs >= FEIGN_MIN_PHASE_MS)).toBe(true);
+    expect(effectiveFeignLevel(feign, false, 5)).toBe(feign);
+    // 压过之后照样走得完：三次空档各推一步
+    let state = feignStart();
+    for (const t of [600, 1400, 2200]) state = tapActionFeign(fast, state, t);
+    expect(isFeignDone(state)).toBe(true);
+  });
+
+  it('schema 挡住重复的试探 id', () => {
+    expect(() =>
+      StillnessFeignSchema.parse({
+        ...feign,
+        tests: [
+          { id: 't1', testMs: 2600, gapMs: 1800 },
+          { id: 't1', testMs: 2400, gapMs: 1600 },
+        ],
+      }),
+    ).toThrow();
+  });
+});

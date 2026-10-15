@@ -1,0 +1,97 @@
+{
+  "figures": [
+    "Liu Bei",
+    "Liu Zhang",
+    "Fa Zheng"
+  ],
+  "story": [
+    {
+      "title": "An Invitation to Help",
+      "text": "Liu Zhang invites Liu Bei into Shu for help — he marches in and settles in the south.",
+      "narration": "Liu Zhang of Yi Province had word of trouble to the north, so he sent for Liu Bei to bring men into Shu and help. Liu Bei set out from Jing Province and marched into Shu. At that time every camp, pass and city there still belonged to Liu Zhang. Liu Bei did not rush anything: he settled in the south first and waited for a chance to be of use."
+    },
+    {
+      "title": "One Place at a Time",
+      "text": "Liu Bei steadies one place, takes the work there in hand, then moves north.",
+      "narration": "Liu Bei did not try to take everything over at once. He began at Fu, taking the work of that place in hand first: holding the road, settling the people, and letting them come to know him. Only when that place was steady did he move north to the next — Jiameng Pass, then Luo, one place at a time, and finally Chengdu. There was no hurry: step by step, the work came into his hands of itself."
+    }
+  ],
+  "keyMoment": {
+    "question": "You are Liu Bei: you have just entered Shu, and every place belongs to someone else. What do you steady first?",
+    "options": [
+      {
+        "text": "Get a firm footing in one place, take the work there in hand, then move north",
+        "hint": ""
+      },
+      {
+        "text": "Take the whole of Yi Province in hand at one stroke",
+        "hint": "That step is too wide — with one place not yet steady and the next already in mind, neither holds."
+      },
+      {
+        "text": "Take nothing in hand, and go back to Jing Province once the help is done",
+        "hint": "Help and leave, and the place is still run by others — the journey would come to nothing."
+      }
+    ],
+    "reveal": "Take it one step at a time — with a firm footing, people will hand the work to you by degrees."
+  },
+  "misconceptions": [
+    "You must be quick to catch an opening — slow means too late",
+    "Taking work in hand means taking what belongs to someone else",
+    "Doing everything in one go saves the most trouble"
+  ],
+  "quiz": [
+    {
+      "question": "Why did Liu Zhang ask Liu Bei to come into Shu?",
+      "options": [
+        "He wanted Liu Bei to bring men and help hold the border",
+        "He wanted to give Yi Province to Liu Bei",
+        "He wanted Liu Bei to be a teacher"
+      ],
+      "answer": 0,
+      "explanation": "It was Liu Zhang who invited him — that invitation was Liu Bei’s first step into Shu."
+    },
+    {
+      "question": "Once in Shu, why did Liu Bei take things over one place at a time?",
+      "options": [
+        "Step by step, no one grows suspicious, and the work is taken in hand surely",
+        "He could not walk far",
+        "He was waiting for Liu Zhang to speak first"
+      ],
+      "answer": 0,
+      "explanation": "One place steady before the next — that is the “by degrees” in turning from guest into host."
+    },
+    {
+      "question": "You have moved to a new class and want to get things done with everyone. What is the steadiest way?",
+      "options": [
+        "Do your own part well, take one task after another in hand, and let them come to trust you",
+        "Announce on the first day that everyone listens to you from now on",
+        "Do nothing and wait to be chosen"
+      ],
+      "answer": 0,
+      "explanation": "It is not about seizing, but taking the work in hand step by step — like Liu Bei on the road into Shu."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Ask, then take the post",
+          "posts": [
+            {
+              "label": "Fu Camp"
+            },
+            {
+              "label": "Jiameng Pass"
+            },
+            {
+              "label": "Luo City"
+            },
+            {
+              "label": "Chengdu"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

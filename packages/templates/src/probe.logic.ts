@@ -1,4 +1,5 @@
-import type { ProbeFigure, ProbeLevel, ProbePatch } from './schemas';
+// hint（指桑骂槐）：老模式的三个类型一个字没改，只是这一行多了一个新模式的名字
+import type { ProbeFigure, ProbeHintLevel, ProbeLevel, ProbePatch } from './schemas';
 
 /**
  * 试探（probe）的纯判定：拿一枝**没有杀伤**的试探，换来信息。
@@ -255,4 +256,170 @@ export function isSpotDone(state: ProbeState): boolean {
 export function nextFigureToShoot(level: SpotLevel, state: ProbeState): ProbeFigure | undefined {
   if (isSpotDone(state)) return undefined;
   return level.figures.find((figure) => !isFigureTried(state, figure.id));
+}
+
+/* ---------------- probe 扩展：hint（第 26 计 · 指桑骂槐） ---------------- */
+
+/**
+ * 指桑骂槐：**不能点名** —— 场上几样东西，敲**对**的那样，该听懂的人自己往前走一步。
+ *
+ * 与 knock / spot 的差别只有一条：这里要试的不是"草丛里有没有蛇"，
+ * 而是**"这样东西是不是他听得懂的那一样"** ——
+ * `props[].has` 在这个模式下就是"这样东西的类别"（字段名沿用老模式那个，
+ * 关卡脚本里就两三种类别），`listener.wants` 是他的那一样。敲对了，他往前走一步；
+ * 敲别的只是没收获 —— **记一笔 wrongKnocks 就完事，零惩罚**（不扣星、不结束、不锁操作）。
+ *
+ * 四条刻意的设计：
+ * - **判定只看"对不对"**：敲错多少次都不影响这一关走不走得完 —— 挨个试过去总能敲对
+ *   （schema 保证至少有那么一样是他听得懂的）。
+ * - **敲对的那一样可以反复敲**：他一步一步往前走，走够 steps 步，他自己就做出了正确的选择。
+ *   "换个说法，别人更容易听进去"是这一计的落点 —— 不是替他把话说出来。
+ * - **敲过的东西记下来**：只是复盘与画面用（哪一样敲过了），不算分、不扣分。
+ * - **判定不看走位**：他走了几步由 `hintProgress` 说，画面上他站在哪儿是美术的事。
+ *
+ * 账本与 knock / spot **各记各的**：老的 `ProbeState` 一个字没改，
+ * 这里另起一个 `ProbeHintState` —— 共用一份状态只会让老模式多出一堆用不上的字段。
+ */
+
+/** 指桑骂槐的时间常量（场景、单测、无头验证共用同一份） */
+export const HINT_TIMING = {
+  /** 敲一下之后，画面把"他有没有反应"演完的时长 */
+  knockMs: 900,
+  /** 他听懂一步、往前走一步要走多久 */
+  stepMs: 1100,
+  /** 开局过一会儿就把小手放到"该敲的那样东西"上（不让孩子干等） */
+  introHandMs: 650,
+  /** 多久没动静就把小手重新放上去 */
+  idleMs: 9000,
+  /** 他做出选择之后看一眼再进典故卡 */
+  finaleHoldMs: 4200,
+  /** 提示气泡的高度 */
+  hintY: 268,
+} as const;
+
+/**
+ * 一局里攒下来的东西：都是"记下来的事"，没有一样是惩罚。
+ */
+export interface ProbeHintState {
+  /** 敲对了走了几步（他要走 steps 步） */
+  progress: number;
+  /** 敲错了几次 —— 只是记一笔，不扣星、不结束 */
+  wrongKnocks: number;
+  /** 敲过的东西（按敲的先后，重复的不记）—— 画面据此画"敲过了" */
+  knocked: string[];
+  /** 刚敲的是哪一样；还没敲过就是 null */
+  lastKnock: string | null;
+  /** 刚敲的那一样是不是他听得懂的（画面据此演"他往前走了一步 / 他没有反应"） */
+  lastWasWanted: boolean;
+}
+
+/** 开一局：一样都还没敲，他站在原地 */
+export function hintStart(): ProbeHintState {
+  return { progress: 0, wrongKnocks: 0, knocked: [], lastKnock: null, lastWasWanted: false };
+}
+
+/** 这是哪一样东西（脚本里写了不存在的 id 就给 undefined，不抛） */
+export function hintPropById(level: ProbeHintLevel, propId: string): ProbePatch | undefined {
+  return level.props.find((prop) => prop.id === propId);
+}
+
+/** 他听得懂的是哪一样（`has` 在这个模式下就是它的 kind） */
+export function wantedKind(level: ProbeHintLevel): string {
+  return level.listener.wants;
+}
+
+/** 这一样是不是他听得懂的 */
+export function isWantedProp(level: ProbeHintLevel, propId: string): boolean {
+  return hintPropById(level, propId)?.has === level.listener.wants;
+}
+
+/** 手指落在哪一样东西上（拿最近的那一样）；forgive 让手指粗一点也点得到 */
+export function hintPropAt(
+  level: ProbeHintLevel,
+  x: number,
+  y: number,
+  forgive = 0,
+): ProbePatch | undefined {
+  let best: ProbePatch | undefined;
+  let bestDist = Number.POSITIVE_INFINITY;
+  for (const prop of level.props) {
+    const dist = Math.hypot(x - prop.x, y - prop.y);
+    if (dist <= prop.radius + forgive && dist < bestDist) {
+      best = prop;
+      bestDist = dist;
+    }
+  }
+  return best;
+}
+
+/** 敲对了几步 */
+export function hintProgress(state: ProbeHintState): number {
+  return state.progress;
+}
+
+/** 敲错了几次 —— 只是记一笔，不扣星 */
+export function wrongKnocks(state: ProbeHintState): number {
+  return state.wrongKnocks;
+}
+
+/** 他还要走几步 */
+export function hintStepsLeft(level: ProbeHintLevel, state: ProbeHintState): number {
+  return Math.max(0, level.steps - state.progress);
+}
+
+/** 他已经走到第几步（0..steps —— 画面上他站在哪儿按它插值） */
+export function listenerStep(level: ProbeHintLevel, state: ProbeHintState): number {
+  return Math.min(level.steps, state.progress);
+}
+
+/**
+ * 敲一样东西：
+ * - **敲到他听得懂的那一样**：`hintProgress` 加一 —— 他往前走一步；走够 steps 步，
+ *   他自己就做出了正确的选择。
+ * - **敲别的**：只是没收获 —— `wrongKnocks` 记一笔（同一样再敲，账照记），
+ *   **不扣星、不结束、不锁操作**（零惩罚）：孩子可以放心地一样一样试过去。
+ * - 脚本里没有这一样、或者他已经走够了：原样返回（连状态对象都不换）。
+ */
+export function knockHint(
+  level: ProbeHintLevel,
+  state: ProbeHintState,
+  propId: string,
+): ProbeHintState {
+  const prop = hintPropById(level, propId);
+  if (prop === undefined || isHintDone(level, state)) return state;
+  const knocked = state.knocked.includes(prop.id) ? state.knocked : [...state.knocked, prop.id];
+  if (prop.has !== level.listener.wants) {
+    return {
+      ...state,
+      wrongKnocks: state.wrongKnocks + 1,
+      knocked,
+      lastKnock: prop.id,
+      lastWasWanted: false,
+    };
+  }
+  return {
+    ...state,
+    progress: state.progress + 1,
+    knocked,
+    lastKnock: prop.id,
+    lastWasWanted: true,
+  };
+}
+
+/** 走够 steps 步 = 他自己做出了正确的选择（这一关成了） */
+export function isHintDone(level: ProbeHintLevel, state: ProbeHintState): boolean {
+  return state.progress >= level.steps;
+}
+
+/**
+ * 该敲哪一样：**他听得懂的那样东西**（按脚本顺序的第一样 —— schema 保证至少有一个）。
+ * 小手与无头验证都用它：它指的不是"敲哪儿都行"，是"敲了才有用"的那一样。
+ * 已经走够了就没有下一个了。
+ */
+export function nextHintProp(
+  level: ProbeHintLevel,
+  state: ProbeHintState,
+): ProbePatch | undefined {
+  if (isHintDone(level, state)) return undefined;
+  return level.props.find((prop) => prop.has === level.listener.wants);
 }

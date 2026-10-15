@@ -1,0 +1,29 @@
+{
+  "id": "shangwu-chouti",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "上屋抽梯",
+  "pinyin": "Shàng wū chōu tī",
+  "dynasty": "西汉",
+  "era": "西汉 · 汉高祖三年",
+  "yearApprox": -204,
+  "source": {
+    "book": "《三十六计·并战计》",
+    "chapter": "上屋抽梯",
+    "quote": "假之以便，唆之使前，断其援应，陷之死地。遇毒，位不当也。"
+  },
+  "moral": "先给方便，再讲条件 —— 等他上来了，梯子在你手里。",
+  "keywords": [
+    "先给方便",
+    "等他到位",
+    "抽掉梯子"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 28,
+    "set": 5
+  }
+}
