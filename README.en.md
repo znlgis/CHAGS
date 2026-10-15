@@ -38,7 +38,7 @@ The collection's first-level structure is **groups**, defined in one place — `
 | Group | Games | Notes |
 |---|---|---|
 | 典故 `allusion` | **17** (all live) | One story, one game; sorted by year |
-| 三十六计 `stratagem` | **6** (Volume 1 · the six Advantageous Stratagems) | Thirty-Six Stratagems, one game each; sorted by **stratagem number**, five more volumes to come |
+| 三十六计 `stratagem` | **12** (Volume 1 · Advantageous 1–6, Volume 2 · Opportunistic 7–12) | Thirty-Six Stratagems, one game each; sorted by **stratagem number**, four more volumes to come |
 
 The hall and the album render one section per group, and **a group with no content yet does not
 disappear**: it shows up as "coming soon".
@@ -52,8 +52,8 @@ has no default, so a stratagem can never be filed under "stories" by accident.
 
 ## Current status
 
-**Seventeen stories plus the first six stratagems** are playable. `pnpm verify` is green (typecheck,
-lint, 387 unit tests, content check, build, size) and every game has a headless playthrough in the
+**Seventeen stories plus the first twelve stratagems** are playable. `pnpm verify` is green (typecheck,
+lint, 546 unit tests, content check, build, size) and every game has a headless playthrough in the
 end-to-end suite (`?autoplay=1` — a new template only counts once it implements `runAutoplay()`).
 
 The shell stays small (Phaser is not in it). Each game's own business code is only a few KB;
@@ -290,9 +290,32 @@ This volume adds **five new gameplay templates** (`ruse` / `siege` / `borrow` / 
 `trace` as well. Each volume starts with a design note, e.g.
 [三十六计-第一辑方案.md](docs/三十六计-第一辑方案.md).
 
+## Thirty-Six Stratagems · Volume 2: the six Opportunistic Stratagems (7–12)
+
+| # | Stratagem | What the child actually does | Template |
+|---|---|---|---|
+| 7 | Something Out of Nothing | Paint straw figures onto empty spots on the rail in the fog: they fade, so keep painting until the other side believes | `show` |
+| 8 | Secretly March to Chencang | The open road decays unless topped up; the hidden path only moves when tapped — both lines compete for one finger | `twoline` |
+| 9 | Watch the Fire from Afar | Step in to make peace and the two sides make up and turn on you — the game is holding still | `wait` (reused) |
+| 10 | A Smile Hiding a Knife | Sweet words, but the eyes, the sleeve, the fingers give him away: **this one teaches spotting it, not using it** | `read` |
+| 11 | The Plum Stands In for the Peach | Tian Ji's horse race: match your lowest against his best, win the other two | `matchup` |
+| 12 | Lead the Sheep Along | The column walks on; an opportunity passes once per round, and only in that short window can it be picked up | `window` (glimpse) |
+
+| Out of nothing | The hidden road | Watching from afar |
+|---|---|---|
+| ![paint](docs/screenshots/98-stratagem-07-wuzhong.png) | ![two lines](docs/screenshots/99-stratagem-08-andu.png) | ![watch](docs/screenshots/100-stratagem-09-gean.png) |
+
+| Reading the tells | The horse race | Picked up in passing |
+|---|---|---|
+| ![tells](docs/screenshots/101-stratagem-10-xiaoli.png) | ![race](docs/screenshots/102-stratagem-11-lidai.png) | ![passing](docs/screenshots/103-stratagem-12-shunshou.png) |
+
+Volume 2 adds **four new templates** (`show` / `twoline` / `read` / `matchup`) plus a `glimpse`
+mode on `window`; the design note is
+[三十六计-第二辑方案.md](docs/三十六计-第二辑方案.md).
+
 ## Design principle: fewer words, more doing
 
-Across all twenty-three games there is almost no teaching text on screen: the two opening lines of a story,
+Across all twenty-nine games there is almost no teaching text on screen: the two opening lines of a story,
 and one short hint that appears when the level starts or when the child is stuck (tap the story page too early and it only says
 "Listen to the story first"). Everything else is shape, motion, sound and speech. Kids **work out** the idea
 instead of being told it.

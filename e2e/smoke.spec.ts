@@ -786,6 +786,13 @@ for (const [id, title] of [
   ['yiyi-dailao', '以逸待劳'],
   ['chenhuo-dajie', '趁火打劫'],
   ['shengdong-jixi', '声东击西'],
+  // 第二辑（敌战计 7–12）
+  ['wuzhong-shengyou', '无中生有'],
+  ['andu-chencang', '暗度陈仓'],
+  ['gean-guanhuo', '隔岸观火'],
+  ['xiaoli-cangdao', '笑里藏刀'],
+  ['lidai-taojiang', '李代桃僵'],
+  ['shunshou-qianyang', '顺手牵羊'],
 ] as const) {
   test('三十六计 · ' + title + ' autoplay 全流程', async ({ page }) => {
     await page.goto('/?autoplay=1#/play/' + id);

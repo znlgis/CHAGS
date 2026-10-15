@@ -33,7 +33,13 @@ export interface WaitConfig {
   level: WaitLevel;
   session: SessionState;
   nextSceneKey: string;
-  titleKey: MessageKey;
+  /**
+   * 顶栏上的名字，二选一：
+   * - `title`：直接给文本（三十六计这种"顶栏要显示计名"的用它，内容已按语言取好）；
+   * - `titleKey`：给界面文案键（太公钓鱼用 "等一等"）。
+   */
+  title?: string;
+  titleKey?: MessageKey;
   /** 渭水、石头、老人、鱼群 */
   drawWorld?: (scene: Phaser.Scene) => void;
   /** 每帧重画：日影、车马的位置都按 metrics 来 */
@@ -82,7 +88,7 @@ export function createWaitScene(ctx: GameContext, cfg: WaitConfig): Phaser.Types
       this.durationMs = effectiveDuration(cfg.level, this.autoplay, WAIT.autoplayFactor);
       this.startedAt = this.ctx.services.now();
 
-      this.drawBackdrop(this.tr(cfg.titleKey));
+      this.drawBackdrop(cfg.title ?? this.tr(cfg.titleKey ?? 'scene.wait'));
       cfg.drawWorld?.(this);
       this.stageGfx = this.add.graphics().setDepth(2);
       this.finaleGfx = this.add.graphics().setDepth(40);

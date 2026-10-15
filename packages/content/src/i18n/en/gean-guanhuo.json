@@ -1,0 +1,107 @@
+{
+  "title": "Watch the Fire from Afar",
+  "dynasty": "Late Eastern Han",
+  "era": "Late Eastern Han · Jian'an, year 10",
+  "figures": [
+    "Cao Cao"
+  ],
+  "source": {
+    "book": "The Thirty-Six Stratagems, Enemy Stratagems",
+    "chapter": "Watch the Fire from Across the River",
+    "quote": "When their order breaks down in the open, wait quietly for them to turn on each other; the violent and reckless bring ruin on themselves."
+  },
+  "moral": "Some things you do not rush to step into — wait until they fall apart on their own.",
+  "keywords": [
+    "Wait",
+    "Do not step in",
+    "Let them fall apart"
+  ],
+  "story": [
+    {
+      "title": "A Quarrel Across the River",
+      "text": "Two brothers on the far bank started quarrelling — you could hear it across the river.",
+      "narration": "Cao Cao brought his soldiers to the river. On the far bank were two brothers, and they fell out with each other first — you could hear it across the water."
+    },
+    {
+      "title": "He Sat Still",
+      "text": "Cao Cao sat still on the bank and watched the far side scatter on its own.",
+      "narration": "Cao Cao sat on his own bank and never crossed the river. Before long the two brothers and their people drifted apart — one river, and nobody had crossed it."
+    }
+  ],
+  "keyMoment": {
+    "question": "They are quarrelling across the river. Do you go over and break it up?",
+    "options": [
+      {
+        "text": "Cross the river and break it up at once",
+        "hint": "The moment you step in, the two of them turn on you together."
+      },
+      {
+        "text": "Do not cross — wait and watch",
+        "hint": ""
+      },
+      {
+        "text": "Send soldiers over",
+        "hint": "Step in, and they will deal with you first."
+      }
+    ],
+    "reveal": "Some things you do not rush to step into — wait until they fall apart on their own."
+  },
+  "misconceptions": [
+    "If people are quarrelling, you should rush in and break it up",
+    "Watching from the far bank means enjoying the show while a friend is in trouble"
+  ],
+  "quiz": [
+    {
+      "question": "What did Cao Cao do while they quarrelled across the river?",
+      "options": [
+        "He sat on the bank and waited; he did not cross",
+        "He crossed the river at once to break it up",
+        "He sent soldiers over to help"
+      ],
+      "answer": 0,
+      "explanation": "Cao Cao sat still on his own bank and waited for them to fall apart — and they scattered by themselves."
+    },
+    {
+      "question": "What does the Thirty-Six Stratagems say to do?",
+      "options": [
+        "When their order breaks down in the open, wait quietly for them to turn on each other",
+        "Cross over and pull them apart first",
+        "Use the confusion to grab things"
+      ],
+      "answer": 0,
+      "explanation": "Their order breaks down in the open while you wait quietly — you do not rush to move."
+    },
+    {
+      "question": "Two classmates start quarrelling. When is the best time to step in?",
+      "options": [
+        "After they have said their piece and cooled down",
+        "Right away, standing between them",
+        "After they start fighting"
+      ],
+      "answer": 0,
+      "explanation": "If you step in at once, both of them will blame you — wait until they have finished and cooled down, then speak."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "temptations": [
+            {
+              "line": "The moment you cross, the two of them turn on you together"
+            },
+            {
+              "line": "The moment you cross, the two of them turn on you together"
+            }
+          ],
+          "lines": [
+            "Sit and watch for a while. There is no hurry.",
+            "This quarrel is theirs to settle.",
+            "Let them fall apart, and the far bank goes quiet."
+          ],
+          "hint": "Wait — do not cross"
+        }
+      }
+    ]
+  }
+}

@@ -75,9 +75,44 @@ export type {
   BeatMark, BeatSlot, StillnessPhase, StillnessPhaseInfo, StillnessState, StrikeResult,
 } from './stillness.logic';
 export {
-  WINDOW_MIN_PHASE_MS, WINDOW_WARN_MS, closeWindow, cycleIndexAt, cycleMs, doneCount, effectiveCycle,
-  isJobDone, isWindowDone, jobAt, jobProgress, jobWork, nextJob, nextWindowInMs, phaseProgress,
-  phaseRemainingMs, tapAt, tapJob, windowStart,
+  WINDOW_MIN_PHASE_MS, WINDOW_WARN_MS, closeWindow, currentJob, cycleIndexAt, cycleMs, doneCount,
+  effectiveCycle, isJobDone, isTravelOver, isWindowDone, jobAt, jobProgress, jobWork, nextJob,
+  nextWindowInMs, phaseProgress, phaseRemainingMs, restartTravel, tapAt, tapJob, travelFloorMs,
+  travelLeftMs, windowStart,
   phaseAt as windowPhaseAt, tapsNeeded as windowTapsNeeded,
 } from './window.logic';
 export type { WindowPhase, WindowState } from './window.logic';
+
+/* ---------- 三十六计（第二辑 · 敌战计 7–12） ---------- */
+export * from './show';
+export * from './twoline';
+export * from './read';
+export * from './matchup';
+// isExposed 在 ruse（示形）与 twoline（双线）里同名、autoplayLevel 在 ruse 与 read 里同名：
+// 语义不同，这里显式改名再导出，免得两处共用一个名字
+export {
+  SHOW_RATES, aliveShadowIds, aliveShadows, beliefAt, beliefRate, isShadowAlive, isShowDone,
+  missingShadows, nextSlotToPaint, paint, paintedAtMs, shadowLeftMs, shadowStrength, showStart,
+  tick,
+  slotAt as showSlotAt,
+} from './show.logic';
+export type { ShowState } from './show.logic';
+export {
+  TWOLINE_TIMING, decoyNow, decoyRatio, hitDecoy, hitReal, needsTopUp, nextLineToTap, realRatio,
+  safeMsLeft, settleDecoy, tapDecoy, tapReal, tapsLeft, twolineStart,
+  isExposed as isDecoyExposed, isTwolineDone,
+} from './twoline.logic';
+export type { TwolineState } from './twoline.logic';
+export {
+  READ_TIMING, applyMiss, applyRead, isReadDone, isTellRead, nextTellAt, nextTellToRead, readGoal,
+  readMisses, readProgress, readStart, tellAt, tellAtSlot, tellLeftMs, tellNear, tellSlots,
+  tellsSoFar,
+  autoplayLevel as readAutoplayLevel,
+} from './read.logic';
+export type { ReadState, TellSlot } from './read.logic';
+export {
+  MATCHUP_TIMING, RIVAL_HIT, assign, bestRoster, bestWins, horseAtSlot, horseNear, isMatchupDone,
+  isRosterFull, lossesFor, matchupProgress, pairings, placements, powerGap, resetRoster, resolve,
+  rivalAt, scaledMs, slotOfHorse, takeBack, winsFor, winsNeeded,
+} from './matchup.logic';
+export type { RaceResult, Roster } from './matchup.logic';

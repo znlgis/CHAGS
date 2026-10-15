@@ -3,13 +3,13 @@ import type { WindowJob, WindowLevel } from './schemas';
 /**
  * 时机窗口：活儿谁都会干，难的是**等对时候**。
  *
- * 对方的营地按周期在"稳"与"乱"之间摆：
- * - calm：靠近就会被赶回来，点它什么也不发生；
- * - warn：巡逻的灯刚转过去（窗口要开了的征兆）；
- * - window：可以干活 —— 点一下推进 `workTapMs` 的活儿。
+ * 两个模式共用同一张周期表（稳 calmMs → 征兆 → 窗口 windowMs）：
+ * - fire（趁火打劫）：活儿都在那儿等着，窗口一开，哪件都能干；
+ * - glimpse（顺手牵羊）：队伍沿路走，这一轮**只路过一件机会** —— 只在窗口里抓得住，
+ *   点别处什么也不发生；一趟（travelMs）走完还没抓够，就把队伍带回起点重走一遍（零惩罚）。
  *
- * 窗口关上的时候，**没干完的活儿进度清零**（零惩罚，下个窗口接着干）。
- * 干完 `goal` 件就算成功 —— 这就是"趁火打劫"落在"看清时机"上的那一半。
+ * 共同的三条：calm 期点它什么也不发生（靠近就被赶回来）；窗口关上，没干完的进度清零；
+ * 干完 `goal` 件就算成功。判定全部按时间轴算，场景只喂墙钟，单测直接喂数字。
  */
 
 export type WindowPhase = 'calm' | 'warn' | 'window';
@@ -47,6 +47,37 @@ export function cycleIndexAt(level: WindowLevel, t: number): number {
   const span = cycleMs(level);
   if (span <= 0) return 0;
   return Math.floor(Math.max(0, t) / span);
+}
+
+/**
+ * glimpse（顺手牵羊）：**这一轮只路过一件机会**。
+ *
+ * 队伍沿路走，每一轮轮着放出一件路边的机会（`jobs[cycleIndexAt % jobs.length]`）——
+ * "抓紧时机"在这里就变成了"抓紧这一轮的那一件"：点别处的什么也不发生。
+ * fire 没有"这一轮只有这一件"的语义（活儿都在那儿等着），所以返回 undefined。
+ */
+export function currentJob(level: WindowLevel, t: number): WindowJob | undefined {
+  if (level.mode !== 'glimpse' || level.jobs.length === 0) return undefined;
+  return level.jobs[cycleIndexAt(level, t) % level.jobs.length];
+}
+
+/** 这一趟还剩多久（glimpse）；fire 没有"一趟"，恒为 0 */
+export function travelLeftMs(level: WindowLevel, t: number): number {
+  if (level.travelMs === undefined) return 0;
+  return Math.max(0, level.travelMs - Math.max(0, t));
+}
+
+/** 这一趟走完了（glimpse）；fire 没有"一趟"，永远不算走完 */
+export function isTravelOver(level: WindowLevel, t: number): boolean {
+  return level.travelMs !== undefined && travelLeftMs(level, t) <= 0;
+}
+
+/**
+ * 一趟走完还没抓够：把这一趟的账结掉，**重走一遍**（零惩罚）。
+ * 抓到的留着（顺手牵到的羊不会跑掉），没干完的清零，只记一笔"白跑一趟"用来复盘。
+ */
+export function restartTravel(state: WindowState, level: WindowLevel): WindowState {
+  return closeWindow(state, level);
 }
 
 /** 此刻是稳、是征兆、还是窗口开了 */
@@ -158,6 +189,10 @@ export function tapJob(state: WindowState, level: WindowLevel, jobId: string): W
 /**
  * 在某一刻点了某件活儿。
  * **只有窗口里才推得动** —— 稳的时候点它什么也不发生（这就是"被赶回来"）。
+ *
+ * glimpse 还多一条：**只接受"这一轮路过的那一件"**。
+ * 点到上一轮 / 下一轮的机会，和点在空地上一样 —— 什么也不发生（零惩罚）。
+ * 这一趟走完了也一样：那已经不是"错过"，是这一趟结束了（场景会把队伍带回起点重走）。
  */
 export function tapAt(
   state: WindowState,
@@ -167,6 +202,10 @@ export function tapAt(
   warnMs: number = WINDOW_WARN_MS,
 ): WindowState {
   if (phaseAt(level, t, warnMs) !== 'window') return state;
+  if (level.mode === 'glimpse') {
+    if (isTravelOver(level, t)) return state;
+    if (currentJob(level, t)?.id !== jobId) return state;
+  }
   return tapJob(state, level, jobId);
 }
 
@@ -200,6 +239,14 @@ export function nextJob(level: WindowLevel, state: WindowState): WindowJob | und
 /** 无头验证：把"稳 / 乱"的周期压成几分之一，每一段都留得下点几下 */
 export const WINDOW_MIN_PHASE_MS = 200;
 
+/**
+ * 一趟至少要走这么多个窗口：每件机会都得轮到一次。
+ * 压缩过头就会变成"抓不够"——无头验证会一趟一趟地重走，永远走不完。
+ */
+export function travelFloorMs(level: WindowLevel, cycle: WindowLevel['cycle']): number {
+  return (cycle.calmMs + cycle.windowMs) * Math.max(1, level.jobs.length);
+}
+
 export function effectiveCycle(
   level: WindowLevel,
   autoplay: boolean,
@@ -207,8 +254,8 @@ export function effectiveCycle(
 ): WindowLevel {
   if (!autoplay || factor <= 1) return level;
   const scale = (ms: number): number => Math.max(WINDOW_MIN_PHASE_MS, Math.round(ms / factor));
-  return {
-    ...level,
-    cycle: { calmMs: scale(level.cycle.calmMs), windowMs: scale(level.cycle.windowMs) },
-  };
+  const cycle = { calmMs: scale(level.cycle.calmMs), windowMs: scale(level.cycle.windowMs) };
+  if (level.travelMs === undefined) return { ...level, cycle };
+  // glimpse：这一趟也要压短，但至少留得下 jobs.length 个窗口
+  return { ...level, cycle, travelMs: Math.max(scale(level.travelMs), travelFloorMs(level, cycle)) };
 }

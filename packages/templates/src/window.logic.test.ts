@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { WindowLevelSchema } from './schemas';
 import {
-  closeWindow, cycleIndexAt, doneCount, effectiveCycle, isWindowDone, jobAt, jobProgress,
-  jobWork, nextJob, nextWindowInMs, phaseAt, phaseProgress, phaseRemainingMs, tapAt, tapJob,
-  tapsNeeded, windowStart,
+  closeWindow, currentJob, cycleIndexAt, doneCount, effectiveCycle, isTravelOver, isWindowDone,
+  jobAt, jobProgress, jobWork, nextJob, nextWindowInMs, phaseAt, phaseProgress, phaseRemainingMs,
+  restartTravel, tapAt, tapJob, tapsNeeded, travelLeftMs, windowStart,
 } from './window.logic';
 
 /** 趁火打劫的水寨：稳 4.2 秒，乱 3 秒，三件活儿（与内容 JSON 里的一模一样） */
@@ -198,5 +198,152 @@ describe('schema', () => {
         jobs: [level.jobs[0], { ...level.jobs[1], id: 'boat' }],
       }),
     ).toThrow();
+  });
+});
+/* ---------------- glimpse（顺手牵羊）：这一轮只路过一件机会 ---------------- */
+
+/** 顺手牵羊的路：稳 3 秒、窗口 2.6 秒，一趟 45 秒，三件机会轮着路过 */
+const glimpse = WindowLevelSchema.parse({
+  mode: 'glimpse',
+  travelMs: 45000,
+  cycle: { calmMs: 3000, windowMs: 2600 },
+  jobs: [
+    { id: 'sheep', x: 105, y: 960, radius: 92, workMs: 1500 },
+    { id: 'wood', x: 510, y: 804, radius: 92, workMs: 1500 },
+    { id: 'skin', x: 510, y: 1116, radius: 92, workMs: 1400 },
+  ],
+  workTapMs: 340,
+  goal: 3,
+  hint: '机会路过就抓住',
+});
+
+/** 在一轮的窗口里把这件机会抓住（每一轮的那件都不一样，所以 t 要落在它自己的窗口里） */
+function grab(jobId: string, t: number, state = windowStart()) {
+  let next = state;
+  const job = glimpse.jobs.find((item) => item.id === jobId)!;
+  for (let i = 0; i < tapsNeeded(job, glimpse); i += 1) next = tapAt(next, glimpse, jobId, t);
+  return next;
+}
+
+describe('glimpse：这一轮只路过一件机会', () => {
+  it('三件机会轮着放出来：羊 → 柴 → 水囊 → 又回到羊', () => {
+    expect(currentJob(glimpse, 0)?.id).toBe('sheep');
+    expect(currentJob(glimpse, 2999)?.id).toBe('sheep');
+    expect(currentJob(glimpse, 3000)?.id).toBe('sheep');
+    expect(currentJob(glimpse, 5599)?.id).toBe('sheep');
+    expect(currentJob(glimpse, 5600)?.id).toBe('wood');
+    expect(currentJob(glimpse, 11200)?.id).toBe('skin');
+    expect(currentJob(glimpse, 16800)?.id).toBe('sheep');
+  });
+
+  it('fire 没有"只有这一件"的语义 —— 活儿都在那儿等着', () => {
+    expect(currentJob(level, 4300)).toBeUndefined();
+    expect(travelLeftMs(level, 4300)).toBe(0);
+    expect(isTravelOver(level, 999999)).toBe(false);
+  });
+
+  it('calm 期点无效 —— 机会还没路过（征兆期也还没开门）', () => {
+    const state = windowStart();
+    expect(tapAt(state, glimpse, 'sheep', 1000)).toBe(state);
+    expect(tapAt(state, glimpse, 'sheep', 2500)).toBe(state);
+    expect(jobWork(tapAt(state, glimpse, 'sheep', 1000), glimpse, 'sheep')).toBe(0);
+  });
+
+  it('窗口期只能点当前这一轮那件：点下一轮的机会什么也不发生', () => {
+    const state = windowStart();
+    // 第一轮窗口里路过的是羊；柴要等到第二轮
+    expect(currentJob(glimpse, 3200)?.id).toBe('sheep');
+    expect(tapAt(state, glimpse, 'wood', 3200)).toBe(state);
+    expect(jobWork(tapAt(state, glimpse, 'wood', 3200), glimpse, 'wood')).toBe(0);
+    expect(jobWork(tapAt(state, glimpse, 'sheep', 3200), glimpse, 'sheep')).toBe(340);
+
+    // 到了第二轮，柴才是能抓的那件；回头点羊已经无效
+    const next = windowStart();
+    expect(currentJob(glimpse, 8900)?.id).toBe('wood');
+    expect(tapAt(next, glimpse, 'sheep', 8900)).toBe(next);
+    expect(jobWork(tapAt(next, glimpse, 'wood', 8900), glimpse, 'wood')).toBe(340);
+  });
+
+  it('点到的位置上确实有件机会，但这一轮不该是它 —— 一样不算（零惩罚）', () => {
+    // 羊站在路口（画面上的那个点），可第二轮路过的已经是柴了
+    expect(jobAt(105, 960, glimpse)?.id).toBe('sheep');
+    const state = windowStart();
+    expect(tapAt(state, glimpse, 'sheep', 8900)).toBe(state);
+    expect(doneCount(state)).toBe(0);
+  });
+
+  it('窗口里连点，一件机会抓得住；抓到了再点也不会变', () => {
+    const state = grab('sheep', 4300);
+    expect(doneCount(state)).toBe(1);
+    expect(jobWork(state, glimpse, 'sheep')).toBe(1500);
+    expect(tapAt(state, glimpse, 'sheep', 4300)).toBe(state);
+  });
+
+  it('一趟走完：还剩多久、是不是走完了', () => {
+    expect(travelLeftMs(glimpse, 0)).toBe(45000);
+    expect(travelLeftMs(glimpse, 12500)).toBe(32500);
+    expect(isTravelOver(glimpse, 44999)).toBe(false);
+    expect(travelLeftMs(glimpse, 44999)).toBe(1);
+    expect(isTravelOver(glimpse, 45000)).toBe(true);
+    expect(travelLeftMs(glimpse, 45000)).toBe(0);
+  });
+
+  it('一趟走完还没抓够：判重来，抓到的留着（零惩罚）', () => {
+    let state = grab('sheep', 4300);
+    for (let i = 0; i < 3; i += 1) state = tapAt(state, glimpse, 'wood', 8900);
+    expect(jobWork(state, glimpse, 'wood')).toBe(1020);
+
+    const again = restartTravel(state, glimpse);
+    expect(again.done).toEqual(['sheep']); // 顺手牵到的羊不会跑掉
+    expect(jobWork(again, glimpse, 'wood')).toBe(0); // 没干完的清零
+    expect(again.resets).toBe(1); // 只记一笔"白跑一趟"，不扣星、不结束
+    expect(isWindowDone(glimpse, again)).toBe(false);
+  });
+
+  it('走完的这一刻，连这一轮的机会也点不动了 —— 这一趟已经结束', () => {
+    // 第 9 轮的窗口在 47800 开：此刻路过的仍是水囊，但这一趟（45000）已经走完
+    expect(phaseAt(glimpse, 47800)).toBe('window');
+    expect(currentJob(glimpse, 47800)?.id).toBe('skin');
+    expect(isTravelOver(glimpse, 47800)).toBe(true);
+    const state = windowStart();
+    expect(tapAt(state, glimpse, 'skin', 47800)).toBe(state);
+  });
+
+  it('抓够 goal 件就成功（每一件都只在它自己那一轮的窗口里）', () => {
+    let state = grab('sheep', 4300);
+    expect(isWindowDone(glimpse, state)).toBe(false);
+    state = grab('wood', 8900, state);
+    expect(isWindowDone(glimpse, state)).toBe(false);
+    state = grab('skin', 14500, state);
+    expect(doneCount(state)).toBe(3);
+    expect(isWindowDone(glimpse, state)).toBe(true);
+    expect(state.done).toEqual(['sheep', 'wood', 'skin']);
+  });
+
+  it('不该点的那件干到一半，窗口一关照样清零（零惩罚）', () => {
+    let state = windowStart();
+    for (let i = 0; i < 3; i += 1) state = tapAt(state, glimpse, 'sheep', 4300);
+    const closed = closeWindow(state, glimpse);
+    expect(jobWork(closed, glimpse, 'sheep')).toBe(0);
+    expect(closed.resets).toBe(1);
+  });
+
+  it('无头验证：一趟压短，但每件机会都还轮得到一次', () => {
+    const fast = effectiveCycle(glimpse, true, 3);
+    expect(fast.cycle).toEqual({ calmMs: 1000, windowMs: 867 });
+    expect(fast.travelMs).toBe(15000);
+    // 至少要走完 jobs.length 个窗口 —— 否则一趟下来一件也抓不到，会一趟一趟地重走
+    expect(fast.travelMs!).toBeGreaterThanOrEqual((fast.cycle.calmMs + fast.cycle.windowMs) * 3);
+    expect(effectiveCycle(glimpse, false, 3)).toBe(glimpse);
+  });
+});
+
+describe('glimpse 的 schema 与边界', () => {
+  it('glimpse 必须给 travelMs —— 不然"一趟"就没有长度', () => {
+    expect(() => WindowLevelSchema.parse({ ...glimpse, travelMs: undefined })).toThrow();
+  });
+
+  it('fire 不许写 travelMs —— 趁火打劫没有"一趟走完"这回事', () => {
+    expect(() => WindowLevelSchema.parse({ ...level, travelMs: 45000 })).toThrow();
   });
 });

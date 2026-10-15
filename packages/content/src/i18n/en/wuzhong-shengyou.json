@@ -1,0 +1,85 @@
+{
+  "title": "Something Out of Nothing",
+  "dynasty": "Three Kingdoms",
+  "era": "Three Kingdoms · Han, Jian'an 13",
+  "figures": [
+    "Zhuge Liang",
+    "Lu Su"
+  ],
+  "source": {
+    "book": "The Thirty-Six Stratagems, Enemy Stratagems",
+    "chapter": "Something Out of Nothing",
+    "quote": "A sham — and then not a sham: make real the thing you feigned."
+  },
+  "moral": "A thing you don't have yet can be drawn first — and then held up.",
+  "keywords": [
+    "Out of nothing",
+    "Shadows",
+    "Hold it up"
+  ],
+  "story": [
+    {
+      "title": "Fog on the River",
+      "text": "Fog on the river, and the boat was empty.",
+      "narration": "In the year 208 a thick fog came down on the Yangtze. The boat lay still in the middle of the river with nothing on board — not one person in sight."
+    },
+    {
+      "title": "Straw Men in the Fog",
+      "text": "A row of straw men stood up in the fog, and arrows came like rain.",
+      "narration": "Zhuge Liang had a row of straw men set up along both sides of the boat. In the fog the other side could not see clearly, so their arrows came like rain, and every one of them stuck in the straw — not a single person was hurt."
+    }
+  ],
+  "keyMoment": {
+    "question": "There is nothing on the boat. How do we make the other side think it is full of men?",
+    "options": [
+      {
+        "text": "Stand a straw man up in each empty place, one after another",
+        "hint": ""
+      },
+      {
+        "text": "Shout across the water",
+        "hint": "Shouting in the fog only tells them you are nervous."
+      },
+      {
+        "text": "Turn the boat around and head back",
+        "hint": "Go back empty-handed, and the arrows are lost."
+      }
+    ],
+    "reveal": "Stand one up in each empty place, and the other side believes the boat is crowded with men."
+  },
+  "misconceptions": [
+    "If you don't have a thing, there is nothing you can do",
+    "To be believed, you have to say it as loudly as you can"
+  ],
+  "quiz": [
+    {
+      "question": "What did Zhuge Liang have set up on the boats?",
+      "options": [
+        "Straw men",
+        "Real soldiers",
+        "Big drums"
+      ],
+      "answer": 0,
+      "explanation": "The figures in the fog were straw men — every arrow stuck in the straw."
+    },
+    {
+      "question": "You want an empty classroom to look as if someone is inside. What do you do?",
+      "options": [
+        "Set a school bag and a water bottle on the seats",
+        "Turn off the lights",
+        "Shout from the doorway"
+      ],
+      "answer": 0,
+      "explanation": "A bag and a bottle on the seats make the room look occupied from the window. Put the things out first."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "One straw man per spot"
+        }
+      }
+    ]
+  }
+}

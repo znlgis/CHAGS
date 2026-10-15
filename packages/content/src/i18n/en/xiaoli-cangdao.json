@@ -1,0 +1,84 @@
+{
+  "title": "A Smile Hiding a Knife",
+  "dynasty": "Tang",
+  "era": "Tang · Yonghui years",
+  "figures": [
+    "Li Yifu"
+  ],
+  "source": {
+    "book": "Thirty-Six Stratagems, Opportunistic Stratagems",
+    "quote": "Win his trust and set him at ease, while you plot against him in secret... hard within, soft without."
+  },
+  "moral": "Sweet words are only half the story — watch what his hands are doing.",
+  "keywords": [
+    "Seeing through",
+    "A tell",
+    "Do not just listen"
+  ],
+  "story": [
+    {
+      "title": "Sweet Words",
+      "text": "He smiled and said one kind thing after another.",
+      "narration": "In the Tang dynasty there was a man named Li Yifu. Whenever he spoke to people he smiled, and his voice was warm and gentle, so everyone felt he meant well. Every sentence he said put people at ease."
+    },
+    {
+      "title": "His Hands Give Him Away",
+      "text": "But his eyes, his cuff and his fingers gave him away again and again.",
+      "narration": "However kind the words were, his body was talking too: his eyes drifted to the side, his cuff tightened a little, his fingers tapped the table. Anyone watching those little movements knew that what he wanted was not what he was saying."
+    }
+  ],
+  "keyMoment": {
+    "question": "He keeps saying kind things. How do you find out what he really wants?",
+    "options": [
+      {
+        "text": "Watch his little movements",
+        "hint": ""
+      },
+      {
+        "text": "Believe what he says",
+        "hint": "Words are easy to say for other people; movements are hard to fake all the way."
+      },
+      {
+        "text": "Just ask him",
+        "hint": "He will only give you more of the same sweet words."
+      }
+    ],
+    "reveal": "Read the sweet words together with his movements, and you can see what he is really after."
+  },
+  "misconceptions": [
+    "Anyone who smiles nicely must be kind",
+    "Sweet words can always be trusted",
+    "You can understand a person just by listening to them"
+  ],
+  "quiz": [
+    {
+      "question": "What was hiding behind Li Yifu's smile?",
+      "options": [
+        "His own secret plan",
+        "A present",
+        "A joke"
+      ],
+      "answer": 0,
+      "explanation": "His kind words only made people relax — his plan was hidden behind them, so you had to watch what his body was doing."
+    },
+    {
+      "question": "Someone praises your toy and reaches for it at the same time. What do you look at first?",
+      "options": [
+        "His hands, not his words",
+        "Listen for more praise",
+        "Hand the toy over"
+      ],
+      "answer": 0,
+      "explanation": "Praise is easy to say; where the hand is reaching shows what he really means to do. Watch the hand first, then decide."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Watch his hands"
+        }
+      }
+    ]
+  }
+}

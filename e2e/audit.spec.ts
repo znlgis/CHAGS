@@ -507,6 +507,13 @@ const STRATAGEMS: [string, string][] = [
   ['yiyi-dailao', 'stillness'],
   ['chenhuo-dajie', 'window'],
   ['shengdong-jixi', 'ruse'],
+  // 第二辑（敌战计 7–12）
+  ['wuzhong-shengyou', 'show'],
+  ['andu-chencang', 'twoline'],
+  ['gean-guanhuo', 'wait'],
+  ['xiaoli-cangdao', 'read'],
+  ['lidai-taojiang', 'matchup'],
+  ['shunshou-qianyang', 'window'],
 ];
 
 for (const locale of LOCALES) {

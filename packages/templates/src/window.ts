@@ -3,8 +3,9 @@ import type { GameContext } from '@chags/game-kit';
 import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
 import { SCENE_KEYS } from './layout';
 import {
-  WINDOW_WARN_MS, closeWindow, cycleIndexAt, effectiveCycle, isJobDone, isWindowDone, jobAt,
-  jobProgress, nextJob, phaseAt, phaseProgress, phaseRemainingMs, tapJob, windowStart,
+  WINDOW_WARN_MS, closeWindow, currentJob, cycleIndexAt, effectiveCycle, isJobDone, isTravelOver,
+  isWindowDone, jobAt, jobProgress, nextJob, phaseAt, phaseProgress, phaseRemainingMs,
+  restartTravel, tapJob, travelLeftMs, windowStart,
 } from './window.logic';
 import type { WindowPhase, WindowState } from './window.logic';
 import type { WindowJob, WindowLevel } from './schemas';
@@ -26,6 +27,10 @@ export const WINDOW = {
   idleMs: 8000,
   /** 干完活儿之后看一眼水寨再走 */
   finaleHoldMs: 4200,
+  /** glimpse：一趟走完了，站住喘口气再走一遍（零惩罚） */
+  tripHoldMs: 1600,
+  /** glimpse：无头验证时喘气的时长 */
+  autoplayTripHoldMs: 240,
   /** 提示气泡的高度 */
   hintY: 268,
 } as const;
@@ -49,6 +54,18 @@ export interface WindowStageState {
   canWork: boolean;
   elapsedMs: number;
   finished: boolean;
+  /** glimpse：这一轮路过的那件机会（fire 恒为 null —— 活儿都在，没有"只有这一件"） */
+  activeJobId: string | null;
+  /** glimpse：这一趟还剩多久；fire 恒为 0 */
+  travelLeftMs: number;
+  /** glimpse：这一趟走了多少（0..1）；fire 恒为 0 */
+  travelProgress: number;
+  /** glimpse：这一趟走完了 —— 没抓够就重走一遍（零惩罚） */
+  travelOver: boolean;
+  /** glimpse：这是第几趟（从 1 开始）；fire 恒为 1 */
+  trip: number;
+  /** glimpse：正在换趟（画面把队伍摆回起点、路程条归零） */
+  restarting: boolean;
 }
 
 export interface WindowConfig {
@@ -64,6 +81,10 @@ export interface WindowConfig {
   /** 全部干完之后念的那句话 */
   reveal?: string;
   finaleHoldMs?: number;
+  /** glimpse：一趟走完、要重走一遍时说的话（不传就用 level.hint） */
+  tripLine?: string;
+  /** glimpse：换趟时站住喘口气的时长 */
+  tripHoldMs?: number;
 }
 
 /**
@@ -75,6 +96,10 @@ export interface WindowConfig {
  * - **零惩罚**：稳的时候点活儿什么也不发生；窗口关上，没干完的进度清零，下个窗口接着干 ——
  *   干完的活儿不会被抹掉。
  * - **提示给在对的时候**：窗口开了才让小手落在还没干完的活儿上（稳的时候不引诱孩子去点）。
+ *
+ * glimpse（顺手牵羊）在同一个场景里加一条：**这一轮只有一件机会路过**。
+ * 别处的、上一轮 / 下一轮的都点不动（零惩罚，只当白跑一趟）；
+ * 这一趟（travelMs）走完还没抓够，就把队伍带回起点重走一遍 —— 抓到的留着，不扣星。
  */
 export function createWindowScene(
   ctx: GameContext,
@@ -87,6 +112,10 @@ export function createWindowScene(
     private finished = false;
     private lastPhase: WindowPhase | null = null;
     private lastRound = -1;
+    /** glimpse：这一趟是第几趟（从 1 开始） */
+    private trip = 1;
+    /** glimpse：正在换趟（这一趟走完了，画面把队伍摆回起点） */
+    private restarting = false;
     private lastTapAt = Number.NEGATIVE_INFINITY;
     private idleMs = 0;
     private worldGfx: Phaser.GameObjects.Graphics | null = null;
@@ -122,11 +151,43 @@ export function createWindowScene(
 
     private tick(delta: number): void {
       const elapsed = this.elapsed();
-      if (!this.finished) {
-        this.syncPhase(elapsed);
-        this.watch(elapsed, delta);
+      if (!this.finished && !this.restarting) {
+        // glimpse：这一趟走完了 —— 没抓够就重走一遍（零惩罚，fire 永远不会走到这里）
+        if (isTravelOver(this.level, elapsed)) this.restartTrip();
+        else {
+          this.syncPhase(elapsed);
+          this.watch(elapsed, delta);
+        }
       }
       this.redraw(elapsed);
+    }
+
+    /**
+     * 一趟走完还没抓够：把这一趟的账结掉，站住喘口气，再走一遍（**零惩罚**）。
+     * 抓到的机会留着 —— 顺手牵到的羊不会跑掉。
+     */
+    private restartTrip(): void {
+      if (this.restarting) return;
+      this.restarting = true;
+      this.hideHand();
+      this.state = restartTravel(this.state, this.level);
+      this.ctx.emit('beat:enter', { beatId: 'window:trip:' + this.trip });
+      const hold = cfg.tripHoldMs ?? WINDOW.tripHoldMs;
+      this.showHint(
+        cfg.tripLine ?? cfg.level.hint,
+        this.autoplay ? WINDOW.autoplayTripHoldMs : hold,
+        WINDOW.hintY,
+      );
+      this.time.delayedCall(this.autoplay ? WINDOW.autoplayTripHoldMs : hold, () => {
+        if (this.finished) return;
+        this.trip += 1;
+        this.restarting = false;
+        this.startedAt = this.ctx.services.now();
+        this.lastPhase = null;
+        this.lastRound = -1;
+        this.idleMs = 0;
+        this.ctx.emit('beat:enter', { beatId: 'window:restart' });
+      });
     }
 
     /** 稳 → 征兆 → 窗口的每一次翻页：发事件、出声、关窗时清零 */
@@ -152,6 +213,9 @@ export function createWindowScene(
       if (phase === 'window' && (prevPhase !== 'window' || prevRound !== round)) {
         this.ctx.services.audio.tone(660, 150);
         this.ctx.emit('beat:enter', { beatId: 'window:open:' + (round + 1) });
+        // glimpse：这一轮路过的是哪一件（复盘与自检用；fire 没有"只有这一件"）
+        const passing = currentJob(this.level, elapsed);
+        if (passing) this.ctx.emit('beat:enter', { beatId: 'window:glimpse:' + passing.id });
       }
     }
 
@@ -164,13 +228,20 @@ export function createWindowScene(
       this.showHint(cfg.level.hint, 2200, WINDOW.hintY);
     }
 
-    /** 提示与小手：窗口里才把小手放到还没干完的活儿上 */
+    /** 提示与小手：窗口里才把小手放到**此刻点得动**的那件上 */
     private watch(elapsed: number, delta: number): void {
       const phase = phaseAt(this.level, elapsed, WINDOW.warnMs);
-      const job = nextJob(this.level, this.state);
-      if (phase === 'window' && job && !this.autoplay && elapsed - this.lastTapAt >= WINDOW.handDelayMs) {
+      // fire：还没干完的第一件；glimpse：这一轮路过的那一件（已经抓到的就不再引孩子去点）
+      const job: WindowJob | null =
+        this.level.mode === 'glimpse' ? this.grabAt(elapsed) : nextJob(this.level, this.state) ?? null;
+      if (
+        phase === 'window' &&
+        job !== null &&
+        !this.autoplay &&
+        elapsed - this.lastTapAt >= WINDOW.handDelayMs
+      ) {
         this.showHand(job);
-      } else if (phase !== 'window') {
+      } else if (phase !== 'window' || job === null) {
         this.hideHand();
       }
 
@@ -193,6 +264,8 @@ export function createWindowScene(
       for (const job of this.level.jobs) {
         work[job.id] = jobProgress(this.state, this.level, job.id);
       }
+      const passing = this.level.mode === 'glimpse' ? currentJob(this.level, elapsed) : undefined;
+      const travel = this.level.travelMs;
       return {
         phase,
         round: cycleIndexAt(this.level, elapsed),
@@ -201,21 +274,51 @@ export function createWindowScene(
         work,
         done: [...this.state.done],
         resets: this.state.resets,
-        canWork: phase === 'window' && !this.finished,
+        canWork:
+          phase === 'window' &&
+          !this.finished &&
+          !this.restarting &&
+          (this.level.mode !== 'glimpse' || this.grabAt(elapsed) !== null),
         elapsedMs: elapsed,
         finished: this.finished,
+        activeJobId: passing?.id ?? null,
+        travelLeftMs: travelLeftMs(this.level, elapsed),
+        travelProgress:
+          travel === undefined || travel <= 0 ? 0 : Math.min(1, Math.max(0, elapsed / travel)),
+        travelOver: isTravelOver(this.level, elapsed),
+        trip: this.trip,
+        restarting: this.restarting,
       };
     }
 
     // ---------------- 点活儿 ----------------
 
+    /**
+     * 此刻抓得住的那件机会（glimpse）：这一轮路过的那件，而且还没抓到。
+     * fire 没有这个概念，恒为 null。
+     */
+    private grabAt(elapsed: number): WindowJob | null {
+      if (this.level.mode !== 'glimpse' || isTravelOver(this.level, elapsed)) return null;
+      const job = currentJob(this.level, elapsed);
+      return job !== undefined && !isJobDone(this.state, job.id) ? job : null;
+    }
+
     private onPress(pointer: Phaser.Input.Pointer): void {
-      if (this.finished) return;
+      if (this.finished || this.restarting) return;
       const job = jobAt(pointer.x, pointer.y, this.level, WINDOW.tapForgive);
       if (!job) return;
       this.idleMs = 0;
+      const elapsed = this.elapsed();
 
-      if (phaseAt(this.level, this.elapsed(), WINDOW.warnMs) !== 'window') {
+      // glimpse：只有这一轮路过的那件抓得住 —— 点到别处（上一轮 / 下一轮的机会）什么也不发生
+      if (this.level.mode === 'glimpse' && currentJob(this.level, elapsed)?.id !== job.id) {
+        this.ctx.emit('beat:enter', { beatId: 'window:missed:' + job.id });
+        this.sfx('tap');
+        this.showHint(cfg.level.hint, 2200, WINDOW.hintY);
+        return;
+      }
+
+      if (phaseAt(this.level, elapsed, WINDOW.warnMs) !== 'window') {
         // 稳的时候靠近会被赶回来：点它什么也不发生（零惩罚，只是白跑一趟）
         this.ctx.emit('beat:enter', { beatId: 'window:blocked:' + job.id });
         this.sfx('tap');
@@ -295,7 +398,8 @@ export function createWindowScene(
     // ---------------- 无头验证 ----------------
 
     /**
-     * 无头验证：窗口一开就对着还没干完的活儿连点，用的还是同一条 tapJob() 路径。
+     * 无头验证：窗口一开就对着**此刻点得动**的那件连点，用的还是同一条 tapJob() 路径。
+     * （glimpse 下"点得动的"就是这一轮路过的那一件；一趟走完会被场景带回起点重走。）
      * 连点比人快得多（55ms 一下），所以压缩过的窗口也够把一件活儿干完。
      */
     private runAutoplay(): void {
@@ -303,9 +407,11 @@ export function createWindowScene(
         delay: WINDOW.autoplayTapMs,
         loop: true,
         callback: () => {
-          if (this.finished) return;
-          if (phaseAt(this.level, this.elapsed(), WINDOW.warnMs) !== 'window') return;
-          const job = nextJob(this.level, this.state);
+          if (this.finished || this.restarting) return;
+          const elapsed = this.elapsed();
+          if (phaseAt(this.level, elapsed, WINDOW.warnMs) !== 'window') return;
+          const job: WindowJob | null =
+            this.level.mode === 'glimpse' ? this.grabAt(elapsed) : nextJob(this.level, this.state) ?? null;
           if (job) this.tapJob(job);
         },
       });

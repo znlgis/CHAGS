@@ -21,6 +21,10 @@ export const SCENE_KEYS = {
   borrow: 'borrow',
   stillness: 'stillness',
   window: 'window',
+  show: 'show',
+  twoline: 'twoline',
+  read: 'read',
+  matchup: 'matchup',
   quiz: 'quiz',
   reward: 'reward',
 } as const;

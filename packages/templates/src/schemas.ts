@@ -835,13 +835,15 @@ export const WindowJobSchema = z.object({
 
 export const WindowLevelSchema = z
   .object({
-    mode: z.enum(['fire']),
-    /** 稳多久、乱多久 */
+    mode: z.enum(['fire', 'glimpse']),
+    /** 稳多久、乱多久（glimpse：每隔一轮路过一个机会） */
     cycle: z.object({ calmMs: z.number().positive(), windowMs: z.number().positive() }),
     jobs: z.array(WindowJobSchema).min(2).max(4),
     /** 点一下推进多少毫秒的活儿 */
     workTapMs: z.number().positive(),
     goal: z.number().int().positive(),
+    /** glimpse（顺手牵羊）：这一趟赶路总共多久 —— 走完还没抓够就重走一遍 */
+    travelMs: z.number().positive().optional(),
     hint: z.string().min(1).max(24),
   })
   .refine((l) => new Set(l.jobs.map((j) => j.id)).size === l.jobs.length, {
@@ -859,9 +861,197 @@ export const WindowLevelSchema = z
   .refine((l) => l.workTapMs < l.cycle.windowMs, {
     message: '点一下就用掉整个窗口 —— 一件也干不完',
     path: ['workTapMs'],
+  })
+  .refine((l) => l.mode !== 'glimpse' || l.travelMs !== undefined, {
+    message: 'glimpse（顺手牵羊）模式必须给 travelMs —— 这一趟要走多久',
+    path: ['travelMs'],
+  })
+  .refine((l) => l.mode !== 'fire' || l.travelMs === undefined, {
+    message: 'fire 模式没有"一趟走完"这回事，不要写 travelMs',
+    path: ['travelMs'],
+  });
+
+/**
+ * show 模板：造势 —— 从"什么都没有"开始，把一个不存在的东西**维持住**。
+ * 本辑只有 draw（第 7 计无中生有：雾里画草人）；树上开花（借现成的势）第五辑再扩。
+ */
+export const ShowSlotSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+});
+
+export const ShowLevelSchema = z
+  .object({
+    mode: z.enum(['draw']),
+    slots: z.array(ShowSlotSchema).min(3).max(8),
+    /** 一笔能立多久：到点就淡掉，得回头补 */
+    fadeMs: z.number().positive(),
+    /** 同时立着的影子数达到它，对方的疑心才开始涨 */
+    needed: z.number().int().positive(),
+    /** 疑心涨到多少算成功 */
+    goal: z.number().positive(),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.slots.map((s) => s.id)).size === l.slots.length, {
+    message: '空位的 id 不能重复',
+    path: ['slots'],
+  })
+  .refine((l) => l.needed <= l.slots.length, {
+    message: '要同时立住的影子比空位还多 —— 这一关不可能过',
+    path: ['needed'],
+  });
+
+/**
+ * twoline 模板：双线 —— 明面撑住、暗里推进，两条线抢同一根手指。
+ * 本辑只有 stack（第 8 计暗度陈仓）；反间计（plant）第六辑再扩。
+ */
+export const TwolineLevelSchema = z
+  .object({
+    mode: z.enum(['stack']),
+    /** 明线：会随时间回落，点一下补一截；跌破 minKeep 就被看穿（零惩罚） */
+    decoy: z.object({
+      x: z.number(),
+      y: z.number(),
+      radius: z.number().positive(),
+      max: z.number().positive(),
+      decayPerSec: z.number().positive(),
+      topUp: z.number().positive(),
+      minKeep: z.number().positive(),
+    }),
+    /** 暗线：点一下推一截，到 goal 就算成 */
+    real: z.object({
+      x: z.number(),
+      y: z.number(),
+      radius: z.number().positive(),
+      step: z.number().positive(),
+      goal: z.number().positive(),
+    }),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => l.decoy.minKeep < l.decoy.max, {
+    message: 'minKeep 不小于上限 —— 明线永远掉不下来，这一关没有张力',
+    path: ['decoy', 'minKeep'],
+  })
+  .refine((l) => l.decoy.topUp <= l.decoy.max, {
+    message: '补一笔就超过上限了',
+    path: ['decoy', 'topUp'],
+  })
+  .refine((l) => l.real.goal / l.real.step <= 60, {
+    message: '暗线要点 60 下以上才推得完 —— 太磨人',
+    path: ['real', 'step'],
+  });
+
+/**
+ * read 模板：识破 —— 好听的话底下，动作会露破绽。
+ * 破绽只在窗口里看得见；没有破绽的时候点只是没收获（零惩罚）。本辑只有 inspect。
+ */
+export const ReadTellSchema = z.object({
+  id: z.string().min(1),
+  /** 从这一局开始算起的出现时刻 */
+  atMs: z.number().nonnegative(),
+  /** 破绽露多久 */
+  windowMs: z.number().positive(),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 这是什么破绽：eye 眼神 / sleeve 袖口 / finger 手指 */
+  kind: z.string().min(1),
+});
+
+export const ReadLevelSchema = z
+  .object({
+    mode: z.enum(['inspect']),
+    speaker: z.object({ x: z.number(), y: z.number() }),
+    tells: z.array(ReadTellSchema).min(3).max(6),
+    goal: z.number().int().positive(),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.tells.map((t) => t.id)).size === l.tells.length, {
+    message: '破绽的 id 不能重复',
+    path: ['tells'],
+  })
+  .refine((l) => l.tells.every((t, i) => i === 0 || t.atMs > l.tells[i - 1]!.atMs), {
+    message: '破绽要按时间先后排（atMs 递增），否则"此刻该看哪儿"就算不出来',
+    path: ['tells'],
+  })
+  .refine((l) => l.goal <= l.tells.length, {
+    message: '要看穿的破绽比出现的还多',
+    path: ['goal'],
+  });
+
+/**
+ * matchup 模板：配对编排 —— 手里这些牌，怎么配对。
+ * 本辑只有 pair（第 11 计李代桃僵：三局两胜）；远交近攻（order）第四辑再扩。
+ */
+export const MatchupHorseSchema = z.object({
+  id: z.string().min(1),
+  rank: z.enum(['top', 'mid', 'low']),
+  power: z.number().positive(),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+});
+
+export const MatchupRivalSchema = z.object({
+  id: z.string().min(1),
+  power: z.number().positive(),
+  x: z.number(),
+  y: z.number(),
+  /** 木牌上的短标签（双语可译，≤12 字） */
+  label: z.string().min(1).max(12),
+});
+
+/** 三匹马 vs 三场：六种配对里最多能赢几场（内容写错不该等孩子打到一半才发现） */
+export function bestMatchupWins(
+  horses: readonly { power: number }[],
+  rivals: readonly { power: number }[],
+): number {
+  let best = 0;
+  const walk = (rest: number[], acc: number[]): void => {
+    if (rest.length === 0) {
+      const wins = acc.filter((h, i) => horses[h]!.power > rivals[i]!.power).length;
+      best = Math.max(best, wins);
+      return;
+    }
+    for (const index of rest) walk(rest.filter((x) => x !== index), [...acc, index]);
+  };
+  if (horses.length === 3 && rivals.length === 3) walk([0, 1, 2], []);
+  return best;
+}
+
+export const MatchupLevelSchema = z
+  .object({
+    mode: z.enum(['pair']),
+    horses: z.array(MatchupHorseSchema).length(3),
+    rivals: z.array(MatchupRivalSchema).length(3),
+    /** 赢几场算胜（三局两胜 = 2） */
+    needWins: z.number().int().min(1).max(3),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.horses.map((h) => h.rank)).size === 3, {
+    message: '三匹马的上 / 中 / 下要各有一匹',
+    path: ['horses'],
+  })
+  .refine((l) => new Set(l.rivals.map((r) => r.id)).size === l.rivals.length, {
+    message: '对手的 id 不能重复',
+    path: ['rivals'],
+  })
+  .refine((l) => bestMatchupWins(l.horses, l.rivals) >= l.needWins, {
+    message: '六种配对都赢不到 needWins 场 —— 这一关不可能赢',
+    path: ['needWins'],
   });
 
 export type RuseShell = z.infer<typeof RuseShellSchema>;
+export type ShowSlot = z.infer<typeof ShowSlotSchema>;
+export type ShowLevel = z.infer<typeof ShowLevelSchema>;
+export type TwolineLevel = z.infer<typeof TwolineLevelSchema>;
+export type ReadTell = z.infer<typeof ReadTellSchema>;
+export type ReadLevel = z.infer<typeof ReadLevelSchema>;
+export type MatchupHorse = z.infer<typeof MatchupHorseSchema>;
+export type MatchupRival = z.infer<typeof MatchupRivalSchema>;
+export type MatchupLevel = z.infer<typeof MatchupLevelSchema>;
 export type RuseItem = z.infer<typeof RuseItemSchema>;
 export type RuseNoise = z.infer<typeof RuseNoiseSchema>;
 export type RuseLevel = z.infer<typeof RuseLevelSchema>;
@@ -926,4 +1116,8 @@ export const templateSchemas: Record<string, z.ZodType> = {
   borrow: BorrowLevelSchema,
   stillness: StillnessLevelSchema,
   window: WindowLevelSchema,
+  show: ShowLevelSchema,
+  twoline: TwolineLevelSchema,
+  read: ReadLevelSchema,
+  matchup: MatchupLevelSchema,
 };
