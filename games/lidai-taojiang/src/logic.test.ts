@@ -1,11 +1,15 @@
-import { ContentEntrySchema, getEntry } from '@chags/content';
+import { ContentEntrySchema, getEntry } from '@chags/content/full';
 import { bestMatchupWins } from '@chags/templates/schemas';
 import { describe, expect, it } from 'vitest';
-import raw from '../../../packages/content/src/entries/lidai-taojiang.json';
+import rawSummary from '../../../packages/content/src/entries/lidai-taojiang.json';
+import rawDetail from '../../../packages/content/src/entries/lidai-taojiang.game.json';
 import {
   bestRoster, bestWins, isMatchupDone, pairings, resolve, winsFor,
 } from '../../../packages/templates/src/matchup.logic';
 import { matchupLevel } from './logic';
+
+/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
+const raw = { ...rawSummary, ...rawDetail };
 
 /** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
 const entry = getEntry('lidai-taojiang') ?? ContentEntrySchema.parse(raw);

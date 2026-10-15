@@ -1,0 +1,71 @@
+{
+  "figures": [
+    "Han Xin",
+    "Liu Bang"
+  ],
+  "story": [
+    {
+      "title": "Hammering on the Plank Road",
+      "text": "Out in the open, the soldiers hammered at the plank road, so slowly that people laughed.",
+      "narration": "In the first year of Han, Liu Bang and his army were shut out south of the Qin mountains. He sent men to rebuild the plank road in plain sight — board by board, so slowly that the guards on the other side laughed."
+    },
+    {
+      "title": "The Path at Night",
+      "text": "By night, another group had already walked the back path into Chencang.",
+      "narration": "By night, another group did not take the plank road at all. They climbed the mountain by a narrow path and slipped quietly into Chencang. By the time the other side noticed, they were already inside the city."
+    }
+  ],
+  "keyMoment": {
+    "question": "The plank road is going up very slowly. What do we do?",
+    "options": [
+      {
+        "text": "Keep building it for everyone to see, and go another way at the same time",
+        "hint": ""
+      },
+      {
+        "text": "Work extra hours and finish the plank road",
+        "hint": "However fast you build, the other side keeps watching that road."
+      },
+      {
+        "text": "Stop building it",
+        "hint": "If the open work suddenly stops, they see at once that you are changing roads."
+      }
+    ],
+    "reveal": "Hold up the open one, and the quiet one gets through — two things can be done at once."
+  },
+  "misconceptions": [
+    "If you are blocked, you can only stop and wait",
+    "Doing two things at once means doing both badly"
+  ],
+  "quiz": [
+    {
+      "question": "Which road did the main army really take?",
+      "options": [
+        "The narrow back path over the mountain to Chencang",
+        "The plank road",
+        "The river"
+      ],
+      "answer": 0,
+      "explanation": "The plank road was built for the other side to watch. The real army took the back path."
+    },
+    {
+      "question": "You want to finish your homework and practise the piano. How do you arrange it?",
+      "options": [
+        "Do one of them out in the open and push the other along in the free moments",
+        "Put both off until tomorrow",
+        "Only practise the piano and skip the homework"
+      ],
+      "answer": 0,
+      "explanation": "Hold up the one everyone can see, and push the other along in the free moments. Both get done."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Hold one, push the other"
+        }
+      }
+    ]
+  }
+}

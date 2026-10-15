@@ -1,4 +1,4 @@
-import { stageScript } from '@chags/content';
+import { stageScript } from '@chags/content/full';
 import type { ContentEntry } from '@chags/content';
 import { SplitLevelSchema } from '@chags/templates/schemas';
 import type { SplitLevel } from '@chags/templates/schemas';

@@ -2,10 +2,6 @@
   "title": "The Beacon Fires",
   "dynasty": "Western Zhou",
   "era": "Western Zhou · Final Years",
-  "figures": [
-    "King You of Zhou",
-    "Bao Si"
-  ],
   "source": {
     "book": "Records of the Grand Historian, Annals of Zhou",
     "chapter": "written by Sima Qian (Western Han); later scholars doubt the beacon story",
@@ -16,83 +12,5 @@
     "Beacon fire",
     "Trust",
     "No one came"
-  ],
-  "story": [
-    {
-      "title": "The Beacon Towers",
-      "text": "Beacon towers ran along the ridge: light them, and the lords would ride to save the king.",
-      "narration": "Along the western ridge stood one beacon tower after another. When an enemy came, the fires were lit, and the lords far away saw the light and rode to save the king."
-    },
-    {
-      "title": "The Queen Who Never Smiled",
-      "text": "King You had a queen named Bao Si who never smiled. One day he lit the fires.",
-      "narration": "King You of Zhou had a queen named Bao Si. She never smiled. One day, to make her laugh, he lit the beacon fires when there was no enemy at all."
-    }
-  ],
-  "keyMoment": {
-    "question": "There is no enemy — what happens if the fires are lit?",
-    "options": [
-      {
-        "text": "The lords ride over, and find no enemy at the gate",
-        "hint": ""
-      },
-      {
-        "text": "They do not come",
-        "hint": ""
-      },
-      {
-        "text": "They go and fight the enemy",
-        "hint": ""
-      }
-    ],
-    "reveal": "Beacon fires are for enemies. Play with them once and it is funny; afterwards no one comes."
-  },
-  "misconceptions": [
-    "Bao Si’s smile destroyed the Western Zhou — the fault was his who lit the fires",
-    "Once or twice does not matter"
-  ],
-  "quiz": [
-    {
-      "question": "What are the beacon fires for?",
-      "options": [
-        "To call the lords when an enemy comes",
-        "To celebrate a festival",
-        "To light the road for travellers"
-      ],
-      "explanation": "A beacon is an alarm: when the lords see the fire, they know the king is in danger."
-    },
-    {
-      "question": "Why did the lords stop coming?",
-      "options": [
-        "They had been tricked several times and no longer believed the fires",
-        "They lived too far away",
-        "They were angry and would not fight"
-      ],
-      "explanation": "The fire shouted \"enemy!\" again and again, and there was never anyone there — so no one believed it any more."
-    },
-    {
-      "question": "Which of these is most like the beacon fires?",
-      "options": [
-        "Shouting \"Fire!\" as a joke, so no one believes you when there is a real fire",
-        "Always doing what you promised",
-        "Returning what you borrowed on time"
-      ],
-      "explanation": "Lie for fun and people stop trusting you — trust runs out a little at a time."
-    }
-  ],
-  "game": {
-    "stages": [
-      {
-        "levelScript": {
-          "lines": {
-            "first": "They came — and there was no enemy at the gate.",
-            "again": "Again they came. Going home, heads shook.",
-            "empty": "This time they did not even reach the gate.",
-            "end": "The fire was real; only the alarm was false."
-          },
-          "hint": "Tap the beacon tower"
-        }
-      }
-    ]
-  }
+  ]
 }

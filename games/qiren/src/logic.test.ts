@@ -1,7 +1,11 @@
-import { ContentEntrySchema, getEntry } from '@chags/content';
+import { ContentEntrySchema, getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
-import rawQiren from '../../../packages/content/src/entries/qiren.json';
+import rawQirenSummary from '../../../packages/content/src/entries/qiren.json';
+import rawQirenDetail from '../../../packages/content/src/entries/qiren.game.json';
 import { placeLevel } from './logic';
+
+/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
+const rawQiren = { ...rawQirenSummary, ...rawQirenDetail };
 
 /**
  * 直接读典故 JSON 再过一遍内容 schema：外壳注册（entries/index.ts）由 Lead 负责，

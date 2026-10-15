@@ -56,8 +56,9 @@ has no default, so a stratagem can never be filed under "stories" by accident.
 lint, 702 unit tests, content check, build, size) and every game has a headless playthrough in the
 end-to-end suite (`?autoplay=1` — a new template only counts once it implements `runAutoplay()`).
 
-The shell stays small (Phaser is not in it). Each game's own business code is only a few KB;
-Phaser is a shared chunk loaded only when a game starts — see `pnpm size` for the exact numbers.
+The shell stays small: no Phaser, and no story or level-script content either. Each game's own
+business code is only a few KB; Phaser is a shared chunk and the full content (stories, quizzes,
+level scripts) is a separate lazy chunk — both load only when a game starts. See `pnpm size`.
 
 ### 1. Cao Chong Weighs the Elephant (history · substitution)
 

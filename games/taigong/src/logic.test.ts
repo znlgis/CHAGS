@@ -1,9 +1,13 @@
-import { ContentEntrySchema, getEntry } from '@chags/content';
+import { ContentEntrySchema, getEntry } from '@chags/content/full';
 // layout 只有常量，没有 Phaser：单测里可以直接用真正的设计分辨率
 import { DESIGN, WAIT } from '@chags/templates/layout';
 import { describe, expect, it } from 'vitest';
-import rawTaigong from '../../../packages/content/src/entries/taigong.json';
+import rawTaigongSummary from '../../../packages/content/src/entries/taigong.json';
+import rawTaigongDetail from '../../../packages/content/src/entries/taigong.game.json';
 import { waitLevel } from './logic';
+
+/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
+const rawTaigong = { ...rawTaigongSummary, ...rawTaigongDetail };
 
 /**
  * 直接读典故 JSON 再过一遍内容 schema：外壳注册（entries/index.ts）由 Lead 负责，

@@ -2,10 +2,6 @@
   "title": "Houyi Shoots the Suns",
   "dynasty": "Primordial",
   "era": "Primordial · Myth",
-  "figures": [
-    "Houyi",
-    "Yao"
-  ],
   "source": {
     "book": "Huainanzi, Basic Profundity",
     "quote": "In the time of Yao, ten suns rose together and scorched the crops and killed the plants, so the people had nothing to eat. Yao sent Yi, who shot the ten suns."
@@ -15,73 +11,5 @@
     "Ten suns",
     "Archery",
     "Keep one"
-  ],
-  "story": [
-    {
-      "title": "Ten Suns",
-      "text": "Ten suns rose together. The crops dried up and the river ran low.",
-      "narration": "Long ago, ten suns rose in the sky at once. The crops were scorched, the plants died, and the people had nothing to eat."
-    },
-    {
-      "title": "Houyi Arrives",
-      "text": "Houyi drew his bow and aimed at the suns.",
-      "narration": "Yao sent for the great archer Houyi. Houyi drew his bow and aimed at the suns in the sky."
-    }
-  ],
-  "keyMoment": {
-    "question": "Ten suns — how many should he shoot down?",
-    "options": [
-      {
-        "text": "Shoot down all ten",
-        "hint": ""
-      },
-      {
-        "text": "Shoot down nine and keep one",
-        "hint": ""
-      }
-    ],
-    "reveal": "Nine down, one left — the land cooled, and there was still light."
-  },
-  "misconceptions": [
-    "Fewer suns is always better",
-    "Shooting all ten would be the greatest feat"
-  ],
-  "quiz": [
-    {
-      "question": "How many suns did Houyi shoot down?",
-      "options": [
-        "Nine",
-        "Ten",
-        "One"
-      ],
-      "explanation": "He shot down nine and left one to light the world."
-    },
-    {
-      "question": "Why shouldn't he shoot down all ten?",
-      "options": [
-        "He ran out of arrows",
-        "Then there would be no light or warmth at all",
-        "The suns would get angry"
-      ],
-      "explanation": "With all ten gone the world would be dark and cold."
-    },
-    {
-      "question": "Which of these is also 'skill needs judgement'?",
-      "options": [
-        "Drinking a whole jug of water at once",
-        "Watering a plant and stopping when it is enough",
-        "Taking all your toys apart"
-      ],
-      "explanation": "Being able to do something does not mean doing it to the extreme."
-    }
-  ],
-  "game": {
-    "stages": [
-      {
-        "levelScript": {
-          "hint": "Drag out, then let go"
-        }
-      }
-    ]
-  }
+  ]
 }

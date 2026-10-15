@@ -1,3 +1,11 @@
+import { groupBy } from '../groups';
+import type { GameGroup } from '../groups';
+import { patchFor } from '../i18n';
+import { DEFAULT_LOCALE } from '../locale';
+import type { Locale } from '../locale';
+import { mergeLocalized } from '../localize';
+import { EntrySummarySchema } from '../schema';
+import type { EntrySummary } from '../schema';
 import raw from './caochong-elephant.json';
 import rawPangu from './pangu.json';
 import rawHouyi from './houyi.json';
@@ -15,7 +23,6 @@ import rawZhaosanmusi from './zhaosanmusi.json';
 import rawJiaotu from './jiaotu.json';
 import rawYangyouji from './yangyouji.json';
 import rawPaoding from './paoding.json';
-// 三十六计：登记顺序 = 计策序号（组内按登记顺序排，content:check 会守这一条）
 import rawMantian from './mantian-guohai.json';
 import rawWeiwei from './weiwei-jiuzhao.json';
 import rawJiedao from './jiedao-sharen.json';
@@ -34,89 +41,72 @@ import rawDiaohu from './diaohu-lishan.json';
 import rawYuqin from './yuqin-guzong.json';
 import rawPaozhuan from './paozhuan-yinyu.json';
 import rawQinzei from './qinzei-qinwang.json';
-import { groupBy } from '../groups';
-import type { GameGroup } from '../groups';
-import { patchFor } from '../i18n';
-import { DEFAULT_LOCALE } from '../locale';
-import type { Locale } from '../locale';
-import { mergeLocalized } from '../localize';
-import { ContentEntrySchema } from '../schema';
-import type { ContentEntry } from '../schema';
 
 /**
- * 构建期就用 zod 校验：内容写错不该等到用户点开才发现。
+ * **摘要层**：大厅与图鉴要用的那一小部分（标题 / 拼音 / 年代 / 寓意 / 关键词 / 出处…）。
+ *
+ * 这一层是首屏唯一的"内容"依赖 —— 故事、复习题与关卡脚本在 `./detail.ts` 里，
+ * 由 `loadEntry()` 在进入游戏时动态加载（见 src/loadEntry.ts）。
+ * 拆开之前，首屏 125.5 KB gzip 里有 65.4 KB 是内容（52%）：大厅为了渲染卡片，
+ * 把 35 条内容的故事与关卡脚本一起下了下来。schema 分三层就是为了让这件事不再发生。
  *
  * 两个分组的登记规则不一样：
  * - 典故：神话排在信史之前，历史长卷上从上古一路走到明清（组内按 yearApprox 再排一次）；
  * - 三十六计：**登记顺序就是计策序号**（组内 orderBy: 'index'），1–36 依次往下写。
  */
-export const entries: ContentEntry[] = [
-  ContentEntrySchema.parse(raw),
-  ContentEntrySchema.parse(rawPangu),
-  ContentEntrySchema.parse(rawHouyi),
-  ContentEntrySchema.parse(rawNuwa),
-  ContentEntrySchema.parse(rawJingwei),
-  ContentEntrySchema.parse(rawKuafu),
-  ContentEntrySchema.parse(rawYugong),
-  ContentEntrySchema.parse(rawShennong),
-  ContentEntrySchema.parse(rawQiren),
-  ContentEntrySchema.parse(rawFenghuo),
-  ContentEntrySchema.parse(rawTaigong),
-  ContentEntrySchema.parse(rawDayu),
-  ContentEntrySchema.parse(rawKezhou),
-  ContentEntrySchema.parse(rawZhaosanmusi),
-  ContentEntrySchema.parse(rawJiaotu),
-  ContentEntrySchema.parse(rawYangyouji),
-  ContentEntrySchema.parse(rawPaoding),
-  ContentEntrySchema.parse(rawMantian),
-  ContentEntrySchema.parse(rawWeiwei),
-  ContentEntrySchema.parse(rawJiedao),
-  ContentEntrySchema.parse(rawYiyi),
-  ContentEntrySchema.parse(rawChenhuo),
-  ContentEntrySchema.parse(rawShengdong),
-  ContentEntrySchema.parse(rawWuzhong),
-  ContentEntrySchema.parse(rawAndu),
-  ContentEntrySchema.parse(rawGean),
-  ContentEntrySchema.parse(rawXiaoli),
-  ContentEntrySchema.parse(rawLidai),
-  ContentEntrySchema.parse(rawShunshou),
-  ContentEntrySchema.parse(rawDacao),
-  ContentEntrySchema.parse(rawJieshi),
-  ContentEntrySchema.parse(rawDiaohu),
-  ContentEntrySchema.parse(rawYuqin),
-  ContentEntrySchema.parse(rawPaozhuan),
-  ContentEntrySchema.parse(rawQinzei),
+export const entrySummaries: EntrySummary[] = [
+  EntrySummarySchema.parse(raw),
+  EntrySummarySchema.parse(rawPangu),
+  EntrySummarySchema.parse(rawHouyi),
+  EntrySummarySchema.parse(rawNuwa),
+  EntrySummarySchema.parse(rawJingwei),
+  EntrySummarySchema.parse(rawKuafu),
+  EntrySummarySchema.parse(rawYugong),
+  EntrySummarySchema.parse(rawShennong),
+  EntrySummarySchema.parse(rawQiren),
+  EntrySummarySchema.parse(rawFenghuo),
+  EntrySummarySchema.parse(rawTaigong),
+  EntrySummarySchema.parse(rawDayu),
+  EntrySummarySchema.parse(rawKezhou),
+  EntrySummarySchema.parse(rawZhaosanmusi),
+  EntrySummarySchema.parse(rawJiaotu),
+  EntrySummarySchema.parse(rawYangyouji),
+  EntrySummarySchema.parse(rawPaoding),
+  EntrySummarySchema.parse(rawMantian),
+  EntrySummarySchema.parse(rawWeiwei),
+  EntrySummarySchema.parse(rawJiedao),
+  EntrySummarySchema.parse(rawYiyi),
+  EntrySummarySchema.parse(rawChenhuo),
+  EntrySummarySchema.parse(rawShengdong),
+  EntrySummarySchema.parse(rawWuzhong),
+  EntrySummarySchema.parse(rawAndu),
+  EntrySummarySchema.parse(rawGean),
+  EntrySummarySchema.parse(rawXiaoli),
+  EntrySummarySchema.parse(rawLidai),
+  EntrySummarySchema.parse(rawShunshou),
+  EntrySummarySchema.parse(rawDacao),
+  EntrySummarySchema.parse(rawJieshi),
+  EntrySummarySchema.parse(rawDiaohu),
+  EntrySummarySchema.parse(rawYuqin),
+  EntrySummarySchema.parse(rawPaozhuan),
+  EntrySummarySchema.parse(rawQinzei),
 ];
 
-/** 取某条内容里指定模板的阶段脚本；缺了就早失败，别等玩到一半才发现 */
-export function stageScript(content: ContentEntry, template: string): unknown {
-  const stage = content.game.stages.find((s) => s.template === template);
-  if (!stage) {
-    throw new Error('内容 ' + content.id + ' 缺少 ' + template + ' 阶段脚本');
-  }
-  return stage.levelScript;
+/** 把某条摘要翻译成目标语言（没有译文就原样返回） */
+export function localizedSummary(summary: EntrySummary, locale: Locale): EntrySummary {
+  if (locale === DEFAULT_LOCALE) return summary;
+  const patch = patchFor(locale, summary.id);
+  return patch === undefined ? summary : mergeLocalized(summary, patch);
 }
 
-/** 把某条内容翻译成目标语言（没有译文就原样返回） */
-export function localizedEntry(content: ContentEntry, locale: Locale): ContentEntry {
-  if (locale === DEFAULT_LOCALE) return content;
-  const patch = patchFor(locale, content.id);
-  return patch === undefined ? content : mergeLocalized(content, patch);
+export function getEntrySummary(id: string, locale: Locale = DEFAULT_LOCALE): EntrySummary | undefined {
+  const base = entrySummaries.find((entry) => entry.id === id);
+  return base === undefined ? undefined : localizedSummary(base, locale);
 }
 
-export function getEntry(id: string, locale: Locale = DEFAULT_LOCALE): ContentEntry | undefined {
-  const base = entries.find((a) => a.id === id);
-  return base === undefined ? undefined : localizedEntry(base, locale);
-}
-
-/** 给大厅/长卷用：按语言取全部内容 */
-export function entriesFor(locale: Locale = DEFAULT_LOCALE): ContentEntry[] {
-  return entries.map((a) => localizedEntry(a, locale));
-}
-
-/** 按年代排序，供历史长卷使用 */
-export function entriesByYear(locale: Locale = DEFAULT_LOCALE): ContentEntry[] {
-  return [...entriesFor(locale)].sort((a, b) => a.yearApprox - b.yearApprox);
+/** 给大厅/图鉴用：按语言取全部摘要 */
+export function summariesFor(locale: Locale = DEFAULT_LOCALE): EntrySummary[] {
+  return entrySummaries.map((entry) => localizedSummary(entry, locale));
 }
 
 /**
@@ -127,8 +117,8 @@ export function entriesByYear(locale: Locale = DEFAULT_LOCALE): ContentEntry[] {
  */
 export function gameGroups(
   locale: Locale = DEFAULT_LOCALE,
-): { group: GameGroup; games: ContentEntry[] }[] {
-  return groupBy(entriesFor(locale)).map(({ group, items }) => ({
+): { group: GameGroup; games: EntrySummary[] }[] {
+  return groupBy(summariesFor(locale)).map(({ group, items }) => ({
     group,
     games:
       group.orderBy === 'year'

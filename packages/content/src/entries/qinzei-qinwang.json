@@ -2,19 +2,11 @@
   "id": "qinzei-qinwang",
   "group": "stratagem",
   "kind": "strategy",
-  "stratagem": {
-    "number": 18,
-    "set": 3
-  },
   "title": "擒贼擒王",
   "pinyin": "Qín zéi qín wáng",
   "dynasty": "唐",
   "era": "唐 · 安史之乱",
   "yearApprox": 757,
-  "figures": [
-    "张巡",
-    "尹子奇"
-  ],
   "source": {
     "book": "《三十六计·攻战计》",
     "chapter": "擒贼擒王",
@@ -30,131 +22,8 @@
     9,
     12
   ],
-  "story": [
-    {
-      "id": "s1",
-      "title": "一模一样的一排人",
-      "text": "对面一排人，穿得一模一样。",
-      "narration": "唐朝安史之乱的时候，张巡守着一座城。对面的队伍排成一阵，衣甲一模一样，看不出谁在发号施令 —— 找不到那一个，就不知道该从哪里使劲。",
-      "illustration": "none"
-    },
-    {
-      "id": "s2",
-      "title": "一枝蒿箭",
-      "text": "一枝蒿箭射过去，那个回头喝令的人 —— 就是他。",
-      "narration": "张巡让人用蒿草削成箭。蒿箭没有杀伤，射在身上不痛不痒；中箭的人自己不在意，旁边的人却回头去看 —— 那一个回头喝令的人，就是领头的尹子奇。",
-      "illustration": "none"
-    }
-  ],
-  "keyMoment": {
-    "beatId": "s1",
-    "question": "怎么在一群一模一样的人里找到领头的？",
-    "options": [
-      {
-        "id": "test",
-        "text": "用一枝没有杀伤的箭试，看谁的反应最大",
-        "isCanonical": true,
-        "hint": ""
-      },
-      {
-        "id": "grab",
-        "text": "一个个抓过来问",
-        "isCanonical": false,
-        "hint": "抓一个，别的就散开了，问不出那一个。"
-      },
-      {
-        "id": "guess",
-        "text": "随便猜一个",
-        "isCanonical": false,
-        "hint": "猜错了就是白试一回，还得从头再来。"
-      }
-    ],
-    "reveal": "找出关键的那一个 —— 找到他，一排人就乱了。"
-  },
-  "misconceptions": [
-    "人就这么多，只能一个一个抓",
-    "擒王就是把领头的打倒"
-  ],
-  "quiz": [
-    {
-      "id": "q1",
-      "kind": "recall",
-      "question": "张巡用什么射过去试探对面？",
-      "options": [
-        "没有杀伤的蒿箭",
-        "最快的刀",
-        "一块石头"
-      ],
-      "answer": 0,
-      "explanation": "蒿箭是蒿草削的，没有杀伤 —— 他要的不是伤人，是看谁的反应最大。"
-    },
-    {
-      "id": "q2",
-      "kind": "transfer",
-      "question": "一群同学在操场上吵吵闹闹。想让大家安静下来，先看谁？",
-      "options": [
-        "看谁一开口，大家就安静下来",
-        "看谁喊得最响",
-        "看谁跑得最快"
-      ],
-      "answer": 0,
-      "explanation": "大家会听的那个人，就是这群人里的“王” —— 先找到他，比一个个喊过去快得多。"
-    }
-  ],
-  "game": {
-    "template": "probe",
-    "stages": [
-      {
-        "template": "probe",
-        "levelScript": {
-          "mode": "spot",
-          "figures": [
-            {
-              "id": "w1",
-              "x": 90,
-              "y": 620,
-              "radius": 72,
-              "isKing": false
-            },
-            {
-              "id": "w2",
-              "x": 205,
-              "y": 620,
-              "radius": 72,
-              "isKing": false
-            },
-            {
-              "id": "w3",
-              "x": 320,
-              "y": 620,
-              "radius": 72,
-              "isKing": false
-            },
-            {
-              "id": "w4",
-              "x": 435,
-              "y": 620,
-              "radius": 72,
-              "isKing": true
-            },
-            {
-              "id": "w5",
-              "x": 550,
-              "y": 620,
-              "radius": 72,
-              "isKing": false
-            },
-            {
-              "id": "w6",
-              "x": 665,
-              "y": 620,
-              "radius": 72,
-              "isKing": false
-            }
-          ],
-          "hint": "用蒿箭一个个试，看谁反应最大"
-        }
-      }
-    ]
+  "stratagem": {
+    "number": 18,
+    "set": 3
   }
 }

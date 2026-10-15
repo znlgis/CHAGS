@@ -2,19 +2,11 @@
   "id": "lidai-taojiang",
   "group": "stratagem",
   "kind": "strategy",
-  "stratagem": {
-    "number": 11,
-    "set": 2
-  },
   "title": "李代桃僵",
   "pinyin": "Lǐ dài táo jiāng",
   "dynasty": "战国",
   "era": "战国·齐威王年间",
   "yearApprox": -340,
-  "figures": [
-    "孙膑",
-    "田忌"
-  ],
   "source": {
     "book": "《史记·孙子吴起列传》",
     "quote": "今以君之下驷与彼上驷，取君上驷与彼中驷，取君中驷与彼下驷。"
@@ -29,138 +21,8 @@
     8,
     12
   ],
-  "story": [
-    {
-      "id": "s1",
-      "title": "三场都差一点",
-      "text": "三场比赛，田忌的马都比对面的差一点。",
-      "narration": "田忌要和齐威王赛马，一共比三场。他把自己的马按上、中、下分成三队，可是每一队都比对面同等的马差一点。照这么比下去，三场都要输。",
-      "illustration": "none"
-    },
-    {
-      "id": "s2",
-      "title": "孙膑的办法",
-      "text": "孙膑说：用最差的那匹，去对他的最好的。",
-      "narration": "孙膑看了一会儿，说：用你的下等马去对他的上等马，输一场没关系；再用你的上等马去对他的中等马，用中等马去对他的下等马 —— 后面两场都赢。三局两胜，整场就是我们的。",
-      "illustration": "none"
-    }
-  ],
-  "keyMoment": {
-    "beatId": "s1",
-    "question": "三匹都差一点，怎么比才有胜算？",
-    "options": [
-      {
-        "id": "low-first",
-        "text": "下等马对他的上等马，其余两场赢回来",
-        "isCanonical": true,
-        "hint": ""
-      },
-      {
-        "id": "top-first",
-        "text": "上等马对他的上等马，先赢一场",
-        "isCanonical": false,
-        "hint": "6 对 7 赢不了 —— 我们的上等马白白用掉了。"
-      },
-      {
-        "id": "quit",
-        "text": "马都比不过，不比了",
-        "isCanonical": false,
-        "hint": "比的是三局两胜，输一场不等于输整场。"
-      }
-    ],
-    "reveal": "故意舍掉一局，把力气留给能赢的两局 —— 舍一局，赢整场。"
-  },
-  "misconceptions": [
-    "每一样都比别人差，就赢不了",
-    "比赛就要每一场都拼到底",
-    "输了一场就等于输了整场"
-  ],
-  "quiz": [
-    {
-      "id": "q1",
-      "kind": "recall",
-      "question": "孙膑让哪匹马去对齐威王的上等马？",
-      "options": [
-        "最差的下等马",
-        "最好的上等马",
-        "中等马"
-      ],
-      "answer": 0,
-      "explanation": "下等马对上等马那一场是故意让出去的，剩下的两场才赢回来。"
-    },
-    {
-      "id": "q2",
-      "kind": "transfer",
-      "question": "三局两胜的棋，第一局明知要输。怎么安排更聪明？",
-      "options": [
-        "把最弱的一局让出去，力气留给能赢的两局",
-        "每一局都硬拼到底",
-        "直接认输不下了"
-      ],
-      "answer": 0,
-      "explanation": "舍掉注定要输的那一局，把认真劲儿留给能赢的两局 —— 赢的是整场。"
-    }
-  ],
-  "game": {
-    "template": "matchup",
-    "stages": [
-      {
-        "template": "matchup",
-        "levelScript": {
-          "mode": "pair",
-          "horses": [
-            {
-              "id": "top",
-              "rank": "top",
-              "power": 6,
-              "x": 180,
-              "y": 1060,
-              "radius": 78
-            },
-            {
-              "id": "mid",
-              "rank": "mid",
-              "power": 5,
-              "x": 375,
-              "y": 1060,
-              "radius": 78
-            },
-            {
-              "id": "low",
-              "rank": "low",
-              "power": 4,
-              "x": 570,
-              "y": 1060,
-              "radius": 78
-            }
-          ],
-          "rivals": [
-            {
-              "id": "r1",
-              "power": 7,
-              "x": 592,
-              "y": 622,
-              "label": "上等马"
-            },
-            {
-              "id": "r2",
-              "power": 5,
-              "x": 592,
-              "y": 812,
-              "label": "中等马"
-            },
-            {
-              "id": "r3",
-              "power": 3,
-              "x": 592,
-              "y": 1002,
-              "label": "下等马"
-            }
-          ],
-          "needWins": 2,
-          "hint": "三局两胜：赢哪两场要想好"
-        }
-      }
-    ]
+  "stratagem": {
+    "number": 11,
+    "set": 2
   }
 }

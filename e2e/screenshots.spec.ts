@@ -10,7 +10,7 @@ interface StageScript { template: string; levelScript: unknown }
 
 /** Playwright 的 ESM 加载器不接受裸 JSON 导入，这里自己读 */
 function loadContent(id: string): { game: { stages: StageScript[] } } {
-  const path = fileURLToPath(new URL('../packages/content/src/entries/' + id + '.json', import.meta.url));
+  const path = fileURLToPath(new URL('../packages/content/src/entries/' + id + '.game.json', import.meta.url));
   return JSON.parse(readFileSync(path, 'utf8')) as { game: { stages: StageScript[] } };
 }
 

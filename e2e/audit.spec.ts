@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
  */
 const panguJson = JSON.parse(
   readFileSync(
-    fileURLToPath(new URL('../packages/content/src/entries/pangu.json', import.meta.url)),
+    fileURLToPath(new URL('../packages/content/src/entries/pangu.game.json', import.meta.url)),
     'utf8',
   ),
 ) as { game: { stages: { levelScript: unknown }[] } };
@@ -65,7 +65,7 @@ interface Point { x: number; y: number }
 /** 把一部典故的关卡脚本读出来（版面巡检要按真实坐标点） */
 function levelOf(id: string, stage = 0): Record<string, unknown> {
   const path = fileURLToPath(
-    new URL('../packages/content/src/entries/' + id + '.json', import.meta.url),
+    new URL('../packages/content/src/entries/' + id + '.game.json', import.meta.url),
   );
   const json = JSON.parse(readFileSync(path, 'utf8')) as {
     game: { stages: { levelScript: Record<string, unknown> }[] };
@@ -75,7 +75,7 @@ function levelOf(id: string, stage = 0): Record<string, unknown> {
 
 const nuwaScript = JSON.parse(
   readFileSync(
-    fileURLToPath(new URL('../packages/content/src/entries/nuwa.json', import.meta.url)),
+    fileURLToPath(new URL('../packages/content/src/entries/nuwa.game.json', import.meta.url)),
     'utf8',
   ),
 ) as { game: { stages: { levelScript: { slots: { id: string; x: number; y: number }[]; orbs: { slotId: string; x: number; y: number }[] } }[] } };
@@ -83,7 +83,7 @@ const nuwaPlace = nuwaScript.game.stages[0]!.levelScript;
 
 const houyiScript = JSON.parse(
   readFileSync(
-    fileURLToPath(new URL('../packages/content/src/entries/houyi.json', import.meta.url)),
+    fileURLToPath(new URL('../packages/content/src/entries/houyi.game.json', import.meta.url)),
     'utf8',
   ),
 ) as { game: { stages: { levelScript: { targets: { x: number; y: number }[] } }[] } };

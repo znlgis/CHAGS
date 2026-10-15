@@ -56,8 +56,9 @@ pnpm dist:apk       # 打包安卓 apk（直接安装）
 **十七个典故 + 三十六计前三辑（第 1–18 计）**全部跑通：`pnpm verify` 全绿（typecheck / lint /
 单测 702 项 / 内容体检 / 构建 / 体积），端到端里每部游戏都有一条无头通关用例
 （`?autoplay=1`，新模板必须实现 `runAutoplay()` 才算数）。
-首屏 shell 仍然很小（不含 Phaser）；每部游戏自己的业务 chunk 只有几 KB，
-Phaser 是共享 chunk，只在进入游戏时加载 —— 具体数字看 `pnpm size`。
+首屏很小（不含 Phaser，也**不含**内容的故事与关卡脚本）：每部游戏自己的业务 chunk 只有几 KB，
+Phaser 是共享 chunk、完整内容（故事 / 复习题 / 关卡脚本）是另一个懒加载 chunk，
+都只在进入游戏时加载 —— 具体数字看 `pnpm size`。
 
 ### 一、曹冲称象（信史 · 等量代换）
 

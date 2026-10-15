@@ -2,9 +2,6 @@
   "title": "Beating the Grass to Startle the Snake",
   "dynasty": "Five Dynasties",
   "era": "Five Dynasties · Southern Tang",
-  "figures": [
-    "Wang Lu"
-  ],
   "source": {
     "book": "The Thirty-Six Stratagems, Attacking Stratagems",
     "chapter": "Beating the Grass to Startle the Snake",
@@ -15,70 +12,5 @@
     "Probe first",
     "Watch the reaction",
     "Think, then move"
-  ],
-  "story": [
-    {
-      "title": "The Name in the Case File",
-      "text": "His own name turned up in the case file, and Wang Lu's heart sank.",
-      "narration": "In the Five Dynasties period Wang Lu was the magistrate of Dangtu county. One day the townspeople sent in a stack of complaints together, and the man they accused was the clerk who worked under him. Wang Lu read line after line, and the longer he read the less he could sit still — the things written on that paper were things he had done himself. As he read on, it felt as if he had seen his own name there."
-    },
-    {
-      "title": "The Snake Bolts",
-      "text": "He poked the grass aside with a bamboo pole — the snake bolted, and the whole yard knew.",
-      "narration": "You beat the grass to drive out the snake hiding in it, but the moment the grass rustles the snake knows first. Wang Lu wrote a line in the margin of the complaint: you only poked the grass a little, and I, the snake, am already startled."
-    }
-  ],
-  "keyMoment": {
-    "question": "You want to know what is in the grass without letting everyone know. What do you do?",
-    "options": [
-      {
-        "text": "Poke just one spot, gently, and look first",
-        "hint": ""
-      },
-      {
-        "text": "Stamp the whole patch of grass flat",
-        "hint": "Flat grass makes far more noise — the whole yard will know."
-      },
-      {
-        "text": "Ignore it and walk straight past",
-        "hint": "Then you never find out what was hiding in the grass."
-      }
-    ],
-    "reveal": "Poke one spot and look first — then decide whether to move. But the moment the grass rustles, the snake hears it too."
-  },
-  "misconceptions": [
-    "To see clearly you have to turn over the whole patch of grass",
-    "Probing is a waste of time — just go straight in"
-  ],
-  "quiz": [
-    {
-      "question": "In the saying \"beating the grass startles the snake\", who was the \"snake\" that got startled?",
-      "options": [
-        "Wang Lu himself, who was frightened",
-        "A snake down in the grass",
-        "The townspeople who brought the complaint"
-      ],
-      "answer": 0,
-      "explanation": "The complaint described exactly what he had done himself — the moment the grass rustled, the \"snake\" that jumped was him."
-    },
-    {
-      "question": "You want to know whether anything is in the drawer, but you do not want the whole family to know. What is better?",
-      "options": [
-        "Open it just a crack and take a look",
-        "Tip the whole drawer out",
-        "Carry the drawer to another room"
-      ],
-      "answer": 0,
-      "explanation": "A crack is enough to see inside — tip the whole drawer out and the noise tells the whole family."
-    }
-  ],
-  "game": {
-    "stages": [
-      {
-        "levelScript": {
-          "hint": "Tap one bush at a time"
-        }
-      }
-    ]
-  }
+  ]
 }

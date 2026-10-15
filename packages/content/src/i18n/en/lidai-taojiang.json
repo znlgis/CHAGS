@@ -2,10 +2,6 @@
   "title": "The Plum Stands In for the Peach",
   "dynasty": "Warring States",
   "era": "Warring States · King Wei of Qi",
-  "figures": [
-    "Sun Bin",
-    "Tian Ji"
-  ],
   "source": {
     "book": "Records of the Grand Historian, Biographies of Sun Tzu and Wu Qi",
     "quote": "Now match your lowest team against his highest, your highest against his middle, and your middle against his lowest."
@@ -15,82 +11,5 @@
     "Matching up",
     "Give one away",
     "Best of three"
-  ],
-  "story": [
-    {
-      "title": "A Little Weaker Every Time",
-      "text": "Three races, and every one of Tian Ji's horses was a little weaker.",
-      "narration": "Tian Ji was going to race horses against King Wei of Qi — three races in all. He split his horses into top, middle and low, but each team was a little weaker than the king's matching team. Race them as they were, and he would lose all three."
-    },
-    {
-      "title": "Sun Bin's Idea",
-      "text": "Sun Bin said: send our weakest against his strongest.",
-      "narration": "Sun Bin watched for a while and said: send your lowest team against his highest and give that race away. Then send your highest against his middle, and your middle against his lowest — you win the last two. Two out of three, and the whole match is ours."
-    }
-  ],
-  "keyMoment": {
-    "question": "Every horse is a little weaker. How should they be matched up?",
-    "options": [
-      {
-        "text": "Our lowest against his highest, then win the other two",
-        "hint": ""
-      },
-      {
-        "text": "Our highest against his highest, to win the first race",
-        "hint": "Six against seven cannot win — and our best horse is used up."
-      },
-      {
-        "text": "If our horses are weaker, don't race at all",
-        "hint": "It is best of three: losing one race is not losing the match."
-      }
-    ],
-    "reveal": "Give away the race you cannot win, and save your strength for the two you can — lose one, win the match."
-  },
-  "misconceptions": [
-    "If you are a little weaker at everything, you cannot win",
-    "You must fight hardest in every single round",
-    "Losing one round means losing the whole thing"
-  ],
-  "quiz": [
-    {
-      "question": "Which of Tian Ji's horses did Sun Bin send against the king's highest?",
-      "options": [
-        "The weakest, lowest team",
-        "The best, highest team",
-        "The middle team"
-      ],
-      "answer": 0,
-      "explanation": "The race against the highest team was given away on purpose, so the other two could be won."
-    },
-    {
-      "question": "In a best-of-three game you know you will lose the first round. What is the smarter plan?",
-      "options": [
-        "Give away the weakest round and save your strength for the two you can win",
-        "Fight at full strength in every round",
-        "Forfeit the whole game"
-      ],
-      "answer": 0,
-      "explanation": "Let the round you cannot win go, and put your care into the two you can — the match is what counts."
-    }
-  ],
-  "game": {
-    "stages": [
-      {
-        "levelScript": {
-          "hint": "Best of three: plan two",
-          "rivals": [
-            {
-              "label": "Top horse"
-            },
-            {
-              "label": "Middle horse"
-            },
-            {
-              "label": "Low horse"
-            }
-          ]
-        }
-      }
-    ]
-  }
+  ]
 }

@@ -1,16 +1,12 @@
 {
   "id": "jiaotu",
   "group": "allusion",
+  "kind": "history",
   "title": "狡兔三窟",
   "pinyin": "jiǎo tù sān kū",
-  "kind": "history",
   "dynasty": "战国",
   "era": "战国·齐",
   "yearApprox": -298,
-  "figures": [
-    "冯谖",
-    "孟尝君"
-  ],
   "source": {
     "book": "《战国策·齐策四》",
     "quote": "狡兔有三窟，仅得免其死耳；今君有一窟，未得高枕而卧也。请为君复凿二窟。"
@@ -24,135 +20,5 @@
   "ageRange": [
     7,
     10
-  ],
-  "story": [
-    {
-      "id": "s1",
-      "title": "草地上的兔子",
-      "text": "草地上一只兔子在吃草，天上有一只鹰在盘旋。",
-      "narration": "春天的草地上，一只兔子在吃草。天上，一只鹰慢慢地盘旋 —— 它得有个躲的地方。",
-      "illustration": "none"
-    },
-    {
-      "id": "s2",
-      "title": "狡兔有三窟",
-      "text": "冯谖说：狡兔有三窟，才免于一死。",
-      "narration": "冯谖对孟尝君说：狡猾的兔子有三个窝，才免于一死。您现在只有一个窝，还不能高枕无忧 —— 请让我再给您凿两个。",
-      "illustration": "none"
-    }
-  ],
-  "keyMoment": {
-    "beatId": "s2",
-    "question": "一个洞，够不够？",
-    "options": [
-      {
-        "id": "one",
-        "text": "够，躲进去不动就行",
-        "isCanonical": false,
-        "hint": "狐狸守在洞口，它就出不来了。"
-      },
-      {
-        "id": "more",
-        "text": "多挖几个：一个被守住，还能从别的走",
-        "isCanonical": true,
-        "hint": ""
-      },
-      {
-        "id": "deep",
-        "text": "挖得越深越安全",
-        "isCanonical": false,
-        "hint": "再深，也只有一个出口。"
-      }
-    ],
-    "reveal": "多一条退路，睡觉才安稳。"
-  },
-  "misconceptions": [
-    "有一个藏身的地方就够了",
-    "洞挖得越深越安全"
-  ],
-  "quiz": [
-    {
-      "id": "q1",
-      "kind": "recall",
-      "question": "冯谖说，狡兔要有几个窟？",
-      "options": [
-        "一个",
-        "三个",
-        "越多越乱，一个都不要"
-      ],
-      "answer": 1,
-      "explanation": "狡兔有三窟 —— 三个窝，才能免于一死。"
-    },
-    {
-      "id": "q2",
-      "kind": "recall",
-      "question": "狐狸守在一个洞口的时候，兔子为什么出不来？",
-      "options": [
-        "因为它只有一个洞",
-        "因为狐狸跑得比它快",
-        "因为洞里太黑了"
-      ],
-      "answer": 0,
-      "explanation": "只有一个出口，被守住就出不去了 —— 所以要多挖几个。"
-    },
-    {
-      "id": "q3",
-      "kind": "transfer",
-      "question": "明天要出远门，天气预报说下午可能下雨 —— 你会怎么做？",
-      "options": [
-        "带上一把伞",
-        "到时候再说",
-        "把家里的窗户关上"
-      ],
-      "answer": 0,
-      "explanation": "提前多准备一手，就是给自己多留一条退路。"
-    }
-  ],
-  "game": {
-    "template": "burrow",
-    "stages": [
-      {
-        "template": "burrow",
-        "levelScript": {
-          "spots": [
-            {
-              "id": "left",
-              "x": 150,
-              "y": 560,
-              "radius": 100,
-              "kind": "grass"
-            },
-            {
-              "id": "mid",
-              "x": 375,
-              "y": 560,
-              "radius": 100,
-              "kind": "mound"
-            },
-            {
-              "id": "right",
-              "x": 600,
-              "y": 560,
-              "radius": 100,
-              "kind": "rock"
-            }
-          ],
-          "digsNeeded": 4,
-          "waves": [
-            {
-              "id": "fox",
-              "blocks": 1,
-              "speak": "狐狸来了，蹲在一个洞口。"
-            },
-            {
-              "id": "hunter",
-              "blocks": 2,
-              "speak": "狐狸和老鹰一起来了。"
-            }
-          ],
-          "hint": "再挖一个洞"
-        }
-      }
-    ]
-  }
+  ]
 }

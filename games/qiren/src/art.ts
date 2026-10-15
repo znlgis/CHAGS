@@ -31,7 +31,7 @@ const SOIL = 0x9a6a3c;
 /** 泡泡半径：与关卡数据里的 slot.radius 一致 */
 const BUBBLE = 70;
 
-/** 四个泡泡在天空区的位置：与 entries/qiren.json 的 slots 一一对应 */
+/** 四个泡泡在天空区的位置：与 entries/qiren.game.json 的 slots 一一对应 */
 const SLOT_SPOTS: Record<string, { x: number; y: number }> = {
   'slot-sky': { x: 200, y: 245 },
   'slot-ground': { x: 550, y: 245 },

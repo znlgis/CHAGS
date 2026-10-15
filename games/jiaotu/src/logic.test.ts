@@ -1,4 +1,4 @@
-import { getEntry } from '@chags/content';
+import { getEntry } from '@chags/content/full';
 import { neededBurrows, openCount, waveResult } from '@chags/templates/burrow.logic';
 import { describe, expect, it } from 'vitest';
 import { MEADOW_Y } from './layout';

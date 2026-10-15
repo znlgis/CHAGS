@@ -1,4 +1,4 @@
-import { getEntry } from '@chags/content';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
 import { tapLevel } from './logic';
 

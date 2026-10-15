@@ -2,10 +2,6 @@
   "title": "The Cunning Rabbit's Three Burrows",
   "dynasty": "Warring States",
   "era": "Warring States · Qi",
-  "figures": [
-    "Feng Xuan",
-    "Lord Mengchang"
-  ],
   "source": {
     "book": "Strategies of the Warring States, Qi IV",
     "quote": "A cunning rabbit has three burrows, and only thus escapes death. Now you have but one burrow, and cannot yet sleep with your pillow high. Let me dig two more for you."
@@ -15,88 +11,5 @@
     "A way out",
     "Preparation",
     "Peace of mind"
-  ],
-  "story": [
-    {
-      "title": "A Rabbit in the Meadow",
-      "text": "A rabbit grazed in the meadow while a hawk circled overhead.",
-      "narration": "In the spring meadow a rabbit was grazing. Above it a hawk wheeled slowly — the rabbit needed somewhere to hide."
-    },
-    {
-      "title": "Three Burrows",
-      "text": "Feng Xuan said: a cunning rabbit has three burrows, and only thus escapes death.",
-      "narration": "Feng Xuan said to Lord Mengchang: a cunning rabbit keeps three burrows, and only thus escapes death. You have but one burrow, and cannot yet sleep with your pillow high — let me dig two more for you."
-    }
-  ],
-  "keyMoment": {
-    "question": "Is one burrow enough?",
-    "options": [
-      {
-        "text": "Enough — just stay inside and keep still",
-        "hint": "With the fox at the entrance, it cannot get out."
-      },
-      {
-        "text": "Dig several: if one is watched, take another way",
-        "hint": ""
-      },
-      {
-        "text": "The deeper the burrow, the safer",
-        "hint": "However deep, there is still only one way out."
-      }
-    ],
-    "reveal": "One more way out, and you can sleep easy."
-  },
-  "misconceptions": [
-    "One hiding place is enough",
-    "A deeper burrow is a safer burrow"
-  ],
-  "quiz": [
-    {
-      "question": "How many burrows did Feng Xuan say a cunning rabbit needs?",
-      "options": [
-        "One",
-        "Three",
-        "None — it is too much trouble"
-      ],
-      "answer": 1,
-      "explanation": "Three burrows — only then does it escape death."
-    },
-    {
-      "question": "Why could the rabbit not get out while the fox waited at one entrance?",
-      "options": [
-        "Because it had only one burrow",
-        "Because the fox runs faster",
-        "Because the burrow was too dark"
-      ],
-      "answer": 0,
-      "explanation": "With a single way out, a fox at the entrance closes it — so dig more."
-    },
-    {
-      "question": "You are going away tomorrow and the forecast says rain in the afternoon. What do you do?",
-      "options": [
-        "Take an umbrella",
-        "Wait and see",
-        "Close the windows at home"
-      ],
-      "answer": 0,
-      "explanation": "One extra preparation is one more way out — the same idea as the third burrow."
-    }
-  ],
-  "game": {
-    "stages": [
-      {
-        "levelScript": {
-          "waves": [
-            {
-              "speak": "The fox is here, sitting at one entrance."
-            },
-            {
-              "speak": "The fox and the hawk have come together."
-            }
-          ],
-          "hint": "Dig one more burrow"
-        }
-      }
-    ]
-  }
+  ]
 }

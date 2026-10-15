@@ -1,4 +1,4 @@
-import { getEntry } from '@chags/content';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
 import { CAMP_Y, TOWER } from './layout';
 import { ruseLevel } from './logic';

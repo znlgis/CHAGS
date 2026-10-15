@@ -2,9 +2,6 @@
   "title": "A Hundred Paces Through a Willow Leaf",
   "dynasty": "Spring and Autumn",
   "era": "Spring and Autumn · Chu",
-  "figures": [
-    "Yang Youji"
-  ],
   "source": {
     "book": "Records of the Grand Historian, Annals of Zhou",
     "quote": "In Chu there was a man named Yang Youji, a master archer. A hundred paces from a willow leaf he shot at it, and in a hundred shots he hit it a hundred times."
@@ -14,99 +11,5 @@
     "Practice",
     "Aiming",
     "Getting better"
-  ],
-  "story": [
-    {
-      "title": "A Leaf a Hundred Paces Away",
-      "text": "Yang Youji hung a willow leaf on a tree and stepped back a hundred paces.",
-      "narration": "In the state of Chu there was a man named Yang Youji, a very good archer. He hung a single willow leaf on a tree, stepped back a hundred paces, and drew his bow."
-    },
-    {
-      "title": "One Arrow, and Another",
-      "text": "One arrow struck the leaf, and the next struck it too — the crowd cheered.",
-      "narration": "One arrow flew and struck the willow leaf; the next struck it again. Thousands of people were watching, and all of them shouted: what shooting! But it was not inborn — it was practised, arrow by arrow."
-    }
-  ],
-  "keyMoment": {
-    "question": "How does one hit a willow leaf a hundred paces away?",
-    "options": [
-      {
-        "text": "He was born with better eyes than other people",
-        "hint": "Being born good at it cannot be practised."
-      },
-      {
-        "text": "Start at ten paces and practise, arrow by arrow, out to a hundred",
-        "hint": ""
-      },
-      {
-        "text": "He was lucky",
-        "hint": "One arrow can be luck; a hundred cannot."
-      }
-    ],
-    "reveal": "From near to far, arrow by arrow — a hundred hits out of a hundred is practised."
-  },
-  "misconceptions": [
-    "Good shooting is inborn",
-    "Missing means you have no talent"
-  ],
-  "quiz": [
-    {
-      "question": "How far away did Yang Youji stand when he shot at the willow leaf?",
-      "options": [
-        "Ten paces",
-        "A hundred paces",
-        "Right under the tree"
-      ],
-      "answer": 1,
-      "explanation": "A hundred paces away, at a single willow leaf — that is the whole saying."
-    },
-    {
-      "question": "Why could he shoot so accurately?",
-      "options": [
-        "He practised, arrow after arrow",
-        "He was born with good eyes",
-        "He was lucky that day"
-      ],
-      "answer": 0,
-      "explanation": "Near first, then farther, one step at a time — accuracy is practised."
-    },
-    {
-      "question": "The first time you try skipping rope, you cannot do a single skip. Which thought is right?",
-      "options": [
-        "The rope is bad — get another",
-        "I was born unable to skip",
-        "Take it slowly; today, just get over one"
-      ],
-      "answer": 2,
-      "explanation": "Just like the willow leaf: near to far, few to many, it comes with practice."
-    }
-  ],
-  "game": {
-    "stages": [
-      {
-        "levelScript": {
-          "ladder": {
-            "rungs": [
-              {
-                "label": "10 paces"
-              },
-              {
-                "label": "30 paces"
-              },
-              {
-                "label": "50 paces"
-              },
-              {
-                "label": "80 paces"
-              },
-              {
-                "label": "100 paces"
-              }
-            ]
-          },
-          "hint": "Aim at the leaf, let go"
-        }
-      }
-    ]
-  }
+  ]
 }

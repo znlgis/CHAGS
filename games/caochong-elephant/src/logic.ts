@@ -1,4 +1,4 @@
-import { stageScript } from '@chags/content';
+import { stageScript } from '@chags/content/full';
 import type { ContentEntry } from '@chags/content';
 import { SubstitutionLevelSchema } from '@chags/templates/schemas';
 import type { SubstitutionLevel } from '@chags/templates/schemas';

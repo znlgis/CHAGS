@@ -1,4 +1,4 @@
-import { getEntry, stageScript } from '@chags/content';
+import { getEntry, stageScript } from '@chags/content/full';
 import { canReach } from '@chags/templates/schemas';
 import { describe, expect, it } from 'vitest';
 import { substitutionLevel } from './logic';

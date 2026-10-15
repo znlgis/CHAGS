@@ -1,4 +1,4 @@
-import { getEntry } from '@chags/content';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
 import { ADVANCE, ARCHER_X0, LEAVES, LEAF_RADII, archerAt } from './layout';
 import { aimLevel, rungTargetId } from './logic';

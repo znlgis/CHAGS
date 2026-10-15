@@ -1,10 +1,16 @@
-import { ContentEntrySchema, getEntry, mergeLocalized, validatePatch } from '@chags/content';
+import { ContentEntrySchema, getEntry, mergeLocalized, validatePatch } from '@chags/content/full';
 import { templateSchemas } from '@chags/templates/schemas';
 import { describe, expect, it } from 'vitest';
-import raw from '../../../packages/content/src/entries/wuzhong-shengyou.json';
-import enPatch from '../../../packages/content/src/i18n/en/wuzhong-shengyou.json';
+import rawSummary from '../../../packages/content/src/entries/wuzhong-shengyou.json';
+import rawDetail from '../../../packages/content/src/entries/wuzhong-shengyou.game.json';
+import enPatchSummary from '../../../packages/content/src/i18n/en/wuzhong-shengyou.json';
+import enPatchDetail from '../../../packages/content/src/i18n/en/wuzhong-shengyou.game.json';
 import { ARROW_FROM, GUNWALE_Y, SHADOW_DOTS, SLOT_RADIUS, SLOT_XS, SUSPICION, WATER_TOP } from './layout';
 import { showLevel } from './logic';
+
+/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
+const raw = { ...rawSummary, ...rawDetail };
+const enPatch = { ...enPatchSummary, ...enPatchDetail };
 
 /** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
 const entry = getEntry('wuzhong-shengyou') ?? ContentEntrySchema.parse(raw);

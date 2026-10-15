@@ -1,0 +1,126 @@
+{
+  "figures": [
+    "曹刿",
+    "鲁庄公"
+  ],
+  "story": [
+    {
+      "id": "s1",
+      "title": "对面的鼓声",
+      "text": "齐军在对面擂鼓，鲁庄公想马上冲出去。",
+      "narration": "长勺的战场上，齐军在对面擂起了战鼓。鲁庄公攥紧拳头，想马上冲出去 —— 曹刿按住了他的手。",
+      "illustration": "none"
+    },
+    {
+      "id": "s2",
+      "title": "再等等",
+      "text": "曹刿按住他的手：再等等，等他们敲完三通鼓。",
+      "narration": "一通鼓、两通鼓、三通鼓。曹刿说：再等等 —— 打仗靠的是一股勇气，一鼓作气，再而衰，三而竭。等他们的力气用完，我们再出去。",
+      "illustration": "none"
+    }
+  ],
+  "keyMoment": {
+    "beatId": "s1",
+    "question": "第一通鼓响了，冲不冲？",
+    "options": [
+      {
+        "id": "charge",
+        "text": "马上冲",
+        "isCanonical": false,
+        "hint": "他们鼓着劲，正好迎上力气最足的时候。"
+      },
+      {
+        "id": "wait",
+        "text": "不冲，等他敲完三通鼓",
+        "isCanonical": true,
+        "hint": ""
+      },
+      {
+        "id": "back",
+        "text": "退进城",
+        "isCanonical": false,
+        "hint": "退回去，他们的鼓就白敲了 —— 可也没等到该出手的时候。"
+      }
+    ],
+    "reveal": "等对方累了再动手，是最省力的打法。"
+  },
+  "misconceptions": [
+    "早一点冲上去才算勇敢",
+    "等一等就是害怕"
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "kind": "recall",
+      "question": "曹刿等到第几通鼓，才让鲁军出击？",
+      "options": [
+        "第一通",
+        "第二通",
+        "第三通"
+      ],
+      "answer": 2,
+      "explanation": "一鼓作气，再而衰，三而竭 —— 等到第三通鼓敲完，对面就没劲了。"
+    },
+    {
+      "id": "q2",
+      "kind": "recall",
+      "question": "《左传》里说，打仗靠的是什么？",
+      "options": [
+        "一股勇气",
+        "人多",
+        "跑得快"
+      ],
+      "answer": 0,
+      "explanation": "夫战，勇气也 —— 勇气是有数的：一鼓作气，再而衰，三而竭。"
+    },
+    {
+      "id": "q3",
+      "kind": "transfer",
+      "question": "拔河的时候，什么时候使劲最省力？",
+      "options": [
+        "一开始就把力气全使出来",
+        "等对方先乱使劲、力气用掉大半时",
+        "从头到尾都慢慢拉"
+      ],
+      "answer": 1,
+      "explanation": "等对方的力气先耗掉大半，你再使劲 —— 这就是以逸待劳。"
+    }
+  ],
+  "game": {
+    "template": "stillness",
+    "stages": [
+      {
+        "template": "stillness",
+        "levelScript": {
+          "mode": "bide",
+          "beats": [
+            {
+              "id": "d1",
+              "drumMs": 2600,
+              "windowMs": 1600,
+              "correct": false
+            },
+            {
+              "id": "d2",
+              "drumMs": 2400,
+              "windowMs": 1400,
+              "correct": false
+            },
+            {
+              "id": "d3",
+              "drumMs": 2000,
+              "windowMs": 2600,
+              "correct": true
+            }
+          ],
+          "action": {
+            "x": 375,
+            "y": 1150,
+            "radius": 110
+          },
+          "hint": "再等一等"
+        }
+      }
+    ]
+  }
+}

@@ -1,4 +1,4 @@
-import { getEntry } from '@chags/content';
+import { getEntry } from '@chags/content/full';
 import { countsFor, happyLeft, isSplitSolved, mood, splitState } from '@chags/templates/split.logic';
 import { describe, expect, it } from 'vitest';
 import { LEFT_X, RIGHT_X, ROPE_Y } from './layout';

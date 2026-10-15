@@ -1,0 +1,75 @@
+{
+  "figures": [
+    "Jingwei",
+    "Nüwa the Younger"
+  ],
+  "story": [
+    {
+      "title": "Nüwa",
+      "text": "The Yan Emperor's youngest daughter went to play by the Eastern Sea.",
+      "narration": "The Yan Emperor had a youngest daughter called Nüwa. One day she went to play by the Eastern Sea."
+    },
+    {
+      "title": "A Little Bird",
+      "text": "She became a little bird and carried stones to fill the sea.",
+      "narration": "Nüwa never came home again. She became a little bird called Jingwei, and from that day on she carried small stones to drop into the Eastern Sea."
+    }
+  ],
+  "keyMoment": {
+    "question": "The sea is so big — can one little bird ever fill it?",
+    "options": [
+      {
+        "text": "It can't be done, so give up",
+        "hint": ""
+      },
+      {
+        "text": "It can't be done, but carry one stone at a time anyway",
+        "hint": ""
+      }
+    ],
+    "reveal": "She knew it would never be full, and still she never once stopped."
+  },
+  "misconceptions": [
+    "If you can't finish it, don't start",
+    "A hopeless task is not worth doing"
+  ],
+  "quiz": [
+    {
+      "question": "Who was Jingwei before?",
+      "options": [
+        "Nüwa, the Yan Emperor's youngest daughter",
+        "A sea bird",
+        "A little fish"
+      ],
+      "explanation": "Nüwa met her end by the Eastern Sea and became a little bird called Jingwei."
+    },
+    {
+      "question": "What does Jingwei do every day?",
+      "options": [
+        "Carries stones and twigs and drops them into the sea",
+        "Plays by the shore",
+        "Looks for the way home"
+      ],
+      "explanation": "Trip after trip, she carries wood and stone to fill the Eastern Sea."
+    },
+    {
+      "question": "Which of these is most like Jingwei filling the sea?",
+      "options": [
+        "Practising ten characters a day until your writing is good",
+        "Writing a thousand characters in one day",
+        "Not practising today"
+      ],
+      "explanation": "A little at a time looks slow, but it keeps moving forward."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "unit": "stones",
+          "hint": "Tap to carry another"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "figures": [
+    "Chang Jian",
+    "Zhao Gu"
+  ],
+  "story": [
+    {
+      "title": "Only Two Lines on the Wall",
+      "text": "Only two lines of a poem were on the wall, and nobody added more.",
+      "narration": "In the Tang dynasty, two lines of a poem were written on a temple wall. People came and went and read them, but not one of them wrote the next lines."
+    },
+    {
+      "title": "Two Lines of His Own First",
+      "text": "Chang Jian wrote his own two lines first; a passer-by added the fine lines.",
+      "narration": "Chang Jian knew that a master poet would pass this way. So he wrote his own two lines on the wall first. When the master saw them, he felt they should not stop there, took up a brush, and added the fine lines that followed."
+    }
+  ],
+  "keyMoment": {
+    "question": "You want someone else to write better lines. What do you do?",
+    "options": [
+      {
+        "text": "Write your own two lines on the wall first",
+        "hint": ""
+      },
+      {
+        "text": "Wait for someone else to write first",
+        "hint": "The wall stays empty, and nobody likes to be first."
+      },
+      {
+        "text": "Paint the wall blank and start over",
+        "hint": "That wipes out the two good lines too — even fewer will answer."
+      }
+    ],
+    "reveal": "Give away your own two lines first, and the better lines follow."
+  },
+  "misconceptions": [
+    "To get others to act, you must wait for them to move first",
+    "Whatever you give away first is a loss"
+  ],
+  "quiz": [
+    {
+      "question": "What did Chang Jian do first?",
+      "options": [
+        "He wrote his own two lines on the wall first",
+        "He waited for someone else to write",
+        "He washed the wall clean"
+      ],
+      "answer": 0,
+      "explanation": "Those first two lines were the brick — whoever read them could not help adding the better lines."
+    },
+    {
+      "question": "You want your classmates to build with your blocks. What is the smarter way?",
+      "options": [
+        "Take out two blocks and build a little something to show them",
+        "Put all the blocks away and wait for them to ask",
+        "Stand beside them and keep calling them over"
+      ],
+      "answer": 0,
+      "explanation": "Build a little something first and others have something to answer and add to — give a little, and what comes back is something better to play with."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Give a little, get more"
+        }
+      }
+    ]
+  }
+}

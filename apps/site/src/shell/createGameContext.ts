@@ -1,4 +1,4 @@
-import { getEntry } from '@chags/content';
+import { loadEntry } from '@chags/content';
 import type { Locale } from '@chags/content';
 import type { DebugOptions, GameContext, GameEventMap, GameManifest } from '@chags/game-kit';
 import { recordDebugEvent } from './debug';
@@ -39,15 +39,20 @@ function detailOf<K extends keyof GameEventMap>(
   return undefined;
 }
 
-export function createGameContext(
+/**
+ * ★ 异步：完整内容（故事 / 复习题 / 关卡脚本）是**动态加载**的。
+ * 大厅只需要摘要，这一层 import() 让 Vite 把完整内容切成懒加载 chunk ——
+ * 首屏因此不再为渲染卡片把 35 条关卡脚本一起下下来。
+ */
+export async function createGameContext(
   manifest: GameManifest,
   container: HTMLElement,
   locale: Locale,
   hooks: GameHostHooks,
-): GameContext {
+): Promise<GameContext> {
   // 关键：交给游戏的是**已经翻译好**的内容，游戏本身不需要知道语言的存在
-  const content = getEntry(manifest.id, locale);
-  if (!content) throw new Error('找不到典故内容：' + manifest.id);
+  const content = await loadEntry(manifest.id, locale);
+  if (!content) throw new Error('找不到游戏内容：' + manifest.id);
 
   return {
     container,

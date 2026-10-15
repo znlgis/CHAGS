@@ -1,8 +1,10 @@
-import { ContentEntrySchema, getEntry, mergeLocalized, validatePatch } from '@chags/content';
+import { ContentEntrySchema, getEntry, mergeLocalized, validatePatch } from '@chags/content/full';
 import { templateSchemas } from '@chags/templates/schemas';
 import { describe, expect, it } from 'vitest';
-import raw from '../../../packages/content/src/entries/dacao-jingshe.json';
-import enPatch from '../../../packages/content/src/i18n/en/dacao-jingshe.json';
+import rawSummary from '../../../packages/content/src/entries/dacao-jingshe.json';
+import rawDetail from '../../../packages/content/src/entries/dacao-jingshe.game.json';
+import enPatchSummary from '../../../packages/content/src/i18n/en/dacao-jingshe.json';
+import enPatchDetail from '../../../packages/content/src/i18n/en/dacao-jingshe.game.json';
 import {
   canCross, cross, crossablePatches, hasSnake, isKnockDone, isKnocked, isSpooked, knock,
   knockOrder, nextKnockStep, probeStart,
@@ -11,6 +13,10 @@ import {
   EXIT, GROUND_TOP, PATCHES, PATCH_RADIUS, SCARE_RADIUS, WALKER, YARD_TOP,
 } from './layout';
 import { dacaoLevel } from './logic';
+
+/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
+const raw = { ...rawSummary, ...rawDetail };
+const enPatch = { ...enPatchSummary, ...enPatchDetail };
 
 /** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
 const entry = getEntry('dacao-jingshe') ?? ContentEntrySchema.parse(raw);

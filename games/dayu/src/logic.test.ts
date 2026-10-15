@@ -1,7 +1,11 @@
-import { ContentEntrySchema } from '@chags/content';
+import { ContentEntrySchema } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
-import raw from '../../../packages/content/src/entries/dayu.json';
+import rawSummary from '../../../packages/content/src/entries/dayu.json';
+import rawDetail from '../../../packages/content/src/entries/dayu.game.json';
 import { tapLevel, traceLevel } from './logic';
+
+/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
+const raw = { ...rawSummary, ...rawDetail };
 
 /**
  * 内容按 id 注册在外壳的清单里，这里直接读原文：

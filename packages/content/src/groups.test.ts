@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { GROUPS, groupBy, isGroupId, sortedGroups } from './groups';
-import { entries, gameGroups } from './index';
+import { gameGroups } from './index';
+// 分组与三十六计的约束要拿完整条目（含 stratagem 与关卡数据）验，所以走详情层
+import { entries } from './entries/detail';
 import { ContentEntrySchema } from './schema';
 
 describe('分组表', () => {

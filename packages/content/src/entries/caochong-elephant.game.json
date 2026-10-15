@@ -1,0 +1,120 @@
+{
+  "figures": [
+    "曹冲",
+    "曹操"
+  ],
+  "story": [
+    {
+      "id": "s1",
+      "title": "一头大象",
+      "text": "有人送给曹操一头大象。",
+      "narration": "有人送给曹操一头大象。",
+      "illustration": "none"
+    },
+    {
+      "id": "s2",
+      "title": "有多重？",
+      "text": "它到底有多重呢？",
+      "narration": "曹操想知道：它到底有多重呢？",
+      "illustration": "none"
+    }
+  ],
+  "keyMoment": {
+    "beatId": "s2",
+    "question": "抬不动，秤也秤不起，怎么才能知道大象有多重？",
+    "options": [
+      {
+        "id": "cut",
+        "text": "把大象切成一块一块",
+        "isCanonical": false,
+        "hint": ""
+      },
+      {
+        "id": "boat",
+        "text": "换成石头，装到同一条水痕",
+        "isCanonical": true,
+        "hint": ""
+      }
+    ],
+    "reveal": "石头和大象让船沉得一样深，重量就一样。"
+  },
+  "misconceptions": [
+    "大象太重了所以称不了",
+    "只有特别大的秤才能称重"
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "kind": "recall",
+      "question": "曹冲是怎么知道大象有多重的？",
+      "options": [
+        "把大象切开来称",
+        "换成石头，装到同一条水痕",
+        "用眼睛看一看"
+      ],
+      "answer": 1,
+      "explanation": "石头和大象让船沉得一样深，所以重量一样。"
+    },
+    {
+      "id": "q2",
+      "kind": "recall",
+      "question": "为什么要在船身上刻一道痕？",
+      "options": [
+        "为了好看",
+        "记住大象上船时船沉到哪里",
+        "为了做记号找船"
+      ],
+      "answer": 1,
+      "explanation": "水痕就是“大象有多重”的记号。"
+    },
+    {
+      "id": "q3",
+      "kind": "transfer",
+      "question": "下面哪个做法，和曹冲的办法一样聪明？",
+      "options": [
+        "用尺子量一量桌子有多长",
+        "用一桶水算出一块石头的体积",
+        "把书包倒空再称一称"
+      ],
+      "answer": 1,
+      "explanation": "都是把“不好直接量的东西”，换成一个能直接量的东西。"
+    }
+  ],
+  "game": {
+    "template": "substitution",
+    "stages": [
+      {
+        "template": "substitution",
+        "levelScript": {
+          "heavy": {
+            "weight": 3300
+          },
+          "capacity": 3600,
+          "tolerance": 80,
+          "stones": [
+            {
+              "id": "big",
+              "value": 500,
+              "radius": 36
+            },
+            {
+              "id": "mid",
+              "value": 300,
+              "radius": 26
+            },
+            {
+              "id": "small",
+              "value": 100,
+              "radius": 17
+            }
+          ],
+          "hints": {
+            "tooLight": "再加几块石头",
+            "tooHeavy": "拿掉一块试试",
+            "stuck": "让水痕回到水面"
+          }
+        }
+      }
+    ]
+  }
+}

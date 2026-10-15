@@ -1,0 +1,104 @@
+{
+  "figures": [
+    "夸父"
+  ],
+  "story": [
+    {
+      "id": "s1",
+      "title": "巨人夸父",
+      "text": "有个巨人叫夸父，他想追上太阳。",
+      "narration": "很久以前，有个巨人叫夸父。他看着太阳每天升起来又落下去，说：我要追上它。",
+      "illustration": "none"
+    },
+    {
+      "id": "s2",
+      "title": "跑啊跑",
+      "text": "他追过一座座山、一条条河，一直跑到太阳落下的地方。",
+      "narration": "夸父迈开大步，追过一座座山、一条条河。渴了，他就把黄河和渭水都喝干了，接着再追。",
+      "illustration": "none"
+    }
+  ],
+  "keyMoment": {
+    "beatId": "s2",
+    "question": "太阳跑得那么快，还追吗？",
+    "options": [
+      {
+        "id": "stop",
+        "text": "追不上，坐下歇歇",
+        "isCanonical": false,
+        "hint": ""
+      },
+      {
+        "id": "keep",
+        "text": "追不上，也一直追下去",
+        "isCanonical": true,
+        "hint": ""
+      }
+    ],
+    "reveal": "他追到了日落的地方。倒下以后，他的手杖长成了一片桃林。"
+  },
+  "misconceptions": [
+    "追不上就别追了",
+    "夸父什么也没留下"
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "kind": "recall",
+      "question": "夸父在追什么？",
+      "options": [
+        "太阳",
+        "月亮",
+        "一只鹿"
+      ],
+      "answer": 0,
+      "explanation": "他要追上每天升起又落下的太阳。"
+    },
+    {
+      "id": "q2",
+      "kind": "recall",
+      "question": "夸父倒下以后，他的手杖变成了什么？",
+      "options": [
+        "一片桃林",
+        "一条大河",
+        "一座高山"
+      ],
+      "answer": 0,
+      "explanation": "他丢下的手杖，化成了一片桃林。"
+    },
+    {
+      "id": "q3",
+      "kind": "transfer",
+      "question": "下面哪件事，和夸父追日最像？",
+      "options": [
+        "明知很难，还是每天都去练球",
+        "一次就练成",
+        "换个容易点的"
+      ],
+      "answer": 0,
+      "explanation": "追不追得上是另一回事，追不追是自己的事。"
+    }
+  ],
+  "game": {
+    "template": "tap",
+    "stages": [
+      {
+        "template": "tap",
+        "levelScript": {
+          "mode": "hold",
+          "targetValue": 1800,
+          "stepValue": 250,
+          "unit": "里",
+          "resistance": 0.25,
+          "hint": "按住，跑起来",
+          "milestones": [
+            {
+              "at": 0.45,
+              "id": "river"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -13,7 +13,7 @@ interface StageScript { template: string; levelScript: unknown }
 function allEntryIds(): string[] {
   const dir = fileURLToPath(new URL('../packages/content/src/entries', import.meta.url));
   return readdirSync(dir)
-    .filter((name) => name.endsWith('.json'))
+    .filter((name) => name.endsWith('.json') && !name.endsWith('.game.json'))
     .map((name) => name.replace(/\.json$/, ''))
     .sort();
 }
@@ -22,7 +22,8 @@ function allEntryIds(): string[] {
 function entryIdsInGroup(group: string): string[] {
   const dir = fileURLToPath(new URL('../packages/content/src/entries', import.meta.url));
   return readdirSync(dir)
-    .filter((name) => name.endsWith('.json'))
+    // 内容拆成摘要（<id>.json）与详情（<id>.game.json）两半：这里只数摘要
+    .filter((name) => name.endsWith('.json') && !name.endsWith('.game.json'))
     .filter((name) => {
       const raw = JSON.parse(readFileSync(join(dir, name), 'utf8')) as { group?: string };
       return raw.group === group;
@@ -33,7 +34,8 @@ function entryIdsInGroup(group: string): string[] {
 
 /** Playwright 的 ESM 加载器不接受裸 JSON 导入，这里自己读 */
 function loadContent(id: string): { game: { stages: StageScript[] } } {
-  const path = fileURLToPath(new URL('../packages/content/src/entries/' + id + '.json', import.meta.url));
+  // 关卡脚本在"详情"那半：<id>.game.json（见 docs/技术方案.md §7.13）
+  const path = fileURLToPath(new URL('../packages/content/src/entries/' + id + '.game.json', import.meta.url));
   return JSON.parse(readFileSync(path, 'utf8')) as { game: { stages: StageScript[] } };
 }
 

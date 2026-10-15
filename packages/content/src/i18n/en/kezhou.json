@@ -2,9 +2,6 @@
   "title": "Marking the Boat for a Lost Sword",
   "dynasty": "Warring States",
   "era": "Warring States · Parable",
-  "figures": [
-    "a man of Chu"
-  ],
   "source": {
     "book": "Lüshi Chunqiu, Examining the Present",
     "quote": "A man of Chu was crossing a river. His sword fell from the boat into the water, and he hastily carved a mark on the boat's side, saying: 'This is where my sword fell.' When the boat stopped, he went into the water at the place he had marked. But the boat had moved on, while the sword had not. To seek a sword like this — is it not confusing?"
@@ -14,92 +11,5 @@
     "Change",
     "A mark",
     "Finding it again"
-  ],
-  "story": [
-    {
-      "title": "The Sword Falls In",
-      "text": "In midstream his sword slipped from the boat into the river.",
-      "narration": "A man of Chu was crossing the river by boat. In midstream his sword slipped into the water and sank to the bottom."
-    },
-    {
-      "title": "He Carves a Mark on the Boat",
-      "text": "He cut a mark on the boat's side: my sword fell right here.",
-      "narration": "With no hurry at all, he carved a mark on the side of the boat: my sword fell into the water right here. When the boat reached the bank, he dived in at the place he had marked — but where was the sword?"
-    }
-  ],
-  "keyMoment": {
-    "question": "The boat kept moving and the sword stayed where it fell. Where should the mark go?",
-    "options": [
-      {
-        "text": "On the boat's side — dive wherever the boat stops",
-        "hint": "But the boat moves on."
-      },
-      {
-        "text": "On something that does not move: a tree on the bank, a float on the water",
-        "hint": ""
-      },
-      {
-        "text": "Count how long the boat sailed, then walk back that far",
-        "hint": "However well you count, the river still flows."
-      }
-    ],
-    "reveal": "The place where the sword fell does not move; the boat does. Make your mark on something that stays."
-  },
-  "misconceptions": [
-    "Wherever you made the mark is where you dive",
-    "As long as the mark is there, the sword can be found"
-  ],
-  "quiz": [
-    {
-      "question": "Where did he carve the mark after the sword fell?",
-      "options": [
-        "On the side of the boat",
-        "On a tree on the bank",
-        "On the surface of the water"
-      ],
-      "answer": 0,
-      "explanation": "He carved it on the boat — but the boat moves, and the mark went with it."
-    },
-    {
-      "question": "Why did he find no sword where he dived?",
-      "options": [
-        "The boat had drifted away, and the mark drifted with it",
-        "Someone had picked the sword up",
-        "The water was too deep"
-      ],
-      "answer": 0,
-      "explanation": "The boat drifted downstream while the sword stayed put — the mark no longer pointed at the sword."
-    },
-    {
-      "question": "Which way of remembering the road home can be trusted?",
-      "options": [
-        "Follow the car in front",
-        "Remember: straight from the school gate, turn right at the second crossing",
-        "Remember: today the sun is on the left"
-      ],
-      "answer": 1,
-      "explanation": "Things that move cannot be your mark. Crossings and signposts stay put, so they can."
-    }
-  ],
-  "game": {
-    "stages": [
-      {
-        "levelScript": {
-          "surfaces": [
-            {
-              "speak": "Carved on the boat's side."
-            },
-            {
-              "speak": "Carved on the tree by the bank."
-            },
-            {
-              "speak": "Carved on the stone downstream."
-            }
-          ],
-          "missLine": "The mark went with the boat.",
-          "hint": "Where will you mark?"
-        }
-      }
-    ]
-  }
+  ]
 }

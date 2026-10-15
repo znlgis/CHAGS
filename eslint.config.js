@@ -39,6 +39,25 @@ export default tseslint.config(
     },
   },
   {
+    // 外壳只能吃"摘要"：完整内容（故事 / 复习题 / 关卡脚本，约 45 KB gzip）
+    // 必须走 loadEntry() 的动态 import，否则首屏会重新变大（见 docs/技术方案.md §7.13）。
+    // 这条规则是那次瘦身唯一的长期守卫 —— 一句 import 就能把它作废，而体积门禁只在打包后才发现。
+    files: ['apps/site/src/**/*.{ts,vue}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@chags/content/full',
+              message: '外壳不许直接引入完整内容：用 @chags/content 的 loadEntry()（动态 import）。',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // 纯逻辑层必须可控、可复现：禁止随机与隐式时钟
     files: ['packages/progress/src/**/*.ts', '**/logic/**/*.ts'],
     rules: {

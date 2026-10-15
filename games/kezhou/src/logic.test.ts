@@ -1,4 +1,4 @@
-import { getEntry } from '@chags/content';
+import { getEntry } from '@chags/content/full';
 import { surfaceWorldX } from '@chags/templates/mark.logic';
 import { describe, expect, it } from 'vitest';
 import { BOAT_X, ROCK_X, SWORD_X, TREE_X } from './layout';

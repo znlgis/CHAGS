@@ -1,0 +1,171 @@
+{
+  "figures": [
+    "女娲"
+  ],
+  "story": [
+    {
+      "id": "s1",
+      "title": "天破了",
+      "text": "天上破了好几个洞，风雨从洞里灌下来。",
+      "narration": "很久很久以前，天上破了好几个大洞。风雨从洞里灌下来，人们又冷又怕。",
+      "illustration": "none"
+    },
+    {
+      "id": "s2",
+      "title": "五色石",
+      "text": "女娲炼出五色石，要一块一块把天补好。",
+      "narration": "女娲炼出了五色石。她要把这些石头，一块一块补到天上的洞里去。",
+      "illustration": "none"
+    }
+  ],
+  "keyMoment": {
+    "beatId": "s2",
+    "question": "天上的洞，该怎么补？",
+    "options": [
+      {
+        "id": "wait",
+        "text": "等它自己长好",
+        "isCanonical": false,
+        "hint": ""
+      },
+      {
+        "id": "stone",
+        "text": "炼五色石，一块一块补上去",
+        "isCanonical": true,
+        "hint": ""
+      }
+    ],
+    "reveal": "她炼出五色石，一块一块，把天补好了。"
+  },
+  "misconceptions": [
+    "洞会自己长好",
+    "只要一块大石头就够了"
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "kind": "recall",
+      "question": "女娲用什么补天？",
+      "options": [
+        "五色石",
+        "泥巴",
+        "木头"
+      ],
+      "answer": 0,
+      "explanation": "她炼出五色石，用它补天上的洞。"
+    },
+    {
+      "id": "q2",
+      "kind": "recall",
+      "question": "女娲是怎么把天补好的？",
+      "options": [
+        "一口气就补好了",
+        "一块一块地补",
+        "请别人来补"
+      ],
+      "answer": 1,
+      "explanation": "一个洞一个洞地补，补完一个天就亮一分。"
+    },
+    {
+      "id": "q3",
+      "kind": "transfer",
+      "question": "下面哪件事，和女娲补天最像？",
+      "options": [
+        "衣服破了个洞，一针一针缝好",
+        "把旧衣服扔掉",
+        "再买一件新衣服"
+      ],
+      "answer": 0,
+      "explanation": "都是把破掉的地方，一点一点补回来。"
+    }
+  ],
+  "game": {
+    "template": "place",
+    "stages": [
+      {
+        "template": "place",
+        "levelScript": {
+          "slots": [
+            {
+              "id": "hole-round",
+              "x": 165,
+              "y": 330,
+              "kind": "round",
+              "radius": 62
+            },
+            {
+              "id": "hole-square",
+              "x": 395,
+              "y": 250,
+              "kind": "square",
+              "radius": 62
+            },
+            {
+              "id": "hole-triangle",
+              "x": 615,
+              "y": 330,
+              "kind": "triangle",
+              "radius": 62
+            },
+            {
+              "id": "hole-diamond",
+              "x": 255,
+              "y": 530,
+              "kind": "diamond",
+              "radius": 62
+            },
+            {
+              "id": "hole-star",
+              "x": 535,
+              "y": 530,
+              "kind": "star",
+              "radius": 62
+            }
+          ],
+          "orbs": [
+            {
+              "id": "stone-round",
+              "slotId": "hole-round",
+              "x": 145,
+              "y": 1226,
+              "kind": "round",
+              "speak": "蓝色的石头补上了圆圆的洞"
+            },
+            {
+              "id": "stone-square",
+              "slotId": "hole-square",
+              "x": 255,
+              "y": 1226,
+              "kind": "square",
+              "speak": "红色的石头补上了方方的洞"
+            },
+            {
+              "id": "stone-triangle",
+              "slotId": "hole-triangle",
+              "x": 365,
+              "y": 1226,
+              "kind": "triangle",
+              "speak": "黄色的石头补上了尖尖的洞"
+            },
+            {
+              "id": "stone-diamond",
+              "slotId": "hole-diamond",
+              "x": 475,
+              "y": 1226,
+              "kind": "diamond",
+              "speak": "白色的石头补上了菱形的洞"
+            },
+            {
+              "id": "stone-star",
+              "slotId": "hole-star",
+              "x": 585,
+              "y": 1226,
+              "kind": "star",
+              "speak": "紫色的石头补上了星形的洞"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -2,10 +2,6 @@
   "title": "Cao Chong Weighs the Elephant",
   "dynasty": "Three Kingdoms",
   "era": "Three Kingdoms · Wei",
-  "figures": [
-    "Cao Chong",
-    "Cao Cao"
-  ],
   "source": {
     "book": "Records of the Three Kingdoms",
     "chapter": "Biography of Deng Ai Wang Chong",
@@ -16,77 +12,5 @@
     "Observe",
     "Swap",
     "Waterline"
-  ],
-  "story": [
-    {
-      "title": "An Elephant",
-      "text": "Someone gave Cao Cao an elephant.",
-      "narration": "Long ago, someone gave Cao Cao a great elephant."
-    },
-    {
-      "title": "How Heavy?",
-      "text": "Just how heavy was it?",
-      "narration": "Cao Cao wanted to know: just how heavy was this elephant?"
-    }
-  ],
-  "keyMoment": {
-    "question": "Too heavy to lift, too big for any scale. How can we find out?",
-    "options": [
-      {
-        "text": "Cut the elephant into pieces",
-        "hint": ""
-      },
-      {
-        "text": "Swap it for stones, up to the same waterline",
-        "hint": ""
-      }
-    ],
-    "reveal": "The stones and the elephant sank the boat to the same depth — so they weighed the same."
-  },
-  "misconceptions": [
-    "An elephant is too heavy to weigh at all",
-    "Only a giant scale could weigh it"
-  ],
-  "quiz": [
-    {
-      "question": "How did Cao Chong find out the elephant's weight?",
-      "options": [
-        "He cut the elephant up",
-        "He swapped it for stones up to the same waterline",
-        "He simply looked at it"
-      ],
-      "explanation": "The stones and the elephant sank the boat to the same depth, so they weighed the same."
-    },
-    {
-      "question": "Why carve a mark on the boat?",
-      "options": [
-        "To make it look nice",
-        "To remember how deep the boat sank with the elephant aboard",
-        "To find the boat later"
-      ],
-      "explanation": "The mark is the record of how heavy the elephant was."
-    },
-    {
-      "question": "Which of these is as clever as Cao Chong's idea?",
-      "options": [
-        "Measure a table with a ruler",
-        "Work out a stone's volume with a bucket of water",
-        "Empty your schoolbag and weigh it"
-      ],
-      "explanation": "Both swap something hard to measure for something easy to measure."
-    }
-  ],
-  "game": {
-    "stages": [
-      {
-        "levelScript": {
-          "hints": {
-            "tooLight": "Add a few more",
-            "tooHeavy": "Take one off",
-            "stuck": "Match the mark"
-          }
-        }
-      }
-    ]
-  }
+  ]
 }

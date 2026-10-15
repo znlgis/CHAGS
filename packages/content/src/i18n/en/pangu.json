@@ -2,9 +2,6 @@
   "title": "Pangu Splits Heaven and Earth",
   "dynasty": "Primordial",
   "era": "Primordial · Myth",
-  "figures": [
-    "Pangu"
-  ],
   "source": {
     "book": "San Wu Li Ji",
     "chapter": "compiled by Xu Zheng, Three Kingdoms · Wu",
@@ -15,102 +12,5 @@
     "Chaos",
     "Split",
     "Become"
-  ],
-  "story": [
-    {
-      "title": "No Sky, No Earth",
-      "text": "Long, long ago, sky and earth were not yet apart.",
-      "narration": "Long, long ago, sky and earth had not yet separated."
-    },
-    {
-      "title": "A Great Egg",
-      "text": "The universe was like an egg, and Pangu slept inside.",
-      "narration": "The universe was like a great egg, and Pangu slept inside it."
-    }
-  ],
-  "keyMoment": {
-    "question": "Pangu lay down. So where did the world come from?",
-    "options": [
-      {
-        "text": "There was nothing at all",
-        "hint": ""
-      },
-      {
-        "text": "His body became the sky, the earth and everything",
-        "hint": ""
-      },
-      {
-        "text": "He woke up again",
-        "hint": ""
-      }
-    ],
-    "reveal": "Pangu lay down, but his eyes became the sun and moon and his blood became the rivers — the world is what he left behind."
-  },
-  "misconceptions": [
-    "When Pangu lay down, everything was gone",
-    "The sky and earth were always there"
-  ],
-  "quiz": [
-    {
-      "question": "What did Pangu's left and right eyes become?",
-      "options": [
-        "The sun and the moon",
-        "Two stars",
-        "Two rivers"
-      ],
-      "explanation": "His left eye became the sun, his right eye the moon."
-    },
-    {
-      "question": "How long did Pangu hold the sky and the earth apart?",
-      "options": [
-        "Eighteen thousand years",
-        "One hundred years",
-        "Three days and nights"
-      ],
-      "explanation": "The sky rose a zhang a day and the earth thickened a zhang a day, for eighteen thousand years."
-    },
-    {
-      "question": "Which of these is also 'becoming something else'?",
-      "options": [
-        "A caterpillar becomes a butterfly",
-        "A rabbit runs very fast",
-        "A seed lies in the soil"
-      ],
-      "explanation": "In both, one thing turns into another."
-    }
-  ],
-  "game": {
-    "stages": [
-      {
-        "levelScript": {
-          "unit": "yr",
-          "hint": "Tap to push the sky"
-        }
-      },
-      {
-        "levelScript": {
-          "orbs": [
-            {
-              "speak": "His left eye became the sun"
-            },
-            {
-              "speak": "His right eye became the moon"
-            },
-            {
-              "speak": "His hair became the stars"
-            },
-            {
-              "speak": "His breath became the wind and clouds"
-            },
-            {
-              "speak": "His blood became the rivers"
-            },
-            {
-              "speak": "His skin and hair became the plants"
-            }
-          ]
-        }
-      }
-    ]
-  }
+  ]
 }

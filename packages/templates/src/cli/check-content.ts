@@ -1,14 +1,17 @@
 import {
-  ContentEntrySchema,
   DEFAULT_LOCALE,
   LOCALES,
-  entries,
+  EntryDetailSchema,
+  EntrySummarySchema,
   groupBy,
   isGroupId,
   mergeLocalized,
   patches,
+  splitEntry,
   validatePatch,
 } from '@chags/content';
+// 完整内容与详情译文：内容体检要的是全量，所以走 '@chags/content/full'
+import { ContentEntrySchema, entries, gamePatches } from '@chags/content/full';
 import { templateSchemas } from '../schemas';
 
 let errors = 0;
@@ -134,26 +137,51 @@ if (stratagems.length > 0) {
 for (const locale of LOCALES) {
   if (locale === DEFAULT_LOCALE) continue;
   const table = patches[locale];
+  const detailTable = gamePatches[locale];
   if (!table) {
-    fail('语言 ' + locale + ' 没有任何译文');
+    fail('语言 ' + locale + ' 没有任何摘要译文');
+    continue;
+  }
+  if (!detailTable) {
+    fail('语言 ' + locale + ' 没有任何详情译文');
     continue;
   }
   console.log('\n语言 ' + locale + '：');
   for (const entry of entries) {
+    // 摘要与详情两半各有各的译文 —— 拆开是为了首屏只加载摘要那一半
+    const { summary, detail } = splitEntry(entry);
     const patch = table[entry.id];
-    if (patch === undefined) {
-      fail(entry.id + ' 缺少 ' + locale + ' 译文');
-      continue;
+    const detailPatch = detailTable[entry.id];
+    if (patch === undefined) fail(entry.id + ' 缺少 ' + locale + ' 摘要译文');
+    if (detailPatch === undefined) fail(entry.id + ' 缺少 ' + locale + ' 详情译文');
+    if (patch === undefined || detailPatch === undefined) continue;
+    for (const issue of validatePatch(summary, patch)) {
+      fail(entry.id + ' 摘要译文 ' + (issue.path || '(根)') + '：' + issue.message);
     }
-    const issues = validatePatch(entry, patch);
-    for (const issue of issues) {
-      fail(entry.id + ' 译文 ' + (issue.path || '(根)') + '：' + issue.message);
+    for (const issue of validatePatch(detail, detailPatch)) {
+      fail(entry.id + ' 详情译文 ' + (issue.path || '(根)') + '：' + issue.message);
     }
-    // 合并之后仍须通过内容 schema —— 译文太长同样会挡住
-    const merged = ContentEntrySchema.safeParse(mergeLocalized(entry, patch));
-    if (!merged.success) {
-      for (const issue of merged.error.issues) {
-        fail(entry.id + ' 译文 ' + issue.path.join('.') + '：' + issue.message);
+    // 合并之后仍须通过 schema —— 译文太长同样会挡住
+    const mergedSummary = EntrySummarySchema.safeParse(mergeLocalized(summary, patch));
+    const mergedDetail = EntryDetailSchema.safeParse(mergeLocalized(detail, detailPatch));
+    if (!mergedSummary.success) {
+      for (const issue of mergedSummary.error.issues) {
+        fail(entry.id + ' 摘要译文 ' + issue.path.join('.') + '：' + issue.message);
+      }
+    }
+    if (!mergedDetail.success) {
+      for (const issue of mergedDetail.error.issues) {
+        fail(entry.id + ' 详情译文 ' + issue.path.join('.') + '：' + issue.message);
+      }
+    }
+    const merged = mergedSummary.success && mergedDetail.success
+      ? ContentEntrySchema.safeParse({ ...mergedSummary.data, ...mergedDetail.data })
+      : ContentEntrySchema.safeParse(entry);
+    if (!mergedSummary.success || !mergedDetail.success || !merged.success) {
+      if (!merged.success) {
+        for (const issue of merged.error.issues) {
+          fail(entry.id + ' 译文 ' + issue.path.join('.') + '：' + issue.message);
+        }
       }
     } else {
       // 合并之后，每一段关卡脚本还要重新过一遍模板 schema。

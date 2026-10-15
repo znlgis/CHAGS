@@ -2,11 +2,6 @@
   "title": "Besiege Wei to Rescue Zhao",
   "dynasty": "Warring States",
   "era": "Warring States · King Xian of Zhou, year 16",
-  "figures": [
-    "Sun Bin",
-    "Tian Ji",
-    "Pang Juan"
-  ],
   "source": {
     "book": "Records of the Grand Historian, Biographies of Sun Tzu and Wu Qi",
     "quote": "Strike at what he must defend, and pierce where he is undefended; when he is held in check, the siege lifts by itself."
@@ -16,70 +11,5 @@
     "The vital point",
     "Lifting a siege",
     "Use your strength elsewhere"
-  ],
-  "story": [
-    {
-      "title": "Handan Is Surrounded",
-      "text": "Handan was surrounded, and cart after cart came begging for help.",
-      "narration": "In 354 BC the armies of Wei surrounded Handan, the capital of Zhao. Cart after cart of messengers raced to Qi to ask for help."
-    },
-    {
-      "title": "Straight for Daliang",
-      "text": "Sun Bin pointed at the map: not Handan — go straight for Daliang.",
-      "narration": "Sun Bin pointed at the map and said to Tian Ji: you cannot untangle a knot by tugging hard, and you cannot save Handan by pushing hard. March straight at Daliang, the city Wei must protect — and the siege of Handan will lift by itself."
-    }
-  ],
-  "keyMoment": {
-    "question": "Handan is sealed off. Where do you strike first?",
-    "options": [
-      {
-        "text": "Charge straight at Handan and fight head-on",
-        "hint": "Head-on we are fewer — we cannot push through."
-      },
-      {
-        "text": "March on Daliang, the city Wei must protect",
-        "hint": ""
-      },
-      {
-        "text": "Take the long way round and raid a small border town",
-        "hint": "Wei will not turn back for a small town."
-      }
-    ],
-    "reveal": "Move the place he cannot afford to lose, and the siege lifts by itself."
-  },
-  "misconceptions": [
-    "If a friend is surrounded, you can only rush straight to him",
-    "Bravery means pushing hardest at the strongest point"
-  ],
-  "quiz": [
-    {
-      "question": "Handan was in danger. Where did Sun Bin lead his army instead?",
-      "options": [
-        "Daliang",
-        "Handan",
-        "Qi"
-      ],
-      "answer": 0,
-      "explanation": "Daliang was the city Wei had to protect — as soon as Qi marched on it, the Wei army turned back."
-    },
-    {
-      "question": "Your brother's block tower is leaning, and he keeps holding the top block. How can you help better?",
-      "options": [
-        "Steady the layer most likely to fall",
-        "Press the top block down harder",
-        "Tell him to keep holding it"
-      ],
-      "answer": 0,
-      "explanation": "Holding the top block fixes one block, but the tower still leans — steady the layer that would fall first, and the whole tower stands."
-    }
-  ],
-  "game": {
-    "stages": [
-      {
-        "levelScript": {
-          "hint": "Hit what he must save"
-        }
-      }
-    ]
-  }
+  ]
 }

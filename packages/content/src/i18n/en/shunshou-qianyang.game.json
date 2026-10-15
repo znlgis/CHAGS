@@ -1,0 +1,80 @@
+{
+  "figures": [
+    "Li Su"
+  ],
+  "story": [
+    {
+      "title": "On the Road in the Snow",
+      "text": "Marching through the snow at night, they passed a stray sheep by the road.",
+      "narration": "In the winter of 817, Li Su led his column through the night toward Caizhou. The snow came down hard and the road was empty — a stray sheep huddled in the snow beside it."
+    },
+    {
+      "title": "Taken Along in Passing",
+      "text": "They took it along in passing, and the column never stopped.",
+      "narration": "Li Su had the soldier beside him pick the sheep up in passing, and the column did not stop for a single step. Before dawn they reached the walls of Caizhou — the small thing was done, and the real errand was not delayed."
+    }
+  ],
+  "keyMoment": {
+    "question": "There is a stray sheep by the road. What do you do?",
+    "options": [
+      {
+        "text": "Pick it up in passing and keep the column moving",
+        "hint": ""
+      },
+      {
+        "text": "Stop and go looking for its owner",
+        "hint": "Dawn is close; if the column stops, the errand is delayed."
+      },
+      {
+        "text": "Leave it and march on",
+        "hint": "A small chance you could take in passing — once it is gone, it is gone."
+      }
+    ],
+    "reveal": "Catch the small chances you pass by — but never let them cost you the errand."
+  },
+  "misconceptions": [
+    "Leading a sheep along in passing means taking what belongs to someone else",
+    "Small chances do not matter; wait for a big one"
+  ],
+  "quiz": [
+    {
+      "question": "Did the column stop for the sheep?",
+      "options": [
+        "No — they picked it up in passing",
+        "Yes — they stopped and searched for its owner",
+        "They turned back to camp"
+      ],
+      "answer": 0,
+      "explanation": "It was something they could do in passing, so the march was not held up — the column never stopped."
+    },
+    {
+      "question": "What kind of chance does the Thirty-Six Stratagems say to take?",
+      "options": [
+        "The smallest gap and the smallest gain",
+        "Only big chances",
+        "Whatever chance someone hands you"
+      ],
+      "answer": 0,
+      "explanation": "Every small gap must be seized and every small gain must be taken — even a small chance is worth taking."
+    },
+    {
+      "question": "On your way to school you see a lost puppy. What do you do?",
+      "options": [
+        "Take it along to somewhere it can be helped, without missing school",
+        "Stay with it until its owner comes",
+        "Leave it alone — school comes first"
+      ],
+      "answer": 0,
+      "explanation": "Do your own errand first and help in passing — take it somewhere it can be helped, and you still get to school on time."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Grab it as it passes"
+        }
+      }
+    ]
+  }
+}

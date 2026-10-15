@@ -42,7 +42,7 @@ onMounted(async () => {
     if (disposed || !host.value) return;
     mod.value = loaded;
     await loaded.mount(
-      createGameContext(loaded.manifest, host.value, i18n.locale, {
+      await createGameContext(loaded.manifest, host.value, i18n.locale, {
         onExit: () => navigate('/'),
         onEvent: handleEvent,
       }),

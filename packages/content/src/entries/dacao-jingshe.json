@@ -2,18 +2,11 @@
   "id": "dacao-jingshe",
   "group": "stratagem",
   "kind": "strategy",
-  "stratagem": {
-    "number": 13,
-    "set": 3
-  },
   "title": "打草惊蛇",
   "pinyin": "Dǎ cǎo jīng shé",
   "dynasty": "五代",
   "era": "五代 · 南唐",
   "yearApprox": 940,
-  "figures": [
-    "王鲁"
-  ],
   "source": {
     "book": "《三十六计·攻战计》",
     "chapter": "打草惊蛇",
@@ -29,130 +22,8 @@
     8,
     12
   ],
-  "story": [
-    {
-      "id": "s1",
-      "title": "案卷上的名字",
-      "text": "案卷上出现了自己的名字，王鲁心里发慌。",
-      "narration": "五代的时候，王鲁在当涂县做县令。一天，百姓联名递上一叠状纸，告的是他手下的主簿。他一行一行往下看，越看越坐不住 —— 状纸上写的那些事，他自己也没少做，看着看着，像是看见了自己的名字。",
-      "illustration": "none"
-    },
-    {
-      "id": "s2",
-      "title": "拨草见蛇",
-      "text": "他拿竹竿拨开草丛 —— 蛇一窜，全院子都知道了。",
-      "narration": "打草本来是想把草丛里的蛇赶出来，可草一响，蛇先知道。王鲁在状纸边上写了一句话：你不过是拨了拨草，我这条蛇已经惊了。",
-      "illustration": "none"
-    }
-  ],
-  "keyMoment": {
-    "beatId": "s1",
-    "question": "想知道草丛里有什么，又不想让所有人都知道，怎么办？",
-    "options": [
-      {
-        "id": "poke",
-        "text": "先轻轻拨一处，看清楚再说",
-        "isCanonical": true,
-        "hint": ""
-      },
-      {
-        "id": "flatten",
-        "text": "把整片草都踩平",
-        "isCanonical": false,
-        "hint": "整片都踩平，动静更大，全院子都知道了。"
-      },
-      {
-        "id": "ignore",
-        "text": "不管它，直接走过去",
-        "isCanonical": false,
-        "hint": "草丛里有什么，就永远不知道了。"
-      }
-    ],
-    "reveal": "先拨一处看清楚，再决定动不动手 —— 可草一响，蛇也会听见。"
-  },
-  "misconceptions": [
-    "想看清楚，就得把整片草都翻一遍",
-    "试探是白费力气，直接上就行"
-  ],
-  "quiz": [
-    {
-      "id": "q1",
-      "kind": "recall",
-      "question": "成语“打草惊蛇”里，被打草惊动的“蛇”是谁？",
-      "options": [
-        "心里发慌的王鲁自己",
-        "草丛里的一条蛇",
-        "递状纸的百姓"
-      ],
-      "answer": 0,
-      "explanation": "状纸上写的正是他自己做过的那些事 —— 草一响，他这条“蛇”先惊了。"
-    },
-    {
-      "id": "q2",
-      "kind": "transfer",
-      "question": "想知道抽屉里有没有东西，又不想让全家都知道。怎么做更好？",
-      "options": [
-        "先轻轻拉开一条缝，看一眼",
-        "把整个抽屉倒出来",
-        "把抽屉搬到别的屋"
-      ],
-      "answer": 0,
-      "explanation": "拉开一条缝就能看清 —— 整个倒出来，动静大得全家都知道了。"
-    }
-  ],
-  "game": {
-    "template": "probe",
-    "stages": [
-      {
-        "template": "probe",
-        "levelScript": {
-          "mode": "knock",
-          "patches": [
-            {
-              "id": "c1",
-              "x": 110,
-              "y": 1090,
-              "radius": 64,
-              "has": "snake"
-            },
-            {
-              "id": "c2",
-              "x": 228,
-              "y": 1008,
-              "radius": 64,
-              "has": "clear"
-            },
-            {
-              "id": "c3",
-              "x": 346,
-              "y": 926,
-              "radius": 64,
-              "has": "snake"
-            },
-            {
-              "id": "c4",
-              "x": 464,
-              "y": 844,
-              "radius": 64,
-              "has": "clear"
-            },
-            {
-              "id": "c5",
-              "x": 604,
-              "y": 754,
-              "radius": 64,
-              "has": "clear"
-            }
-          ],
-          "scareRadius": 150,
-          "exit": {
-            "x": 690,
-            "y": 660,
-            "radius": 58
-          },
-          "hint": "一丛一丛敲，敲到蛇就绕开"
-        }
-      }
-    ]
+  "stratagem": {
+    "number": 13,
+    "set": 3
   }
 }

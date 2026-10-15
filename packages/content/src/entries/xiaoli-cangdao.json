@@ -2,18 +2,11 @@
   "id": "xiaoli-cangdao",
   "group": "stratagem",
   "kind": "strategy",
-  "stratagem": {
-    "number": 10,
-    "set": 2
-  },
   "title": "笑里藏刀",
   "pinyin": "Xiào lǐ cáng dāo",
   "dynasty": "唐",
   "era": "唐·永徽年间",
   "yearApprox": 655,
-  "figures": [
-    "李义府"
-  ],
   "source": {
     "book": "《三十六计·敌战计》",
     "quote": "信而安之，阴以图之……刚中柔外也。"
@@ -28,149 +21,8 @@
     8,
     12
   ],
-  "story": [
-    {
-      "id": "s1",
-      "title": "满口好话",
-      "text": "他笑着说了很多好话，一句比一句好听。",
-      "narration": "唐朝的李义府，跟人说话的时候总是笑着，语气又轻又暖，谁听了都觉得他是一片好心。他说的每一句话，都让人很舒服。",
-      "illustration": "none"
-    },
-    {
-      "id": "s2",
-      "title": "出卖他的小动作",
-      "text": "可是他的眼神、袖口和手指，一次一次出卖了他。",
-      "narration": "话说得再好听，他的动作也在说话：眼神往旁边飘，袖口悄悄收紧了一下，手指在桌上轻轻敲。看这些的人，就知道他心里想的和嘴上说的不是一回事。",
-      "illustration": "none"
-    }
-  ],
-  "keyMoment": {
-    "beatId": "s1",
-    "question": "他一直在说好话，怎么知道他真正想干什么？",
-    "options": [
-      {
-        "id": "watch",
-        "text": "看他的小动作",
-        "isCanonical": true,
-        "hint": ""
-      },
-      {
-        "id": "believe",
-        "text": "相信他说的话",
-        "isCanonical": false,
-        "hint": "话是可以说给别人听的，动作很难一起装到底。"
-      },
-      {
-        "id": "ask",
-        "text": "直接问他",
-        "isCanonical": false,
-        "hint": "他嘴上还是那套好话 —— 问不出别的。"
-      }
-    ],
-    "reveal": "好听的话配着他的动作一起看，才看得懂他真正想干什么。"
-  },
-  "misconceptions": [
-    "笑得好看的人一定是好人",
-    "好听的话就可以放心相信",
-    "想看懂一个人，只用听他说什么"
-  ],
-  "quiz": [
-    {
-      "id": "q1",
-      "kind": "recall",
-      "question": "李义府的笑后面藏着什么？",
-      "options": [
-        "他心里的打算",
-        "一件礼物",
-        "一句玩笑"
-      ],
-      "answer": 0,
-      "explanation": "他的好话只是让人放松，心里的打算藏在话后面 —— 所以要看他的动作。"
-    },
-    {
-      "id": "q2",
-      "kind": "transfer",
-      "question": "有人一边夸你的玩具好看，一边伸手去拿。你先看什么？",
-      "options": [
-        "看他的手，而不是听他说的话",
-        "听他还要夸几句",
-        "把玩具递给他"
-      ],
-      "answer": 0,
-      "explanation": "夸得再好听，手往哪儿伸才是他真正要做的事 —— 先看手，再决定怎么办。"
-    }
-  ],
-  "game": {
-    "template": "read",
-    "stages": [
-      {
-        "template": "read",
-        "levelScript": {
-          "mode": "inspect",
-          "speaker": {
-            "x": 375,
-            "y": 520
-          },
-          "tells": [
-            {
-              "id": "t1",
-              "atMs": 2600,
-              "windowMs": 1500,
-              "x": 307,
-              "y": 461,
-              "radius": 74,
-              "kind": "eye"
-            },
-            {
-              "id": "t2",
-              "atMs": 6100,
-              "windowMs": 1500,
-              "x": 180,
-              "y": 762,
-              "radius": 80,
-              "kind": "sleeve"
-            },
-            {
-              "id": "t3",
-              "atMs": 9800,
-              "windowMs": 1500,
-              "x": 300,
-              "y": 856,
-              "radius": 78,
-              "kind": "finger"
-            },
-            {
-              "id": "t4",
-              "atMs": 13800,
-              "windowMs": 1500,
-              "x": 443,
-              "y": 461,
-              "radius": 74,
-              "kind": "eye"
-            },
-            {
-              "id": "t5",
-              "atMs": 17400,
-              "windowMs": 1500,
-              "x": 570,
-              "y": 762,
-              "radius": 80,
-              "kind": "sleeve"
-            },
-            {
-              "id": "t6",
-              "atMs": 20900,
-              "windowMs": 1500,
-              "x": 448,
-              "y": 856,
-              "radius": 78,
-              "kind": "finger"
-            }
-          ],
-          "goal": 4,
-          "hint": "好听的话里，留意他的小动作"
-        }
-      }
-    ]
+  "stratagem": {
+    "number": 10,
+    "set": 2
   }
 }

@@ -2,10 +2,6 @@
   "title": "A Borrowed Name",
   "dynasty": "Late Qin",
   "era": "Qin · Second Emperor, year 1",
-  "figures": [
-    "Chen Sheng",
-    "Wu Guang"
-  ],
   "source": {
     "book": "The Thirty-Six Stratagems, Attack Stratagems",
     "chapter": "A Borrowed Name",
@@ -16,70 +12,5 @@
     "A name",
     "Gathering people",
     "The old flag"
-  ],
-  "story": [
-    {
-      "title": "The Group Scatters",
-      "text": "The group scattered, and only one old flag was left.",
-      "narration": "In 209 BC heavy rain trapped the men marching to the frontier at Daze Township. One after another they slipped away, until only an old flag lay in the mud of the camp."
-    },
-    {
-      "title": "The Old Flag Goes Up",
-      "text": "The old flag went up, and footsteps came back from every direction.",
-      "narration": "Chen Sheng and Wu Guang raised the old flag, and on it they wrote names everyone knew in their hearts — Fusu and Xiang Yan. Hearing those names, the men who had scattered in every direction came back, one by one."
-    }
-  ],
-  "keyMoment": {
-    "question": "Everyone has scattered. How do you call them back?",
-    "options": [
-      {
-        "text": "Chase after them one by one",
-        "hint": "They ran in every direction; one person cannot catch them all."
-      },
-      {
-        "text": "Raise the old flag",
-        "hint": ""
-      },
-      {
-        "text": "Forget it — let them go",
-        "hint": "They are still there; they just need a reason to come back."
-      }
-    ],
-    "reveal": "A name everyone knows can gather a scattered crowd again."
-  },
-  "misconceptions": [
-    "Once people run off, they can never be called back",
-    "The only way to gather people is to fetch them one by one"
-  ],
-  "quiz": [
-    {
-      "question": "Whose names did Chen Sheng and Wu Guang borrow?",
-      "options": [
-        "Fusu and Xiang Yan",
-        "The First Emperor",
-        "Liu Bang"
-      ],
-      "answer": 0,
-      "explanation": "Fusu and Xiang Yan were names people already trusted — with them on the old flag, the men came back."
-    },
-    {
-      "question": "You want to organize a class activity, but nobody answers when you call. What do you do?",
-      "options": [
-        "Borrow a name everyone knows, like \"the class team for the school games\"",
-        "Pull people in one by one, and give up if they refuse",
-        "Shout louder in the classroom"
-      ],
-      "answer": 0,
-      "explanation": "People come for the name they trust. Borrow a reason everyone recognizes, and they gather on their own."
-    }
-  ],
-  "game": {
-    "stages": [
-      {
-        "levelScript": {
-          "hint": "Raise the old flag"
-        }
-      }
-    ]
-  }
+  ]
 }

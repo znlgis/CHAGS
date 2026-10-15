@@ -1,16 +1,12 @@
 {
   "id": "yugong",
   "group": "allusion",
+  "kind": "history",
   "title": "愚公移山",
   "pinyin": "yú gōng yí shān",
-  "kind": "history",
   "dynasty": "战国",
   "era": "战国·寓言",
   "yearApprox": -320,
-  "figures": [
-    "愚公",
-    "智叟"
-  ],
   "source": {
     "book": "《列子·汤问》",
     "quote": "虽我之死，有子存焉；子又生孙，孙又生子；子又有子，子又有孙；子子孙孙无穷匮也，而山不加增，何苦而不平？"
@@ -24,112 +20,5 @@
   "ageRange": [
     8,
     11
-  ],
-  "story": [
-    {
-      "id": "s1",
-      "title": "两座大山",
-      "text": "愚公家门前有两座大山，出门要绕很远很远。",
-      "narration": "太行和王屋两座大山，挡在愚公家门前。出一趟门，要绕上好几天的路。",
-      "illustration": "none"
-    },
-    {
-      "id": "s2",
-      "title": "把山挖平",
-      "text": "九十岁的愚公说：我们一起把山挖平。",
-      "narration": "九十岁的愚公把全家叫到一起：这两座山挡了几辈子了，我们一起把它挖平，好不好？",
-      "illustration": "none"
-    }
-  ],
-  "keyMoment": {
-    "beatId": "s2",
-    "question": "河曲智叟笑他：你都快九十了，挖得完吗？",
-    "options": [
-      {
-        "id": "give-up",
-        "text": "挖不完，那就算了",
-        "isCanonical": false,
-        "hint": ""
-      },
-      {
-        "id": "generations",
-        "text": "我挖不完，子子孙孙接着挖——山又不会长高",
-        "isCanonical": true,
-        "hint": ""
-      }
-    ],
-    "reveal": "子子孙孙无穷匮也，而山不加增 —— 山不会再长高，人却一代接一代。"
-  },
-  "misconceptions": [
-    "一个人做不完就别做",
-    "年纪大了什么也做不了"
-  ],
-  "quiz": [
-    {
-      "id": "q1",
-      "kind": "recall",
-      "question": "愚公家门前是哪两座山？",
-      "options": [
-        "太行、王屋",
-        "泰山、华山",
-        "黄山、庐山"
-      ],
-      "answer": 0,
-      "explanation": "太行和王屋两座大山，挡住了出门的路。"
-    },
-    {
-      "id": "q2",
-      "kind": "recall",
-      "question": "智叟笑他挖不完，愚公是怎么回答的？",
-      "options": [
-        "我挖不完，还有儿子、孙子，子子孙孙挖下去",
-        "那我就不挖了",
-        "让别人来挖"
-      ],
-      "answer": 0,
-      "explanation": "山不会再长高，可人一代接一代。"
-    },
-    {
-      "id": "q3",
-      "kind": "transfer",
-      "question": "下面哪件事，和愚公移山最像？",
-      "options": [
-        "每天读一页书，一年读完一本厚书",
-        "通宵一晚把书读完",
-        "这本书太难，不读了"
-      ],
-      "answer": 0,
-      "explanation": "一个人做不完的事，可以慢慢做、接着做。"
-    }
-  ],
-  "game": {
-    "template": "tap",
-    "stages": [
-      {
-        "template": "tap",
-        "levelScript": {
-          "mode": "tap",
-          "targetValue": 3000,
-          "stepValue": 75,
-          "unit": "担",
-          "resistance": 0.25,
-          "hint": "点一点，接着挖",
-          "milestones": [
-            {
-              "at": 0.3,
-              "id": "zhisou"
-            },
-            {
-              "at": 0.6,
-              "id": "gen-2"
-            },
-            {
-              "at": 0.85,
-              "id": "gen-3"
-            }
-          ]
-        }
-      }
-    ]
-  }
+  ]
 }

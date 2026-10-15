@@ -2,10 +2,6 @@
   "title": "Cook Ding Carves an Ox",
   "dynasty": "Warring States",
   "era": "Warring States · Parable",
-  "figures": [
-    "Cook Ding",
-    "Lord Wenhui"
-  ],
   "source": {
     "book": "Zhuangzi, Nourishing the Lord of Life",
     "quote": "Between the joints there are spaces, and the blade has no thickness. With no thickness it enters where there is space, and wide and easy there is room for the blade to glide. That is why after nineteen years the edge is as if fresh from the whetstone."
@@ -15,86 +11,5 @@
     "Finding the grain",
     "Going with it",
     "Not forcing"
-  ],
-  "story": [
-    {
-      "title": "The Flesh Falls Apart",
-      "text": "Cook Ding carved an ox for Lord Wenhui: a touch, a lean, and the flesh came apart.",
-      "narration": "Cook Ding was carving an ox for Lord Wenhui. His hand touched, his shoulder leaned, his foot pressed, his knee braced, and the flesh fell away with a soft sound; the blade rang like music."
-    },
-    {
-      "title": "Nineteen Years, a New Blade",
-      "text": "The knife had been used nineteen years, and its edge was like newly ground.",
-      "narration": "Lord Wenhui stared: how is your knife so fine? Cook Ding said: this knife has served nineteen years and parted thousands of oxen, yet its edge is as if fresh from the whetstone — because I send it along the spaces between the joints, and never hack."
-    }
-  ],
-  "keyMoment": {
-    "question": "Nineteen years, thousands of oxen — why is the knife still like new?",
-    "options": [
-      {
-        "text": "It is forged from especially good steel",
-        "hint": "Even good steel turns if you hack at bone."
-      },
-      {
-        "text": "He follows the spaces between the joints and never hacks",
-        "hint": ""
-      },
-      {
-        "text": "He rarely uses it",
-        "hint": "Thousands of oxen in nineteen years."
-      }
-    ],
-    "reveal": "There are spaces between the joints and the blade is thin — follow the space and the knife neither labours nor suffers."
-  },
-  "misconceptions": [
-    "You just need more strength to part it",
-    "A blunt knife should be replaced"
-  ],
-  "quiz": [
-    {
-      "question": "How long had Cook Ding used that knife?",
-      "options": [
-        "Nineteen years",
-        "One year",
-        "Three days"
-      ],
-      "answer": 0,
-      "explanation": "Nineteen years and thousands of oxen — and the edge like new."
-    },
-    {
-      "question": "Why was his knife still like newly ground?",
-      "options": [
-        "He followed the seams and never hacked",
-        "He was too weak to cut bone",
-        "He kept replacing it with new knives"
-      ],
-      "answer": 0,
-      "explanation": "The spaces between joints are already there; follow them and the blade neither labours nor wears."
-    },
-    {
-      "question": "Your shoelace is in a tight knot. What do you do?",
-      "options": [
-        "Yank hard until it breaks",
-        "Look at how the knot is tied and pull the one end that frees it",
-        "Cut the lace with scissors"
-      ],
-      "answer": 1,
-      "explanation": "Like carving the ox: find the seam first, and it takes far less force than pulling."
-    }
-  ],
-  "game": {
-    "stages": [
-      {
-        "levelScript": {
-          "lines": {
-            "first": "When I first cut oxen, all I saw was an ox.",
-            "grain": "Follow the grain; part the great joints.",
-            "free": "Now I meet it with my mind, not my eyes.",
-            "end": "Where there is room, a thin blade glides with space to spare."
-          },
-          "hint": "Push along the seam"
-        }
-      }
-    ]
-  }
+  ]
 }

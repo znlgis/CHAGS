@@ -2,10 +2,6 @@
   "title": "Crossing the Sea Under Camouflage",
   "dynasty": "Tang",
   "era": "Tang · Zhenguan 19",
-  "figures": [
-    "Xue Rengui",
-    "Emperor Taizong of Tang"
-  ],
   "source": {
     "book": "The Thirty-Six Stratagems · Winning Stratagems",
     "chapter": "Crossing the Sea Under Camouflage",
@@ -16,70 +12,5 @@
     "An ordinary look",
     "Hide",
     "Crossing the sea"
-  ],
-  "story": [
-    {
-      "title": "The Army Reaches the Sea",
-      "text": "The waves were too rough — the emperor stood on shore, afraid to board.",
-      "narration": "The Tang army of three hundred thousand reached the sea. Wave after wave came rolling in, and the emperor stood on the shore worrying: if the ship tossed like that, who could bear the crossing?"
-    },
-    {
-      "title": "A New “Great Camp” by the Sea",
-      "text": "The emperor walked in smiling, and the ground under him never moved.",
-      "narration": "General Xue Rengui had a great camp built of bright cloth, with a banquet laid out inside. The emperor walked in smiling and sat down perfectly steady. Then the curtain lifted — the camp had been floating on the sea all along, and the emperor had already crossed."
-    }
-  ],
-  "keyMoment": {
-    "question": "To get the emperor across without his noticing, what should the ship be dressed up as?",
-    "options": [
-      {
-        "text": "A great camp",
-        "hint": ""
-      },
-      {
-        "text": "A warship",
-        "hint": "A warship tells everyone that something big is coming."
-      },
-      {
-        "text": "A raft",
-        "hint": "A raft bobs about — the emperor would see through it at once."
-      }
-    ],
-    "reveal": "The plainer the look, the less anyone suspects it."
-  },
-  "misconceptions": [
-    "Crossing the sea under camouflage is not cheating: it puts a big thing inside an ordinary look",
-    "Not everything is solved by being strong"
-  ],
-  "quiz": [
-    {
-      "question": "What did Xue Rengui disguise the ship as?",
-      "options": [
-        "A great camp",
-        "A warship",
-        "A bridge"
-      ],
-      "answer": 0,
-      "explanation": "A camp was the plainest thing of all — the emperor walked in and never suspected a thing."
-    },
-    {
-      "question": "For a big thing that everyone would notice, which way is most like crossing the sea under camouflage?",
-      "options": [
-        "Tuck it quietly into something you do every day",
-        "Tell everyone about it first",
-        "Leave it until the very last day"
-      ],
-      "answer": 0,
-      "explanation": "The plainer the look, the less anyone suspects it — the big thing hides inside the ordinary."
-    }
-  ],
-  "game": {
-    "stages": [
-      {
-        "levelScript": {
-          "hint": "Give them a plain look"
-        }
-      }
-    ]
-  }
+  ]
 }

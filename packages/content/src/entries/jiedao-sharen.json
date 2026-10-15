@@ -2,19 +2,11 @@
   "id": "jiedao-sharen",
   "group": "stratagem",
   "kind": "strategy",
-  "stratagem": {
-    "number": 3,
-    "set": 1
-  },
   "title": "借刀杀人",
   "pinyin": "Jiè dāo shā rén",
   "dynasty": "春秋",
   "era": "春秋·鲁哀公年间",
   "yearApprox": -484,
-  "figures": [
-    "子贡",
-    "孔子"
-  ],
   "source": {
     "book": "《史记·仲尼弟子列传》",
     "quote": "故子贡一出，存鲁，乱齐，破吴，强晋而霸越。"
@@ -29,136 +21,8 @@
     8,
     12
   ],
-  "story": [
-    {
-      "id": "s1",
-      "title": "我去走一趟",
-      "text": "鲁国要被大国打了，子贡说：我去走一趟。",
-      "narration": "齐国的大军要来打鲁国。子贡对孔子说：让我去走一趟吧。",
-      "illustration": "none"
-    },
-    {
-      "id": "s2",
-      "title": "一趟走下来",
-      "text": "他一趟走下来，四国的兵互相牵住，鲁国安稳了。",
-      "narration": "子贡先到齐国，又到吴国、晋国、越国。他走完这一趟，四个国家的兵互相牵住，谁也顾不上打鲁国了。",
-      "illustration": "none"
-    }
-  ],
-  "keyMoment": {
-    "beatId": "s2",
-    "question": "鲁国打不过，子贡做了什么？",
-    "options": [
-      {
-        "id": "fight",
-        "text": "把粮食都搬出来，硬扛",
-        "isCanonical": false,
-        "hint": "粮仓搬空了，也挡不住大军。"
-      },
-      {
-        "id": "borrow",
-        "text": "去别的国家走一圈，借他们的力",
-        "isCanonical": true,
-        "hint": ""
-      },
-      {
-        "id": "hide",
-        "text": "躲进山里",
-        "isCanonical": false,
-        "hint": "人躲起来了，家就没了。"
-      }
-    ],
-    "reveal": "自己搬不动，就请别人的力气来一起搬。"
-  },
-  "misconceptions": [
-    "搬不动就只能再使劲一点",
-    "借力就是自己不干活"
-  ],
-  "quiz": [
-    {
-      "id": "q1",
-      "kind": "recall",
-      "question": "子贡这一趟，借来了几个国家的力？",
-      "options": [
-        "一个",
-        "四个",
-        "十个"
-      ],
-      "answer": 1,
-      "explanation": "齐、吴、晋、越四个国家的兵互相牵住 —— 他一趟走下来，鲁国就安稳了。"
-    },
-    {
-      "id": "q2",
-      "kind": "transfer",
-      "question": "石头太重，一个人搬不动。怎么办最好？",
-      "options": [
-        "找一根结实的木棍和一块垫脚的石头，撬它",
-        "咬咬牙，自己再用力试一次",
-        "把石头旁边的土挖掉一点"
-      ],
-      "answer": 0,
-      "explanation": "木棍垫在石头上就是杠杆 —— 借的是杠杆的力，比自己硬撑省力得多。"
-    }
-  ],
-  "game": {
-    "template": "borrow",
-    "stages": [
-      {
-        "template": "borrow",
-        "levelScript": {
-          "mode": "force",
-          "load": {
-            "x": 500,
-            "y": 1000,
-            "radius": 120,
-            "weight": 40
-          },
-          "props": [
-            {
-              "id": "self",
-              "kind": "self",
-              "x": 220,
-              "y": 1120,
-              "radius": 80,
-              "power": 1
-            },
-            {
-              "id": "fulcrum",
-              "kind": "fulcrum",
-              "x": 430,
-              "y": 1150,
-              "radius": 76,
-              "power": 0
-            },
-            {
-              "id": "stick",
-              "kind": "source",
-              "x": 300,
-              "y": 900,
-              "radius": 76,
-              "power": 12
-            },
-            {
-              "id": "wheel",
-              "kind": "source",
-              "x": 620,
-              "y": 820,
-              "radius": 86,
-              "power": 18
-            },
-            {
-              "id": "ox",
-              "kind": "source",
-              "x": 680,
-              "y": 1080,
-              "radius": 86,
-              "power": 14
-            }
-          ],
-          "needed": 30,
-          "hint": "别硬推，借杠杆的力"
-        }
-      }
-    ]
+  "stratagem": {
+    "number": 3,
+    "set": 1
   }
 }

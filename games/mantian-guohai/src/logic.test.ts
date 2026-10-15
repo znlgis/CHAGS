@@ -1,4 +1,4 @@
-import { getEntry } from '@chags/content';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
 import { DECK_BOTTOM, DECK_TOP, SHELF_X, SHIP } from './layout';
 import { ruseLevel } from './logic';

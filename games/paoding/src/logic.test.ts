@@ -1,4 +1,4 @@
-import { getEntry } from '@chags/content';
+import { getEntry } from '@chags/content/full';
 import { ButcherLevelSchema } from '@chags/templates/schemas';
 import { describe, expect, it } from 'vitest';
 import { KNIFE, PIECES, PUSH } from './layout';

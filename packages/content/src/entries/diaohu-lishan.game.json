@@ -1,0 +1,123 @@
+{
+  "figures": [
+    "孙策",
+    "刘勋"
+  ],
+  "story": [
+    {
+      "id": "s1",
+      "title": "山口一步不离",
+      "text": "山口的守将一步不离，谁也别想过去。",
+      "narration": "东汉末年，孙策要过山口，可守将刘勋就守在山口上，一步也不离开。硬冲过去，两边都要吃亏。",
+      "illustration": "none"
+    },
+    {
+      "id": "s2",
+      "title": "山那边闹起来了",
+      "text": "山那边闹起来了，守将过去看 —— 山口空了。",
+      "narration": "孙策备了一份厚礼，又让人在山那边点起灯火、升起炊烟。刘勋远远看见那边有动静，带人过去看。等他回头，山口已经空了。",
+      "illustration": "none"
+    }
+  ],
+  "keyMoment": {
+    "beatId": "s1",
+    "question": "守将一直站在山口，怎么过去？",
+    "options": [
+      {
+        "id": "bait",
+        "text": "在山那边放个诱饵，把他引开",
+        "isCanonical": true,
+        "hint": ""
+      },
+      {
+        "id": "rush",
+        "text": "硬冲过去",
+        "isCanonical": false,
+        "hint": "他就堵在口子上，硬冲要吃亏。"
+      },
+      {
+        "id": "wait",
+        "text": "等他自己走开",
+        "isCanonical": false,
+        "hint": "他一步不离，等不到他走。"
+      }
+    ],
+    "reveal": "把他引开，路就通了。"
+  },
+  "misconceptions": [
+    "过不去的时候，只能硬冲",
+    "守着岗位的人不会离开"
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "kind": "recall",
+      "question": "守将为什么会离开山口？",
+      "options": [
+        "山那边有动静，他过去看了",
+        "他累了，回去歇一会儿",
+        "有人喊他去吃饭"
+      ],
+      "answer": 0,
+      "explanation": "山那边的灯火和炊烟是诱饵 —— 他一过去看，山口就空出来了。"
+    },
+    {
+      "id": "q2",
+      "kind": "transfer",
+      "question": "妈妈一直守在厨房门口，你要把碗端出去，怎么办更聪明？",
+      "options": [
+        "请她去接个电话，趁空档把碗端出去",
+        "端着碗从她身边硬挤过去",
+        "站在门口一直等她走开"
+      ],
+      "answer": 0,
+      "explanation": "硬挤会打翻碗，干等也不是办法 —— 给她一件更要紧的事去做，门口自然就空了。"
+    }
+  ],
+  "game": {
+    "template": "lure",
+    "stages": [
+      {
+        "template": "lure",
+        "levelScript": {
+          "mode": "decoy",
+          "guard": {
+            "x": 375,
+            "y": 520,
+            "radius": 96
+          },
+          "baits": [
+            {
+              "id": "fire",
+              "x": 150,
+              "y": 320,
+              "radius": 66,
+              "awayMs": 3200
+            },
+            {
+              "id": "smoke",
+              "x": 375,
+              "y": 268,
+              "radius": 66,
+              "awayMs": 5200
+            },
+            {
+              "id": "lantern",
+              "x": 614,
+              "y": 336,
+              "radius": 66,
+              "awayMs": 7000
+            }
+          ],
+          "prize": {
+            "x": 560,
+            "y": 1000,
+            "radius": 100,
+            "needMs": 4800
+          },
+          "hint": "放个诱饵把他引开，按住箱子"
+        }
+      }
+    ]
+  }
+}

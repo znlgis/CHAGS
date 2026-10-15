@@ -1,4 +1,4 @@
-import { getEntry } from '@chags/content';
+import { getEntry } from '@chags/content/full';
 import { tapsNeeded } from '@chags/templates/tap.logic';
 import { slotFor } from '@chags/templates/place.logic';
 import { describe, expect, it } from 'vitest';

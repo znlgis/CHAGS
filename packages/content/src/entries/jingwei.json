@@ -1,16 +1,12 @@
 {
   "id": "jingwei",
   "group": "allusion",
+  "kind": "myth",
   "title": "精卫填海",
   "pinyin": "jīng wèi tián hǎi",
-  "kind": "myth",
   "dynasty": "上古",
   "era": "上古·神话",
   "yearApprox": -9995,
-  "figures": [
-    "精卫",
-    "女娃"
-  ],
   "source": {
     "book": "《山海经·北山经》",
     "quote": "炎帝之少女，名曰女娃。女娃游于东海，溺而不返，故为精卫，常衔西山之木石，以堙于东海。"
@@ -24,99 +20,5 @@
   "ageRange": [
     7,
     10
-  ],
-  "story": [
-    {
-      "id": "s1",
-      "title": "女娃",
-      "text": "炎帝的小女儿女娃，到东海边去玩。",
-      "narration": "炎帝有个小女儿，叫女娃。有一天，她到东海边去玩。",
-      "illustration": "none"
-    },
-    {
-      "id": "s2",
-      "title": "一只小鸟",
-      "text": "女娃变成了一只小鸟，天天衔来石头填海。",
-      "narration": "女娃再也没能回家，她变成了一只小鸟，名字叫精卫。从那以后，她天天衔来小石头，投进东海。",
-      "illustration": "none"
-    }
-  ],
-  "keyMoment": {
-    "beatId": "s2",
-    "question": "海这么大，一只小鸟填得完吗？",
-    "options": [
-      {
-        "id": "stop",
-        "text": "填不完，算了吧",
-        "isCanonical": false,
-        "hint": ""
-      },
-      {
-        "id": "keep",
-        "text": "填不完，也一块一块地填",
-        "isCanonical": true,
-        "hint": ""
-      }
-    ],
-    "reveal": "她知道填不满，可她一次也没有停。"
-  },
-  "misconceptions": [
-    "填不完就别填了",
-    "做不成的事不值得做"
-  ],
-  "quiz": [
-    {
-      "id": "q1",
-      "kind": "recall",
-      "question": "精卫原来是谁？",
-      "options": [
-        "炎帝的小女儿女娃",
-        "一只海鸟",
-        "一条小鱼"
-      ],
-      "answer": 0,
-      "explanation": "女娃在东海边出了事，变成了一只叫精卫的小鸟。"
-    },
-    {
-      "id": "q2",
-      "kind": "recall",
-      "question": "精卫每天在做什么？",
-      "options": [
-        "衔来石头和树枝，投进海里",
-        "在海边玩",
-        "找回家的路"
-      ],
-      "answer": 0,
-      "explanation": "她一趟一趟地衔来木石，要把东海填平。"
-    },
-    {
-      "id": "q3",
-      "kind": "transfer",
-      "question": "下面哪件事，和精卫填海最像？",
-      "options": [
-        "每天练十个字，慢慢把字练好",
-        "一天写一千个字",
-        "今天不写了"
-      ],
-      "answer": 0,
-      "explanation": "一点点地做，看起来慢，可一直在往前。"
-    }
-  ],
-  "game": {
-    "template": "tap",
-    "stages": [
-      {
-        "template": "tap",
-        "levelScript": {
-          "mode": "tap",
-          "targetValue": 2400,
-          "stepValue": 60,
-          "unit": "块",
-          "resistance": 0.2,
-          "hint": "点一点，再衔一块",
-          "milestones": []
-        }
-      }
-    ]
-  }
+  ]
 }
