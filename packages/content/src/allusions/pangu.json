@@ -115,7 +115,7 @@
         "levelScript": {
           "mode": "tap",
           "targetValue": 18000,
-          "stepValue": 600,
+          "stepValue": 450,
           "unit": "年",
           "resistance": 0.35,
           "hint": "点一点，把天撑高",

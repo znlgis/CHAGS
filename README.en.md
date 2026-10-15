@@ -45,9 +45,9 @@ No "next" button, no multiple-choice question. The player performs Cao Chong's f
 
 drag the elephant onto the scale (it collapses) → drag it onto the boat (the boat sinks)
 → tap the hull to carve the waterline → carry stones aboard until the mark meets the water
-→ weigh the stones: 3000.
+→ weigh the stones: 3300 (six big stones only reach 3000 — you have to mix in a mid-sized one).
 
-| Story beats | The scale collapses | Carving the mark | Swapping for stones | The mark meets the water | Elephant = 3000 |
+| Story beats | The scale collapses | Carving the mark | Swapping for stones | The mark meets the water | Elephant = 3300 |
 |---|---|---|---|---|---|
 | ![story](docs/screenshots/02-story.png) | ![collapse](docs/screenshots/04-scale-fails.png) | ![mark](docs/screenshots/05-mark.png) | ![stones](docs/screenshots/06-substitute.png) | ![match](docs/screenshots/07-matched.png) | ![weighed](docs/screenshots/08-weighed.png) |
 
@@ -56,7 +56,7 @@ drag the elephant onto the scale (it collapses) → drag it onto the boat (the b
 Five stages, built from three templates plus one bespoke scene:
 
 1. **Crack** — tap the egg four times; chaos bursts open, light specks rise, dark lumps sink
-2. **Hold** — tap 30 times: the sky rises, the earth sinks, **Pangu is literally stretched on screen**, up to 18,000 years
+2. **Hold** — tap 40 times: the sky rises, the earth sinks, **Pangu is literally stretched on screen**, up to 18,000 years
 3. **Give** — drag six orbs home: left eye → sun, right eye → moon, hair → stars, breath → wind, blood → rivers, skin → plants
 
 When you pick up an orb, its destination glows — no failure, no text. On arrival the original line is **spoken aloud**.
@@ -114,7 +114,7 @@ Tap to carry one basket. At 30% the scoffer arrives and shakes his head; at 60% 
 
 ### 8. Shennong Tastes a Hundred Herbs (legend · taste before you sort)
 
-Six plants, each with a question mark over it: **until you taste it, you cannot know what it is.**
+Eight plants, each with a question mark over it: **until you taste it, you cannot know what it is.**
 Drag a plant to Shennong's mouth and a small badge appears on it — edible, medicine, or do not eat —
 using the same picture as the wooden board it belongs to. No reading required.
 
@@ -128,7 +128,7 @@ Tasting a poisonous one only makes him frown and see stars for a moment.
 ### 9. Yu Tames the Flood (legend · dam or channel)
 
 First he **dams** it himself: one tap, one basket of earth, and the water rises with the dike — until
-the tenth tap, when the water tops the bank and the dike bursts. Only then does the game hand over the
+the fourteenth basket, when the water tops the bank and the dike bursts. Only then does the game hand over the
 other idea: draw a channel with a finger and the flood follows it, the water drops level by level and
 green shoots come up on the land it leaves behind. Three channels, and each time he passes his own door
 with the lamp still burning inside — and does not go in.
@@ -228,7 +228,7 @@ practice.)
 
 The first cut lands on bone: a clang, and the blade gains a nick — the child finds that out first-hand.
 Then the seams light up: grab a piece and **push along the seam** and it slides free with a click. The
-last two pieces are given no hint at all. The ending is a whole skeleton — and a knife still like new
+last three pieces are given no hint at all. The ending is a whole skeleton — and a knife still like new
 after nineteen years.
 
 | The first cut | Opened along the seams |
@@ -238,8 +238,23 @@ after nineteen years.
 ## Design principle: fewer words, more doing
 
 Across all seventeen stories there is almost no teaching text on screen: the two opening lines of a story,
-and one short hint that only appears if the child is stuck. Everything else is shape, motion, sound and
-speech. Kids **work out** the idea instead of being told it.
+and one short hint that only appears if the child is stuck (tap the story page too early and it only says
+"Listen to the story first"). Everything else is shape, motion, sound and speech. Kids **work out** the idea
+instead of being told it.
+
+## Two hard rules (2026-10-15)
+
+1. **The story must be heard before the game starts.** The "tap to continue" hand only appears once the
+   narration of that beat has finished; on a device with no voice at all (muted, no voice pack, headless
+   browser) the game waits out a reading-time estimate instead, so the beat can never be skipped for free.
+   Only the debug switches `?autoplay=1` and `?story=instant` bypass it.
+
+   | Listening: speaker + progress bar | Tapped too early: "listen first" |
+   |---|---|
+   | ![listening](docs/screenshots/89-story-listening.png) | ![keep listening](docs/screenshots/90-story-keep-listening.png) |
+2. **Difficulty went up one notch, punishment stays at zero.** More steps (30 → 40 taps, 10 → 14 baskets,
+   6 → 8 herbs, 5 → 7 beacon towers…), tighter tolerances, and hints that arrive later — but no mistakes
+   can ever end a session.
 
 ## Bilingual by design
 

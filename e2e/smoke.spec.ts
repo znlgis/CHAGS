@@ -30,7 +30,7 @@ const nuwaJson = loadContent('nuwa');
 const BOAT = { x: SUB.boatX, y: 600 };
 
 test('真实操作通关：拖大象上船 → 刻水痕 → 搬石头 → 称出重量', async ({ page }) => {
-  await page.goto('/#/play/caochong-elephant');
+  await page.goto('/?story=instant#/play/caochong-elephant');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
 
@@ -55,19 +55,49 @@ test('真实操作通关：拖大象上船 → 刻水痕 → 搬石头 → 称�
   await clickDesign(page, SUB.boatX, SUB.waterTop - 60);
   await expect.poll(() => events(page)).toContain('choice:made:carve');
 
-  // ④ 一块块搬石头，直到水痕回到水面（6 × 500 = 3000）
+  // ④ 一块块搬石头，直到水痕回到水面：6 块大石 = 3000 还差一点，
+  //    再搭一块中石正好 3300 —— 新难度要求大小搭配，光搬大石头凑不出来
   await expect.poll(() => events(page)).toContain('beat:enter:substitute');
   await page.waitForTimeout(500);
   for (let i = 0; i < 6; i += 1) {
     await dragDesign(page, SUB_PILES[0], BOAT);
     await page.waitForTimeout(120);
   }
+  await dragDesign(page, SUB_PILES[1], BOAT);
+  await page.waitForTimeout(200);
 
   await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
   await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
 
   await clickDesign(page, REWARD.done.x, REWARD.done.y);
   await expect.poll(() => events(page)).toContain('session:exit');
+});
+
+/**
+ * 故事是正片，不是可以点掉的过场：
+ * 每一幕的旁白没念完之前，点哪都不翻页，也不会提前发 story:ready。
+ * 无头设备上放不出声音时，按"读一遍"的时间兜底（见 packages/templates/src/story.logic.ts）。
+ */
+test('故事必须听完：旁白没念完之前，怎么点都不翻页', async ({ page }) => {
+  await page.goto('/#/play/caochong-elephant');
+  await expect(page.locator('canvas')).toBeVisible();
+  await expect.poll(() => events(page)).toContain('beat:enter:s1');
+
+  // 刚进故事页就猛点：这一幕还没听完，不许翻页
+  await tapDesign(page, 375, 900, 4, 120);
+  expect(await events(page), '听不完就不该放行').not.toContain('story:ready:s1');
+  expect(await events(page), '听不完就不该进玩法').not.toContain('scene:enter:substitution');
+
+  // 听完第一幕，小手才出现；这时点一下才到第二幕
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('story:ready:s1');
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:s2');
+  expect(await events(page), '第二幕还没听就不该进玩法').not.toContain('scene:enter:substitution');
+
+  // 第二幕同样要听完
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('story:ready:s2');
+  await clickDesign(page, 375, 900);
+  await expect.poll(() => events(page), { timeout: 20_000 }).toContain('scene:enter:substitution');
 });
 
 test('autoplay 全流程 + 刷新后进度还在', async ({ page }) => {
@@ -92,7 +122,7 @@ interface PlaceScript {
 const panguPlace = panguJson.game.stages[1]!.levelScript as unknown as PlaceScript;
 
 test('盘古：点蛋 → 连点撑天 → 拖光球化身，真实操作通关', async ({ page }) => {
-  await page.goto('/#/play/pangu');
+  await page.goto('/?story=instant#/play/pangu');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
 
@@ -110,8 +140,8 @@ test('盘古：点蛋 → 连点撑天 → 拖光球化身，真实操作通关'
   }
   await expect.poll(() => events(page), { timeout: 20_000 }).toContain('scene:enter:tap');
 
-  // ② 连点 30 次，把天撑到一万八千年
-  for (let i = 0; i < 30; i += 1) {
+  // ② 连点 40 次，把天撑到一万八千年
+  for (let i = 0; i < 40; i += 1) {
     await clickDesign(page, 375, 700);
     await page.waitForTimeout(55);
   }
@@ -188,7 +218,7 @@ async function shootAt(page: Page, target: { x: number; y: number }): Promise<vo
 }
 
 test('后羿射日：真实拖拽射箭，射九留一', async ({ page }) => {
-  await page.goto('/#/play/houyi');
+  await page.goto('/?story=instant#/play/houyi');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
 
@@ -215,7 +245,7 @@ test('后羿射日：真实拖拽射箭，射九留一', async ({ page }) => {
 });
 
 test('后羿射日：把最后一个也射了，天黑之后太阳会自己回来（不会卡死）', async ({ page }) => {
-  await page.goto('/#/play/houyi');
+  await page.goto('/?story=instant#/play/houyi');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
   // 故事页有 350ms 输入锁（防连点跳页），第一下要等锁过去
@@ -247,7 +277,7 @@ interface PlaceScript2 {
 const nuwaPlace = nuwaJson.game.stages[0]!.levelScript as unknown as PlaceScript2;
 
 test('女娲补天：真实拖拽把五色石补进天上的洞', async ({ page }) => {
-  await page.goto('/#/play/nuwa');
+  await page.goto('/?story=instant#/play/nuwa');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
 
@@ -276,7 +306,7 @@ test('女娲补天 autoplay 全流程', async ({ page }) => {
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });
 test('精卫填海：连点投石，一块一块把海填出小岛', async ({ page }) => {
-  await page.goto('/#/play/jingwei');
+  await page.goto('/?story=instant#/play/jingwei');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
   // 故事页有 350ms 输入锁（防连点跳页），第一下要等锁过去
@@ -286,7 +316,7 @@ test('精卫填海：连点投石，一块一块把海填出小岛', async ({ pa
   await clickDesign(page, 375, 900);
   await expect.poll(() => events(page)).toContain('scene:enter:tap');
 
-  await tapDesign(page, 375, 1000, 32, 110);
+  await tapDesign(page, 375, 1000, 44, 110);
   await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
   await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
 });
@@ -298,7 +328,7 @@ test('精卫填海 autoplay 全流程', async ({ page }) => {
 });
 
 test('夸父追日：按住奔跑，追到河渭喝一口再接着追', async ({ page }) => {
-  await page.goto('/#/play/kuafu');
+  await page.goto('/?story=instant#/play/kuafu');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
   // 故事页有 350ms 输入锁（防连点跳页），第一下要等锁过去
@@ -308,8 +338,8 @@ test('夸父追日：按住奔跑，追到河渭喝一口再接着追', async ({
   await clickDesign(page, 375, 900);
   await expect.poll(() => events(page)).toContain('scene:enter:tap');
 
-  // 跑到河渭（45%）：按住约 2.7 秒就到了
-  await holdDesign(page, 375, 1000, 3400);
+  // 跑到河渭（45%）：按住约 3.3 秒就到了（1800 里 ÷ 250 里每秒）
+  await holdDesign(page, 375, 1000, 4200);
 
   // 里程碑必须发事件 —— 否则"暂停有没有生效"只能靠肉眼，把 pause 删掉都不会红。
   // 顺序也很重要：到河边是**暂停**，不该直接通关。
@@ -330,7 +360,7 @@ test('夸父追日 autoplay 全流程（中途喝水不能卡死）', async ({ p
 });
 
 test('愚公移山：连点挖山，智叟与两次代际交接都能接着往下走', async ({ page }) => {
-  await page.goto('/#/play/yugong');
+  await page.goto('/?story=instant#/play/yugong');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
   // 故事页有 350ms 输入锁（防连点跳页），第一下要等锁过去
@@ -364,7 +394,7 @@ test('愚公移山 autoplay 全流程（三个里程碑都不能卡死）', asyn
 // ---------------- 第二辑：神农 / 杞人 / 烽火 ----------------
 
 test('神农尝百草：没尝过就分不了类，会被送回嘴边先尝一口', async ({ page }) => {
-  await page.goto('/#/play/shennong');
+  await page.goto('/?story=instant#/play/shennong');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
   await page.waitForTimeout(450);
@@ -373,25 +403,33 @@ test('神农尝百草：没尝过就分不了类，会被送回嘴边先尝一�
   await clickDesign(page, 375, 900);
   await expect.poll(() => events(page)).toContain('scene:enter:sort');
 
+  const herbs = (loadContent('shennong').game.stages[0]!.levelScript as {
+    items: { id: string; x: number; y: number }[];
+    bins: { id: string; x: number; y: number }[];
+  });
+  const liquorice = herbs.items.find((i) => i.id === 'liquorice')!;
+  const poisonBin = herbs.bins.find((b) => b.id === 'poison')!;
+  const cureBin = herbs.bins.find((b) => b.id === 'cure')!;
+
   // 甘草还没尝过就拖到"有毒别吃"上：不算错，会被送回嘴边尝一口
-  await dragDesign(page, { x: 600, y: 630 }, { x: 605, y: 1128 });
+  await dragDesign(page, { x: liquorice.x, y: liquorice.y }, { x: poisonBin.x, y: poisonBin.y });
   await expect.poll(() => events(page), { timeout: 15_000 }).toContain('beat:enter:taste:liquorice');
   expect(await events(page)).not.toContain('beat:enter:liquorice');
 
   // 等它飞回原位、带着"尝过"的牌子，再拖到"能治病"上才算数
   await page.waitForTimeout(2600);
-  await dragDesign(page, { x: 600, y: 630 }, { x: 375, y: 1128 });
+  await dragDesign(page, { x: liquorice.x, y: liquorice.y }, { x: cureBin.x, y: cureBin.y });
   await expect.poll(() => events(page), { timeout: 15_000 }).toContain('beat:enter:liquorice');
 });
 
-test('神农尝百草 autoplay 全流程（六株草先尝后分）', async ({ page }) => {
+test('神农尝百草 autoplay 全流程（八株草先尝后分）', async ({ page }) => {
   await page.goto('/?autoplay=1#/play/shennong');
   await expect.poll(() => events(page), { timeout: 90_000 }).toContain('level:complete');
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });
 
 test('杞人忧天：把"想明白"送到担忧上，泡泡就破了', async ({ page }) => {
-  await page.goto('/#/play/qiren');
+  await page.goto('/?story=instant#/play/qiren');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
   await page.waitForTimeout(450);
@@ -412,7 +450,11 @@ test('杞人忧天 autoplay 全流程', async ({ page }) => {
 
 test('烽火戏诸侯：三次点火把信用用完，真的来了一个人也没来', async ({ page }) => {
   test.setTimeout(120_000);
-  await page.goto('/#/play/fenghuo');
+  const towers = (loadContent('fenghuo').game.stages[0]!.levelScript as {
+    towers: { x: number; y: number }[];
+  }).towers;
+  const first = towers[0]!;
+  await page.goto('/?story=instant#/play/fenghuo');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
   await page.waitForTimeout(450);
@@ -422,22 +464,22 @@ test('烽火戏诸侯：三次点火把信用用完，真的来了一个人也�
   await expect.poll(() => events(page)).toContain('scene:enter:beacon');
 
   // 第一次：火光传向天边，诸侯赶来，她笑了
-  await clickDesign(page, 250, 840);
+  await clickDesign(page, first.x, first.y);
   await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:relay:1');
   await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:laugh:1');
 
   // 第二、三次：信任一格一格用完（每轮约 6 秒）
   await expect.poll(() => events(page), { timeout: 30_000 }).toContain('beat:enter:ready:1');
-  await clickDesign(page, 250, 840);
+  await clickDesign(page, first.x, first.y);
   await expect.poll(() => events(page), { timeout: 30_000 }).toContain('beat:enter:laugh:2');
   await expect.poll(() => events(page), { timeout: 30_000 }).toContain('beat:enter:ready:2');
-  await clickDesign(page, 250, 840);
+  await clickDesign(page, first.x, first.y);
   await expect.poll(() => events(page), { timeout: 30_000 }).toContain('beat:enter:laugh:3');
   // 信用用完：天边真的起了烟
   await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:smoke');
 
   // 第四次点火是真的 —— 火光还是传了出去，什么也没有回来
-  await clickDesign(page, 250, 840);
+  await clickDesign(page, first.x, first.y);
   await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:relay:4');
   await expect.poll(() => events(page), { timeout: 30_000 }).toContain('beat:enter:empty');
 });
@@ -453,7 +495,7 @@ test('大禹治水：先堵到决口，再划三段河道（真实操作，三�
     segments: { start: { x: number; y: number }; anchors: { x: number; y: number }[]; end: { x: number; y: number } }[];
   };
   test.setTimeout(150_000);
-  await page.goto('/#/play/dayu');
+  await page.goto('/?story=instant#/play/dayu');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
   await page.waitForTimeout(450);
@@ -462,8 +504,8 @@ test('大禹治水：先堵到决口，再划三段河道（真实操作，三�
   await clickDesign(page, 375, 900);
   await expect.poll(() => events(page)).toContain('scene:enter:tap');
 
-  // 堵：点满十下，堤垮，水冲回来，然后进入"疏"
-  await tapDesign(page, 375, 1000, 11, 150);
+  // 堵：点满十四下，堤垮，水冲回来，然后进入"疏"
+  await tapDesign(page, 375, 1000, 15, 150);
   await expect.poll(() => events(page), { timeout: 30_000 }).toContain('scene:enter:trace');
 
   // 疏：一段一段划过去（每一段结束都有"路过家门"的演出）
@@ -492,7 +534,7 @@ test('太公钓鱼：点了诱惑要多等，但永远等得到 —— 等到文
   };
   const bend = level.temptations[0]!;
   test.setTimeout(180_000);
-  await page.goto('/#/play/taigong');
+  await page.goto('/?story=instant#/play/taigong');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
   await page.waitForTimeout(450);
@@ -541,7 +583,7 @@ test('刻舟求剑：刻在船帮上一定捞空，改刻在岸上就捞到了',
   const tree = level.surfaces.find((s) => s.id === 'tree')!;
   test.setTimeout(120_000);
 
-  await page.goto('/#/play/kezhou');
+  await page.goto('/?story=instant#/play/kezhou');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
   await page.waitForTimeout(450);
@@ -584,7 +626,7 @@ test('朝三暮四：挪一格就从发怒变高兴，绳上一直是七颗', as
   const gap = (right.x - left.x) / level.total;
   test.setTimeout(120_000);
 
-  await page.goto('/#/play/zhaosanmusi');
+  await page.goto('/?story=instant#/play/zhaosanmusi');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
   await page.waitForTimeout(450);
@@ -618,16 +660,18 @@ test('朝三暮四 autoplay 全流程（一步一格挪到让猴子高兴）', a
 test('狡兔三窟：一个洞被狐狸守住，挖到三窟才躲得过', async ({ page }) => {
   const level = loadContent('jiaotu').game.stages[0]!.levelScript as {
     spots: { id: string; x: number; y: number }[];
+    digsNeeded: number;
   };
   const dig = async (spot: { x: number; y: number }): Promise<void> => {
-    for (let i = 0; i < 3; i += 1) {
+    // 每个洞挖几铲是难度参数，写死会在调难度时静默失效
+    for (let i = 0; i < level.digsNeeded; i += 1) {
       await clickDesign(page, spot.x, spot.y);
       await page.waitForTimeout(220);
     }
   };
   test.setTimeout(180_000);
 
-  await page.goto('/#/play/jiaotu');
+  await page.goto('/?story=instant#/play/jiaotu');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
   await page.waitForTimeout(450);
@@ -669,7 +713,7 @@ test('百步穿杨：一档一档往后退，五片柳叶全中', async ({ page 
   };
   test.setTimeout(180_000);
 
-  await page.goto('/#/play/yangyouji');
+  await page.goto('/?story=instant#/play/yangyouji');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
   await page.waitForTimeout(450);
@@ -714,7 +758,7 @@ test('庖丁解牛：先砍一刀留下缺口，再顺着缝一块块推出去',
   };
   test.setTimeout(180_000);
 
-  await page.goto('/#/play/paoding');
+  await page.goto('/?story=instant#/play/paoding');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
   await page.waitForTimeout(450);

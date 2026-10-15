@@ -108,7 +108,7 @@
         "template": "tap",
         "levelScript": {
           "mode": "tap",
-          "targetValue": 1800,
+          "targetValue": 2400,
           "stepValue": 60,
           "unit": "块",
           "resistance": 0.2,

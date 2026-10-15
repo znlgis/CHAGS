@@ -131,7 +131,7 @@
             }
           ],
           "initialLeft": 3,
-          "minPerSide": 1,
+          "minPerSide": 2,
           "audience": {
             "watchedBinId": "morning",
             "happyAt": 4,

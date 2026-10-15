@@ -20,7 +20,7 @@ const BOAT = { x: SUB.boatX, y: 600 };
 
 test('capture screenshots', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/');
+  await page.goto('/?story=instant');
   await page.waitForSelector('[data-testid="hall"]');
   await page.screenshot({ path: 'docs/screenshots/01-hall.png' });
 
@@ -53,6 +53,8 @@ test('capture screenshots', async ({ page }) => {
     await dragDesign(page, SUB_PILES[0], BOAT);
     await page.waitForTimeout(120);
   }
+  // 六块大石还差一点：再搭一块中石才是大象的重量（3300）
+  await dragDesign(page, SUB_PILES[1], BOAT);
   await page.waitForTimeout(300);
   await page.screenshot({ path: 'docs/screenshots/07-matched.png' });
 
@@ -75,9 +77,23 @@ interface PlaceScript2 {
 
 const panguPlaceScript = panguJson.game.stages[1]!.levelScript as unknown as PlaceScript2;
 
+test('capture story gate screenshots', async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 932 });
+  // 这一条刻意**不带** ?story=instant：要拍的就是"听完才能继续"那一刻的样子
+  await page.goto('/#/play/caochong-elephant');
+  await page.waitForSelector('canvas');
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/89-story-listening.png' });
+
+  // 提前点一下：不翻页，只出现"先听完这个故事"
+  await page.mouse.click(215, 500);
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: 'docs/screenshots/90-story-keep-listening.png' });
+});
+
 test('capture pangu screenshots', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/');
+  await page.goto('/?story=instant');
   await page.waitForSelector('[data-testid="hall"]');
   await page.screenshot({ path: 'docs/screenshots/11-hall-two.png' });
 
@@ -107,14 +123,14 @@ test('capture pangu screenshots', async ({ page }) => {
   await page.waitForTimeout(1400);
   await page.screenshot({ path: 'docs/screenshots/16-push-start.png' });
 
-  for (let i = 0; i < 24; i += 1) {
+  for (let i = 0; i < 30; i += 1) {
     await clickDesign(page, 375, 700);
     await page.waitForTimeout(40);
   }
   await page.waitForTimeout(200);
   await page.screenshot({ path: 'docs/screenshots/17-sky-high.png' });
 
-  for (let i = 0; i < 6; i += 1) {
+  for (let i = 0; i < 12; i += 1) {
     await clickDesign(page, 375, 700);
     await page.waitForTimeout(40);
   }
@@ -144,7 +160,7 @@ test('capture pangu screenshots', async ({ page }) => {
 });
 test('capture english screenshots', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=en');
+  await page.goto('/?lang=en&story=instant');
   await page.waitForSelector('[data-testid="hall"]');
   await page.screenshot({ path: 'docs/screenshots/23-en-hall.png' });
 
@@ -164,7 +180,7 @@ test('capture english screenshots', async ({ page }) => {
   await page.waitForTimeout(1500);
   await page.screenshot({ path: 'docs/screenshots/25-en-push.png' });
 
-  for (let i = 0; i < 30; i += 1) {
+  for (let i = 0; i < 40; i += 1) {
     await clickDesign(page, 375, 700);
     await page.waitForTimeout(45);
   }
@@ -189,7 +205,7 @@ const houyiScript = loadContent('houyi').game.stages[0]!.levelScript as unknown 
 
 test('capture nuwa screenshots', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/nuwa');
+  await page.goto('/?lang=zh-CN&story=instant#/play/nuwa');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(800);
   await page.screenshot({ path: 'docs/screenshots/30-nuwa-story.png' });
@@ -217,7 +233,7 @@ test('capture nuwa screenshots', async ({ page }) => {
 
 test('capture houyi screenshots', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/houyi');
+  await page.goto('/?lang=zh-CN&story=instant#/play/houyi');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(800);
   await page.screenshot({ path: 'docs/screenshots/34-houyi-story.png' });
@@ -246,7 +262,7 @@ test('capture houyi screenshots', async ({ page }) => {
 });
 test('capture jingwei screenshots', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/jingwei');
+  await page.goto('/?lang=zh-CN&story=instant#/play/jingwei');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(800);
   await page.screenshot({ path: 'docs/screenshots/40-jingwei-story.png' });
@@ -256,18 +272,18 @@ test('capture jingwei screenshots', async ({ page }) => {
   await page.waitForTimeout(700);
   await page.screenshot({ path: 'docs/screenshots/41-jingwei-start.png' });
 
-  await tapDesign(page, 375, 1000, 16, 110);
+  await tapDesign(page, 375, 1000, 20, 110);
   await page.waitForTimeout(400);
   await page.screenshot({ path: 'docs/screenshots/42-jingwei-half.png' });
 
-  await tapDesign(page, 375, 1000, 18, 110);
+  await tapDesign(page, 375, 1000, 24, 110);
   await page.waitForTimeout(600);
   await page.screenshot({ path: 'docs/screenshots/43-jingwei-island.png' });
 });
 
 test('capture kuafu screenshots', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/kuafu');
+  await page.goto('/?lang=zh-CN&story=instant#/play/kuafu');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(800);
   await page.screenshot({ path: 'docs/screenshots/44-kuafu-story.png' });
@@ -277,8 +293,8 @@ test('capture kuafu screenshots', async ({ page }) => {
   await page.waitForTimeout(700);
   await page.screenshot({ path: 'docs/screenshots/45-kuafu-running.png' });
 
-  // 跑到河渭，喝水那一刻
-  await holdDesign(page, 375, 1000, 3300);
+  // 跑到河渭，喝水那一刻（1800 里 ÷ 250 里每秒，河渭在 45%）
+  await holdDesign(page, 375, 1000, 3600);
   await page.waitForTimeout(500);
   await page.screenshot({ path: 'docs/screenshots/46-kuafu-drinking.png' });
 
@@ -298,7 +314,7 @@ test('capture shennong screenshots', async ({ page }) => {
   const cure = level.bins.find((b) => b.id === 'cure')!;
 
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/shennong');
+  await page.goto('/?lang=zh-CN&story=instant#/play/shennong');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(900);
   await page.screenshot({ path: 'docs/screenshots/53-shennong-story.png' });
@@ -327,7 +343,7 @@ test('capture dayu screenshots', async ({ page }) => {
   };
 
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/dayu');
+  await page.goto('/?lang=zh-CN&story=instant#/play/dayu');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(900);
   await page.screenshot({ path: 'docs/screenshots/57-dayu-story.png' });
@@ -336,13 +352,13 @@ test('capture dayu screenshots', async ({ page }) => {
   await clickDesign(page, 375, 900);
   await page.waitForTimeout(800);
 
-  // 堵：一筐一筐往上筑，水也跟着涨
+  // 堵：一筐一筐往上筑，水也跟着涨（十四筐才漫过堤顶）
   await tapDesign(page, 375, 1000, 6, 140);
   await page.waitForTimeout(400);
   await page.screenshot({ path: 'docs/screenshots/58-dayu-dike.png' });
 
   // 再点几下：堤垮，水冲回来
-  await tapDesign(page, 375, 1000, 5, 140);
+  await tapDesign(page, 375, 1000, 9, 140);
   await page.waitForTimeout(1600);
   await page.screenshot({ path: 'docs/screenshots/59-dayu-breach.png' });
   await page.waitForTimeout(2600);
@@ -368,7 +384,7 @@ test('capture taigong screenshots', async ({ page }) => {
   const bend = level.temptations[0]!;
 
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/taigong');
+  await page.goto('/?lang=zh-CN&story=instant#/play/taigong');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(900);
   await page.screenshot({ path: 'docs/screenshots/61-taigong-story.png' });
@@ -396,7 +412,7 @@ test('capture fenghuo screenshots', async ({ page }) => {
   const first = level.towers[0]!;
 
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/fenghuo');
+  await page.goto('/?lang=zh-CN&story=instant#/play/fenghuo');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(900);
   await page.screenshot({ path: 'docs/screenshots/65-fenghuo-story.png' });
@@ -435,7 +451,7 @@ test('capture qiren screenshots', async ({ page }) => {
   const slot = level.slots.find((s) => s.id === orb.slotId)!;
 
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/qiren');
+  await page.goto('/?lang=zh-CN&story=instant#/play/qiren');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(900);
   await page.screenshot({ path: 'docs/screenshots/70-qiren-story.png' });
@@ -461,7 +477,7 @@ test('capture qiren screenshots', async ({ page }) => {
 
 test('capture yugong screenshots', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/yugong');
+  await page.goto('/?lang=zh-CN&story=instant#/play/yugong');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(800);
   await page.screenshot({ path: 'docs/screenshots/48-yugong-story.png' });
@@ -471,13 +487,13 @@ test('capture yugong screenshots', async ({ page }) => {
   await page.waitForTimeout(700);
   await page.screenshot({ path: 'docs/screenshots/49-yugong-mountains.png' });
 
-  // 挖到智叟出现：里程碑在 30%，3000 担的 30% 正好是第 9 下
-  await tapDesign(page, 375, 1000, 9, 130);
+  // 挖到智叟出现：里程碑在 30%，3000 担的 30% 是第 12 下（每下 75 担）
+  await tapDesign(page, 375, 1000, 14, 130);
   await page.waitForTimeout(500);
   await page.screenshot({ path: 'docs/screenshots/50-yugong-zhisou.png' });
 
   // 继续挖到第一次交接（60%）
-  await tapDesign(page, 375, 1000, 12, 130);
+  await tapDesign(page, 375, 1000, 14, 130);
   await page.waitForTimeout(500);
   await page.screenshot({ path: 'docs/screenshots/51-yugong-handover.png' });
 
@@ -495,7 +511,7 @@ test('capture kezhou screenshots', async ({ page }) => {
   const tree = level.surfaces.find((s) => s.id === 'tree')!;
 
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/kezhou');
+  await page.goto('/?lang=zh-CN&story=instant#/play/kezhou');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(900);
   await page.screenshot({ path: 'docs/screenshots/74-kezhou-story.png' });
@@ -526,7 +542,7 @@ test('capture zhaosanmusi screenshots', async ({ page }) => {
   const divider = (left: number) => ({ x: level.bins[0]!.x + gap * left, y: level.bins[0]!.y });
 
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/zhaosanmusi');
+  await page.goto('/?lang=zh-CN&story=instant#/play/zhaosanmusi');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(900);
   await page.screenshot({ path: 'docs/screenshots/77-zhaosanmusi-story.png' });
@@ -554,9 +570,11 @@ test('capture zhaosanmusi screenshots', async ({ page }) => {
 test('capture jiaotu screenshots', async ({ page }) => {
   const level = loadContent('jiaotu').game.stages[0]!.levelScript as {
     spots: { x: number; y: number }[];
+    digsNeeded: number;
   };
   const dig = async (spot: { x: number; y: number }): Promise<void> => {
-    for (let i = 0; i < 3; i += 1) {
+    // 每个洞挖几铲是难度参数，写死会在调难度时静默失效
+    for (let i = 0; i < level.digsNeeded; i += 1) {
       await clickDesign(page, spot.x, spot.y);
       await page.waitForTimeout(220);
     }
@@ -569,7 +587,7 @@ test('capture jiaotu screenshots', async ({ page }) => {
   };
 
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/jiaotu');
+  await page.goto('/?lang=zh-CN&story=instant#/play/jiaotu');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(900);
   await page.screenshot({ path: 'docs/screenshots/80-jiaotu-story.png' });
@@ -610,7 +628,7 @@ test('capture yangyouji screenshots', async ({ page }) => {
   };
 
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/yangyouji');
+  await page.goto('/?lang=zh-CN&story=instant#/play/yangyouji');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(900);
   await page.screenshot({ path: 'docs/screenshots/83-yangyouji-story.png' });
@@ -657,7 +675,7 @@ test('capture paoding screenshots', async ({ page }) => {
   };
 
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/?lang=zh-CN#/play/paoding');
+  await page.goto('/?lang=zh-CN&story=instant#/play/paoding');
   await page.waitForSelector('canvas');
   await page.waitForTimeout(900);
   await page.screenshot({ path: 'docs/screenshots/86-paoding-story.png' });

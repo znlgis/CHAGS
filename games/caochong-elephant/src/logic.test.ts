@@ -9,7 +9,7 @@ describe('曹冲称象 · 关卡数据', () => {
   it('内容里的关卡脚本能通过模板 schema', () => {
     expect(raw).toBeTruthy();
     const level = substitutionLevel(raw!);
-    expect(level.heavy.weight).toBe(3000);
+    expect(level.heavy.weight).toBe(3300);
     expect(level.capacity).toBe(3600);
     expect(level.stones.length).toBe(3);
   });

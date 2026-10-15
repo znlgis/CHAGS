@@ -5,9 +5,13 @@ import { sortLevel } from './logic';
 describe('神农尝百草 · 关卡数据', () => {
   const level = sortLevel(getAllusion('shennong')!);
 
-  it('三块木牍 + 六株草，一块不多一块不少', () => {
+  it('三块木牍 + 八株草，一块不多一块不少', () => {
     expect(level.bins.length).toBe(3);
-    expect(level.items.length).toBe(6);
+    expect(level.items.length).toBe(8);
+    // 每一类都得有：尝过之后，三块木牍上都要有东西
+    for (const bin of level.bins) {
+      expect(level.items.filter((i) => i.binId === bin.id).length).toBeGreaterThanOrEqual(2);
+    }
   });
 
   it('每块木牍都有东西可放 —— 不然孩子会盯着一块空木牍发呆', () => {

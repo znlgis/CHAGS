@@ -97,7 +97,7 @@ export function createSortScene(ctx: GameContext, cfg: SortConfig): Phaser.Types
     private tick(delta: number): void {
       if (this.finished || this.busy) return;
       this.idleMs += delta;
-      if (this.idleMs < 7000) return;
+      if (this.idleMs < 8500) return;
       this.idleMs = 0;
       this.showHint(cfg.level.hint);
       const next = this.cfgNextItem();

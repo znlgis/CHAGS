@@ -14,9 +14,12 @@ export function readDebugOptions(): DebugOptions | undefined {
   const params = new URLSearchParams(window.location.search);
   const autoplay = params.get('autoplay') === '1';
   const seed = params.get('seed');
-  if (!autoplay && !seed) return undefined;
+  // ?story=instant：截图巡检专用，跳过"听完才能继续"的等待（玩家界面上没有这个开关）
+  const storyInstant = params.get('story') === 'instant';
+  if (!autoplay && !seed && !storyInstant) return undefined;
   const options: DebugOptions = {};
   if (autoplay) options.autoplay = true;
+  if (storyInstant) options.storyInstant = true;
   if (seed !== null && seed.length > 0) options.seed = seed;
   return options;
 }
@@ -29,6 +32,7 @@ function detailOf<K extends keyof GameEventMap>(
   if (type === 'scene:enter') return (payload as GameEventMap['scene:enter']).scene;
   if (type === 'choice:made') return (payload as GameEventMap['choice:made']).choiceId;
   if (type === 'beat:enter') return (payload as GameEventMap['beat:enter']).beatId;
+  if (type === 'story:ready') return (payload as GameEventMap['story:ready']).beatId;
   return undefined;
 }
 

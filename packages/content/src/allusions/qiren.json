@@ -118,28 +118,28 @@
               "x": 200,
               "y": 245,
               "kind": "sky",
-              "radius": 82
+              "radius": 70
             },
             {
               "id": "slot-ground",
               "x": 550,
               "y": 245,
               "kind": "ground",
-              "radius": 82
+              "radius": 70
             },
             {
               "id": "slot-suns",
               "x": 200,
               "y": 530,
               "kind": "suns",
-              "radius": 82
+              "radius": 70
             },
             {
               "id": "slot-stars",
               "x": 550,
               "y": 530,
               "kind": "stars",
-              "radius": 82
+              "radius": 70
             }
           ],
           "orbs": [

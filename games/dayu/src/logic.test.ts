@@ -17,12 +17,12 @@ describe('大禹治水 · 关卡数据', () => {
     expect(content.game.template).toBe('trace');
   });
 
-  it('堵：十筐土正好把堤点满，一筐都不多', () => {
+  it('堵：十四筐土正好把堤点满，一筐都不多', () => {
     expect(tap.mode).toBe('tap');
     expect(tap.unit).toBe('筐');
-    expect(tap.targetValue).toBe(10);
+    expect(tap.targetValue).toBe(14);
     expect(Number.isInteger(tap.targetValue / tap.stepValue)).toBe(true);
-    expect(tap.targetValue / tap.stepValue).toBe(10);
+    expect(tap.targetValue / tap.stepValue).toBe(14);
   });
 
   it('堵：筑堤是"使点劲"的手感，提示不超过 24 字', () => {
@@ -36,9 +36,9 @@ describe('大禹治水 · 关卡数据', () => {
     expect(trace.segments.map((s) => s.id)).toEqual(['ditch', 'mountain', 'sea']);
   });
 
-  it('疏：每段三个锚点 + 一个终点，容差够手指粗的小朋友', () => {
+  it('疏：每段四个锚点 + 一个终点，容差够手指粗的小朋友', () => {
     for (const segment of trace.segments) {
-      expect(segment.anchors.length, segment.id + ' 的锚点数').toBe(3);
+      expect(segment.anchors.length, segment.id + ' 的锚点数').toBe(4);
       for (const anchor of segment.anchors) expect(anchor.radius).toBeGreaterThanOrEqual(60);
       expect(segment.end.radius).toBeGreaterThanOrEqual(60);
     }

@@ -11,7 +11,11 @@ export const ARCHER_X0 = 380;
 export const ARCHER_STEP = 72;
 /** 木牌（"再退十步"）的位置 —— 关卡数据里的 ladder.advance 必须与它一致 */
 export const ADVANCE = { x: 375, y: 1244, radius: 90 };
-/** 五片柳叶：越远越小，也摆得开（不然远的那几片会挤成一团） */
+/**
+ * 五片柳叶：越远越小，也摆得开（不然远的那几片会挤成一团）。
+ * LEAF_RADII 同时用于**画叶子**和 schema 里的判定半径 ——
+ * 两边必须一起改，否则会"画得比判定大"，孩子点在叶子上反而不算中。
+ */
 export const LEAVES = [
   { x: 352, y: 430 },
   { x: 280, y: 402 },
@@ -19,7 +23,7 @@ export const LEAVES = [
   { x: 152, y: 352 },
   { x: 96, y: 330 },
 ] as const;
-export const LEAF_RADII = [44, 36, 30, 24, 19] as const;
+export const LEAF_RADII = [36, 30, 25, 20, 15] as const;
 
 export function archerAt(rungIndex: number): { x: number; y: number } {
   return { x: ARCHER_X0 + rungIndex * ARCHER_STEP, y: ARCHER_Y };

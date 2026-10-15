@@ -29,7 +29,7 @@ const CLOUD = 0x3c4470;
 const SOIL = 0x9a6a3c;
 
 /** 泡泡半径：与关卡数据里的 slot.radius 一致 */
-const BUBBLE = 82;
+const BUBBLE = 70;
 
 /** 四个泡泡在天空区的位置：与 allusions/qiren.json 的 slots 一一对应 */
 const SLOT_SPOTS: Record<string, { x: number; y: number }> = {

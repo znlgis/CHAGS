@@ -144,7 +144,7 @@ for (const locale of LOCALES) {
   test('audit ' + locale + ' — caochong', async ({ page }) => {
     test.setTimeout(180_000);
     await page.setViewportSize({ width: 430, height: 932 });
-    await page.goto('/?lang=' + locale + '#/play/caochong-elephant');
+    await page.goto('/?lang=' + locale + '&story=instant#/play/caochong-elephant');
     await page.waitForSelector('canvas');
     await page.waitForTimeout(800);
     await page.screenshot({ path: out + '/01-story.png' });
@@ -180,7 +180,7 @@ for (const locale of LOCALES) {
   test('audit ' + locale + ' — pangu', async ({ page }) => {
     test.setTimeout(180_000);
     await page.setViewportSize({ width: 430, height: 932 });
-    await page.goto('/?lang=' + locale + '#/play/pangu');
+    await page.goto('/?lang=' + locale + '&story=instant#/play/pangu');
     await page.waitForSelector('canvas');
     await page.waitForTimeout(800);
     await page.screenshot({ path: out + '/09-story.png' });
@@ -199,7 +199,7 @@ for (const locale of LOCALES) {
     await page.waitForTimeout(1500);
     await page.screenshot({ path: out + '/12-grow-start.png' });
 
-    for (let i = 0; i < 30; i += 1) {
+    for (let i = 0; i < 40; i += 1) {
       await clickDesign(page, 375, 700);
       await page.waitForTimeout(45);
     }
@@ -238,7 +238,7 @@ for (const locale of LOCALES) {
     const open = (id: string, autoplay = false) => {
       nav += 1;
       return page.goto(
-        '/?lang=' + locale + '&r=' + nav + (autoplay ? '&autoplay=1' : '') + '#/play/' + id,
+        '/?lang=' + locale + '&r=' + nav + (autoplay ? '&autoplay=1' : '&story=instant') + '#/play/' + id,
       );
     };
 
@@ -279,8 +279,8 @@ for (const locale of LOCALES) {
         );
       }
       if (game.id === 'jiaotu') {
-        const level = levelOf('jiaotu') as { spots: Point[] };
-        for (let i = 0; i < 3; i += 1) {
+        const level = levelOf('jiaotu') as { spots: Point[]; digsNeeded: number };
+        for (let i = 0; i < level.digsNeeded; i += 1) {
           await clickDesign(page, level.spots[0]!.x, level.spots[0]!.y);
           await page.waitForTimeout(180);
         }
@@ -352,7 +352,7 @@ for (const locale of LOCALES) {
         const level = levelOf('dayu', 1) as {
           segments: { start: Point; anchors: Point[]; end: Point }[];
         };
-        for (let i = 0; i < 12; i += 1) {
+        for (let i = 0; i < 15; i += 1) {
           await clickDesign(page, 375, 1000);
           await page.waitForTimeout(140);
         }
@@ -468,8 +468,9 @@ for (const locale of LOCALES) {
           await page.waitForTimeout(240);
         }
       } else if (game.hold) {
-        await holdDesign(page, 375, 1000, 3400);
-        await holdDesign(page, 375, 1000, 5200);
+        // 河渭在 45%（1800 里 ÷ 250 里每秒 ≈ 3.3 秒），喝完再接着追
+        await holdDesign(page, 375, 1000, 4200);
+        await holdDesign(page, 375, 1000, 5600);
       } else {
         // 连点类：点一下查一次，卡片一出现就立刻停手
         for (let i = 0; i < 80; i += 1) {

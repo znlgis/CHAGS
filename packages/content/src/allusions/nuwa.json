@@ -112,35 +112,35 @@
               "x": 165,
               "y": 330,
               "kind": "round",
-              "radius": 74
+              "radius": 62
             },
             {
               "id": "hole-square",
               "x": 395,
               "y": 250,
               "kind": "square",
-              "radius": 74
+              "radius": 62
             },
             {
               "id": "hole-triangle",
               "x": 615,
               "y": 330,
               "kind": "triangle",
-              "radius": 74
+              "radius": 62
             },
             {
               "id": "hole-diamond",
               "x": 255,
               "y": 530,
               "kind": "diamond",
-              "radius": 74
+              "radius": 62
             },
             {
               "id": "hole-star",
               "x": 535,
               "y": 530,
               "kind": "star",
-              "radius": 74
+              "radius": 62
             }
           ],
           "orbs": [

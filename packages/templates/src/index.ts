@@ -5,6 +5,7 @@ export * from './substitution.logic';
 // clamp01 / isComplete / progress 在几个模板里同名，这里显式改名再导出
 export { comboLevel, easedProgress, isTapComplete, pendingMilestones, progressFor, tapsNeeded } from './tap.logic';
 export { findSlotAt, isCorrect, isPlaceComplete, placeProgress, slotFor } from './place.logic';
+export * from './story.logic';
 export * from './story';
 export * from './substitution';
 export * from './tap';

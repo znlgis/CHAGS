@@ -108,7 +108,7 @@
         "levelScript": {
           "mode": "hold",
           "targetValue": 1800,
-          "stepValue": 300,
+          "stepValue": 250,
           "unit": "里",
           "resistance": 0.25,
           "hint": "按住，跑起来",

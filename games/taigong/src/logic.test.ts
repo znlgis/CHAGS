@@ -13,7 +13,7 @@ const raw = getAllusion('taigong') ?? AllusionSchema.parse(rawTaigong);
 const level = waitLevel(raw);
 
 describe('太公钓鱼 · 关卡数据', () => {
-  it('等 45 秒：不短到没等过，也不长到坐不住', () => {
+  it('等将近一分钟：不短到没等过，也不长到坐不住', () => {
     expect(level.durationMs).toBeGreaterThanOrEqual(30_000);
     expect(level.durationMs).toBeLessThanOrEqual(90_000);
   });

@@ -142,7 +142,7 @@
           "probe": {
             "x": 375,
             "y": 330,
-            "radius": 95
+            "radius": 82
           },
           "items": [
             {
@@ -150,7 +150,7 @@
               "binId": "food",
               "kind": "grain",
               "tastedKind": "food",
-              "x": 150,
+              "x": 140,
               "y": 630,
               "speak": "谷穗，能吃。"
             },
@@ -159,16 +159,25 @@
               "binId": "food",
               "kind": "berry",
               "tastedKind": "food",
-              "x": 375,
+              "x": 295,
               "y": 630,
               "speak": "野果，能吃。"
+            },
+            {
+              "id": "tuber",
+              "binId": "food",
+              "kind": "tuber",
+              "tastedKind": "food",
+              "x": 450,
+              "y": 630,
+              "speak": "野薯，能填肚子。"
             },
             {
               "id": "liquorice",
               "binId": "cure",
               "kind": "liquorice",
               "tastedKind": "cure",
-              "x": 600,
+              "x": 605,
               "y": 630,
               "speak": "甘草，甜的，能止咳。"
             },
@@ -177,16 +186,25 @@
               "binId": "cure",
               "kind": "ginger",
               "tastedKind": "cure",
-              "x": 150,
+              "x": 140,
               "y": 800,
               "speak": "生姜，辣的，能驱寒。"
+            },
+            {
+              "id": "bark",
+              "binId": "cure",
+              "kind": "bark",
+              "tastedKind": "cure",
+              "x": 295,
+              "y": 800,
+              "speak": "桂皮，煮水能暖身子。"
             },
             {
               "id": "mushroom",
               "binId": "poison",
               "kind": "mushroom",
               "tastedKind": "poison",
-              "x": 375,
+              "x": 450,
               "y": 800,
               "speak": "毒蘑菇，不能吃。"
             },
@@ -195,7 +213,7 @@
               "binId": "poison",
               "kind": "blueberry",
               "tastedKind": "poison",
-              "x": 600,
+              "x": 605,
               "y": 800,
               "speak": "不认识的蓝果子，不能吃。"
             }

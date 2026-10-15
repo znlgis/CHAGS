@@ -169,7 +169,7 @@
               "kind": "sun"
             }
           ],
-          "hitRadius": 64,
+          "hitRadius": 56,
           "arrowSpeed": 1500,
           "goalCount": 9,
           "hint": "拖出去，松手射箭"

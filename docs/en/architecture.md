@@ -131,8 +131,10 @@ DOM plus Tailwind is far faster to build than drawing lists, scrolling and forms
 - Audio goes through `PlatformServices.audio`, never directly through Phaser's sound system.
 - **iOS and WeChat require a user gesture to unlock audio** — the shell does it once on the first tap.
 - Narration is split per story beat; generated with TTS first, real voice-over later for key idioms.
-- `AudioBus.speak(text, locale)` selects a `zh-CN` or `en-US` voice; recorded audio would follow the
-  same locale switch (`audio/<locale>/<id>.m4a`).
+- `AudioBus.speak(text, locale)` selects a `zh-CN` or `en-US` voice and returns a `SpeechHandle` whose
+  `done` promise resolves as `ended` / `unavailable` — the story scene uses that to enforce
+  "listen to the beat before you continue"; recorded audio would follow the same locale switch
+  (`audio/<locale>/<id>.m4a`).
 - **Stage 0 approach (zero files):** TTS for narration, WebAudio oscillators for effects. Interfaces unchanged when real
   audio arrives.
 
@@ -291,7 +293,7 @@ Pangu is all three at once:
 
 ```
 story (two opening beats) → chaos (bespoke: tap the egg, chaos bursts)
-                          → grow  (hold the sky: 30 taps, 18,000 years)
+                          → grow  (hold the sky: 40 taps, 18,000 years)
                           → place (six orbs return to sun, moon, rivers, plants)
                           → reward (story card)
 ```
@@ -357,7 +359,7 @@ a design doc.**
 
 | Layer | Mechanism | Implementation |
 |---|---|---|
-| L1 | **Immersion** — do the story, don't read it | `story` beats with narration; the child plays the role |
+| L1 | **Immersion** — do the story, don't read it (it must be heard first) | `story` beats with narration; `story:ready` fires only when the beat is finished; the child plays the role |
 | L2 | **Key discovery** — work it out yourself | Embodied in the interaction (drag, tap, push); `keyMoment` supplies the reveal line and review questions |
 | L3 | **Multi-channel encoding** — see, hear, do, say | Art, speech, dragging, spoken lines on placement |
 | L4 | **Collection and structure** — story cards, timeline scroll | `card:unlocked`; cards placed by `yearApprox` on a scroll from myth to late imperial China |
@@ -497,7 +499,7 @@ the 40% custom half of the 60/40 rule.
 **Three design decisions**
 
 1. **Persistence becomes sore fingers.** "The sky rises a zhang a day, the earth thickens a zhang a day, Pangu grows a
-   zhang a day" turns into "each tap raises the sky one zhang and stretches the figure on screen", 30 taps for 18,000 years.
+   zhang a day" turns into "each tap raises the sky one zhang and stretches the figure on screen", 40 taps for 18,000 years.
    Pitch rises with height, so progress is audible.
 2. **Failure-free placement.** Pick up an orb and its destination glows. Shape plus hint, no text; each arrival is
    **spoken aloud** ("his left eye became the sun") — heard, not read.
@@ -513,7 +515,7 @@ a 60.6 KB gzip shell and 3 KB / 7 KB game chunks.
 |---|---|---|
 | **UI strings** | New `@chags/i18n`: one flat key→text catalog per language | Generic labels don't belong in story JSON |
 | **Story content** | Chinese stays in `allusions/*.json`; translations live in `i18n/en/*.json` as structural mirrors | Keeps source readable; an untranslated story still runs |
-| **Narration** | `AudioBus.speak(text, locale)`; TTS picks a `zh-CN`/`en-US` voice | Recorded audio will follow the same locale switch |
+| **Narration** | `AudioBus.speak(text, locale)` returns a `SpeechHandle`; TTS picks a `zh-CN`/`en-US` voice | Recorded audio will follow the same locale switch; the story gate needs `done` |
 | **Docs** | `README.md` / `README.en.md`; `docs/` and `docs/en/` | Each language reads as its own document |
 
 **Key design points**

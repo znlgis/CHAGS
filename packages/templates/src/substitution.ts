@@ -6,7 +6,7 @@ import {
 } from '@chags/phaser-kit';
 import type { DragController } from '@chags/phaser-kit';
 import { SCENE_KEYS, SUB, SUB_BOAT_DROP, SUB_PILES, SUB_SCALE_DROP } from './layout';
-import { depthRatio, judge, markRatio } from './substitution.logic';
+import { depthRatio, judge, markRatio, nextStoneFor } from './substitution.logic';
 import type { SubstitutionLevel, StoneDef } from './schemas';
 import type { SessionState } from './session';
 
@@ -641,13 +641,13 @@ export function createSubstitutionScene(
         node.setPosition(SUB.boatX, SUB.waterTop - 120);
         this.boardHeavy();
       });
+      // 一块一块挑着搬：只搬最大的那种会在偏轻/偏重之间来回跳（见 nextStoneFor）
       this.time.delayedCall(4200, () => {
-        const biggest = [...cfg.level.stones].sort((a, b) => b.value - a.value)[0];
-        if (!biggest) return;
         for (let i = 0; i < 60; i += 1) {
           this.time.delayedCall(i * 30, () => {
             if (this.stage !== 'substitute' || this.finished) return;
-            this.addStoneToBoat(biggest);
+            const stone = nextStoneFor(this.total(), cfg.level);
+            if (stone) this.addStoneToBoat(stone);
           });
         }
       });

@@ -6,10 +6,10 @@ import { tapLevel } from './logic';
 describe('精卫填海 · 关卡数据', () => {
   const raw = getAllusion('jingwei');
 
-  it('连点模式，三十下填满', () => {
+  it('连点模式，四十下填满', () => {
     const level = tapLevel(raw!);
     expect(level.mode).toBe('tap');
-    expect(tapsNeeded(level)).toBe(30);
+    expect(tapsNeeded(level)).toBe(40);
   });
 
   it('计数单位是"块" —— 一次一块，正是这个典故的分量所在', () => {

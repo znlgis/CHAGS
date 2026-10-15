@@ -38,11 +38,13 @@ describe('庖丁解牛 · 关卡数据', () => {
     expect(nickCount(1, 'wrong-way')).toBe(2);
   });
 
-  it('最后两块不给提示，但还是推得开', () => {
-    expect(level.blindTail).toBe(2);
-    const opened = level.pieces.slice(0, level.pieces.length - 2).map((p) => p.id);
+  it('最后三块不给提示，但还是推得开', () => {
+    expect(level.blindTail).toBe(3);
+    const opened = level.pieces.slice(0, level.pieces.length - level.blindTail).map((p) => p.id);
     expect(isHintless(level, opened)).toBe(true);
-    expect(isButcherComplete(level, [...opened, ...level.pieces.slice(-2).map((p) => p.id)])).toBe(true);
+    // 再推掉一块，剩下的仍然不给提示
+    expect(isHintless(level, [...opened, level.pieces[opened.length]!.id])).toBe(true);
+    expect(isButcherComplete(level, level.pieces.map((p) => p.id))).toBe(true);
   });
 });
 

@@ -27,7 +27,9 @@ describe('刻舟求剑 · 关卡数据', () => {
   it('船从剑落水的地方出发，漂到下游的石头边上', () => {
     const boat = level.surfaces.find((s) => s.id === 'boat')!;
     expect(surfaceWorldX(boat, 0)).toBe(SWORD_X);
-    expect(surfaceWorldX(boat, level.driftDistance)).toBe(ROCK_X - 40);
+    // 终点落在岸边那块石头附近（±60px）：孩子一眼能看出"船已经漂到下游了"。
+    // 不写死具体像素 —— 漂多远是难度参数，会随难度调整。
+    expect(Math.abs(surfaceWorldX(boat, level.driftDistance) - ROCK_X)).toBeLessThanOrEqual(60);
   });
 
   it('漂走的距离远大于捞剑的容差 —— 刻在船上一定捞空', () => {

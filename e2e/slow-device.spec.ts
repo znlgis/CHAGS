@@ -17,7 +17,7 @@ test.describe('慢设备', () => {
     const cdp = await context.newCDPSession(page);
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 6 });
 
-    await page.goto('/#/play/kuafu');
+    await page.goto('/?story=instant#/play/kuafu');
     await expect(page.locator('canvas')).toBeVisible();
     await expect.poll(() => events(page)).toContain('session:start');
 

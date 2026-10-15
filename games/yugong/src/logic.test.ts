@@ -5,10 +5,10 @@ import { tapLevel } from './logic';
 describe('愚公移山 · 关卡数据', () => {
   const raw = getAllusion('yugong');
 
-  it('连点挖山，三十担挖平', () => {
+  it('连点挖山，四十担挖平', () => {
     const level = tapLevel(raw!);
     expect(level.mode).toBe('tap');
-    expect(level.targetValue / level.stepValue).toBe(30);
+    expect(level.targetValue / level.stepValue).toBe(40);
   });
 
   it('三个里程碑：智叟 + 两次代际交接', () => {

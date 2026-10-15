@@ -10,9 +10,9 @@ describe('夸父追日 · 关卡数据', () => {
     expect(level.mode).toBe('hold');
   });
 
-  it('按住六秒能追上（1800 里 ÷ 300 里每秒）', () => {
+  it('按住七秒多才追上（1800 里 ÷ 250 里每秒）', () => {
     const level = tapLevel(raw!);
-    expect(level.targetValue / level.stepValue).toBe(6);
+    expect(level.targetValue / level.stepValue).toBeCloseTo(7.2, 6);
   });
 
   it('中途有河渭喝水的里程碑', () => {

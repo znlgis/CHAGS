@@ -109,7 +109,7 @@
         "levelScript": {
           "mode": "tap",
           "targetValue": 3000,
-          "stepValue": 100,
+          "stepValue": 75,
           "unit": "担",
           "resistance": 0.25,
           "hint": "点一点，接着挖",

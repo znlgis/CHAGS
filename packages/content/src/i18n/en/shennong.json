@@ -102,10 +102,16 @@
               "speak": "A wild berry. You can eat it."
             },
             {
+              "speak": "A wild tuber. It fills your belly."
+            },
+            {
               "speak": "Liquorice. Sweet — it eases a cough."
             },
             {
               "speak": "Ginger. Hot — it warms you up."
+            },
+            {
+              "speak": "Cinnamon bark. Boiled, it warms you through."
             },
             {
               "speak": "A toadstool. You must not eat it."

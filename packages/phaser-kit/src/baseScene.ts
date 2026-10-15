@@ -43,6 +43,11 @@ export abstract class BaseScene extends Phaser.Scene {
     return this.ctx.debug?.autoplay === true;
   }
 
+  /** ?story=instant（截图巡检用）：跳过故事页"听完才能继续"的等待 */
+  protected get storyInstant(): boolean {
+    return this.ctx.debug?.storyInstant === true;
+  }
+
   protected drawBackdrop(label?: string): void {
     const g = this.add.graphics();
     g.fillStyle(THEME.sky, 1);

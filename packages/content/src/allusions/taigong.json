@@ -113,14 +113,14 @@
       {
         "template": "wait",
         "levelScript": {
-          "durationMs": 45000,
+          "durationMs": 58000,
           "temptations": [
             {
               "id": "bend",
               "kind": "bend",
               "x": 150,
               "y": 1150,
-              "penaltyMs": 5000,
+              "penaltyMs": 7000,
               "line": "换了弯钩，钓上来的还是鱼。"
             },
             {
@@ -128,7 +128,7 @@
               "kind": "bait",
               "x": 375,
               "y": 1150,
-              "penaltyMs": 5000,
+              "penaltyMs": 7000,
               "line": "我要钓的，不是鱼。"
             },
             {
@@ -136,7 +136,7 @@
               "kind": "move",
               "x": 600,
               "y": 1150,
-              "penaltyMs": 5000,
+              "penaltyMs": 7000,
               "line": "换个地方，等的人就不在这儿了。"
             }
           ],

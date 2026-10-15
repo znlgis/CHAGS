@@ -1,6 +1,7 @@
 import { speechLang } from '@chags/game-kit';
 import type {
-  AudioBus, LifecycleBus, Locale, PlatformServices, ProgressStore, SaveData, SfxKey, Telemetry,
+  AudioBus, LifecycleBus, Locale, PlatformServices, ProgressStore, SaveData, SfxKey,
+  SpeechHandle, SpeechOutcome, Telemetry,
 } from '@chags/game-kit';
 import { emptySave, migrate } from '@chags/progress';
 import { nativeTextToSpeech } from './runtime';
@@ -128,13 +129,19 @@ export function createWebAudioBus(): AudioBus {
     tone(freq: number, durationMs: number): void {
       tone(freq, durationMs / 1000, 0, 'triangle');
     },
-    speak(text: string, locale: Locale): void {
-      if (muted) return;
+    /**
+     * 朗读。句柄的 done 在"念完"或"确认念不出来"时 resolve ——
+     * 故事页靠它兑现"听完才能继续"，玩法里的旁白则直接忽略返回值。
+     * 注意：静音、没有语音包、无头浏览器都必须走 unavailable 这一路，
+     * 绝不能既不 resolve 又不报错（那会把故事页永远钉住）。
+     */
+    speak(text: string, locale: Locale): SpeechHandle {
+      if (muted) return { done: Promise.resolve('unavailable') };
 
       // ① 原生 TTS（安卓）：WebView 没有 Web Speech API，必须走系统语音
       const native = nativeTextToSpeech();
       if (native) {
-        void native
+        const done = native
           .speak({
             text,
             lang: speechLang(locale),
@@ -142,14 +149,16 @@ export function createWebAudioBus(): AudioBus {
             pitch: 1.05,
             volume: 1,
           })
-          .catch(() => {
-            // 安卓设备没装语音包时会失败；静默降级，绝不让游戏卡住
-          });
-        return;
+          .then((): SpeechOutcome => 'ended')
+          // 安卓设备没装语音包时会失败；静默降级，绝不让游戏卡住
+          .catch((): SpeechOutcome => 'unavailable');
+        return { done };
       }
 
       // ② Web Speech API（桌面 WebView2 / 浏览器）
-      if (typeof speechSynthesis === 'undefined') return;
+      if (typeof speechSynthesis === 'undefined') {
+        return { done: Promise.resolve('unavailable') };
+      }
       speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = speechLang(locale);
@@ -159,7 +168,19 @@ export function createWebAudioBus(): AudioBus {
       const voices = speechSynthesis.getVoices();
       const match = voices.find((v) => v.lang.toLowerCase().startsWith(locale === 'en' ? 'en' : 'zh'));
       if (match) utterance.voice = match;
-      speechSynthesis.speak(utterance);
+      const done = new Promise<SpeechOutcome>((resolve) => {
+        // 只认第一个结果：cancel() 也可能把这一条打成 error
+        let settled = false;
+        const settle = (outcome: SpeechOutcome): void => {
+          if (settled) return;
+          settled = true;
+          resolve(outcome);
+        };
+        utterance.onend = () => settle('ended');
+        utterance.onerror = () => settle('unavailable');
+        speechSynthesis.speak(utterance);
+      });
+      return { done };
     },
     stopSpeech(): void {
       const native = nativeTextToSpeech();

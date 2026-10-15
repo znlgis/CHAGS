@@ -27,6 +27,8 @@ export interface GameEventMap {
   'session:start': { at: number };
   'scene:enter': { scene: string };
   'beat:enter': { beatId: string };
+  /** 这一幕的旁白真的听完了 —— 故事页的小手到这一刻才出现 */
+  'story:ready': { beatId: string };
   'choice:made': { beatId: string; choiceId: string; correct: boolean; latencyMs: number };
   'hint:used': { beatId: string; level: number };
   'level:complete': {
@@ -71,6 +73,17 @@ export interface ProgressStore {
   save(data: SaveData): Promise<void>;
 }
 
+/** 朗读的结果：真的念完了 / 这台设备念不出来（静音、没装语音包、无头浏览器） */
+export type SpeechOutcome = 'ended' | 'unavailable';
+
+export interface SpeechHandle {
+  /**
+   * 念完、或者确认念不出来时 resolve —— 两种情况都必须 resolve，
+   * 否则故事页会永远停在"正在听"上。玩法里的旁白可以完全忽略它。
+   */
+  readonly done: Promise<SpeechOutcome>;
+}
+
 export interface AudioBus {
   /** iOS / 微信必须由用户手势触发解锁 */
   unlock(): Promise<void>;
@@ -78,7 +91,7 @@ export interface AudioBus {
   /** 指定音高的一声，用于"进度听得见"（例如天越撑越高，音调越高） */
   tone(freq: number, durationMs: number): void;
   /** 语音：按当前语言朗读。将来的真人配音也按 locale 取不同音频文件 */
-  speak(text: string, locale: Locale): void;
+  speak(text: string, locale: Locale): SpeechHandle;
   stopSpeech(): void;
   setMuted(muted: boolean): void;
   isMuted(): boolean;
@@ -112,8 +125,12 @@ export interface PlatformServices {
 
 export interface DebugOptions {
   seed?: string;
-  skipIntro?: boolean;
   autoplay?: boolean;
+  /**
+   * ?story=instant（自动化截图用）：跳过故事页"听完才能继续"的等待。
+   * 玩家在界面上拿不到这个开关，只有 URL 参数能给。
+   */
+  storyInstant?: boolean;
 }
 
 export interface GameContext {

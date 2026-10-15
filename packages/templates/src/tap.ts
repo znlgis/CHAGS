@@ -157,7 +157,7 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
         // 之前这段只写在连点分支里，于是长按模式（夸父）永远不提示：
         // 孩子只会点不会按的话，点一下只涨 30，要 60 下才满，而他完全不知道问题在哪。
         this.idleMs += delta;
-        if (this.idleMs > 6000) {
+        if (this.idleMs > 8000) {
           this.idleMs = 0;
           this.showHint(cfg.level.hint);
           // 光有文字小朋友不一定看得懂，把小手找回来

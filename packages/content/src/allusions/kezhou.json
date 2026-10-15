@@ -115,7 +115,7 @@
           "sword": {
             "x": 200,
             "y": 900,
-            "radius": 90
+            "radius": 70
           },
           "surfaces": [
             {
@@ -146,8 +146,8 @@
               "speak": "刻在下游的石头上。"
             }
           ],
-          "driftMs": 4200,
-          "driftDistance": 400,
+          "driftMs": 5000,
+          "driftDistance": 460,
           "missLine": "记号跟着船走了。",
           "hint": "记号刻在哪儿？"
         }

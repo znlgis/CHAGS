@@ -27,6 +27,7 @@ export const messages = {
     'play.notFound': '找不到这个典故：',
 
     'scene.story': '看故事',
+    'story.listenFirst': '先听完这个故事',
     'scene.chaos': '开一开',
     'scene.substitution': '试一试',
     'scene.hold': '撑一撑',
@@ -83,6 +84,7 @@ export const messages = {
     'play.notFound': 'Story not found: ',
 
     'scene.story': 'The Story',
+    'story.listenFirst': 'Listen to the story first',
     'scene.chaos': 'Crack It',
     'scene.substitution': 'Try It',
     'scene.hold': 'Hold It Up',

@@ -108,10 +108,10 @@
         "template": "substitution",
         "levelScript": {
           "heavy": {
-            "weight": 3000
+            "weight": 3300
           },
           "capacity": 3600,
-          "tolerance": 100,
+          "tolerance": 80,
           "stones": [
             {
               "id": "big",

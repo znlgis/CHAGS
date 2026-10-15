@@ -8,9 +8,9 @@ describe('狡兔三窟 · 关卡数据', () => {
   const raw = getAllusion('jiaotu');
   const level = burrowLevel(raw!);
 
-  it('三个土坡，每个挖三铲', () => {
+  it('三个土坡，每个挖四铲', () => {
     expect(level.spots.map((s) => s.id)).toEqual(['left', 'mid', 'right']);
-    expect(level.digsNeeded).toBe(3);
+    expect(level.digsNeeded).toBe(4);
   });
 
   it('土坡画在草地上 —— 美术和关卡数据必须一致', () => {
@@ -23,9 +23,10 @@ describe('狡兔三窟 · 关卡数据', () => {
   });
 
   it('一个洞遇上狐狸就出不去；两个洞才躲得过第一次', () => {
-    expect(waveResult({ left: 3 }, level.waves[0]!, level)).toBe('trapped');
-    expect(openCount({ left: 3, mid: 1 }, level)).toBe(1);
-    expect(waveResult({ left: 3, mid: 3 }, level.waves[0]!, level)).toBe('safe');
+    expect(waveResult({ left: 4 }, level.waves[0]!, level)).toBe('trapped');
+    // 没挖通的洞不算退路：挖了 3 铲的那个洞口还堵着
+    expect(openCount({ left: 4, mid: 3 }, level)).toBe(1);
+    expect(waveResult({ left: 4, mid: 4 }, level.waves[0]!, level)).toBe('safe');
   });
 
   it('故事两幕：先看见兔子，再听冯谖那句话', () => {

@@ -68,16 +68,16 @@ export const PLACE = {
   skyTop: 150,
   skyBottom: 640,
   earthBottom: 1128,
-  /** 归位宽容度：在槽位半径上再加这么多像素，小朋友不用对准 */
-  dropForgive: 70,
+  /** 归位宽容度：在槽位半径上再加这么多像素 —— 要对准，但不必像素级对准 */
+  dropForgive: 52,
 } as const;
 
 // ---------- sort：先尝后分 ----------
 export const SORT = {
-  /** 归位宽容度：和 place 一样，小朋友不用对准 */
-  dropForgive: 70,
+  /** 归位宽容度：和 place 一样，要对准但不必像素级对准 */
+  dropForgive: 52,
   /** 拿起东西时，该去的地方发光的光圈外扩 */
-  hintRing: 28,
+  hintRing: 22,
   /** 尝一口的默认时长 */
   tasteMs: 1000,
 } as const;
@@ -85,29 +85,29 @@ export const SORT = {
 // ---------- trace：手指划出一条路 ----------
 export const TRACE = {
   /** 河道画多粗 */
-  channelWidth: 36,
+  channelWidth: 32,
   /** 拿起手指时，下一处目标的提示光圈外扩 */
-  hintRing: 22,
+  hintRing: 18,
   /** 一笔划多久没进展就开始提示 */
-  idleMs: 9000,
+  idleMs: 11000,
 } as const;
 
 // ---------- wait：等 ----------
 export const WAIT = {
   /** 诱惑按钮的命中半径：手指粗也能点得到 */
-  temptationRadius: 78,
+  temptationRadius: 64,
   /** 等到之后，一直不点"收钩"的兜底时间 —— 绝不会卡住 */
   fallbackMs: 16000,
   /** 无头验证时把等待压缩成几分之一 */
   autoplayFactor: 7,
   /** 多久没动静就给提示 */
-  idleMs: 9000,
+  idleMs: 11000,
 } as const;
 
 // ---------- mark：在会动的世界上做记号 ----------
 export const MARK = {
   /** 刻记号的命中宽容度：手指粗也能刻到 */
-  carveForgive: 70,
+  carveForgive: 54,
   /** 刻完之后多久开船（给孩子看一眼自己刻的记号） */
   carveHoldMs: 1200,
   /** 下水捞一趟的时长 */
@@ -117,23 +117,26 @@ export const MARK = {
   /** 无头验证时把漂船压成几分之一 */
   autoplayFactor: 7,
   /** 多久没动静就把小手放到船帮上 */
-  idleMs: 6000,
+  idleMs: 8000,
 } as const;
 
 // ---------- split：总量不变，换个分法 ----------
 export const SPLIT = {
-  /** 木牌（分界）的命中半径 */
-  dividerRadius: 86,
+  /**
+   * 木牌（分界）的命中半径。
+   * 必须小于一格（七颗时约 64px），否则"点绳子上想分的地方"会跟"拖木牌"抢判定。
+   */
+  dividerRadius: 58,
   /** 猴子看完新分法的反应时间 */
   reactMs: 900,
   /** 多久没动静就把小手放到木牌上 */
-  idleMs: 8000,
+  idleMs: 11000,
 } as const;
 
 // ---------- burrow：预留退路 ----------
 export const BURROW = {
   /** 土坡的命中宽容度 */
-  digForgive: 60,
+  digForgive: 44,
   /** 挖一铲之后，危险出现的停顿（让孩子看清自己挖了几个洞） */
   firstWaveDelayMs: 1400,
   /** 危险守在洞口 / 从洞口脱身的一次演出 */
@@ -143,7 +146,7 @@ export const BURROW = {
   /** 无头验证时把这些演出压成几分之一 */
   autoplayFactor: 5,
   /** 多久没动静就把小手放到还没挖的土坡上 */
-  idleMs: 7000,
+  idleMs: 9000,
 } as const;
 
 // ---------- 复习小考验（复习模式用，首次通关不出现） ----------

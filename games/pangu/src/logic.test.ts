@@ -12,11 +12,11 @@ describe('盘古开天辟地 · 关卡数据', () => {
     expect(raw!.yearApprox).toBeLessThan(-1000);
   });
 
-  it('撑天要 30 次点击，正好点满一万八千年', () => {
+  it('撑天要 40 次点击，正好点满一万八千年', () => {
     const level = tapLevel(raw!);
     expect(level.targetValue).toBe(18000);
     expect(level.mode).toBe('tap');
-    expect(tapsNeeded(level)).toBe(30);
+    expect(tapsNeeded(level)).toBe(40);
   });
 
   it('六个部位各归各位，一个不多一个不少', () => {

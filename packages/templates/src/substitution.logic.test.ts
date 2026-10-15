@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { clamp01, depthRatio, judge, markOffsetRatio, markRatio, sumStones } from './substitution.logic';
+import {
+  clamp01, depthRatio, judge, markOffsetRatio, markRatio, nextStoneFor, sumStones,
+} from './substitution.logic';
 import { SubstitutionLevelSchema } from './schemas';
 import type { SubstitutionLevel } from './schemas';
 
@@ -46,6 +48,42 @@ describe('等量代换判定', () => {
 
   it('水痕相对甲板的偏移与吃水互补', () => {
     expect(markOffsetRatio(level)).toBeCloseTo(1 - markRatio(level), 10);
+  });
+});
+
+describe('自动通关怎么挑石头', () => {
+  /** 真正上线的关卡：大象 3300、容差 80 —— 光搬大石头凑不出来 */
+  const online: SubstitutionLevel = SubstitutionLevelSchema.parse({
+    heavy: { weight: 3300 },
+    capacity: 3600,
+    tolerance: 80,
+    stones: [
+      { id: 'big', value: 500, radius: 36 },
+      { id: 'mid', value: 300, radius: 26 },
+      { id: 'small', value: 100, radius: 17 },
+    ],
+    hints: { tooLight: '再加几块石头', tooHeavy: '拿掉一块试试', stuck: '让水痕回到水面' },
+  });
+
+  it('一路搬下去，一定停在容差里（不会在偏轻/偏重之间来回跳）', () => {
+    let total = 0;
+    for (let i = 0; i < 40; i += 1) {
+      if (judge(total, online) === 'match') break;
+      const stone = nextStoneFor(total, online);
+      expect(stone, '第 ' + i + ' 步已经挑不出石头了').toBeTruthy();
+      total += stone!.value;
+      expect(total).toBeLessThanOrEqual(online.capacity);
+    }
+    expect(judge(total, online)).toBe('match');
+  });
+
+  it('偏重的时候不再加大石头，改挑小的', () => {
+    // 已经 3500（超出 3300+80）：再放任何一块都会更偏重，这时只挑最小的
+    expect(nextStoneFor(3760, online)?.value).toBe(100);
+  });
+
+  it('没有石头可选时返回 undefined，而不是抛错', () => {
+    expect(nextStoneFor(0, { ...online, stones: [] })).toBeUndefined();
   });
 });
 

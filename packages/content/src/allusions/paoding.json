@@ -122,7 +122,7 @@
               "w": 150,
               "h": 124,
               "grooveDeg": 0,
-              "radius": 92
+              "radius": 78
             },
             {
               "id": "neck",
@@ -132,7 +132,7 @@
               "w": 104,
               "h": 136,
               "grooveDeg": -30,
-              "radius": 82
+              "radius": 70
             },
             {
               "id": "shoulder",
@@ -142,7 +142,7 @@
               "w": 132,
               "h": 122,
               "grooveDeg": -60,
-              "radius": 84
+              "radius": 72
             },
             {
               "id": "ribs",
@@ -152,7 +152,7 @@
               "w": 146,
               "h": 158,
               "grooveDeg": -90,
-              "radius": 92
+              "radius": 78
             },
             {
               "id": "loin",
@@ -162,7 +162,7 @@
               "w": 124,
               "h": 138,
               "grooveDeg": -120,
-              "radius": 84
+              "radius": 72
             },
             {
               "id": "haunch",
@@ -172,7 +172,7 @@
               "w": 148,
               "h": 156,
               "grooveDeg": 180,
-              "radius": 92
+              "radius": 78
             },
             {
               "id": "foreleg",
@@ -182,7 +182,7 @@
               "w": 74,
               "h": 232,
               "grooveDeg": 90,
-              "radius": 84
+              "radius": 72
             },
             {
               "id": "hindleg",
@@ -192,11 +192,11 @@
               "w": 74,
               "h": 232,
               "grooveDeg": 90,
-              "radius": 84
+              "radius": 72
             }
           ],
           "blindCuts": 1,
-          "blindTail": 2,
+          "blindTail": 3,
           "lines": {
             "first": "始臣之解牛之时，所见无非牛者。",
             "grain": "依乎天理，批大郤，导大窾。",

@@ -195,7 +195,7 @@ export function drawWorld(g: Phaser.GameObjects.Graphics, mood: Mood): void {
   g.fillStyle(FIELD, 1);
   g.fillRect(0, 496, W, H - 496);
 
-  // 两垄土：六株草就长在上面
+  // 两垄土：八株草就长在上面
   roundRect(g, 52, 556, 646, 152, 42, SOIL, shade(SOIL, 0.8), 5);
   roundRect(g, 52, 726, 646, 152, 42, SOIL, shade(SOIL, 0.8), 5);
 
@@ -342,6 +342,37 @@ export function drawPlant(
       g.strokeEllipse(-4, -50, 38, 24);
       break;
     }
+    case 'tuber': {
+      // 一窝野薯：土里露出来的三块，顶上一丛叶
+      g.fillStyle(0xb98a52, 1);
+      g.fillEllipse(-26, 14, 50, 38);
+      g.fillEllipse(8, 22, 62, 44);
+      g.fillEllipse(34, 4, 42, 34);
+      g.lineStyle(6, THEME.outline, 1);
+      g.strokeEllipse(8, 22, 62, 44);
+      g.fillStyle(leaf, 1);
+      g.fillEllipse(-20, -36, 38, 24);
+      g.fillEllipse(14, -40, 38, 24);
+      g.strokeEllipse(14, -40, 38, 24);
+      break;
+    }
+    case 'bark': {
+      // 一卷桂皮：两片树皮卷着，旁边一片叶
+      g.fillStyle(0x9a6b3f, 1);
+      g.fillRoundedRect(-46, -34, 34, 78, 14);
+      g.fillStyle(0xb3844f, 1);
+      g.fillRoundedRect(4, -26, 30, 70, 13);
+      g.lineStyle(6, THEME.outline, 1);
+      g.strokeRoundedRect(-46, -34, 34, 78, 14);
+      g.strokeRoundedRect(4, -26, 30, 70, 13);
+      g.fillStyle(0xd6a86f, 1);
+      g.fillRoundedRect(-40, -22, 12, 54, 6);
+      g.fillStyle(leaf, 1);
+      g.fillEllipse(34, -52, 44, 26);
+      g.lineStyle(6, THEME.outline, 1);
+      g.strokeEllipse(34, -52, 44, 26);
+      break;
+    }
     case 'mushroom':
       g.fillStyle(0xf3e6cf, 1);
       g.fillRoundedRect(-15, -6, 30, 48, 12);
@@ -383,11 +414,11 @@ export function drawPlant(
 export function drawFinale(g: Phaser.GameObjects.Graphics): void {
   g.fillStyle(0xfbe08a, 0.3);
   g.fillCircle(375, 720, 320);
-  // 最早的药书：六片竹简，一片记一种草
-  for (let i = 0; i < 6; i += 1) {
-    const x = 375 - 216 + i * 74;
-    roundRect(g, x, 604, 66, 300, 14, i % 2 === 0 ? 0xf0dcb4 : 0xe8d0a0, THEME.woodDeep, 5);
-    drawIcon(g, i < 2 ? 'food' : i < 4 ? 'cure' : 'poison', x + 33, 700, 0.26);
+  // 最早的药书：八片竹简，一片记一种草 —— 尝过多少种，竹简上就写多少条
+  for (let i = 0; i < 8; i += 1) {
+    const x = 375 - 216 + i * 54;
+    roundRect(g, x, 604, 50, 300, 12, i % 2 === 0 ? 0xf0dcb4 : 0xe8d0a0, THEME.woodDeep, 5);
+    drawIcon(g, i < 3 ? 'food' : i < 6 ? 'cure' : 'poison', x + 25, 700, 0.22);
   }
   g.fillStyle(THEME.redDeep, 1);
   g.fillRect(140, 646, 470, 12);
