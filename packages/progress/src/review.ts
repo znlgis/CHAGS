@@ -20,6 +20,15 @@ export function isDue(state: ReviewState, now: number): boolean {
 }
 
 /**
+ * 距离下次复习还有几天 —— 结果页要显示"隔 n 天再来复习"。
+ * 向上取整且至少 1：刚答完（dueAt 在未来）永远显示"1 天"以上，
+ * 不会出现"隔 0 天"这种说不通的句子。
+ */
+export function daysUntil(dueAt: number, now: number): number {
+  return Math.max(1, Math.ceil((dueAt - now) / DAY_MS));
+}
+
+/**
  * 答对率 → 0..3 级，用于安排下次复习间隔。
  * 门槛刻意放宽（60% 即 2 级）：这是给小朋友的，宁可多复习一次，也不要打击信心。
  */

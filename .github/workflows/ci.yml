@@ -9,6 +9,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# 只读就够：CI 不写仓库（发版在工作流在 release.yml 里单独授权）
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -37,12 +41,17 @@ jobs:
         run: pnpm test
       - name: 内容校验（含中英译文与关卡脚本）
         run: pnpm content:check
-      - name: 构建 + 体积守卫
+      - name: 构建
         run: pnpm build
+      # 体积是硬指标：以前这一步只在本地 pnpm verify 里跑，CI 上从来没有真的守过
+      - name: 体积守卫
+        run: pnpm size
 
   # ---------- 端到端：真实浏览器里把每个典故玩一遍 ----------
   e2e:
     runs-on: ubuntu-latest
+    # 不给上限的话卡死会挂满默认 6 小时
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -58,7 +67,9 @@ jobs:
       - name: 开发服务器端到端
         run: pnpm e2e
 
+      # 前一步挂了也要跑：产物拆分与懒加载是另一条链路，不该被开发服务器的失败吞掉
       - name: 生产构建产物端到端
+        if: '!cancelled()'
         run: pnpm e2e:dist
 
       # 失败时留下截图与轨迹（配置了 only-on-failure / retain-on-failure）。
@@ -77,7 +88,9 @@ jobs:
     # PR 上跑太慢（17 部 × 2 语言，约 30 分钟），只在主干与手动触发时跑
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # 两个语言 ×（三十六计 10 分钟 + 典故 3 分钟）—— 60 分钟会中途掐断，
+    # 而掐断时连 if: always() 的截图都传不上来，巡检最需要的证据反而丢了
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

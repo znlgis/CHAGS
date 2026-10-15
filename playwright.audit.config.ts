@@ -4,6 +4,8 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   testMatch: 'audit.spec.ts',
+  // 巡检是截图给人看的：重试只会拖长时间，失败就该停下来看
+  retries: 0,
   timeout: 180_000,
   fullyParallel: false,
   workers: 1,

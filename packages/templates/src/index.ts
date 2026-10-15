@@ -40,7 +40,7 @@ export {
 } from './burrow.logic';
 export * from './burrow';
 export * from './aim';
-export * from './quiz';
+// 复习测验不再走 Phaser：到期复习由外壳用 DOM 实现（apps/site/src/views/ReviewView.vue）
 export * from './reward';
 
 /* ---------- 三十六计（第一辑 · 胜战计 1–6） ---------- */

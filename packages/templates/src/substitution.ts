@@ -330,7 +330,8 @@ export function createSubstitutionScene(
 
       if (this.scaleTries >= 2) {
         createHand(this, SUB.boatX, SUB.waterTop - 250, 1.1);
-        this.showHint('太重了，换个办法', 2400);
+        // 文案走文案表：这里原本是写死的中文，英文版会突然冒出一句中文
+        this.showHint(this.tr('substitution.tryBoat'), 2400);
       }
     }
 

@@ -15,11 +15,6 @@ const EARTH_BOTTOM = 1334;
 const START_GAP = 40;
 const END_GAP = 700;
 
-export const holdStage = {
-  width: 750,
-  height: 1334,
-};
-
 export function drawHoldStage(g: Phaser.GameObjects.Graphics, stage: TapStageMetrics): void {
   const gap = START_GAP + (END_GAP - START_GAP) * stage.eased;
   const skyBottom = CENTER_Y - gap / 2;

@@ -4,7 +4,7 @@ export type { Locale };
 export { speechLang } from '@chags/content';
 
 export type TemplateId =
-  | 'story' | 'substitution' | 'tap' | 'place' | 'aim' | 'quiz' | 'match' | 'order' | 'drag'
+  | 'story' | 'substitution' | 'tap' | 'place' | 'aim' | 'match' | 'order' | 'drag'
   | 'board' | 'timing' | 'react' | 'branch' | 'build' | 'grow'
   | 'sort' | 'trace' | 'wait' | 'beacon'
   | 'mark' | 'split' | 'burrow' | 'butcher'
@@ -53,16 +53,23 @@ export interface GameEventMap {
 
 export type SfxKey = 'tap' | 'correct' | 'wrong' | 'splash' | 'unlock' | 'complete';
 
+/**
+ * 0..3 的三档评价：**星星与复习评级共用**。
+ * 星星是"这一局玩得怎么样"（只增不减，给小朋友看），
+ * 评级是"记得牢不牢"（决定下次复习间隔，见 packages/progress/src/review.ts）。
+ */
+export type Stars = 0 | 1 | 2 | 3;
+
 export interface ReviewState {
   level: number;
   dueAt: number | null;
-  lastGrade: 0 | 1 | 2 | 3 | null;
+  lastGrade: Stars | null;
   reviews: number;
 }
 
 export interface EntryProgress {
   entryId: string;
-  stars: 0 | 1 | 2 | 3;
+  stars: Stars;
   completions: number;
   lastPlayedAt: number | null;
   review: ReviewState;

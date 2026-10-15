@@ -8,6 +8,7 @@ import { useProgress } from './stores/progress';
 import AlbumView from './views/AlbumView.vue';
 import HallView from './views/HallView.vue';
 import PlayView from './views/PlayView.vue';
+import ReviewView from './views/ReviewView.vue';
 
 const route = useRoute();
 const progress = useProgress();
@@ -80,8 +81,13 @@ function navClass(active: boolean): string {
     >
       <PlayView
         v-if="route.name === 'play'"
-        :key="route.gameId + ':' + i18n.locale"
-        :game-id="route.gameId ?? ''"
+        :key="route.entryId + ':' + i18n.locale"
+        :entry-id="route.entryId ?? ''"
+      />
+      <ReviewView
+        v-else-if="route.name === 'review'"
+        :key="route.entryId + ':' + i18n.locale"
+        :entry-id="route.entryId ?? ''"
       />
       <AlbumView v-else-if="route.name === 'album'" />
       <HallView v-else />

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DAY_MS, createReviewState, gradeFromScore, isDue, nextReview } from './review';
+import { DAY_MS, createReviewState, daysUntil, gradeFromScore, isDue, nextReview } from './review';
 import { migrate, emptySave, ProgressManager } from './manager';
 import { SAVE_SCHEMA_VERSION } from '@chags/game-kit';
 import type { SaveData } from '@chags/game-kit';
@@ -48,6 +48,16 @@ describe('nextReview', () => {
   });
 });
 
+describe('daysUntil', () => {
+  it('向上取整，且至少 1 天', () => {
+    expect(daysUntil(3 * DAY_MS, 0)).toBe(3);
+    expect(daysUntil(3 * DAY_MS + 1, 0)).toBe(4);
+    expect(daysUntil(DAY_MS - 1, 0)).toBe(1);
+    // 已经过期（孩子隔了很久才回来）：显示 1 天，不显示负数或 0
+    expect(daysUntil(0, 5 * DAY_MS)).toBe(1);
+  });
+});
+
 describe('gradeFromScore', () => {
   it('按答对率给出 0..3 级', () => {
     expect(gradeFromScore(3, 3)).toBe(3);
@@ -55,6 +65,20 @@ describe('gradeFromScore', () => {
     expect(gradeFromScore(1, 3)).toBe(1);
     expect(gradeFromScore(0, 3)).toBe(0);
     expect(gradeFromScore(0, 0)).toBe(0);
+  });
+
+  // 两条阈值线（100% / 60% / 30%）直接决定"下次什么时候复习"，
+  // 以前只测了分母为 3 的四个点：把 0.6 改成 0.7 测试照样绿。
+  it('恰好压在阈值线上：60% 是 2 级，30% 是 1 级', () => {
+    expect(gradeFromScore(3, 5)).toBe(2);
+    expect(gradeFromScore(3, 10)).toBe(1);
+    expect(gradeFromScore(2, 10)).toBe(0);
+    expect(gradeFromScore(4, 10)).toBe(1);
+  });
+
+  it('分母为 0（没答过题）不给级别，也不抛错', () => {
+    expect(gradeFromScore(0, 0)).toBe(0);
+    expect(gradeFromScore(5, 0)).toBe(0);
   });
 });
 

@@ -28,7 +28,32 @@ export default tseslint.config(
     languageOptions: { parserOptions: { parser: tseslint.parser } },
   },
   {
-    // TypeScript 已经负责未定义变量检查
+    // Node 侧脚本（没有类型兜底）：no-undef 在这里仍然有效，所以要把用到的
+    // Node 全局变量显式声明出来（不引 globals 包，保持依赖零增长）
+    files: ['scripts/**/*.mjs', '*.config.js', '*.config.mjs'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        Buffer: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        TextEncoder: 'readonly',
+        TextDecoder: 'readonly',
+        fetch: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        queueMicrotask: 'readonly',
+        structuredClone: 'readonly',
+      },
+    },
+  },
+  {
+    // TypeScript 已经负责未定义变量检查（只对 TS/Vue 关：
+    // scripts/*.mjs 与配置文件没有类型兜底，no-undef 在那里仍然有效）
+    files: ['**/*.{ts,vue}'],
     rules: {
       'no-undef': 'off',
       'vue/multi-word-component-names': 'off',
@@ -58,8 +83,10 @@ export default tseslint.config(
     },
   },
   {
-    // 纯逻辑层必须可控、可复现：禁止随机与隐式时钟
-    files: ['packages/progress/src/**/*.ts', '**/logic/**/*.ts'],
+    // 纯逻辑层必须可控、可复现：禁止随机与隐式时钟。
+    // 注意：纯逻辑文件叫 *.logic.ts（仓库里没有 logic/ 目录）——
+    // 这条 glob 以前写成 '**/logic/**/*.ts'，等于从来没生效过。
+    files: ['packages/progress/src/**/*.ts', '**/*.logic.ts', '**/logic/**/*.ts'],
     rules: {
       'no-restricted-properties': [
         'error',

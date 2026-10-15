@@ -42,6 +42,11 @@ const kindClass = (kind: string): string =>
 const groups = computed(() => gameGroups(i18n.locale));
 const total = computed(() => groups.value.reduce((sum, g) => sum + g.games.length, 0));
 
+/** 到期要复习的内容（按大厅顺序，横幅上的"去复习"直接进第一部） */
+const dueIds = computed(() =>
+  groups.value.flatMap(({ games }) => games.filter((g) => progress.reviewDue(g.id)).map((g) => g.id)),
+);
+
 const groupTitle = (id: string): string => i18n.t(groupMessageKey(id, 'title'));
 const groupNote = (id: string): string => i18n.t(groupMessageKey(id, 'note'));
 const groupEmpty = (id: string): string => i18n.t(groupMessageKey(id, 'empty'));
@@ -55,6 +60,25 @@ const groupEmpty = (id: string): string => i18n.t(groupMessageKey(id, 'empty'));
       <span data-testid="collected-count" class="font-bold text-[#2c6b64]">{{ progress.collected }}</span>
       / {{ total }} {{ i18n.t('hall.unit') }}
     </p>
+
+    <!-- 到期复习：只有真的到期了才出现，不然首页永远挂着一句废话 -->
+    <div
+      v-if="dueIds.length > 0"
+      data-testid="hall-review"
+      class="mt-6 flex items-center justify-between gap-3 rounded-3xl border-2 border-[#c98a1c] bg-[#fffaf0] p-4"
+    >
+      <p class="min-w-0 text-sm text-[#5c4b3d]">
+        {{ i18n.t('hall.reviewDue', { n: dueIds.length }) }}
+      </p>
+      <button
+        type="button"
+        data-testid="hall-review-go"
+        class="min-h-12 shrink-0 rounded-full bg-[#2c6b64] px-5 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
+        @click="navigate('/review/' + dueIds[0])"
+      >
+        {{ i18n.t('hall.reviewGo') }}
+      </button>
+    </div>
 
     <section
       v-for="{ group, games: groupGames } in groups"

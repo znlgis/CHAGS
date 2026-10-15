@@ -1,7 +1,7 @@
 import { DEFAULT_LOCALE, LOCALES } from '@chags/content';
 import type { Locale } from '@chags/content';
-import { messages } from './messages';
-import type { MessageKey, Translator } from './messages';
+import { fillTemplate, messages } from './messages';
+import type { MessageKey, MessageParams, Translator } from './messages';
 
 export * from './messages';
 export { LOCALES, DEFAULT_LOCALE };
@@ -12,10 +12,16 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   en: 'English',
 };
 
-/** 取词器；缺键时回落到中文，最后回落到键名本身（永不抛错、永不空白） */
+/**
+ * 取词器；缺键时回落到中文，最后回落到键名本身（永不抛错、永不空白）。
+ * 带 {参数} 的句子传第二个参数即可：`t('review.score', { n: 2, m: 3 })`。
+ */
 export function createTranslator(locale: Locale): Translator {
   const table = messages[locale] ?? messages[DEFAULT_LOCALE];
-  return (key: MessageKey): string => table[key] ?? messages[DEFAULT_LOCALE][key] ?? key;
+  return (key: MessageKey, params?: MessageParams): string => {
+    const text: string = table[key] ?? messages[DEFAULT_LOCALE][key] ?? key;
+    return params === undefined ? text : fillTemplate(text, params);
+  };
 }
 
 /** 从 URL 的 ?lang= 读语言，用于分享与自动化测试 */

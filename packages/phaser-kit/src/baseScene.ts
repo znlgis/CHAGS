@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameContext, SfxKey } from '@chags/game-kit';
 import { createTranslator } from '@chags/i18n';
-import type { MessageKey, Translator } from '@chags/i18n';
+import type { MessageKey, MessageParams, Translator } from '@chags/i18n';
 import { createHand, groundShadow, popIn, roundRect, shade } from './cartoon';
 import { isTapArmed } from './tapGuard';
 import { CSS, THEME, textStyle } from './theme';
@@ -200,10 +200,10 @@ export abstract class BaseScene extends Phaser.Scene {
     this.ctx.services.audio.play(key);
   }
 
-  /** 界面文案：典故本身的文字走 ctx.content，通用标签走这里 */
-  protected tr(key: MessageKey): string {
+  /** 界面文案：典故本身的文字走 ctx.content，通用标签走这里（带 {参数} 的句子传第二个参数） */
+  protected tr(key: MessageKey, params?: MessageParams): string {
     this.translator ??= createTranslator(this.ctx.locale);
-    return this.translator(key);
+    return this.translator(key, params);
   }
 
   protected speak(text: string): void {

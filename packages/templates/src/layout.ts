@@ -30,7 +30,6 @@ export const SCENE_KEYS = {
   chase: 'chase',
   swap: 'swap',
   chain: 'chain',
-  quiz: 'quiz',
   reward: 'reward',
 } as const;
 
@@ -161,18 +160,6 @@ export const BURROW = {
   autoplayFactor: 5,
   /** 多久没动静就把小手放到还没挖的土坡上 */
   idleMs: 9000,
-} as const;
-
-// ---------- 复习小考验（复习模式用，首次通关不出现） ----------
-export const QUIZ = {
-  questionY: 250,
-  options: [
-    { x: 375, y: 540 },
-    { x: 375, y: 700 },
-    { x: 375, y: 860 },
-    { x: 375, y: 1020 },
-  ],
-  next: { x: 375, y: 1200 },
 } as const;
 
 // ---------- 典故卡 ----------

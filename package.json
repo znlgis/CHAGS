@@ -13,6 +13,7 @@
     "test": "vitest run",
     "content:check": "tsx packages/templates/src/cli/check-content.ts",
     "e2e": "playwright test",
+    "shots": "playwright test --config playwright.shots.config.ts",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm content:check && pnpm build && pnpm size",
     "e2e:dist": "playwright test --config playwright.preview.config.ts",
     "audit:i18n": "playwright test --config playwright.audit.config.ts",

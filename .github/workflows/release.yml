@@ -7,9 +7,15 @@ on:
       - 'v*'
   # 手动跑一次只出产物、不发 Release（用于验证流程）
   workflow_dispatch:
+    inputs:
+      allow_unsigned_android:
+        description: '没有配置 Android 签名 Secrets 时也构建 APK（仅供流程验证，产物不可分发）'
+        type: boolean
+        default: false
 
+# 默认只读：只有最后发 Release 的那个 job 需要写权限
 permissions:
-  contents: write
+  contents: read
 
 env:
   NODE_VERSION: '24'
@@ -69,6 +75,10 @@ jobs:
 
       - name: 构建站点
         run: pnpm --filter @chags/site build
+
+      # 体积守卫也进发版链路：以前只有本地 verify 守着，CI 与发版都没守过
+      - name: 体积守卫
+        run: pnpm size
 
       - uses: actions/upload-artifact@v4
         with:
@@ -202,8 +212,14 @@ jobs:
               echo "keyPassword=$KEY_PASSWORD"
             } > keystore.properties
             echo "已配置 Release 签名"
+          elif [ "${{ inputs.allow_unsigned_android }}" = "true" ]; then
+            echo "::warning::未配置签名 Secrets，但勾选了 allow_unsigned_android —— 本次用 debug 签名，产物仅供验证，不可分发给用户"
           else
-            echo "::warning::未配置签名 Secrets（ANDROID_KEYSTORE_BASE64 等），本次将使用 debug 签名 —— 产物仍可安装，但不适合正式分发"
+            # debug 签名的"正式版"一旦被用户装上，就再也无法用正式密钥覆盖安装（签名不一致，
+            # 安卓直接拒绝安装）。宁可这一步失败，也不要发一个装不了升级包的版本出去。
+            echo "::error::未配置 Android 签名 Secrets（ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASSWORD / ANDROID_KEY_ALIAS / ANDROID_KEY_PASSWORD）。"
+            echo "::error::只想验证打包流程的话，请手动触发本工作流并勾选 allow_unsigned_android。"
+            exit 1
           fi
 
       - name: 构建 APK
@@ -222,8 +238,24 @@ jobs:
 
       - name: 校验签名
         run: |
+          # pipefail：否则 apksigner 的失败退出码会被 head 吃掉（原来那版等于没校验）
+          set -euo pipefail
           APK=apps/mobile/android/app/build/outputs/apk/release/app-release.apk
-          $ANDROID_SDK_ROOT/build-tools/36.0.0/apksigner verify --print-certs "$APK" | head -4
+          APKSIGNER="$ANDROID_SDK_ROOT/build-tools/36.0.0/apksigner"
+          # 显式判退出码：赋值语句里的失败不会自己中止脚本
+          if ! CERTS="$("$APKSIGNER" verify --print-certs "$APK")"; then
+            echo "::error::apksigner 校验失败：$APK"
+            exit 1
+          fi
+          echo "$CERTS" | head -4
+          # 签名者是不是 debug 证书，比"有没有签名"更要紧：debug 签名同样能通过 verify
+          if echo "$CERTS" | grep -q 'CN=Android Debug'; then
+            if [ "${{ inputs.allow_unsigned_android }}" != "true" ]; then
+              echo "::error::APK 是 debug 签名，不能作为正式版本发布"
+              exit 1
+            fi
+            echo "::warning::按 allow_unsigned_android 允许了 debug 签名"
+          fi
 
       - name: 收集产物
         run: |
@@ -243,6 +275,9 @@ jobs:
     needs: [version, windows, android]
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
+    # 写权限只给这一步：上面那些 job 会跑第三方 action，不需要写仓库
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:

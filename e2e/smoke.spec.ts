@@ -641,6 +641,8 @@ test('太公钓鱼 autoplay 全流程（等待被压缩，仍然走完整条线�
 test('中英双语下每个典故都能载入 —— 关卡数据在两种语言下都必须过 schema', async ({ page }) => {
   // 英文的 unit 曾经写成 "baskets"，超出上限导致整个游戏打不开，而且构建期没拦住。
   // 这条用例专门守它：只要 schema 校验失败，页面就不会出现 canvas。
+  // 53 部 × 2 语言 = 106 次真实导航，默认 90 秒不够（dev server 冷启动时尤其明显）
+  test.setTimeout(600_000);
   const ids = allEntryIds();
   for (const locale of ['zh-CN', 'en'] as const) {
     for (const id of ids) {
@@ -648,7 +650,9 @@ test('中英双语下每个典故都能载入 —— 关卡数据在两种语言
       await expect(page.locator('canvas'), locale + ' / ' + id + ' 打不开').toBeVisible({
         timeout: 15_000,
       });
-      await page.waitForTimeout(180);
+      // 画面出来还不够：内容与关卡数据要真的过了 schema —— session:start 是那之后的第一件事。
+      // （别用固定 sleep 等它：慢机器上会假红，快机器上白等）
+      await expect.poll(() => events(page), { timeout: 15_000 }).toContain('session:start');
     }
   }
 });

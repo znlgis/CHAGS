@@ -74,6 +74,26 @@ export const messages = {
     'aim.stepBack': '再退十步',
     'scene.reward': '典故卡',
     'sort.tasteFirst': '先尝一口',
+    // 等量代换：大象两次上秤都压垮之后的那句提示（模板层文案，不属于关卡数据）
+    'substitution.tryBoat': '太重了，换个办法',
+
+    // 到期复习：入口在图鉴，题目来自内容里的 quiz（见 docs/技术方案.md §7.4）
+    'album.review': '复习',
+    'album.reviewDue': '该复习了',
+    'review.title': '小考验',
+    'review.loading': '正在准备题目…',
+    'review.notFound': '找不到这条内容',
+    'review.progress': '第 {n} 题 · 共 {m} 题',
+    'review.correct': '答对啦！',
+    'review.wrong': '再看看答案～',
+    'review.next': '继续',
+    'review.seeResult': '看结果',
+    'review.score': '答对 {n} / {m} 题',
+    'review.nextDueIn': '{n} 天后再来复习',
+    'review.backToAlbum': '回图鉴',
+    'review.playAgain': '再玩一局',
+    'hall.reviewDue': '有 {n} 个典故该复习了',
+    'hall.reviewGo': '去复习',
 
     'reward.keywords': '关键词',
     'reward.source': '出处',
@@ -149,6 +169,24 @@ export const messages = {
     'aim.stepBack': 'Ten paces back',
     'scene.reward': 'Story Card',
     'sort.tasteFirst': 'Taste it first',
+    'substitution.tryBoat': 'Too heavy — try another way',
+
+    'album.review': 'Review',
+    'album.reviewDue': 'Review due',
+    'review.title': 'A Quick Quiz',
+    'review.loading': 'Getting the questions ready…',
+    'review.notFound': 'This story is missing',
+    'review.progress': 'Question {n} of {m}',
+    'review.correct': 'That is right!',
+    'review.wrong': 'Have another look',
+    'review.next': 'Next',
+    'review.seeResult': 'See how you did',
+    'review.score': 'You got {n} of {m}',
+    'review.nextDueIn': 'Come back in {n} days',
+    'review.backToAlbum': 'Back to Cards',
+    'review.playAgain': 'Play it again',
+    'hall.reviewDue': '{n} stories are due for review',
+    'hall.reviewGo': 'Review',
 
     'reward.keywords': 'Keywords',
     'reward.source': 'Source',
@@ -202,9 +240,22 @@ export function stratagemSetKey(set: number): MessageKey {
   return ('stratagem.set.' + set) as MessageKey;
 }
 
-/** "第 {n} 计"：中英句式不同，所以模板放在文案表里，数字由这里填 */
-export function stratagemLabel(template: string, number: number): string {
-  return template.replace('{n}', String(number));
+/** 文案里的占位符参数：`'review.score': '答对 {n} / {m} 题'` */
+export type MessageParams = Record<string, string | number>;
+
+/**
+ * 填占位符。**只认 {名字} 形式**，缺参数时原样保留 ——
+ * 少传一个参数会在界面上留下 {n}，比整句消失更容易被发现（单测会盯着这一点）。
+ */
+export function fillTemplate(template: string, params: MessageParams): string {
+  return template.replace(/\{(\w+)\}/g, (whole, name: string) =>
+    name in params ? String(params[name]) : whole,
+  );
 }
 
-export type Translator = (key: MessageKey) => string;
+/** "第 {n} 计"：中英句式不同，所以模板放在文案表里，数字由这里填 */
+export function stratagemLabel(template: string, number: number): string {
+  return fillTemplate(template, { n: number });
+}
+
+export type Translator = (key: MessageKey, params?: MessageParams) => string;

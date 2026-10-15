@@ -2,15 +2,16 @@ import { ref } from 'vue';
 import type { Ref } from 'vue';
 
 export interface Route {
-  name: 'hall' | 'play' | 'album';
-  gameId?: string;
+  name: 'hall' | 'play' | 'album' | 'review';
+  /** 内容 id：play 是玩哪一部，review 是复习哪一部（两者共用同一个 id 空间） */
+  entryId?: string;
 }
 
 function parse(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
-  if (parts[0] === 'play' && parts[1]) {
-    return { name: 'play', gameId: decodeURIComponent(parts[1]) };
-  }
+  const id = parts[1];
+  if (parts[0] === 'play' && id) return { name: 'play', entryId: decodeURIComponent(id) };
+  if (parts[0] === 'review' && id) return { name: 'review', entryId: decodeURIComponent(id) };
   if (parts[0] === 'album') return { name: 'album' };
   return { name: 'hall' };
 }

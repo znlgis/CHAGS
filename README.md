@@ -15,18 +15,22 @@ Phaser 4.2（游戏）· Vue 3.5 + Pinia（外壳）· Vite 8 · TypeScript 5.9.
 
 ## 快速开始
 
+环境要求：**Node 24 + pnpm 11.22** —— 与 CI 的 `NODE_VERSION` 和 `package.json` 的 `packageManager` 一致。
+
 ```bash
 pnpm install
 pnpm dev            # 开发服务器 http://127.0.0.1:5183
-pnpm verify         # typecheck + lint + test + content:check + build（提交前必须全绿）
+pnpm verify         # typecheck + lint + test + content:check + build + size（提交前必须全绿）
 pnpm e2e            # Playwright 端到端（需先 npx playwright install chromium）
 pnpm e2e:dist       # 针对生产构建产物再跑一遍（验证 chunk 懒加载）
 pnpm audit:i18n     # 双语版面巡检：把两种语言下的每个画面截图到 .scratch/i18n-audit/
-pnpm dist:win       # 打包 Windows 便携 exe（约 3.3 MB，双击即玩，不用安装）
+pnpm icons          # 重新生成应用图标（需要 Python + Pillow；只在改图标时用）
+pnpm dist:win       # 打包 Windows 便携 exe（双击即玩，不用安装；体积以产物为准）
 pnpm dist:apk       # 打包安卓 apk（直接安装）
 ```
 
-调试直达链接：`/?autoplay=1#/play/caochong-elephant`（自动通关，用于无头验证）
+调试直达链接：`/?autoplay=1#/play/caochong-elephant`（自动通关，用于无头验证）、
+`/?lang=en`（强制英文，与分享链接、自动化测试用的是同一个开关）
 
 ## 分组：现在两组，以后还会有更多
 
@@ -51,14 +55,47 @@ pnpm dist:apk       # 打包安卓 apk（直接安装）
 
 `pnpm content:check` 会打印每一组的条目数，并拦住没登记的分组 id。
 
+## 新增一个游戏
+
+一个游戏要碰的地方（现有 53 个都是这么走的）：
+
+1. **新 workspace 包** `games/<id>/`：`package.json` + `src/{manifest,index,logic,art}.ts`
+   —— 需要专属画面时再加 `scenes/` 与 `layout.ts`；判定一律写在 `logic.ts`（不 import Phaser，可单测）；
+2. **内容两半** `packages/content/src/entries/<id>.json`（摘要：标题 / 年代 / 出处 / 寓意 / 关键词）
+   与 `<id>.game.json`（详情：故事分幕 / 关键抉择 / 复习题 / 误解 / 关卡脚本）。
+   复习题**每条 3 道、必须含 1 道 `transfer`**，`content:check` 强制；
+   用新模板的话，还要在 `packages/game-kit/src/contract.ts` 的 `TemplateId` 里加 id，
+   并在 `packages/templates/src/schemas.ts` 登记关卡 schema；
+3. **双语补丁** `packages/content/src/i18n/en/<id>.json` 与 `<id>.game.json`（两半各一份）
+   —— 缺字段、结构对不上、英文里混了中文，构建期就报错；
+4. **两处登记** `packages/content/src/entries/index.ts` 与 `packages/content/src/i18n/index.ts`
+   各一行；
+5. **外壳接线** `apps/site/package.json` 加依赖 + `apps/site/src/registry.ts` 加一行懒加载 import。
+   —— 这两步有 `apps/site/src/registry.test.ts` 守着：**注册表少一行（或多一行）会被单测当场抓住**，
+   不会等到用户点进去才发现"找不到这个游戏"；
+6. **端到端用例** `e2e/` 里加一条 `?autoplay=1` 的无头通关（新模板必须实现 `runAutoplay()` 才算数）；
+7. **`pnpm verify` 全绿**（typecheck / lint / test / content:check / build / size），再按需跑 `pnpm e2e`。
+
+同样一份文件级清单见 [docs/三十六计方案.md](docs/三十六计方案.md) 第六节。
+
 ## 当前进度
 
 **十七个典故 + 三十六计全六辑（第 1–36 计）**全部跑通：`pnpm verify` 全绿（typecheck / lint /
-单测 1208 项 / 内容体检 / 构建 / 体积），端到端里每部游戏都有一条无头通关用例
+单测 1221 项 / 内容体检 / 构建 / 体积），端到端里每部游戏都有一条无头通关用例
 （`?autoplay=1`，新模板必须实现 `runAutoplay()` 才算数）。
 首屏很小（不含 Phaser，也**不含**内容的故事与关卡脚本）：每部游戏自己的业务 chunk 只有几 KB，
 Phaser 是共享 chunk、完整内容（故事 / 复习题 / 关卡脚本）是另一个懒加载 chunk，
 都只在进入游戏时加载 —— 具体数字看 `pnpm size`。
+
+### 到期复习（本轮上线）
+
+图鉴里每张典故卡上都有一个「复习」按钮；到了该复习的时候，卡上会多一枚「该复习了」徽章，
+游戏馆顶部也会出现一条横幅（**只有真的有到期内容时才出现**）直接送达第一部。
+
+点进去是 3 道题（含 1 道迁移题），**答对率决定下次什么时候再见**：1 / 3 / 7 / 21 / 60 天。
+评级只改"下次什么时候复习"，**不动星星** —— 星星只增不减，复习答错不该把它扣掉。
+这一页是纯 DOM，不再为三道题去加载 Phaser；为什么这么做见
+[docs/技术方案.md](docs/技术方案.md) §7.17。
 
 ### 一、曹冲称象（信史 · 等量代换）
 
@@ -458,20 +495,29 @@ Phaser 是共享 chunk、完整内容（故事 / 复习题 / 关卡脚本）是�
 ## 目录结构
 
 ```
-apps/site                  Vue 3.5 外壳：游戏馆（按分组分区）/ 游戏宿主 / 图鉴
-packages/game-kit          契约层（GameModule / GameContext / 事件），不含 Phaser
-packages/content           典故数据 + zod schema
-packages/templates         玩法模板：story / substitution / tap / place / aim / sort / trace / wait / mark / split / burrow / butcher / quiz / reward
-packages/phaser-kit        Phaser 启动器、主题、基础场景
+apps/site                  Vue 3.5 外壳：游戏馆（按分组分区）/ 游戏宿主 / 图鉴 / 到期复习
+apps/desktop               Tauri 2 桌面壳（便携 exe）
+apps/mobile                Capacitor 8 安卓壳（apk）
+packages/game-kit          契约层（GameModule / GameContext / 事件）+ TemplateId，不含 Phaser
+packages/content           内容数据（摘要 <id>.json + 详情 <id>.game.json）+ zod schema + 英文译文补丁
+packages/i18n              界面文案表（中英各一份，少写一个键就编译报错）
+packages/templates         玩法模板实现；契约里有 36 个模板 id，见 packages/game-kit/src/contract.ts
+                           （已被内容用到的 26 个 + 所有游戏共用的开场 story；
+                           match / order / drag / board / timing / react / branch / build / grow
+                           是预留 id，还没有实现；
+                           butcher / beacon 是游戏包内的专属场景，数据登记在模板层；
+                           chaos 连模板 id 都没有，是盘古包里的纯专属场景）
+packages/phaser-kit        Phaser 启动器、主题、基础场景、拖拽控制器
 packages/platform          Web 实现：IndexedDB / WebAudio / TTS / 生命周期
 packages/progress          存档、复习调度（纯函数，可单测）
-games/caochong-elephant    曹冲称象（等量代换：substitution 模板）
-games/pangu                盘古开天辟地（撑天 tap + 化身 place + 专属开蛋场景）
-games/houyi / nuwa / jingwei / kuafu / yugong   后羿射日 / 女娲补天 / 精卫填海 / 夸父追日 / 愚公移山
-games/shennong / dayu / taigong / fenghuo / qiren  神农尝百草 / 大禹治水 / 太公钓鱼 / 烽火戏诸侯 / 杞人忧天
-games/kezhou / zhaosanmusi / jiaotu / yangyouji / paoding  刻舟求剑 / 朝三暮四 / 狡兔三窟 / 百步穿杨 / 庖丁解牛
+games/<id>                 53 个游戏包：一个典故 / 一计一个包
 e2e                        Playwright 冒烟 + 真实操作 + 截图
+scripts                    体积守卫（check-size.mjs）、图标生成（make-icons.py）
 ```
+
+游戏清单的唯一事实来源是 `packages/content/src/entries/`（内容）与
+`apps/site/src/registry.ts`（懒加载注册）—— 两边对不上，`apps/site/src/registry.test.ts`
+会当场报错。内容一共 53 条：十七个典故（曹冲称象 → 庖丁解牛）+ 三十六计全 36 计。
 
 ## 三条架构铁律
 

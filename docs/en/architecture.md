@@ -1,7 +1,16 @@
-# CHAGS Architecture · v1.2
+# CHAGS Architecture · v1.2 (synced to §7.3)
 
 > Status: living document. Chinese version: [../技术方案.md](../技术方案.md)
 > A collection of small games about Chinese historical anecdotes and myths, for children aged 7–10.
+
+> ⚠️ **This file is only synced up to §7.3** (the bilingual round, 2026-10-13). The Chinese
+> [../技术方案.md](../技术方案.md) kept going: it has **§7.4–§7.17** — the review-and-optimisation pass,
+> the six stratagem volumes (36 games), the content summary/detail split, and the **due review** feature
+> (Chinese §7.17), which finally wired up `quiz` / `gradeFromScore` / `recordReview`.
+> **For anything after §7.3 the Chinese document is authoritative**; this file is not a mirror of it.
+> The stale claims that used to sit here have been corrected or removed: the template table that listed
+> templates which do not exist in code (and called `quiz` implemented), the "63.4 KB" shell figure, and
+> "which story is third" (long answered: seventeen stories plus all thirty-six stratagems).
 
 **In one line:** Phaser 4 + Vue 3.5, H5-first, five layers ("shell + engine + gameplay templates + content data + standalone game bundles").
 Each story is an independently developed, independently bundled, lazily loaded game module. Gameplay skeletons are reused
@@ -45,7 +54,7 @@ but "remembered it and understood what it means."**
 |---|---|---|
 | 1 | A parent hands over a phone; no install allowed | H5 / PWA, playable from a link |
 | 2 | Short attention span; a session is 3–5 minutes | No long connections, no loading waits, resumable at any time |
-| 3 | Played in cars, at grandparents', on weak networks | Static assets + Service Worker precache |
+| 3 | Played in cars, at grandparents', on weak networks | Static assets + Service Worker precache (the precache is **planned**, not implemented yet) |
 | 4 | Must run on old Android phones and old iPads | 2D, strict size budget, graceful degradation |
 | 5 | **"Remembering" is the core metric** | The content model itself carries *key discovery / misconceptions / transfer questions / review interval* |
 | 6 | The collection should grow to 30–100 stories | Modular boundaries + a template library: a new story = one package + one JSON file |
@@ -121,7 +130,7 @@ DOM plus Tailwind is far faster to build than drawing lists, scrolling and forms
 - 750×1334 portrait design resolution; `@1x`/`@2x` only.
 - Fonts **must be commercially licensed** (Noto Sans SC, LXGW WenKai, ZCOOL KuaiLe — verify each). Subset them: a full CJK
   font is 5–10 MB, a subset can be ~100 KB.
-- Keep an `ASSETS-LICENSES.md` ledger from day one.
+- Keep an `ASSETS-LICENSES.md` ledger — but only once real art enters the pipeline (everything is drawn with geometry today, so it would be an empty table).
 - Style: **rounded cartoon with Chinese colours** (vermilion / indigo / cream / ink).
 - **Stage 0–1 ship zero image assets**: everything is drawn with Phaser Graphics, so gameplay could be verified before art
   existed. Swapping in real art changes no code.
@@ -153,10 +162,10 @@ DOM plus Tailwind is far faster to build than drawing lists, scrolling and forms
 | Unit | Vitest | Pure logic: judging, scoring, scheduling, merging |
 | Content | `content:check` | zod schemas, template stage schemas, **translation completeness**, cross-references |
 | End-to-end | Playwright | Real-mouse playthroughs, autoplay runs, screenshot capture, production-build chunk loading |
-| Size | size-limit (planned) | Bundle budgets |
+| Size | `scripts/check-size.mjs` (runs in `pnpm verify` and CI) | Five budgets: initial gzip / initial raw / biggest lazy chunk gzip / chunk raw / whole-dist raw (see Chinese §5) |
 
-**One command: `pnpm verify` = typecheck → lint → test → content:check → build.** For AI-assisted work this command
-*is* the definition of done.
+**One command: `pnpm verify` = typecheck → lint → test → content:check → build → size.** For AI-assisted work this
+command *is* the definition of done.
 
 ### 2.8 Deployment
 
@@ -178,7 +187,8 @@ two shipped languages. All of them raise cost and compliance risk while contribu
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Shell  apps/site  (Vue 3.5 SFC)                             │
-│  hall · timeline scroll · album · settings · parent area      │
+│  hall · album · game host · due review (the four views)       │
+│  timeline scroll / settings / parent area: planned, not built │
 │  ── state: Pinia ── routing: hash composable ── i18n: @chags/i18n
 └───────────────┬─────────────────────────────────────────────┘
                 │  dynamic import (code splitting; Phaser appears only here)
@@ -205,7 +215,9 @@ two shipped languages. All of them raise cost and compliance risk while contribu
 ### 3.2 Repository layout
 
 ```
-apps/site/            Vue 3.5 shell
+apps/site/            Vue 3.5 shell (hall / album / game host / due review)
+apps/desktop/         Tauri 2 desktop shell (portable exe)
+apps/mobile/          Capacitor 8 Android shell (APK)
 packages/
   game-kit/           GameModule / GameContext / events (no Phaser)
   content/            story JSON + zod + translations + localisation
@@ -214,10 +226,10 @@ packages/
   phaser-kit/         engine bootstrap, cartoon primitives, drag controller, base scene
   platform/           Web implementations: IndexedDB / WebAudio / TTS / lifecycle
   progress/           save file, migration, spaced repetition (pure)
-games/
-  caochong-elephant/  Cao Chong Weighs the Elephant
-  pangu/              Pangu Splits Heaven and Earth
+games/<id>/           one story / one stratagem per package (53 today; the list's single source
+                      of truth is packages/content/src/entries/ + apps/site/src/registry.ts)
 e2e/                  Playwright
+scripts/              size guard (check-size.mjs), icon generation
 docs/  docs/en/       design docs, Chinese and English
 ```
 
@@ -293,25 +305,20 @@ Pangu is all three at once:
 
 ```
 story (two opening beats) → chaos (bespoke: tap the egg, chaos bursts)
-                          → grow  (hold the sky: 40 taps, 18,000 years)
+                          → tap   (hold the sky: 40 taps, 18,000 years)
                           → place (six orbs return to sun, moon, rivers, plants)
                           → reward (story card)
 ```
 
-| Template | Interaction primitive | Story kind | Used by | Status |
-|---|---|---|---|---|
-| `story` | Storybook beats + narration (shared opening) | any | all | ✅ |
-| `substitution` | Drag + waterline: swap for something weighable | principles | Cao Chong | ✅ |
-| `grow` | Repeated taps make one thing grow, against rising resistance | persistence | Pangu | ✅ |
-| `place` | Drag items to where they belong | belonging, transformation | Pangu | ✅ |
-| `quiz` | Multiple choice (review mode only, never on first play) | recall, transfer | review centre | ✅ |
-| `match` | Pairing | concepts | 望梅止渴, 杯弓蛇影 | todo |
-| `order` | Sequencing / timeline | cause and effect | 拔苗助长, 一鸣惊人 | todo |
-| `board` | Board tactics | strategy | 田忌赛马 | todo |
-| `timing` | Timing bar | waiting vs acting | 守株待兔 | todo |
-| `react` | Reaction tapping | quick thinking | 司马光砸缸 | todo |
-| `branch` | Branching choices | decisions and consequences | 完璧归赵 | todo |
-| `build` | Repair / build | putting things right | 亡羊补牢 | todo |
+Templates are registered by id in `packages/game-kit/src/contract.ts` (`TemplateId`, 36 ids today).
+The ones actually implemented and used by content are the shared story opener plus 26 gameplay templates:
+`substitution`, `tap`, `place`, `aim`, `sort`, `trace`, `wait`, `mark`, `split`, `burrow`,
+`butcher` (bespoke scene inside the Paoding package, schema-registered here), `beacon` (same, Fenghuo),
+`ruse`, `siege`, `borrow`, `stillness`, `window`, `show`, `twoline`, `read`, `matchup`, `probe`,
+`lure`, `chase`, `swap`, `chain`. Ids such as `match` / `order` / `drag` / `board` / `timing` /
+`react` / `branch` / `build` / `grow` are **reserved and not implemented**, and `quiz` no longer
+exists at all — the due-review quiz is a DOM page in the shell (Chinese §7.17). Per-template detail lives
+in the Chinese §3.4 and §7.10–§7.16.
 
 Templates trade off against sameness. The hard rule is that **every story must declare a `keyMoment`** (the
 discovery the child should make), and that templates only supply interaction primitives — narration, art, feedback and
@@ -321,7 +328,7 @@ sound stay bespoke. Target ratio: **60% reuse / 40% custom**.
 
 Content is fully separated from code; a non-programmer can edit it, and `content:check` blocks mistakes at build time.
 
-Every entry declares its **group** (`allusion` today, `stratagem` reserved). The group table lives in
+Every entry declares its **group** (`allusion` for the seventeen stories, `stratagem` for the thirty-six stratagems — both live). The group table lives in
 `packages/content/src/groups.ts`; group labels live in `packages/i18n` (`group.<id>.title/note/empty`,
 enforced by the type system); the hall and the album simply iterate the table, so a third or fourth
 group needs no UI change. Empty groups are rendered as "coming soon" rather than hidden.
@@ -349,9 +356,9 @@ group needs no UI change. Empty groups are rendered as "coming soon" rather than
   "quiz": [ { "kind": "transfer", "question": "…", "options": ["…"], "answer": 0 } ],
 
   "game": {
-    "template": "grow",              // primary template (thumbnail / filtering)
+    "template": "tap",               // primary template (thumbnail / filtering)
     "stages": [                      // executed in order
-      { "template": "grow",  "levelScript": { "targetValue": 18000, "stepValue": 600 } },
+      { "template": "tap",   "levelScript": { "targetValue": 18000, "stepValue": 600 } },
       { "template": "place", "levelScript": { "slots": [], "orbs": [] } }
     ]
   }
@@ -412,15 +419,21 @@ mini-game becomes an optional later branch.
 
 ## 5. Performance and size budget
 
-| Metric | Budget | Notes |
+`pnpm size` (`scripts/check-size.mjs`, also wired into `pnpm verify` and CI) measures five budgets against
+`apps/site/dist` and fails the build when one is exceeded:
+
+| Budget | Limit | Why |
 |---|---|---|
-| Shell JS | **≤ 150 KB gzip** | currently **63.4 KB**, Phaser excluded |
-| Per-game chunk | ≤ 120 KB gzip | currently 3 KB and 7 KB |
-| Phaser | ≈ 350 KB gzip | measured; shared chunk, loaded on first game |
-| Per-game first-screen assets | ≤ 2 MB | lazy, per beat |
-| Playable within | ≤ 3 s on 4G | shell + cover only |
-| Frame rate | 60 fps mid-range Android, ≥ 30 fps low-end | degradation path: fewer particles, lower fps |
-| Session length | 3–5 minutes | matches attention span |
+| Initial JS + CSS (gzip) | ≤ 150 KB | What the user must download before seeing the hall |
+| Initial JS + CSS (raw) | ≤ 500 KB | The desktop and Android shells load **local files**, no gzip — raw bytes are their real cost |
+| Biggest lazy chunk (gzip) | ≤ 450 KB | Chunks fetched only when a game starts; Phaser is the biggest today |
+| Biggest lazy chunk (raw) | ≤ 1800 KB | Same local-loading reason |
+| Whole `dist` (raw) | ≤ 3500 KB | The bytes that go into the exe / APK |
+
+Everything else is still a target rather than a gate: Phaser ≈ 350 KB gzip (shared chunk), ≤ 2 MB of
+per-game assets, ≤ 200 KB per image, ≤ 100 KB per audio clip, playable within 3 s on 4G, 60 fps mid-range
+/ ≥ 30 fps low-end, 3–5 minute sessions. Concrete KB figures move every round — **`pnpm size` is the
+source of truth**, and the numbers in the Chinese §7.x are historical measurements from their own round.
 
 ---
 
@@ -497,6 +510,8 @@ at the far left of the timeline scroll, producing a span "from myth to recorded 
 
 **Two new reusable templates**
 - **`grow`** (persistence): repeated taps make one thing grow. Reusable for 愚公移山, 精卫填海, 铁杵磨针, 闻鸡起舞, 卧薪尝胆.
+  *(Later note: the Pangu hold stage ended up using `tap`; the id `grow` is still declared in the contract
+  but unused. Rewriting templates into a shared `tap` primitive turned out to be the cheaper reuse.)*
 - **`place`** (belonging): drag things where they belong. Reusable for 孔融让梨, 完璧归赵, 负荆请罪.
 
 The "tap the egg until it bursts" scene is **game-specific code** (`games/pangu/src/scenes/chaos.ts`), not a template —
@@ -536,8 +551,9 @@ a 60.6 KB gzip shell and 3 KB / 7 KB game chunks.
    automated tests deterministic.
 4. **Switching language remounts the game** (the host is keyed by locale), so no half-translated scene can survive.
 
-**Measured:** `pnpm verify` green; **8 end-to-end tests**, one dedicated to switching languages (UI, story titles,
-story cards, and persistence across a reload). Shell 63.4 KB gzip.
+**Measured (then):** `pnpm verify` green; **8 end-to-end tests**, one dedicated to switching languages (UI, story
+titles, story cards, and persistence across a reload). Shell 63.4 KB gzip — a historical figure; the current
+number comes from `pnpm size`.
 
 ---
 
@@ -555,8 +571,10 @@ story cards, and persistence across a reload). Shell 63.4 KB gzip.
 
 ## 9. Still open
 
-- Which story is third (suggestion: 司马光砸缸 — the `react` template, complementing Cao Chong's slow reasoning).
-- When real art enters the pipeline.
+- Everything the Chinese document added after §7.3 (bilingual follow-ups, the six stratagem volumes, the
+  size-guard budgets, the content split, the due-review feature of §7.17) has not been translated here —
+  see the banner at the top; the Chinese document is authoritative.
+- When real art enters the pipeline (everything is still drawn with geometry).
 - Whether the timeline scroll should tint myths differently (data is ready, UI is not).
 - Whether to pursue WeChat mini-games.
 

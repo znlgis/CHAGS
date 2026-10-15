@@ -2,6 +2,7 @@
 import { gameGroups } from '@chags/content';
 import { groupMessageKey, stratagemLabel, stratagemSetKey } from '@chags/i18n';
 import { computed } from 'vue';
+import { navigate } from '../router';
 import { useLocale } from '../stores/locale';
 import { useProgress } from '../stores/progress';
 
@@ -22,6 +23,10 @@ const sections = computed(() =>
     .filter((section) => section.cards.length > 0),
 );
 const total = computed(() => sections.value.reduce((sum, s) => sum + s.cards.length, 0));
+/** 到期要复习的张数：图鉴是它的入口（见 docs/技术方案.md §7.17） */
+const dueCount = computed(
+  () => sections.value.reduce((sum, s) => sum + s.cards.filter((c) => progress.reviewDue(c.id)).length, 0),
+);
 </script>
 
 <template>
@@ -29,6 +34,9 @@ const total = computed(() => sections.value.reduce((sum, s) => sum + s.cards.len
     <h1 class="text-2xl font-bold text-[#b03a31]">{{ i18n.t('album.title') }}</h1>
     <p v-if="total === 0" class="mt-6 rounded-3xl bg-[#fffaf0] p-6 text-sm text-[#6b5a49]">
       {{ i18n.t('album.empty') }}
+    </p>
+    <p v-else-if="dueCount > 0" data-testid="album-due-count" class="mt-3 text-sm text-[#8a5f10]">
+      {{ i18n.t('hall.reviewDue', { n: dueCount }) }}
     </p>
 
     <section
@@ -67,6 +75,24 @@ const total = computed(() => sections.value.reduce((sum, s) => sum + s.cards.len
             {{ i18n.t('album.source') }}：{{ entry.source.book }}
           </p>
           <p class="mt-1 text-sm leading-relaxed text-[#5c4b3d]">{{ entry.source.quote }}</p>
+          <div class="mt-4 flex items-center justify-between gap-3">
+            <span
+              v-if="progress.reviewDue(entry.id)"
+              :data-testid="'album-due-' + entry.id"
+              class="rounded-full bg-[#fdeccd] px-3 py-1 text-sm text-[#8a5f10]"
+            >
+              {{ i18n.t('album.reviewDue') }}
+            </span>
+            <span v-else />
+            <button
+              type="button"
+              :data-testid="'review-start-' + entry.id"
+              class="min-h-12 shrink-0 rounded-full bg-[#2c6b64] px-5 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
+              @click="navigate('/review/' + entry.id)"
+            >
+              {{ i18n.t('album.review') }}
+            </button>
+          </div>
         </li>
       </ul>
     </section>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { GameEventMap, GameModule } from '@chags/game-kit';
+import type { GameEventMap, GameModule, Stars } from '@chags/game-kit';
+import { gradeFromScore } from '@chags/progress';
 import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import { navigate } from '../router';
 import { registry } from '../registry';
@@ -7,7 +8,7 @@ import { createGameContext } from '../shell/createGameContext';
 import { useLocale } from '../stores/locale';
 import { useProgress } from '../stores/progress';
 
-const props = defineProps<{ gameId: string }>();
+const props = defineProps<{ entryId: string }>();
 const host = ref<HTMLDivElement | null>(null);
 /** ★ 必须用 shallowRef：ref 会深度代理整个 Phaser 对象图 */
 const mod = shallowRef<GameModule | null>(null);
@@ -21,20 +22,29 @@ const progress = useProgress();
 const i18n = useLocale();
 let disposed = false;
 
+/**
+ * 一局的表现同时喂两件事：
+ * - **星星**（只增不减，给孩子看）：由这一局的失误次数决定；
+ * - **复习评级**（决定下次什么时候再见面）：优先用答对率。
+ *   关卡里有"选择题"的模板会记 correct/total（借力、试探、配对、造势…），
+ *   纯动手不记对错的模板 total 为 0 —— 那就退回用星星当评级。
+ *   两条路都不再是"拿星星顶替"的权宜之计（见 docs/技术方案.md §7.17）。
+ */
+function reviewGrade(result: GameEventMap['level:complete']): Stars {
+  return result.total > 0 ? gradeFromScore(result.correct, result.total) : result.stars;
+}
+
 function handleEvent<K extends keyof GameEventMap>(type: K, payload: GameEventMap[K]): void {
   if (type === 'level:complete') {
     const result = payload as GameEventMap['level:complete'];
-    // 一局的表现直接决定下次复习间隔：3 星 → 3 级。
-    // 这里把 stars 同时当 grade 是**暂时的**：复习测验还没接上，
-    // session.correct/total 恒为 0，没有答对率可用（见 docs/技术方案.md 7.4）。
-    void progress.recordCompletion(props.gameId, result.stars, result.stars);
+    void progress.recordCompletion(props.entryId, result.stars, reviewGrade(result));
   }
 }
 
 onMounted(async () => {
-  const load = registry[props.gameId];
+  const load = registry[props.entryId];
   if (!load) {
-    error.value = i18n.t('play.notFound') + props.gameId;
+    error.value = i18n.t('play.notFound') + props.entryId;
     return;
   }
   try {
@@ -51,7 +61,7 @@ onMounted(async () => {
     const detail = cause instanceof Error ? cause.message : String(cause);
     error.value = i18n.t('play.loadFailed');
     // 详情只留给开发与自动化：e2e 靠它定位问题，玩家不需要看到
-    console.error('[chags] 游戏载入失败：' + props.gameId, cause);
+    console.error('[chags] 游戏载入失败：' + props.entryId, cause);
     if (typeof window !== 'undefined') {
       window.__chags = window.__chags ?? { events: [], last: null };
       window.__chags.lastError = detail;

@@ -15,14 +15,17 @@ Phaser 4.2 (games) · Vue 3.5 + Pinia (shell) · Vite 8 · TypeScript 5.9.3 · p
 
 ## Getting started
 
+Requirements: **Node 24 + pnpm 11.22** — the same versions as the CI `NODE_VERSION` and the `packageManager` field in `package.json`.
+
 ```bash
 pnpm install
 pnpm dev            # dev server at http://127.0.0.1:5183
-pnpm verify         # typecheck + lint + test + content:check + build (must be green before committing)
+pnpm verify         # typecheck + lint + test + content:check + build + size (must be green before committing)
 pnpm e2e            # Playwright end-to-end (run npx playwright install chromium first)
 pnpm e2e:dist       # same suite against the production build (verifies chunk lazy-loading)
 pnpm audit:i18n     # screenshot every screen in both languages into .scratch/i18n-audit/
-pnpm dist:win       # portable Windows exe (~3.3 MB, double-click to play, no install)
+pnpm icons          # regenerate the app icons (needs Python + Pillow; only when icons change)
+pnpm dist:win       # portable Windows exe (double-click to play, no install; size: see the build output)
 pnpm dist:apk       # Android APK (sideload)
 ```
 
@@ -50,15 +53,54 @@ Adding a group takes three steps: add a row to `GROUPS` (`id` / `order` / `order
 **compile error**), and give every new content entry a `"group": "<id>"` — the schema deliberately
 has no default, so a stratagem can never be filed under "stories" by accident.
 
+## Adding a game
+
+This is what every one of the 53 games touched, in order:
+
+1. **A new workspace package** `games/<id>/`: `package.json` + `src/{manifest,index,logic,art}.ts`
+   — add `scenes/` and `layout.ts` for bespoke screens. Rules live in `logic.ts` (no Phaser import,
+   unit-testable);
+2. **Both halves of the content**: `packages/content/src/entries/<id>.json` (summary: title / era /
+   source / moral / keywords) and `<id>.game.json` (detail: story beats / key moment / quiz /
+   misconceptions / level script). The quiz is **3 questions and must include one `transfer`**, which
+   `content:check` enforces. A new template also needs an id in `TemplateId`
+   (`packages/game-kit/src/contract.ts`) and a level schema registered in
+   `packages/templates/src/schemas.ts`;
+3. **Translation patches**: `packages/content/src/i18n/en/<id>.json` and `<id>.game.json` (one per
+   half). A missing field, a structural mismatch or Chinese left inside the English file fails the build;
+4. **Two registry lines**: `packages/content/src/entries/index.ts` and
+   `packages/content/src/i18n/index.ts`;
+5. **Shell wiring**: a dependency in `apps/site/package.json` plus one lazy `import` line in
+   `apps/site/src/registry.ts`. `apps/site/src/registry.test.ts` guards both — **one line missing from
+   the registry (or one line too many) fails a unit test** instead of surfacing as "game not found"
+   after a child taps the card;
+6. **An end-to-end case** in `e2e/`: a headless `?autoplay=1` playthrough (a new template does not count
+   until it implements `runAutoplay()`);
+7. **`pnpm verify` green** (typecheck / lint / test / content:check / build / size), then `pnpm e2e`.
+
+The same file-level checklist lives in [docs/三十六计方案.md](docs/三十六计方案.md), section 6.
+
 ## Current status
 
-**Seventeen stories plus the first twenty-four stratagems** are playable. `pnpm verify` is green (typecheck,
-lint, 1208 unit tests, content check, build, size) and every game has a headless playthrough in the
-end-to-end suite (`?autoplay=1` — a new template only counts once it implements `runAutoplay()`).
+**Seventeen stories plus all thirty-six stratagems (all six volumes)** are playable. `pnpm verify` is green
+(typecheck, lint, 1221 unit tests, content check, build, size) and every game has a headless playthrough
+in the end-to-end suite (`?autoplay=1` — a new template only counts once it implements `runAutoplay()`).
 
 The shell stays small: no Phaser, and no story or level-script content either. Each game's own
 business code is only a few KB; Phaser is a shared chunk and the full content (stories, quizzes,
 level scripts) is a separate lazy chunk — both load only when a game starts. See `pnpm size`.
+
+### Due review (new this round)
+
+Every story card in the album now carries a **Review** button. When a story comes due, the card shows a
+"Review due" badge and the hall shows a banner — **only when something is actually due** — that takes the
+child straight to the first one.
+
+The quiz is 3 questions (one of them a transfer question), and **the score decides when you meet again**:
+1 / 3 / 7 / 21 / 60 days. The grade only moves the next review date; **it never touches the stars** —
+stars only ever go up, and getting a review question wrong should not cost one. The page is plain DOM, so
+three questions no longer pull in Phaser; the reasoning is in [docs/技术方案.md](docs/技术方案.md) §7.17
+(Chinese).
 
 ### 1. Cao Chong Weighs the Elephant (history · substitution)
 
@@ -461,20 +503,30 @@ means adding one JSON file — zero game code changes. Missing translations are 
 ## Repository layout
 
 ```
-apps/site                  Vue 3.5 shell: hall / game host / album, language switcher
-packages/game-kit          Contracts (GameModule / GameContext / events). No Phaser.
-packages/content           Story data + zod schemas + translations
-packages/i18n              UI message catalogs (zh-CN / en)
-packages/templates         Gameplay templates: story / substitution / tap / place / aim / sort / trace / wait / mark / split / burrow / butcher / quiz / reward
+apps/site                  Vue 3.5 shell: hall (grouped) / game host / album / due review
+apps/desktop               Tauri 2 desktop shell (portable exe)
+apps/mobile                Capacitor 8 Android shell (APK)
+packages/game-kit          Contracts (GameModule / GameContext / events) + TemplateId. No Phaser.
+packages/content           Content (summary <id>.json + detail <id>.game.json) + zod + English patches
+packages/i18n              UI message catalogs (zh-CN / en; a missing key is a compile error)
+packages/templates         Gameplay template implementations; the contract declares 36 template ids
+                           (packages/game-kit/src/contract.ts): 26 used by content plus the shared
+                           opening `story`; match / order / drag / board / timing / react / branch /
+                           build / grow are reserved ids, not implemented yet; butcher / beacon are
+                           bespoke scenes inside game packages, registered in the template layer;
+                           chaos has no template id at all and lives in the Pangu package
 packages/phaser-kit        Phaser bootstrap, cartoon drawing primitives, drag controller, base scene
 packages/platform          Web services: IndexedDB / WebAudio / TTS / lifecycle
 packages/progress          Save file, migration, spaced-repetition scheduling (pure functions)
-games/caochong-elephant    Cao Chong Weighs the Elephant
-games/pangu                Pangu Splits Heaven and Earth (+ bespoke chaos scene)
-games/houyi, nuwa, jingwei, kuafu, yugong   Houyi / Nüwa / Jingwei / Kuafu / Yugong
-games/shennong, dayu, taigong, fenghuo, qiren   Shennong / Yu / the Grand Duke / the beacon fires / the man of Qi
+games/<id>                 53 game packages: one story / one stratagem each
 e2e                        Playwright smoke, real-input playthroughs, screenshot capture
+scripts                    Size guard (check-size.mjs), icon generation (make-icons.py)
 ```
+
+The single source of truth for the game list is `packages/content/src/entries/` (content) and
+`apps/site/src/registry.ts` (the lazy-load registry) — if the two disagree,
+`apps/site/src/registry.test.ts` fails on the spot. That is 53 entries: seventeen stories
+(Cao Chong → Cook Ding) plus all thirty-six stratagems.
 
 ## Three architectural rules
 

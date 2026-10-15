@@ -91,6 +91,19 @@ for (const entry of entries) {
   );
 }
 
+// ---------- 唯一性：id 与标题都不能撞车 ----------
+// 复制一条内容来改是最常见的加法（"照着女娲再写一个"），
+// 撞了 id 的话 getEntry() 只会返回先登记的那一条，而注册表是按集合比的、看不出来。
+const seenIds = new Set<string>();
+const seenTitles = new Map<string, string>();
+for (const entry of entries) {
+  if (seenIds.has(entry.id)) fail('内容 id 重复：' + entry.id);
+  seenIds.add(entry.id);
+  const prev = seenTitles.get(entry.title);
+  if (prev !== undefined) fail('标题重复："' + entry.title + '" 同时属于 ' + prev + ' 与 ' + entry.id);
+  seenTitles.set(entry.title, entry.id);
+}
+
 // ---------- 分组体检：每条内容都要落在一个登记过的分组里 ----------
 // 空组不算错：三十六计现在就是空的，大厅会把它显示成"敬请期待"。
 console.log('\n分组：');

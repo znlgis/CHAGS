@@ -1,5 +1,5 @@
 import type { GameManifest } from '@chags/game-kit';
-import { DESIGN } from '@chags/templates';
+import { DESIGN } from '@chags/templates/layout';
 
 export const manifest: GameManifest = {
   id: 'dacao-jingshe',
