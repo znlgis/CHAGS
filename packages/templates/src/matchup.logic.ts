@@ -1,5 +1,7 @@
 import { bestMatchupWins } from './schemas';
-import type { MatchupHorse, MatchupLevel, MatchupRival } from './schemas';
+import type {
+  MatchupHorse, MatchupLevel, MatchupNeighbor, MatchupOrderLevel, MatchupRival,
+} from './schemas';
 
 /**
  * 配对编排（matchup）的纯判定：谁对谁、这一场谁赢、赢够几场算胜。
@@ -241,4 +243,129 @@ export function matchupProgress(level: MatchupLevel, wins: number): number {
 export function scaledMs(value: number, autoplay: boolean, factor = MATCHUP_TIMING.autoplayFactor): number {
   if (!autoplay) return value;
   return Math.max(MATCHUP_TIMING.autoplayMinMs, Math.round(value / factor));
+}
+
+/* ---------------- order（远交近攻）：一圈势力，按顺序点过去 ---------------- */
+
+/**
+ * 顺序模式的手感常量（场景、单测、e2e 共用同一份）。
+ * 节拍沿用 pair 那一套：无头验证下两者一样快，孩子看到的是同一种呼吸。
+ */
+export const MATCHUP_ORDER_TIMING = {
+  /** 点的宽容度：势力城画得不小，手指粗也点得到 */
+  tapForgive: 46,
+  /** 点对时的一圈金光 / 点错时的一圈红光，各亮多久 */
+  markHoldMs: 700,
+  /** 点对一个之后停一下，再把小手放到下一个 */
+  stepHoldMs: 320,
+  /** 无头验证：隔多久点下一个 */
+  autoplayStepMs: MATCHUP_TIMING.autoplayStepMs,
+  /** 多久没动静就把小手放到下一个该点的势力上 */
+  idleMs: MATCHUP_TIMING.idleMs,
+  /** 一圈都走完之后看一眼地图，再进典故卡 */
+  finaleHoldMs: MATCHUP_TIMING.finaleHoldMs,
+  /** 提示气泡的高度 */
+  hintY: MATCHUP_TIMING.hintY,
+} as const;
+
+/**
+ * 一圈势力点下来的账。
+ *
+ * sequence 从关卡里抄一份进来：这样"下一个该点谁"**只按 state 就能回答**，
+ * pick() 也不必再要 level —— 这一关唯一的难点就是"先点哪个"。
+ */
+export interface OrderState {
+  /** 正确顺序（关卡里 sequence 的副本） */
+  sequence: string[];
+  /** 按顺序点过的势力（点中的先后就是正确顺序） */
+  picked: string[];
+  /** 点错了几次 —— 只是复盘用，不扣星也不结束 */
+  wrongs: number;
+}
+
+export function orderStart(level: MatchupOrderLevel): OrderState {
+  return { sequence: [...level.sequence], picked: [], wrongs: 0 };
+}
+
+/** 下一个该点谁（sequence 里最靠前那个还没点过的）；都点完了就是 undefined */
+export function nextIdInOrder(state: OrderState): string | undefined {
+  return state.sequence.find((id) => !state.picked.includes(id));
+}
+
+/**
+ * 下一个该点的势力 —— 提示、小手与无头验证都按它走。
+ * 都点完了就是 undefined。
+ */
+export function expectedNext(
+  level: MatchupOrderLevel,
+  state: OrderState,
+): MatchupNeighbor | undefined {
+  const id = nextIdInOrder(state);
+  return id === undefined ? undefined : level.neighbors.find((neighbor) => neighbor.id === id);
+}
+
+/**
+ * 点一个势力：**不是下一个就原样返回**（零惩罚 —— 只提示，顺序可以重排）。
+ * 点对了才记进 picked；点错了什么也不改（"错了几次"由 noteWrongPick 单独记）。
+ */
+export function pick(state: OrderState, id: string): OrderState {
+  if (nextIdInOrder(state) !== id) return state;
+  return { ...state, picked: [...state.picked, id] };
+}
+
+/** 点错一次：只记一笔（复盘用）—— 不扣星、不结束，也不改已经点对的那些 */
+export function noteWrongPick(state: OrderState): OrderState {
+  return { ...state, wrongs: state.wrongs + 1 };
+}
+
+/** 点过了几个 */
+export function pickedCount(state: OrderState): number {
+  return state.picked.length;
+}
+
+/** 点错了几次 */
+export function wrongPicks(state: OrderState): number {
+  return state.wrongs;
+}
+
+/** 按点中的先后，都点了哪些（画面"已结好 / 已处理"按它画） */
+export function pickedOrder(state: OrderState): string[] {
+  return [...state.picked];
+}
+
+/** 一圈都点完了没有 */
+export function isOrderDone(level: MatchupOrderLevel, state: OrderState): boolean {
+  return state.picked.length >= level.sequence.length;
+}
+
+/** 0..1：画面上的"走到了第几步"按它画 */
+export function orderProgress(level: MatchupOrderLevel, state: OrderState): number {
+  const total = level.sequence.length;
+  return total <= 0 ? 1 : Math.max(0, Math.min(1, state.picked.length / total));
+}
+
+/** 手指落在哪个势力上（按屏幕位置算距离，不依赖命中区域） */
+export function neighborAt(
+  level: MatchupOrderLevel,
+  x: number,
+  y: number,
+  forgive = 0,
+): MatchupNeighbor | undefined {
+  let best: MatchupNeighbor | undefined;
+  let bestDist = Number.POSITIVE_INFINITY;
+  for (const neighbor of level.neighbors) {
+    const dist = Math.hypot(x - neighbor.x, y - neighbor.y);
+    if (dist <= neighbor.radius + forgive && dist < bestDist) {
+      best = neighbor;
+      bestDist = dist;
+    }
+  }
+  return best;
+}
+
+/** 按正确顺序排好的那一圈（画面"下一个是谁"与无头验证都按它走） */
+export function neighborsInOrder(level: MatchupOrderLevel): MatchupNeighbor[] {
+  return level.sequence
+    .map((id) => level.neighbors.find((neighbor) => neighbor.id === id))
+    .filter((neighbor): neighbor is MatchupNeighbor => neighbor !== undefined);
 }

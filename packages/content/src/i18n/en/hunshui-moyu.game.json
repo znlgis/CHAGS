@@ -1,0 +1,81 @@
+{
+  "figures": [
+    "Zhu Xu",
+    "Xie Xuan"
+  ],
+  "story": [
+    {
+      "title": "A River Between Them",
+      "text": "Across the Fei River, Qin had many men and Jin had few — neither side moved first.",
+      "narration": "In the year 383, the armies of Qin and Jin faced each other across the Fei River. Qin had far more men; Jin had few — and neither side would move first. On the Jin side they understood: a straight clash could not be won. First the whole situation had to change."
+    },
+    {
+      "title": "Across in the Muddle",
+      "text": "The moment Qin's ranks fell into disorder, Jin crossed the river.",
+      "narration": "Zhu Xu shouted from behind the Qin lines that Qin had been beaten, and Qin's own ranks fell into disorder. Jin crossed the river in that muddle and got the business done — the more confused everything is, the steadier you must stay."
+    }
+  ],
+  "keyMoment": {
+    "question": "They have far more men and the river lies between you. How do you get it done?",
+    "options": [
+      {
+        "text": "Stir the situation into a muddle first, then move",
+        "hint": ""
+      },
+      {
+        "text": "Charge straight across the river anyway",
+        "hint": "In a straight clash, the smaller side only loses more."
+      },
+      {
+        "text": "Do nothing and wait for them to scatter",
+        "hint": "Waiting will not bring it — you have to stir up the muddle yourself."
+      }
+    ],
+    "reveal": "When everything is in a muddle, stay the steadiest — muddy the water first, then get it done."
+  },
+  "misconceptions": [
+    "Muddying the water means taking what you can while others are in trouble",
+    "When things get messy, just be messy along with them"
+  ],
+  "quiz": [
+    {
+      "question": "How did Jin throw Qin's ranks into disorder?",
+      "options": [
+        "Someone shouted from behind the Qin lines",
+        "They stirred the river muddy",
+        "They waited for Qin to scatter"
+      ],
+      "answer": 0,
+      "explanation": "Zhu Xu shouted from behind the Qin lines that Qin had been beaten — and Qin's own ranks fell apart."
+    },
+    {
+      "question": "According to the Thirty-Six Stratagems, when do you take your profit in muddy water?",
+      "options": [
+        "When the other side is confused inside and no one is in charge",
+        "When the other side lines up and waits",
+        "When the other side has more men"
+      ],
+      "answer": 0,
+      "explanation": "Take advantage of their hidden confusion and of their weakness with no one in charge — move when the other side has no firm hand."
+    },
+    {
+      "question": "The classroom is noisy at break and your homework is not finished. What do you do?",
+      "options": [
+        "Do the most important question first and do not join the noise",
+        "Join in the noise with everyone else",
+        "Wait until the classroom is completely quiet"
+      ],
+      "answer": 0,
+      "explanation": "When everything is in a muddle, stay the steadiest — finish the one thing that matters first."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Muddy the water first"
+        }
+      }
+    ]
+  }
+}

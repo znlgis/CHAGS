@@ -59,8 +59,13 @@ export type { GazeSide, LampPhase, RuseSight, ShellPick } from './ruse.logic';
 export {
   frontGain, frontTap, isRelieved, isSiegeDone, nextVital, relieve, resistanceOf, siegeProgress,
   siegeStart, tapsToFinish, untouchedVitals, vitalAt,
+  // support（釜底抽薪）/ close（关门捉贼）：第四辑扩出来的两个模式
+  baseLog, closeExit, closeProgress, closeSchedule, closeStart, closedCount, closingExit, closingRatio,
+  escapeExit, escapeLeftMs, exitAt, exitById, fireLevel, hasEscaped, isCloseDone, isExitClosed,
+  isPulled, isSupportDone, logAt, logById, nextExitToClose, nextLogToPull, pullLog, pulledCount,
+  roundElapsedMs, standingCount, supportProgress, supportStart,
 } from './siege.logic';
-export type { SiegeState } from './siege.logic';
+export type { SiegeExit, SiegeState } from './siege.logic';
 export {
   borrowStart, canLift, connectProp, disconnectProp, hasFulcrum, isBorrowDone, isLifted,
   nextPropToConnect, propAt, pull, selfPower, suggestedConnections, totalPower,
@@ -82,9 +87,11 @@ export {
   effectiveCycle, isJobDone, isTravelOver, isWindowDone, jobAt, jobProgress, jobWork, nextJob,
   nextWindowInMs, phaseProgress, phaseRemainingMs, restartTravel, tapAt, tapJob, travelFloorMs,
   travelLeftMs, windowStart,
+  // stir（混水摸鱼）：窗口是自己搅出来的
+  MURK_MAX, isMuddy, muddyLeftMs, murkAt, stirAt, stirStart,
   phaseAt as windowPhaseAt, tapsNeeded as windowTapsNeeded,
 } from './window.logic';
-export type { WindowPhase, WindowState } from './window.logic';
+export type { MurkState, StirWindowLevel, WindowPhase, WindowState } from './window.logic';
 
 /* ---------- 三十六计（第二辑 · 敌战计 7–12） ---------- */
 export * from './show';
@@ -117,8 +124,11 @@ export {
   MATCHUP_TIMING, RIVAL_HIT, assign, bestRoster, bestWins, horseAtSlot, horseNear, isMatchupDone,
   isRosterFull, lossesFor, matchupProgress, pairings, placements, powerGap, resetRoster, resolve,
   rivalAt, scaledMs, slotOfHorse, takeBack, winsFor, winsNeeded,
+  // order（远交近攻）：一圈势力，近的先解决、远的先结好
+  MATCHUP_ORDER_TIMING, expectedNext, isOrderDone, neighborAt, neighborsInOrder, nextIdInOrder,
+  noteWrongPick, orderProgress, orderStart, pick, pickedCount, pickedOrder, wrongPicks,
 } from './matchup.logic';
-export type { RaceResult, Roster } from './matchup.logic';
+export type { OrderState, RaceResult, Roster } from './matchup.logic';
 
 /* ---------- 三十六计（第三辑 · 攻战计 13–18） ---------- */
 export * from './probe';
@@ -146,3 +156,20 @@ export {
   tick as chaseTick,
 } from './chase.logic';
 export type { ChaseBand, ChaseState } from './chase.logic';
+
+/* ---------- 三十六计（第四辑 · 混战计 19–24） ---------- */
+export * from './swap';
+export * from './chain';
+export {
+  SWAP_TIMING, canPlace, caughtPosts, gateHit, hasLeft, isAllSwapped, isPostSwapped, isShellDone,
+  leave, leftAtMs, nextPeekInMs, nextPostToSwap, nextSwapStep, peek, peekCount, placeSpare,
+  postAt, postById, seenCount, spareAt, spareById, spareFor, spareOf, spareStandingAt, swapCount,
+  swapOrder, swapStart, unswappedPosts, usableSpares,
+} from './swap.logic';
+export type { SwapState, SwapStep } from './swap.logic';
+export {
+  CHAIN_TIMING, askPass, chainStart, chainStep, envoyHit, gateAt, gateById, gatesLeft, hasPass,
+  hasReturnedHome, homeHit, isAllGatesTaken, isGateTaken, isNextGate, isPassDone, nextGate,
+  returnHome, takeGate, takenCount,
+} from './chain.logic';
+export type { ChainState, ChainStep } from './chain.logic';

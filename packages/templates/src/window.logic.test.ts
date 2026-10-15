@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { WindowLevelSchema } from './schemas';
 import {
-  closeWindow, currentJob, cycleIndexAt, doneCount, effectiveCycle, isTravelOver, isWindowDone,
-  jobAt, jobProgress, jobWork, nextJob, nextWindowInMs, phaseAt, phaseProgress, phaseRemainingMs,
-  restartTravel, tapAt, tapJob, tapsNeeded, travelLeftMs, windowStart,
+  MURK_MAX, closeWindow, currentJob, cycleIndexAt, doneCount, effectiveCycle, isJobDone, isMuddy,
+  isTravelOver, isWindowDone, jobAt, jobProgress, jobWork, muddyLeftMs, murkAt, nextJob,
+  nextWindowInMs, phaseAt, phaseProgress, phaseRemainingMs, restartTravel, stirAt, stirStart,
+  tapAt, tapJob, tapsNeeded, travelLeftMs, windowStart,
 } from './window.logic';
 
 /** 趁火打劫的水寨：稳 4.2 秒，乱 3 秒，三件活儿（与内容 JSON 里的一模一样） */
@@ -345,5 +346,154 @@ describe('glimpse 的 schema 与边界', () => {
 
   it('fire 不许写 travelMs —— 趁火打劫没有"一趟走完"这回事', () => {
     expect(() => WindowLevelSchema.parse({ ...level, travelMs: 45000 })).toThrow();
+  });
+});
+/* ---------------- stir（混水摸鱼）：窗口是自己搅出来的 ---------------- */
+
+/** 淝水边的那口塘：三条鱼，搅一下浑一会儿（与内容 JSON 里的一模一样） */
+const stir = WindowLevelSchema.parse({
+  mode: 'stir',
+  // stir 里"稳多久、乱多久"的周期不参与判定（窗口是自己搅出来的），
+  // 但 schema 要它，画面上也要有个"窗口有多长"的参照 —— 取最长的鱼那么多。
+  cycle: { calmMs: 1800, windowMs: 2400 },
+  jobs: [
+    { id: 'carp', x: 175, y: 880, radius: 92, workMs: 1400 },
+    { id: 'crucian', x: 575, y: 800, radius: 92, workMs: 1600 },
+    { id: 'grass', x: 375, y: 1140, radius: 92, workMs: 1200 },
+  ],
+  workTapMs: 320,
+  goal: 3,
+  stir: { x: 375, y: 560, radius: 96, perTapMs: 900, clearPerSec: 45, muddyAt: 60 },
+  hint: '先把水搅浑',
+});
+
+/** 在浑水期把一条鱼摸到手里：水清了就先搅一下，再接着摸（与场景同一条路） */
+function land(fishId: string, t: number, state = stirStart(stir)) {
+  let next = state;
+  for (let i = 0; i < 12 && !isJobDone(next, fishId); i += 1) {
+    next = isMuddy(stir, next, t) ? tapAt(next, stir, fishId, t) : stirAt(stir, next, t);
+  }
+  return next;
+}
+
+describe('stir：水是清的，窗口要自己搅出来', () => {
+  it('开局水是清的：不浑、抓不动、浑水钟只剩 0', () => {
+    const state = stirStart(stir);
+    expect(murkAt(state, 0)).toBe(0);
+    expect(isMuddy(stir, state, 0)).toBe(false);
+    expect(muddyLeftMs(stir, state, 0)).toBe(0);
+    expect(state.stir?.stirs).toBe(0);
+    expect(state.done).toEqual([]);
+  });
+
+  it('搅一下就浑：一下加 90（perTapMs 按满浑折算），已经够到 muddyAt 以上', () => {
+    const state = stirAt(stir, stirStart(stir), 1000);
+    expect(murkAt(state, 1000)).toBe(90);
+    expect(isMuddy(stir, state, 1000)).toBe(true);
+    expect(state.stir?.stirs).toBe(1);
+    // (90 − 60) / 45 秒 ≈ 0.67 秒 —— 浑水只够抓几下的，抓不完就再搅
+    expect(muddyLeftMs(stir, state, 1000)).toBeCloseTo(((90 - 60) / 45) * 1000, 6);
+  });
+
+  it('浑水随时间澄清：45/秒，浑到 muddyAt 以下就摸不动了', () => {
+    const state = stirAt(stir, stirStart(stir), 1000);
+    expect(murkAt(state, 2000)).toBe(45);
+    expect(murkAt(state, 3000)).toBe(0); // 再澄清一秒就到底，不会变成负数
+    expect(isMuddy(stir, state, 1600)).toBe(true); // 90 − 27 = 63
+    expect(isMuddy(stir, state, 1700)).toBe(false); // 90 − 31.5 = 58.5
+    expect(muddyLeftMs(stir, state, 1700)).toBe(0);
+  });
+
+  it('浑度封顶 100：连着搅也不会超过，搅一次就算一次', () => {
+    let state = stirStart(stir);
+    for (let i = 0; i < 4; i += 1) state = stirAt(stir, state, 1000 + i * 55);
+    expect(murkAt(state, 1165)).toBe(MURK_MAX);
+    expect(state.stir?.stirs).toBe(4);
+  });
+
+  it('t 比上一次量浑度还早（时钟倒流）也不会把浑度算成负数', () => {
+    const state = stirAt(stir, stirStart(stir), 5000);
+    expect(murkAt(state, 0)).toBe(90);
+  });
+});
+
+describe('stir：浑水里才抓得动鱼（零惩罚）', () => {
+  it('水清的时候点鱼什么也不发生 —— 那条鱼摆尾滑走', () => {
+    const state = stirStart(stir);
+    expect(tapAt(state, stir, 'carp', 1200)).toBe(state);
+    expect(jobWork(tapAt(state, stir, 'carp', 1200), stir, 'carp')).toBe(0);
+    expect(doneCount(state)).toBe(0);
+  });
+
+  it('搅浑之后连点，鱼就到手了；到手之后点它也不会变', () => {
+    let state = stirAt(stir, stirStart(stir), 1000);
+    for (let i = 0; i < 5; i += 1) state = tapAt(state, stir, 'carp', 1200);
+    expect(doneCount(state)).toBe(1);
+    expect(jobWork(state, stir, 'carp')).toBe(1400);
+    expect(tapAt(state, stir, 'carp', 1200)).toBe(state);
+  });
+
+  it('水一清，摸了一半的鱼滑走：进度清零，摸到的留着（零惩罚，搅一下再来）', () => {
+    let state = stirAt(stir, stirStart(stir), 1000);
+    for (let i = 0; i < 3; i += 1) state = tapAt(state, stir, 'carp', 1200);
+    expect(jobWork(state, stir, 'carp')).toBe(960);
+
+    const cleared = closeWindow(state, stir);
+    expect(jobWork(cleared, stir, 'carp')).toBe(0);
+    expect(cleared.resets).toBe(1); // 只记一笔"白跑一趟"，不扣星、不结束
+    expect(doneCount(cleared)).toBe(0);
+
+    // 再搅一下就能接着摸：不扣星、不结束，也没有别的代价
+    const again = stirAt(stir, cleared, 4000);
+    expect(isMuddy(stir, again, 4000)).toBe(true);
+    expect(jobWork(tapAt(again, stir, 'carp', 4000), stir, 'carp')).toBe(320);
+  });
+
+  it('什么也没摸的时候水清了，不算白跑一趟', () => {
+    expect(closeWindow(stirStart(stir), stir).resets).toBe(0);
+  });
+
+  it('摸到的鱼不会被水清掉', () => {
+    const caught = land('grass', 1200);
+    expect(doneCount(caught)).toBe(1);
+    const cleared = closeWindow(caught, stir);
+    expect(cleared.done).toEqual(['grass']);
+    expect(jobWork(cleared, stir, 'grass')).toBe(1200);
+  });
+
+  it('三条鱼都摸到才算成（每一条都是"搅一下、抓几下"）', () => {
+    let state = stirStart(stir);
+    for (const id of ['carp', 'crucian', 'grass']) {
+      state = stirAt(stir, state, 6000);
+      state = land(id, 6000, state);
+      expect(isJobDone(state, id)).toBe(true);
+    }
+    expect(isWindowDone(stir, state)).toBe(true);
+    expect(state.done).toEqual(['carp', 'crucian', 'grass']);
+    expect(doneCount(state)).toBe(3);
+  });
+});
+
+describe('stir 的 schema 与边界', () => {
+  it('stir 必须给 stir —— 不然不知道水要怎么搅、多快澄清', () => {
+    expect(() => WindowLevelSchema.parse({ ...stir, stir: undefined })).toThrow();
+  });
+
+  it('fire / glimpse 不许写 stir —— 没有"自己搅出来的窗口"这回事', () => {
+    expect(() => WindowLevelSchema.parse({ ...level, stir: stir.stir })).toThrow();
+    expect(() => WindowLevelSchema.parse({ ...glimpse, stir: stir.stir })).toThrow();
+  });
+
+  it('老模式一个字没改：fire 里 isMuddy 恒为 false，tapAt 照样按窗口判定', () => {
+    const state = windowStart();
+    expect(isMuddy(level, state, 4300)).toBe(false);
+    expect(muddyLeftMs(level, state, 4300)).toBe(0);
+    expect(murkAt(state, 4300)).toBe(0);
+    // 搅水对 fire 无效：原样返回，连 stirs 都不记
+    expect(stirAt(level, state, 4300)).toBe(state);
+    // 窗口里点得动、稳的时候点不动 —— 与扩展之前完全一样
+    expect(tapJob(state, level, 'boat').work['boat']).toBe(340);
+    expect(tapAt(state, level, 'boat', 1000)).toBe(state);
+    expect(tapAt(state, level, 'boat', 4300)).not.toBe(state);
   });
 });

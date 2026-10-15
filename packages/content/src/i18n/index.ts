@@ -34,6 +34,12 @@ import enDiaohu from './en/diaohu-lishan.json';
 import enYuqin from './en/yuqin-guzong.json';
 import enPaozhuan from './en/paozhuan-yinyu.json';
 import enQinzei from './en/qinzei-qinwang.json';
+import enFudi from './en/fudi-chouxin.json';
+import enHunshui from './en/hunshui-moyu.json';
+import enJinchan from './en/jinchan-tuoqiao.json';
+import enGuanmen from './en/guanmen-zhuozei.json';
+import enYuanjiao from './en/yuanjiao-jingong.json';
+import enJiadao from './en/jiadao-faguo.json';
 
 /**
  * 典故内容的翻译补丁。结构镜像原文，只写需要翻译的字段。
@@ -76,6 +82,12 @@ export const patches: Partial<Record<Locale, Record<string, unknown>>> = {
     'yuqin-guzong': enYuqin,
     'paozhuan-yinyu': enPaozhuan,
     'qinzei-qinwang': enQinzei,
+    'fudi-chouxin': enFudi,
+    'hunshui-moyu': enHunshui,
+    'jinchan-tuoqiao': enJinchan,
+    'guanmen-zhuozei': enGuanmen,
+    'yuanjiao-jingong': enYuanjiao,
+    'jiadao-faguo': enJiadao,
   },
 };
 

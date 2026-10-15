@@ -13,7 +13,9 @@ export type TemplateId =
   // 三十六计第二辑：造势 / 双线 / 识破 / 配对编排
   | 'show' | 'twoline' | 'read' | 'matchup'
   // 三十六计第三辑：试探 / 诱饵 / 追而不逼
-  | 'probe' | 'lure' | 'chase';
+  | 'probe' | 'lure' | 'chase'
+  // 三十六计第四辑：替换 / 连环
+  | 'swap' | 'chain';
 
 export interface GameManifest {
   id: string;

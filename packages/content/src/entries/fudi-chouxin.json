@@ -1,0 +1,29 @@
+{
+  "id": "fudi-chouxin",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "釜底抽薪",
+  "pinyin": "Fǔ dǐ chōu xīn",
+  "dynasty": "东汉",
+  "era": "东汉 · 建安五年",
+  "yearApprox": 200,
+  "source": {
+    "book": "《三十六计·混战计》",
+    "chapter": "釜底抽薪",
+    "quote": "不敌其力，而消其势，兑下乾上之象。"
+  },
+  "moral": "不跟火硬碰，从底下把柴一根根抽走。",
+  "keywords": [
+    "从根上解决",
+    "不硬碰",
+    "乌巢"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 19,
+    "set": 4
+  }
+}

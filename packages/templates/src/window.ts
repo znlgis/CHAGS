@@ -1,13 +1,20 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
-import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
+import { BaseScene, THEME, createHand, sparkleAt, tapRipple } from '@chags/phaser-kit';
 import { SCENE_KEYS } from './layout';
 import {
-  WINDOW_WARN_MS, closeWindow, currentJob, cycleIndexAt, effectiveCycle, isJobDone, isTravelOver,
-  isWindowDone, jobAt, jobProgress, nextJob, phaseAt, phaseProgress, phaseRemainingMs,
-  restartTravel, tapJob, travelLeftMs, windowStart,
+  MURK_MAX, WINDOW_WARN_MS, closeWindow, currentJob, cycleIndexAt, effectiveCycle, isJobDone,
+  isMuddy, isTravelOver, isWindowDone, jobAt, jobProgress, muddyLeftMs, murkAt, nextJob, phaseAt,
+  phaseProgress, phaseRemainingMs, restartTravel, stirAt, stirStart, tapAt, tapJob, travelLeftMs,
+  windowStart,
 } from './window.logic';
-import type { WindowPhase, WindowState } from './window.logic';
+import type { StirWindowLevel, WindowPhase, WindowState } from './window.logic';
+
+/**
+ * stir 模式的关卡类型从逻辑层原样再导出一份：游戏包要用它给 `windowLevel()` 收窄返回类型
+ * （schema 里 stir 是可选的，这里在类型上写死"一定有 stir"）。
+ */
+export type { StirWindowLevel };
 import type { WindowJob, WindowLevel } from './schemas';
 import type { SessionState } from './session';
 
@@ -33,6 +40,14 @@ export const WINDOW = {
   autoplayTripHoldMs: 240,
   /** 提示气泡的高度 */
   hintY: 268,
+
+  /* ---------- stir（混水摸鱼）：窗口是自己搅出来的 ---------- */
+  /** 停手这么久之后（水清了就指水面，浑着就指还没摸到的鱼）把小手放过去 */
+  stirIdleMs: 8000,
+  /** 搅水的那圈涟漪亮多久 */
+  rippleMs: 760,
+  /** 搅浑之后"浑了，快抓"在气泡里停多久 */
+  stirHoldMs: 1600,
 } as const;
 
 /** 交给游戏画的一切：夜里的水寨、火光、跑远的巡逻灯、每件活儿的进度 */
@@ -87,6 +102,45 @@ export interface WindowConfig {
   tripHoldMs?: number;
 }
 
+/** stir（混水摸鱼）那一屏的画面状态：窗口的通用字段 + 这一塘水的水况 */
+export interface StirStageState extends WindowStageState {
+  /** 此刻水有多浑（0..100） */
+  murk: number;
+  /** 浑到 muddyAt 以上 —— 此刻才抓得动鱼 */
+  muddy: boolean;
+  /** 这么浑还能撑多久（水清了就是 0）—— 画面"水快清了"的钟按它画 */
+  muddyLeftMs: number;
+  /** 搅了几下水（复盘用，不是惩罚） */
+  stirs: number;
+  /** 水面的搅浑点（关卡数据里的那一圈） */
+  stir: { x: number; y: number; radius: number };
+}
+
+/**
+ * stir（混水摸鱼）这一路的配置。与 fire / glimpse 的 `WindowConfig` 是两份 ——
+ * 老字段一个字没动，多出来的这些只有 stir 用得上。
+ */
+export interface WindowStirConfig {
+  level: StirWindowLevel;
+  session: SessionState;
+  nextSceneKey: string;
+  /** 顶栏上的名字；不传就把整屏交给 drawWorld */
+  title?: string;
+  /** 整屏画面：水塘、水色、浑度、鱼都按 state 画 */
+  drawWorld: (g: Phaser.GameObjects.Graphics, state: StirStageState) => void;
+  /** 点鱼时的表现（鱼尾一摆） */
+  onTapJob?: (job: WindowJob, api: { scene: Phaser.Scene; progress: number }) => void;
+  /** 搅水时的表现（水花） */
+  onStir?: (api: { scene: Phaser.Scene; murk: number }) => void;
+  /** 水搅浑了、可以抓了的那一句（不传就用 level.hint） */
+  muddyLine?: string;
+  /** 水太清了、鱼摆尾滑走了的那一句（不传就用 level.hint） */
+  slipLine?: string;
+  drawFinale?: (g: Phaser.GameObjects.Graphics, state: StirStageState) => void;
+  reveal?: string;
+  finaleHoldMs?: number;
+}
+
 /**
  * 时机窗口：活儿谁都会干，难的是等对时候。
  *
@@ -100,8 +154,11 @@ export interface WindowConfig {
  * glimpse（顺手牵羊）在同一个场景里加一条：**这一轮只有一件机会路过**。
  * 别处的、上一轮 / 下一轮的都点不动（零惩罚，只当白跑一趟）；
  * 这一趟（travelMs）走完还没抓够，就把队伍带回起点重走一遍 —— 抓到的留着，不扣星。
+ *
+ * 下面这一段是 **fire / glimpse 那条路（一行没改）**，只是从 createWindowScene 里
+ * 挪成了一个具名函数；stir 那一半在文件末尾另起一段，由 mode 分派。
  */
-export function createWindowScene(
+function createTimedWindowScene(
   ctx: GameContext,
   cfg: WindowConfig,
 ): Phaser.Types.Scenes.SceneType {
@@ -417,4 +474,337 @@ export function createWindowScene(
       });
     }
   };
+}
+
+/* ---------------- stir（混水摸鱼）：窗口是自己搅出来的 ---------------- */
+
+/**
+ * 混水摸鱼：**窗口是自己搅出来的**。
+ *
+ * 与 fire / glimpse 的区别只有一条，但它就是这一计的全部：水本来是清的 ——
+ * 点水面把水搅浑（浑度涨，封顶 100），只有浑水里鱼才慢下来、才摸得到；
+ * 不搅就一直清，一直抓不到。浑度按 clearPerSec 澄清，水一清，
+ * 摸到一半的那条鱼就摆尾滑走 —— **只是重来**：不扣星、不结束，搅一下就能接着摸。
+ */
+function createStirWindowScene(
+  ctx: GameContext,
+  cfg: WindowStirConfig,
+): Phaser.Types.Scenes.SceneType {
+  return class StirWindowScene extends BaseScene {
+    private level: StirWindowLevel = cfg.level;
+    private state: WindowState = stirStart(cfg.level);
+    private startedAt = 0;
+    private finished = false;
+    /** 上一帧水是浑的吗 —— 由浑转清的那一瞬要结一次账 */
+    private wasMuddy = false;
+    /** 水清了几回（第几塘水）—— 只是复盘与事件名用，不是惩罚 */
+    private clears = 0;
+    private lastTapAt = Number.NEGATIVE_INFINITY;
+    private idleMs = 0;
+    private worldGfx: Phaser.GameObjects.Graphics | null = null;
+    private hand: Phaser.GameObjects.Graphics | null = null;
+
+    constructor() {
+      super(SCENE_KEYS.window, ctx);
+    }
+
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.window });
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title);
+      this.worldGfx = this.add.graphics().setDepth(2);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+      this.onShutdownCleanup(() => this.hideHand());
+
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
+      else {
+        this.showHint(cfg.level.hint, 3000, WINDOW.hintY);
+        this.time.delayedCall(WINDOW.handDelayMs, () => this.pointAtNext());
+      }
+    }
+
+    private elapsed(): number {
+      return Math.max(0, this.ctx.services.now() - this.startedAt);
+    }
+
+    // ---------------- 每一帧 ----------------
+
+    private tick(delta: number): void {
+      const elapsed = this.elapsed();
+      if (!this.finished) {
+        const muddy = isMuddy(this.level, this.state, elapsed);
+        // 水清了：摸到一半的那条鱼摆尾滑走 —— 没摸完的进度清零（零惩罚）
+        if (this.wasMuddy && !muddy) this.waterCleared();
+        this.wasMuddy = muddy;
+
+        this.idleMs += delta;
+        if (this.idleMs >= WINDOW.stirIdleMs) {
+          this.idleMs = 0;
+          this.showHint(cfg.level.hint, 2600, WINDOW.hintY);
+          this.pointAtNext();
+        } else if (this.hand === null && elapsed - this.lastTapAt >= WINDOW.handDelayMs) {
+          // 停手够久了：把小手放回此刻该动的地方
+          this.pointAtNext();
+        }
+      }
+      this.redraw(elapsed);
+    }
+
+    /** 水清了：没摸完的清零、摸到的留着（零惩罚），只记一笔"白跑一趟"用来复盘 */
+    private waterCleared(): void {
+      const before = this.state.resets;
+      this.state = closeWindow(this.state, this.level);
+      this.clears += 1;
+      this.hideHand();
+      this.ctx.emit('beat:enter', { beatId: 'window:clear:' + this.clears });
+      if (this.state.resets <= before) return;
+      this.ctx.emit('beat:enter', { beatId: 'window:slipped:' + this.clears });
+      this.showHint(cfg.slipLine ?? this.level.hint, 2200, WINDOW.hintY);
+    }
+
+    private redraw(elapsed: number): void {
+      const g = this.worldGfx;
+      if (!g) return;
+      g.clear();
+      cfg.drawWorld(g, this.stageState(elapsed));
+    }
+
+    private stageState(elapsed: number): StirStageState {
+      const work: Record<string, number> = {};
+      for (const job of this.level.jobs) {
+        work[job.id] = jobProgress(this.state, this.level, job.id);
+      }
+      const stir = this.level.stir;
+      const muddy = isMuddy(this.level, this.state, elapsed);
+      const murk = murkAt(this.state, elapsed);
+      const leftMs = muddyLeftMs(this.level, this.state, elapsed);
+      return {
+        // 窗口的通用字段：stir 里"窗口"就是那一塘浑水 —— 浑着就是窗口开着
+        phase: muddy ? 'window' : 'calm',
+        round: this.clears,
+        progress: murk / MURK_MAX,
+        remainingMs: leftMs,
+        work,
+        done: [...this.state.done],
+        resets: this.state.resets,
+        canWork: muddy && !this.finished,
+        elapsedMs: elapsed,
+        finished: this.finished,
+        activeJobId: null,
+        travelLeftMs: 0,
+        travelProgress: 0,
+        travelOver: false,
+        trip: 1,
+        restarting: false,
+        murk,
+        muddy,
+        muddyLeftMs: leftMs,
+        stirs: this.state.stir?.stirs ?? 0,
+        stir: { x: stir.x, y: stir.y, radius: stir.radius },
+      };
+    }
+
+    // ---------------- 点 ----------------
+
+    private onPress(pointer: Phaser.Input.Pointer): void {
+      if (this.finished) return;
+      this.idleMs = 0;
+      const elapsed = this.elapsed();
+      const stir = this.level.stir;
+      // 水面优先：搅水的那一圈压在鱼上面 —— 点到它就是在搅水（别把竹竿当成鱼）
+      if (Math.hypot(pointer.x - stir.x, pointer.y - stir.y) <= stir.radius + WINDOW.tapForgive) {
+        this.stirWater(elapsed);
+        return;
+      }
+      const job = jobAt(pointer.x, pointer.y, this.level, WINDOW.tapForgive);
+      if (!job) {
+        // 点在空水面上：什么也没碰到 —— 零惩罚，只是白点一下
+        this.miss(pointer.x, pointer.y);
+        return;
+      }
+      if (!isMuddy(this.level, this.state, elapsed)) {
+        this.slipAway(job, elapsed);
+        return;
+      }
+      this.tapFish(job, elapsed);
+    }
+
+    /** 搅水（真实操作与无头验证走的是同一条路） */
+    private stirWater(t: number): void {
+      if (this.finished) return;
+      const before = this.state;
+      this.state = stirAt(this.level, this.state, t);
+      if (this.state === before) return;
+      const stir = this.level.stir;
+      this.lastTapAt = t;
+      this.idleMs = 0;
+      this.hideHand();
+      this.sfx('splash');
+      const ripple = tapRipple(this, stir.x, stir.y, stir.radius, THEME.water);
+      this.time.delayedCall(WINDOW.rippleMs, () => ripple.destroy());
+      this.ctx.emit('beat:enter', { beatId: 'window:stir:' + (this.state.stir?.stirs ?? 0) });
+      cfg.onStir?.({ scene: this, murk: murkAt(this.state, t) });
+      if (!isMuddy(this.level, this.state, t)) return;
+      // 浑了：这一塘水的窗口开了
+      this.wasMuddy = true;
+      this.ctx.emit('beat:enter', { beatId: 'window:muddy:' + this.clears });
+      this.showHint(cfg.muddyLine ?? this.level.hint, WINDOW.stirHoldMs, WINDOW.hintY);
+      this.pointAtNext();
+    }
+
+    /** 浑水里摸鱼（真实操作与无头验证走的是同一条路） */
+    private tapFish(job: WindowJob, t: number): void {
+      if (this.finished) return;
+      this.lastTapAt = t;
+      this.idleMs = 0;
+      this.hideHand();
+      if (isJobDone(this.state, job.id)) {
+        // 摸到的鱼再点也不会变
+        this.sfx('tap');
+        return;
+      }
+
+      const before = jobProgress(this.state, this.level, job.id);
+      // 与单测同一条判定：水浑了才推得动（tapAt 里的 stir 分支）
+      this.state = tapAt(this.state, this.level, job.id, t);
+      const after = jobProgress(this.state, this.level, job.id);
+      cfg.onTapJob?.(job, { scene: this, progress: after });
+      if (after <= before) return;
+
+      if (after < 1) {
+        this.sfx('tap');
+        this.ctx.services.audio.tone(320 + after * 260, 60);
+        return;
+      }
+
+      // 摸到一条
+      this.hideHand();
+      this.sfx('correct');
+      sparkleAt(this, job.x, job.y - 40, THEME.gold, 6);
+      this.ctx.emit('beat:enter', { beatId: 'window:fish:' + job.id });
+      cfg.session.total += 1;
+      cfg.session.correct += 1;
+      if (isWindowDone(this.level, this.state)) this.finish();
+    }
+
+    /** 水清了：点到鱼也抓不动 —— 它摆尾滑走了（零惩罚，搅一下再来） */
+    private slipAway(job: WindowJob, t: number): void {
+      if (this.finished) return;
+      this.lastTapAt = t;
+      this.sfx('tap');
+      const ripple = tapRipple(this, job.x, job.y, job.radius, THEME.inkSoft);
+      this.time.delayedCall(WINDOW.rippleMs, () => ripple.destroy());
+      this.ctx.emit('beat:enter', { beatId: 'window:slip:' + job.id });
+      this.showHint(cfg.slipLine ?? this.level.hint, 2200, WINDOW.hintY);
+      this.pointAtNext();
+    }
+
+    /** 点在空水面上：什么也没碰到（零惩罚） */
+    private miss(x: number, y: number): void {
+      if (this.finished) return;
+      this.lastTapAt = this.elapsed();
+      this.sfx('tap');
+      const ripple = tapRipple(this, x, y, 44, THEME.inkSoft);
+      this.time.delayedCall(WINDOW.rippleMs, () => ripple.destroy());
+      this.ctx.emit('beat:enter', { beatId: 'window:miss' });
+      this.showHint(cfg.level.hint, 2200, WINDOW.hintY);
+      this.pointAtNext();
+    }
+
+    private finish(): void {
+      if (this.finished) return;
+      this.finished = true;
+      this.hideHand();
+      this.sfx('complete');
+      this.cameras.main.flash(320, 255, 250, 220);
+      sparkleAt(this, this.W / 2, 720, THEME.gold, 12);
+      const finale = this.add.graphics().setDepth(40);
+      cfg.drawFinale?.(finale, this.stageState(this.elapsed()));
+      if (cfg.reveal !== undefined) {
+        this.time.delayedCall(1400, () => this.showHint(cfg.reveal as string, 3200, WINDOW.hintY));
+      }
+      this.time.delayedCall(cfg.finaleHoldMs ?? WINDOW.finaleHoldMs, () =>
+        this.scene.start(cfg.nextSceneKey),
+      );
+    }
+
+    // ---------------- 小手 ----------------
+
+    /** 把小手放到此刻该动的地方：水清了就指水面，浑着就指还没摸到的鱼 */
+    private pointAtNext(): void {
+      if (this.finished || this.autoplay) return;
+      const elapsed = this.elapsed();
+      if (!isMuddy(this.level, this.state, elapsed)) {
+        const stir = this.level.stir;
+        this.showHandAt(stir.x, stir.y - stir.radius - 30);
+        return;
+      }
+      const job = nextJob(this.level, this.state);
+      if (job) this.showHandAt(job.x, job.y - job.radius - 40);
+    }
+
+    private showHandAt(x: number, y: number): void {
+      this.hideHand();
+      this.hand = createHand(this, x, y, 1.05);
+    }
+
+    private hideHand(): void {
+      if (!this.hand) return;
+      this.tweens.killTweensOf(this.hand);
+      this.hand.destroy();
+      this.hand = null;
+    }
+
+    // ---------------- 无头验证 ----------------
+
+    /**
+     * 无头验证：水清了就搅，浑着就对着还没摸到的鱼连点 ——
+     * 走的是与真实操作完全相同的 stirWater / tapFish 两条路。
+     */
+    private runAutoplay(): void {
+      this.time.addEvent({
+        delay: WINDOW.autoplayTapMs,
+        loop: true,
+        callback: () => {
+          if (this.finished) return;
+          const elapsed = this.elapsed();
+          if (!isMuddy(this.level, this.state, elapsed)) {
+            this.stirWater(elapsed);
+            return;
+          }
+          const job = nextJob(this.level, this.state);
+          if (job) this.tapFish(job, elapsed);
+        },
+      });
+    }
+  };
+}
+
+/**
+ * 时机窗口：两种玩法共用一个场景键（SCENE_KEYS.window），按 level.mode 分派。
+ * - fire（趁火打劫）/ glimpse（顺手牵羊）：窗口按时间开合 —— 既有路径，一行未改；
+ * - stir（混水摸鱼）：窗口是**自己搅出来的** —— 点水面搅浑，浑水里才摸得到鱼。
+ */
+// 两个重载 + 一个并集的实现：老模式的调用处（传的是内联箭头函数）由第一个重载
+// 做上下文类型推导，不用担心并集让回调参数变成 any —— 既有游戏包一行都不用改。
+export function createWindowScene(
+  ctx: GameContext,
+  cfg: WindowConfig,
+): Phaser.Types.Scenes.SceneType;
+export function createWindowScene(
+  ctx: GameContext,
+  cfg: WindowStirConfig,
+): Phaser.Types.Scenes.SceneType;
+export function createWindowScene(
+  ctx: GameContext,
+  cfg: WindowConfig | WindowStirConfig,
+): Phaser.Types.Scenes.SceneType {
+  if (cfg.level.mode === 'stir') return createStirWindowScene(ctx, cfg as WindowStirConfig);
+  return createTimedWindowScene(ctx, cfg as WindowConfig);
 }

@@ -1,0 +1,73 @@
+{
+  "figures": [
+    "Cao Cao",
+    "Yuan Shao"
+  ],
+  "story": [
+    {
+      "title": "The Grain Mountain at Wuchao",
+      "text": "All of Yuan Shao's grain was stored at Wuchao, piled like a hill.",
+      "narration": "At Guandu the two armies faced each other. Cao Cao had few soldiers and little food, while cart after cart of Yuan Shao's grain rolled into Wuchao and piled up like a hill. Yuan Shao could afford to wait; Cao Cao could not.",
+      "illustration": "none"
+    },
+    {
+      "title": "Burning the Grain at Night",
+      "text": "Cao Cao did not fight head-on: he slipped into Wuchao at night and burned the grain.",
+      "narration": "Cao Cao did not throw his men against Yuan Shao's army. He picked a small band of picked troops, took up torches, crept into Wuchao in the dark and burned the granaries. With the grain gone, Yuan Shao's great army could not hold on.",
+      "illustration": "none"
+    }
+  ],
+  "keyMoment": {
+    "question": "Yuan Shao has more men and more grain. Where do you strike?",
+    "options": [
+      {
+        "text": "Gather everyone and charge his army head-on",
+        "hint": "He has more men and more grain — we cannot outlast him."
+      },
+      {
+        "text": "Burn the grain at Wuchao — that is what holds him up",
+        "hint": ""
+      },
+      {
+        "text": "Pull back and wait for him to grow weak",
+        "hint": "His grain carts keep rolling while we wait."
+      }
+    ],
+    "reveal": "Do not beat at the flames — pull the firewood out from under them, and the fire goes out by itself."
+  },
+  "misconceptions": [
+    "A big fire can only be beaten with a bigger effort",
+    "If you cannot win, step aside and wait"
+  ],
+  "quiz": [
+    {
+      "question": "Where was Yuan Shao's grain stored?",
+      "options": [
+        "Wuchao",
+        "Guandu",
+        "Xudu"
+      ],
+      "answer": 0,
+      "explanation": "All the grain was at Wuchao — that is the place Cao Cao burned at night."
+    },
+    {
+      "question": "The soup is too salty and adding water does not help. What is smarter?",
+      "options": [
+        "Put in less salt — fix it at the root",
+        "Add even more water",
+        "Turn the stove up"
+      ],
+      "answer": 0,
+      "explanation": "More water leaves the saltiness in the pot; using less salt is pulling the firewood out from under the fire."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Pull out the logs below"
+        }
+      }
+    ]
+  }
+}

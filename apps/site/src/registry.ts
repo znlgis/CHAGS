@@ -43,4 +43,11 @@ export const registry: Record<string, () => Promise<{ default: GameModule }>> = 
   'yuqin-guzong': () => import('@chags/game-yuqin-guzong'),
   'paozhuan-yinyu': () => import('@chags/game-paozhuan-yinyu'),
   'qinzei-qinwang': () => import('@chags/game-qinzei-qinwang'),
+  // 三十六计 · 第四辑（混战计 19–24）
+  'fudi-chouxin': () => import('@chags/game-fudi-chouxin'),
+  'hunshui-moyu': () => import('@chags/game-hunshui-moyu'),
+  'jinchan-tuoqiao': () => import('@chags/game-jinchan-tuoqiao'),
+  'guanmen-zhuozei': () => import('@chags/game-guanmen-zhuozei'),
+  'yuanjiao-jingong': () => import('@chags/game-yuanjiao-jingong'),
+  'jiadao-faguo': () => import('@chags/game-jiadao-faguo'),
 };

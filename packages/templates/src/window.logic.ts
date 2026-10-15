@@ -27,6 +27,13 @@ export interface WindowState {
   done: string[];
   /** 窗口关上时白跑了几个半截 —— 只用于复盘，不惩罚 */
   resets: number;
+  /**
+   * stir（混水摸鱼）这一塘水的水况；fire / glimpse 没有这一项。
+   *
+   * 它挂在 state 上而不是只从 level 读，是为了让 `murkAt(state, t)` 能**只按
+   * state 与墙钟**回答"现在多浑" —— 澄清速度从关卡取来存进这里，判定就不必再传 level。
+   */
+  stir?: MurkState;
 }
 
 /** 一件活儿要点几下（单测、提示语与关卡验算共用） */
@@ -193,6 +200,9 @@ export function tapJob(state: WindowState, level: WindowLevel, jobId: string): W
  * glimpse 还多一条：**只接受"这一轮路过的那一件"**。
  * 点到上一轮 / 下一轮的机会，和点在空地上一样 —— 什么也不发生（零惩罚）。
  * 这一趟走完了也一样：那已经不是"错过"，是这一趟结束了（场景会把队伍带回起点重走）。
+ *
+ * stir（混水摸鱼）与前两个都不一样：**没有"稳 / 乱"的周期** ——
+ * 窗口是自己搅出来的，所以只认"此刻水浑不浑"（见文件末尾的 stir 一段）。
  */
 export function tapAt(
   state: WindowState,
@@ -201,6 +211,8 @@ export function tapAt(
   t: number,
   warnMs: number = WINDOW_WARN_MS,
 ): WindowState {
+  // stir：浑水里才推得动；水一清，那条鱼摆尾滑走 —— 点它什么也不发生（零惩罚）
+  if (level.mode === 'stir') return isMuddy(level, state, t) ? tapJob(state, level, jobId) : state;
   if (phaseAt(level, t, warnMs) !== 'window') return state;
   if (level.mode === 'glimpse') {
     if (isTravelOver(level, t)) return state;
@@ -258,4 +270,98 @@ export function effectiveCycle(
   if (level.travelMs === undefined) return { ...level, cycle };
   // glimpse：这一趟也要压短，但至少留得下 jobs.length 个窗口
   return { ...level, cycle, travelMs: Math.max(scale(level.travelMs), travelFloorMs(level, cycle)) };
+}
+
+/* ---------------- stir（混水摸鱼）：窗口是自己搅出来的 ---------------- */
+
+/** 浑度按 0–100 算；点水面最多搅到这么浑 */
+export const MURK_MAX = 100;
+
+/**
+ * 这一塘水的水况（挂在 `WindowState.stir` 上）。
+ *
+ * 澄清速度从关卡里取来存在这里，`murkAt(state, t)` 因此**只按 state 与墙钟**
+ * 就能回答"现在多浑" —— 判定不必再传 level，单测也只需要喂两个数。
+ */
+export interface MurkState {
+  /** 上一次量到的浑度（0..100） */
+  murk: number;
+  /** 上一次量浑度的时刻（这一局的墙钟） */
+  atMs: number;
+  /** 每秒澄清多少（从关卡的 stir.clearPerSec 取来） */
+  clearPerSec: number;
+  /** 搅了几下水 —— 只是复盘用，不扣星也不结束 */
+  stirs: number;
+}
+
+/**
+ * stir 模式的关卡：schema 已经保证它有 stir 那一块（fire / glimpse 不许写），
+ * 这里在类型上也把它写死，场景里就不用每处都判一次。
+ */
+export type StirWindowLevel = WindowLevel & {
+  mode: 'stir';
+  stir: NonNullable<WindowLevel['stir']>;
+};
+
+/**
+ * 一局浑水的开局：**水是清的**（0）—— 这一关的窗口要靠自己搅出来，
+ * 所以不能沿用 fire / glimpse 的 `windowStart()`（那份一个字没动）。
+ */
+export function stirStart(level: WindowLevel): WindowState {
+  return {
+    work: {},
+    done: [],
+    resets: 0,
+    // 万一内容里没有 stir 那一块（schema 在构建期就会挡下来），就按"每秒澄清 0"开局：
+    // 水一直是清的，搅不动也抓不动 —— 不会假装这一关能玩
+    stir: { murk: 0, atMs: 0, clearPerSec: level.stir?.clearPerSec ?? 0, stirs: 0 },
+  };
+}
+
+/** 此刻水有多浑（0..100）：从上一次量到的那一刻起，按 clearPerSec 澄清 */
+export function murkAt(state: WindowState, t: number): number {
+  const water = state.stir;
+  if (water === undefined) return 0;
+  const clearedMs = Math.max(0, t - water.atMs);
+  const left = water.murk - (clearedMs / 1000) * water.clearPerSec;
+  return Math.max(0, Math.min(MURK_MAX, left));
+}
+
+/**
+ * 点一下水面：搅起来的浑加上去，**封顶 100**。
+ *
+ * 一下搅出的浑按"满浑 100"折算 perTapMs —— 900 毫秒的一下就是 +90，
+ * 加上去的那点浑，正好够澄清 perTapMs 那么久（clearPerSec 45 时约 0.9 秒）。
+ * 所以要抓鱼就得一直搅：水一清，鱼就滑走了。
+ */
+export function stirAt(level: WindowLevel, state: WindowState, t: number): WindowState {
+  const stir = level.stir;
+  if (level.mode !== 'stir' || stir === undefined) return state;
+  const now = Math.max(0, t);
+  const murk = Math.min(MURK_MAX, murkAt(state, now) + (stir.perTapMs / 1000) * MURK_MAX);
+  return {
+    ...state,
+    stir: {
+      murk,
+      atMs: now,
+      clearPerSec: stir.clearPerSec,
+      stirs: (state.stir?.stirs ?? 0) + 1,
+    },
+  };
+}
+
+/** 浑到 muddyAt 以上才算"浑水" —— 只有浑水里才抓得动鱼（fire / glimpse 恒为 false） */
+export function isMuddy(level: WindowLevel, state: WindowState, t: number): boolean {
+  const stir = level.stir;
+  if (level.mode !== 'stir' || stir === undefined) return false;
+  return murkAt(state, t) >= stir.muddyAt;
+}
+
+/** 这么浑还能撑多久（已经清了就是 0）—— 画面上"水快清了"的钟就按它画 */
+export function muddyLeftMs(level: WindowLevel, state: WindowState, t: number): number {
+  const stir = level.stir;
+  if (level.mode !== 'stir' || stir === undefined) return 0;
+  const murk = murkAt(state, t);
+  if (murk < stir.muddyAt) return 0;
+  return ((murk - stir.muddyAt) / stir.clearPerSec) * 1000;
 }

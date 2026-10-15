@@ -2,16 +2,19 @@ import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import type { MessageKey } from '@chags/i18n';
 import {
-  BaseScene, CSS, THEME, createHand, popIn, roundRect, shade, sparkleAt, textStyle,
+  BaseScene, CSS, THEME, createHand, popIn, roundRect, shade, sparkleAt, tapRipple, textStyle,
 } from '@chags/phaser-kit';
 import { SCENE_KEYS } from './layout';
 import {
-  MATCHUP_TIMING, RIVAL_HIT, assign, bestRoster, horseAtSlot, horseNear, isMatchupDone,
-  isRosterFull, matchupProgress, placements, resetRoster, resolve, rivalAt, scaledMs, slotOfHorse,
-  takeBack, winsFor, winsNeeded,
+  MATCHUP_ORDER_TIMING, MATCHUP_TIMING, RIVAL_HIT, assign, bestRoster, expectedNext, horseAtSlot,
+  horseNear, isMatchupDone, isOrderDone, isRosterFull, matchupProgress, neighborAt, noteWrongPick,
+  orderProgress, orderStart, pick, pickedCount, pickedOrder, placements, resetRoster, resolve,
+  rivalAt, scaledMs, slotOfHorse, takeBack, winsFor, winsNeeded, wrongPicks,
 } from './matchup.logic';
-import type { RaceResult, Roster } from './matchup.logic';
-import type { MatchupHorse, MatchupLevel, MatchupRival } from './schemas';
+import type { OrderState, RaceResult, Roster } from './matchup.logic';
+import type {
+  MatchupHorse, MatchupLevel, MatchupNeighbor, MatchupOrderLevel, MatchupRival,
+} from './schemas';
 import type { SessionState } from './session';
 
 /**
@@ -41,6 +44,18 @@ export const MATCHUP = {
   hintY: MATCHUP_TIMING.hintY,
   /** 底部按钮的大小（位置由场景按设计分辨率定：居中、离底 150） */
   button: { width: 430, height: 116, fromBottom: 150 },
+} as const;
+
+/**
+ * order（远交近攻）那一半的常量 —— 节拍沿用 matchup.logic 的 MATCHUP_ORDER_TIMING
+ * （单测、画面与无头验证共用同一份），这里只补这一屏的画法常量。
+ */
+export const MATCHUP_ORDER = {
+  ...MATCHUP_ORDER_TIMING,
+  /** 下一个该点的势力外面那一圈呼吸光比城大多少 */
+  ringPad: 16,
+  /** 进度槽（走到第几步）画在哪里 —— 游戏包的 drawStage 用它（与 pair 的计分板同一带） */
+  progress: { x: 150, y: 196, w: 450, h: 46 },
 } as const;
 
 /** 交给游戏画的一切（每帧一份新的） */
@@ -117,8 +132,11 @@ export interface MatchupConfig {
  *   李代桃僵的落点恰恰是"故意舍一局"：输掉第一场不等于输掉整场。
  * - **开赛才跑**：排满了才有"开赛"这一步 —— 孩子能先看清楚自己的排法再动手。
  * - **计分板只说赢了几场**：不泄露"该怎么排"，六种排法得他自己找。
+ *
+ * 下面这一段是 **pair 那条路（一行没改）**，只是从 createMatchupScene 里
+ * 挪成了一个具名函数；order 那一半在文件末尾另起一段，由 mode 分派。
  */
-export function createMatchupScene(
+function createPairMatchupScene(
   ctx: GameContext,
   cfg: MatchupConfig,
 ): Phaser.Types.Scenes.SceneType {
@@ -639,4 +657,369 @@ export function scoreboardText(
     .text(375, y, text, textStyle(34, CSS.ink, true))
     .setOrigin(0.5)
     .setDepth(80);
+}
+
+/* ---------------- order（远交近攻）：一圈势力，按顺序点过去 ---------------- */
+
+/** 交给游戏画的 order 画面（每帧一份新的） */
+export interface OrderStageState {
+  /** 已经按顺序点过的势力（点中的先后就是正确顺序） */
+  picked: string[];
+  /** 下一个该点谁；都点完了就是 null */
+  nextId: string | null;
+  /** 点过了几个 / 一共几个 */
+  pickedCount: number;
+  total: number;
+  /** 0..1：走到了第几步 */
+  ratio: number;
+  /** 点错了几次 —— 只是复盘用，不扣星也不结束 */
+  wrongs: number;
+  /** 刚点中的那一个（画面给一次强调） */
+  lastPicked: MatchupNeighbor | null;
+  /** 刚点错的那一个（零惩罚：只提示、可以重排） */
+  lastWrong: MatchupNeighbor | null;
+  /** 这一局过了多久（墙钟）—— 呼吸的光圈与刚落下的红光按它算 */
+  elapsedMs: number;
+  done: boolean;
+}
+
+/**
+ * order 那一半的配置。与 pair 的 `MatchupConfig` 是两份 ——
+ * 老字段一个字没动，多出来的这些只有 order 用得上。
+ */
+export interface MatchupOrderConfig {
+  level: MatchupOrderLevel;
+  session: SessionState;
+  nextSceneKey: string;
+  /** 场景标题：不给就用内容标题 */
+  titleKey?: MessageKey;
+  /** 这个世界：地图、秦都、一圈势力的城（画一次） */
+  drawWorld: (g: Phaser.GameObjects.Graphics, level: MatchupOrderLevel) => void;
+  /** 每帧重画：谁已经处理好 / 结好了，下一个是谁 */
+  drawStage: (g: Phaser.GameObjects.Graphics, state: OrderStageState, level: MatchupOrderLevel) => void;
+  /**
+   * 城头上的称呼是 Text（Graphics 画不了字）：场景建好之后挂一次。
+   * 与 pair 的 decorate 同一个用法。
+   */
+  decorate?: (scene: Phaser.Scene, level: MatchupOrderLevel) => void;
+  /** 一圈都走完：把地图收个尾 */
+  drawFinale?: (g: Phaser.GameObjects.Graphics, state: OrderStageState, level: MatchupOrderLevel) => void;
+  /** 走完一圈时念的那句话（关键抉择点的揭晓语） */
+  reveal?: string;
+  finaleHoldMs?: number;
+}
+
+/**
+ * 远交近攻：一圈势力围着地图中央 —— **近的先解决、远的先结好**。
+ *
+ * 三条刻意的设计：
+ * - **顺序写在关卡里**（sequence），判定全在 matchup.logic：谁排在前面、这一步该点谁，
+ *   单测与画面用的是同一份，孩子不会遇到"看起来该点这个、点了却没反应"。
+ * - **点错零惩罚**：不是下一个就只是原样返回 —— 不扣星、不结束、也不改已经点对的那些；
+ *   画面把小手挪回该点的那一个，重新排就是。
+ * - **没有交战画面**：近处的"处理"是立下一根界桩，远处的"结好"是系上一根结绳 ——
+ *   地图上看得见的两件事，仅此而已。
+ */
+function createOrderMatchupScene(
+  ctx: GameContext,
+  cfg: MatchupOrderConfig,
+): Phaser.Types.Scenes.SceneType {
+  return class MatchupOrderScene extends BaseScene {
+    private level: MatchupOrderLevel = cfg.level;
+    private state: OrderState = orderStart(cfg.level);
+    private startedAt = 0;
+    private finished = false;
+    private lastPicked: MatchupNeighbor | null = null;
+    private lastPickedAt = Number.NEGATIVE_INFINITY;
+    private lastWrong: MatchupNeighbor | null = null;
+    private lastWrongAt = Number.NEGATIVE_INFINITY;
+    private misses = 0;
+    private idleMs = 0;
+    private worldGfx: Phaser.GameObjects.Graphics | null = null;
+    private stageGfx: Phaser.GameObjects.Graphics | null = null;
+    private doneGfx: Phaser.GameObjects.Graphics | null = null;
+    private markGfx: Phaser.GameObjects.Graphics | null = null;
+    private hand: Phaser.GameObjects.Graphics | null = null;
+
+    constructor() {
+      super(SCENE_KEYS.matchup, ctx);
+    }
+
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.matchup });
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(20);
+      this.doneGfx = this.add.graphics().setDepth(40);
+      this.markGfx = this.add.graphics().setDepth(70);
+      cfg.decorate?.(this, this.level);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTap(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+      this.onShutdownCleanup(() => this.hideHand());
+
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
+      else {
+        this.showHint(this.level.hint, 3000, MATCHUP_ORDER.hintY);
+        this.time.delayedCall(1400, () => this.pointAtNext());
+      }
+    }
+
+    private now(): number {
+      return Math.max(0, this.ctx.services.now() - this.startedAt);
+    }
+
+    // ---------------- 每一帧 ----------------
+
+    private tick(delta: number): void {
+      const t = this.now();
+      this.redraw(t);
+      if (this.finished) return;
+      this.idleMs += delta;
+      if (this.idleMs < MATCHUP_ORDER.idleMs) return;
+      this.idleMs = 0;
+      this.showHint(this.level.hint, 2600, MATCHUP_ORDER.hintY);
+      this.pointAtNext();
+    }
+
+    private redraw(t: number): void {
+      const stage = this.stageState(t);
+      if (this.stageGfx) {
+        this.stageGfx.clear();
+        cfg.drawStage(this.stageGfx, stage, this.level);
+      }
+      if (this.doneGfx) {
+        this.doneGfx.clear();
+        if (this.finished) cfg.drawFinale?.(this.doneGfx, stage, this.level);
+      }
+      this.drawMarks(stage, t);
+    }
+
+    private stageState(t: number): OrderStageState {
+      const next = expectedNext(this.level, this.state);
+      return {
+        picked: pickedOrder(this.state),
+        nextId: next?.id ?? null,
+        pickedCount: pickedCount(this.state),
+        total: this.level.sequence.length,
+        ratio: orderProgress(this.level, this.state),
+        wrongs: wrongPicks(this.state),
+        lastPicked: this.lastPicked,
+        lastWrong: this.lastWrong,
+        elapsedMs: t,
+        done: this.finished,
+      };
+    }
+
+    /**
+     * 模板自己画的那一点反馈（都画在城上面）：
+     * 下一个该点的那一个一直在呼吸；刚点对的金光、刚点错的红光各亮一下。
+     */
+    private drawMarks(stage: OrderStageState, t: number): void {
+      const g = this.markGfx;
+      if (!g) return;
+      g.clear();
+
+      const next = expectedNext(this.level, this.state);
+      if (next && !this.finished) {
+        const breathe = 0.72 + 0.28 * Math.sin(t / 240);
+        g.lineStyle(8, THEME.gold, 0.5 + 0.4 * breathe);
+        g.strokeCircle(next.x, next.y, next.radius + MATCHUP_ORDER.ringPad + 12 * breathe);
+      }
+
+      const picked = stage.lastPicked;
+      const sincePick = t - this.lastPickedAt;
+      if (picked !== null && sincePick >= 0 && sincePick <= MATCHUP_ORDER.markHoldMs) {
+        const p = sincePick / MATCHUP_ORDER.markHoldMs;
+        g.lineStyle(9, THEME.teal, 0.9 * (1 - p));
+        g.strokeCircle(picked.x, picked.y, picked.radius + 14 + 62 * p);
+      }
+
+      const wrong = stage.lastWrong;
+      const sinceWrong = t - this.lastWrongAt;
+      if (wrong !== null && sinceWrong >= 0 && sinceWrong <= MATCHUP_ORDER.markHoldMs) {
+        const p = sinceWrong / MATCHUP_ORDER.markHoldMs;
+        g.lineStyle(9, THEME.red, 0.9 * (1 - p));
+        g.strokeCircle(wrong.x, wrong.y, wrong.radius + 14 + 46 * p);
+      }
+    }
+
+    // ---------------- 点 ----------------
+
+    private onTap(pointer: Phaser.Input.Pointer): void {
+      if (this.finished) return;
+      this.idleMs = 0;
+      this.pressAt(pointer.x, pointer.y);
+    }
+
+    /** 点一个势力（真实操作与无头验证走的是同一条路） */
+    private pressAt(x: number, y: number): void {
+      if (this.finished) return;
+      const neighbor = neighborAt(this.level, x, y, MATCHUP_ORDER.tapForgive);
+      if (!neighbor) {
+        this.miss(x, y);
+        return;
+      }
+      const before = this.state;
+      const next = pick(this.state, neighbor.id);
+      if (next === before) {
+        // 不是下一个：只提示，可以重排 —— 不扣星、不结束
+        this.wrongPick(neighbor);
+        return;
+      }
+
+      this.state = next;
+      this.lastPicked = neighbor;
+      this.lastPickedAt = this.now();
+      this.idleMs = 0;
+      this.hideHand();
+      this.sfx('correct');
+      sparkleAt(this, neighbor.x, neighbor.y, THEME.gold, 5);
+      this.ctx.emit('beat:enter', {
+        beatId: 'matchup:order:' + neighbor.id + ':' + pickedCount(this.state),
+      });
+      this.ctx.emit('choice:made', {
+        beatId: 'matchup:order',
+        choiceId: neighbor.id,
+        correct: true,
+        latencyMs: this.now(),
+      });
+      if (isOrderDone(this.level, this.state)) {
+        this.finish();
+        return;
+      }
+      this.time.delayedCall(MATCHUP_ORDER.stepHoldMs, () => this.pointAtNext());
+    }
+
+    /** 点错了顺序：记一笔、亮一圈红光，把小手挪回该点的那一个（零惩罚） */
+    private wrongPick(neighbor: MatchupNeighbor): void {
+      if (this.finished) return;
+      this.state = noteWrongPick(this.state);
+      this.lastWrong = neighbor;
+      this.lastWrongAt = this.now();
+      this.idleMs = 0;
+      this.sfx('tap');
+      const ripple = tapRipple(this, neighbor.x, neighbor.y, neighbor.radius + 16, THEME.red);
+      this.time.delayedCall(MATCHUP_ORDER.markHoldMs, () => ripple.destroy());
+      this.ctx.emit('beat:enter', {
+        beatId: 'matchup:order:wrong:' + neighbor.id + ':' + wrongPicks(this.state),
+      });
+      this.showHint(this.level.hint, 2400, MATCHUP_ORDER.hintY);
+      this.pointAtNext();
+    }
+
+    /** 点在空地上：什么也没有（零惩罚） */
+    private miss(x: number, y: number): void {
+      if (this.finished) return;
+      this.misses += 1;
+      this.idleMs = 0;
+      this.sfx('tap');
+      const ripple = tapRipple(this, x, y, 40, THEME.inkSoft);
+      this.time.delayedCall(MATCHUP_ORDER.markHoldMs, () => ripple.destroy());
+      this.ctx.emit('beat:enter', { beatId: 'matchup:order:miss:' + this.misses });
+      this.pointAtNext();
+    }
+
+    // ---------------- 收尾 ----------------
+
+    private finish(): void {
+      if (this.finished) return;
+      this.finished = true;
+      this.hideHand();
+      this.sfx('complete');
+      this.cameras.main.flash(320, 255, 250, 220);
+      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
+      cfg.session.total += 1;
+      cfg.session.correct += 1;
+      this.ctx.emit('beat:enter', { beatId: 'matchup:order:done' });
+      const reveal = cfg.reveal;
+      if (reveal !== undefined) {
+        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, MATCHUP_ORDER.hintY));
+      }
+      this.time.delayedCall(cfg.finaleHoldMs ?? MATCHUP_ORDER.finaleHoldMs, () =>
+        this.scene.start(cfg.nextSceneKey),
+      );
+    }
+
+    // ---------------- 小手 ----------------
+
+    /** 把小手放到下一个该点的势力上 */
+    private pointAtNext(): void {
+      if (this.finished || this.autoplay) return;
+      const next = expectedNext(this.level, this.state);
+      if (!next) return;
+      this.hideHand();
+      this.hand = createHand(this, next.x, next.y + next.radius + 26, 1.05);
+    }
+
+    private hideHand(): void {
+      if (!this.hand) return;
+      this.tweens.killTweensOf(this.hand);
+      this.hand.destroy();
+      this.hand = null;
+    }
+
+    // ---------------- 无头验证 ----------------
+
+    /**
+     * 无头验证：按 sequence 一个一个点过去 ——
+     * 走的是与真实操作完全相同的 neighborAt + pick 那条路（场景只负责"点在这儿"）。
+     */
+    private runAutoplay(): void {
+      this.time.addEvent({
+        delay: MATCHUP_ORDER.autoplayStepMs,
+        loop: true,
+        callback: () => {
+          if (this.finished) return;
+          const next = expectedNext(this.level, this.state);
+          if (next) this.pressAt(next.x, next.y);
+        },
+      });
+    }
+  };
+}
+
+/** 进度槽：走到第几步（0..总步数）—— 游戏包的 drawStage 用它，口径与判定同一份 */
+export function matchupOrderBar(
+  g: Phaser.GameObjects.Graphics,
+  level: MatchupOrderLevel,
+  picked: number,
+): void {
+  const { x, y, w, h } = MATCHUP_ORDER.progress;
+  roundRect(g, x, y, w, h, h / 2, shade(THEME.card, 0.96), THEME.outline, 5);
+  const total = Math.max(1, level.sequence.length);
+  const fill = (w - 12) * Math.max(0, Math.min(1, picked / total));
+  if (fill > 6) roundRect(g, x + 6, y + 6, fill, h - 12, (h - 12) / 2, THEME.teal, null, 0);
+}
+
+/** 城头上的称呼（双语由内容 JSON 的 label 给） */
+export function neighborLabel(neighbor: MatchupNeighbor): string {
+  return neighbor.label;
+}
+
+/**
+ * 配对编排：两种玩法共用一个场景键（SCENE_KEYS.matchup），按 level.mode 分派。
+ * - pair（李代桃僵）：三匹马对三场，怎么排决定输赢 —— 既有路径，一行未改；
+ * - order（远交近攻）：一圈势力，按"近的先解决、远的先结好"的顺序点过去。
+ */
+export function createMatchupScene(
+  ctx: GameContext,
+  cfg: MatchupConfig,
+): Phaser.Types.Scenes.SceneType;
+export function createMatchupScene(
+  ctx: GameContext,
+  cfg: MatchupOrderConfig,
+): Phaser.Types.Scenes.SceneType;
+export function createMatchupScene(
+  ctx: GameContext,
+  cfg: MatchupConfig | MatchupOrderConfig,
+): Phaser.Types.Scenes.SceneType {
+  if (cfg.level.mode === 'order') return createOrderMatchupScene(ctx, cfg as MatchupOrderConfig);
+  return createPairMatchupScene(ctx, cfg as MatchupConfig);
 }

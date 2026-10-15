@@ -9,6 +9,7 @@ export { gamePatches, gamePatchFor } from '../i18n/game';
 
 import { EntryDetailSchema, ContentEntrySchema } from '../schema';
 import type { ContentEntry, EntryDetail } from '../schema';
+import { patchFor } from '../i18n';
 import { gamePatchFor } from '../i18n/game';
 import { DEFAULT_LOCALE } from '../locale';
 import type { Locale } from '../locale';
@@ -49,6 +50,12 @@ import rawDiaohu from './diaohu-lishan.game.json';
 import rawYuqin from './yuqin-guzong.game.json';
 import rawPaozhuan from './paozhuan-yinyu.game.json';
 import rawQinzei from './qinzei-qinwang.game.json';
+import rawFudi from './fudi-chouxin.game.json';
+import rawHunshui from './hunshui-moyu.game.json';
+import rawJinchan from './jinchan-tuoqiao.game.json';
+import rawGuanmen from './guanmen-zhuozei.game.json';
+import rawYuanjiao from './yuanjiao-jingong.game.json';
+import rawJiadao from './jiadao-faguo.game.json';
 
 /**
  * **详情层**：故事 / 关键抉择 / 复习题 / 误解 / 关卡脚本。
@@ -93,6 +100,12 @@ export const entryDetails: Record<string, EntryDetail> = {
   'yuqin-guzong': EntryDetailSchema.parse(rawYuqin),
   'paozhuan-yinyu': EntryDetailSchema.parse(rawPaozhuan),
   'qinzei-qinwang': EntryDetailSchema.parse(rawQinzei),
+  'fudi-chouxin': EntryDetailSchema.parse(rawFudi),
+  'hunshui-moyu': EntryDetailSchema.parse(rawHunshui),
+  'jinchan-tuoqiao': EntryDetailSchema.parse(rawJinchan),
+  'guanmen-zhuozei': EntryDetailSchema.parse(rawGuanmen),
+  'yuanjiao-jingong': EntryDetailSchema.parse(rawYuanjiao),
+  'jiadao-faguo': EntryDetailSchema.parse(rawJiadao),
 };
 
 /** 完整条目：摘要 + 详情（两条记录合并之后再过一次完整 schema） */
@@ -109,11 +122,23 @@ export function stageScript(content: ContentEntry, template: string): unknown {
   return stage.levelScript;
 }
 
-/** 把某条完整内容翻译成目标语言（没有译文就原样返回） */
+/**
+ * 把某条完整内容翻译成目标语言。
+ *
+ * ★ **两份补丁都要合上**：摘要字段（标题 / 寓意 / 关键词 / 出处）的译文在 `i18n/index.ts`，
+ * 详情字段（故事 / 题 / 关卡）的译文在 `i18n/game.ts`。拆分时这里只合了详情那一份，
+ * 结果英文卡面与顶栏露出中文 —— 那是 content:check（自己把两半拼起来查）与
+ * 双语巡检（只截图、不认字）都拦不住的一类 bug。
+ * 现在 `localize.test.ts` 直接对"运行时取到的英文完整条目"扫中文，堵住它。
+ */
 export function localizedEntry(content: ContentEntry, locale: Locale): ContentEntry {
   if (locale === DEFAULT_LOCALE) return content;
-  const patch = gamePatchFor(locale, content.id);
-  return patch === undefined ? content : mergeLocalized(content, patch);
+  const summaryPatch = patchFor(locale, content.id);
+  const detailPatch = gamePatchFor(locale, content.id);
+  let localized = content;
+  if (summaryPatch !== undefined) localized = mergeLocalized(localized, summaryPatch);
+  if (detailPatch !== undefined) localized = mergeLocalized(localized, detailPatch);
+  return localized;
 }
 
 export function getEntry(id: string, locale: Locale = DEFAULT_LOCALE): ContentEntry | undefined {

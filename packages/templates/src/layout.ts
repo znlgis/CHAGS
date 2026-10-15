@@ -28,6 +28,8 @@ export const SCENE_KEYS = {
   probe: 'probe',
   lure: 'lure',
   chase: 'chase',
+  swap: 'swap',
+  chain: 'chain',
   quiz: 'quiz',
   reward: 'reward',
 } as const;

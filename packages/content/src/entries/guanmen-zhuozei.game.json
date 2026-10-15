@@ -1,0 +1,125 @@
+{
+  "figures": [
+    "孙膑",
+    "庞涓"
+  ],
+  "story": [
+    {
+      "id": "s1",
+      "title": "又窄又险的马陵道",
+      "text": "马陵道夹在两山之间，又窄又险 —— 孙膑算准了庞涓会走这条路。",
+      "narration": "孙膑算准了庞涓回师非走马陵道不可。那条道夹在两山之间，窄得只容一队人通过，两边的山脊上正好藏得住伏兵。",
+      "illustration": "none"
+    },
+    {
+      "id": "s2",
+      "title": "先把门关上",
+      "text": "他没有去拦头，先把两头的山口堵住，再收网。",
+      "narration": "孙膑没有带人去拦头硬拼。他先让人把马陵道两头的山口堵上，两边山脊上一齐举起火把 —— 进了这条道的人，一个也出不去。",
+      "illustration": "none"
+    }
+  ],
+  "keyMoment": {
+    "beatId": "s2",
+    "question": "庞涓的兵正往马陵道来。先做什么？",
+    "options": [
+      {
+        "id": "close",
+        "text": "先把两头的山口堵住，再动手",
+        "isCanonical": true,
+        "hint": ""
+      },
+      {
+        "id": "charge",
+        "text": "马上冲上去，从正面拦住他",
+        "isCanonical": false,
+        "hint": "拦头一打，他一急就从另一头跑了。"
+      },
+      {
+        "id": "shout",
+        "text": "先在外面喊话，让他自己出来",
+        "isCanonical": false,
+        "hint": "他要往哪儿跑，就由他挑了。"
+      }
+    ],
+    "reveal": "先把退路堵上，再动手 —— 门关好了，贼再想跑也没路。"
+  },
+  "misconceptions": [
+    "一发现敌人就得马上冲上去",
+    "人够多就一定抓得住，不用管他往哪儿跑"
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "kind": "recall",
+      "question": "孙膑把伏兵设在哪里？",
+      "options": [
+        "马陵道",
+        "邯郸城下",
+        "大梁城外"
+      ],
+      "answer": 0,
+      "explanation": "马陵道又窄又险，两头的山口一堵上，进去的兵就出不来了。"
+    },
+    {
+      "id": "q2",
+      "kind": "transfer",
+      "question": "弟弟的弹珠滚得到处都是：两颗滚到沙发底下，一颗正滚向门口。先挡住哪儿？",
+      "options": [
+        "先把门口挡住",
+        "先钻到沙发底下掏",
+        "先追滚得最快的那一颗"
+      ],
+      "answer": 0,
+      "explanation": "门口挡住了，剩下的再慢慢捡 —— 退路先堵上，才不会全跑光。"
+    }
+  ],
+  "game": {
+    "template": "siege",
+    "stages": [
+      {
+        "template": "siege",
+        "levelScript": {
+          "mode": "close",
+          "exits": [
+            {
+              "id": "west",
+              "x": 140,
+              "y": 620,
+              "radius": 84,
+              "closeMs": 1200
+            },
+            {
+              "id": "east",
+              "x": 610,
+              "y": 620,
+              "radius": 84,
+              "closeMs": 1200
+            },
+            {
+              "id": "north",
+              "x": 375,
+              "y": 330,
+              "radius": 84,
+              "closeMs": 1200
+            },
+            {
+              "id": "south",
+              "x": 375,
+              "y": 1010,
+              "radius": 84,
+              "closeMs": 1200
+            }
+          ],
+          "thief": {
+            "x": 375,
+            "y": 690,
+            "radius": 80
+          },
+          "escapeAfterMs": 9000,
+          "hint": "趁贼还没跑，把出口都关上"
+        }
+      }
+    ]
+  }
+}

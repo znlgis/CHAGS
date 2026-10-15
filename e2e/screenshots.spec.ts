@@ -732,6 +732,13 @@ for (const [id, scene, file] of [
   ['yuqin-guzong', 'chase', '107-stratagem-16-yuqin.png'],
   ['paozhuan-yinyu', 'lure', '108-stratagem-17-paozhuan.png'],
   ['qinzei-qinwang', 'probe', '109-stratagem-18-qinzei.png'],
+  // 第四辑（混战计 19–24）
+  ['fudi-chouxin', 'siege', '110-stratagem-19-fudi.png'],
+  ['hunshui-moyu', 'window', '111-stratagem-20-hunshui.png'],
+  ['jinchan-tuoqiao', 'swap', '112-stratagem-21-jinchan.png'],
+  ['guanmen-zhuozei', 'siege', '113-stratagem-22-guanmen.png'],
+  ['yuanjiao-jingong', 'matchup', '114-stratagem-23-yuanjiao.png'],
+  ['jiadao-faguo', 'chain', '115-stratagem-24-jiadao.png'],
 ] as const) {
   test('capture stratagem screenshots: ' + id, async ({ page }) => {
     await page.setViewportSize({ width: 430, height: 932 });

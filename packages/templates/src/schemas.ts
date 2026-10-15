@@ -835,7 +835,7 @@ export const WindowJobSchema = z.object({
 
 export const WindowLevelSchema = z
   .object({
-    mode: z.enum(['fire', 'glimpse']),
+    mode: z.enum(['fire', 'glimpse', 'stir']),
     /** 稳多久、乱多久（glimpse：每隔一轮路过一个机会） */
     cycle: z.object({ calmMs: z.number().positive(), windowMs: z.number().positive() }),
     jobs: z.array(WindowJobSchema).min(2).max(4),
@@ -844,6 +844,20 @@ export const WindowLevelSchema = z
     goal: z.number().int().positive(),
     /** glimpse（顺手牵羊）：这一趟赶路总共多久 —— 走完还没抓够就重走一遍 */
     travelMs: z.number().positive().optional(),
+    /** stir（混水摸鱼）：窗口是自己搅出来的 */
+    stir: z
+      .object({
+        x: z.number(),
+        y: z.number(),
+        radius: z.number().positive(),
+        /** 点一下搅多久的浑 */
+        perTapMs: z.number().positive(),
+        /** 每秒澄清多少 */
+        clearPerSec: z.number().positive(),
+        /** 浑到多少算"浑水" */
+        muddyAt: z.number().positive().max(100),
+      })
+      .optional(),
     hint: z.string().min(1).max(24),
   })
   .refine((l) => new Set(l.jobs.map((j) => j.id)).size === l.jobs.length, {
@@ -869,6 +883,14 @@ export const WindowLevelSchema = z
   .refine((l) => l.mode !== 'fire' || l.travelMs === undefined, {
     message: 'fire 模式没有"一趟走完"这回事，不要写 travelMs',
     path: ['travelMs'],
+  })
+  .refine((l) => l.mode !== 'stir' || l.stir !== undefined, {
+    message: 'stir（混水摸鱼）模式必须给 stir —— 水要怎么搅、多快澄清',
+    path: ['stir'],
+  })
+  .refine((l) => l.mode === 'stir' || l.stir === undefined, {
+    message: 'fire / glimpse 模式没有"搅水"，不要写 stir',
+    path: ['stir'],
   });
 
 /**
@@ -1276,7 +1298,189 @@ export const BorrowBannerLevelSchema = z
     path: ['needed'],
   });
 
+/* ---------------- swap：替换（金蝉脱壳） ---------------- */
+
+export const SwapPostSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 这个位置原本站着的"样子"：替身要挑同样 kind 的 */
+  kind: z.string().min(1),
+});
+
+export const SwapSpareSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  kind: z.string().min(1),
+});
+
+/**
+ * 金蝉脱壳：把一排"还站在那儿的人"换成替身，样子要对；
+ * 检查者每隔 peekMs 抬头看一次，没换好的位置会被戳穿（撤销换装，零惩罚）。
+ */
+export const SwapLevelSchema = z
+  .object({
+    mode: z.literal('shell'),
+    posts: z.array(SwapPostSchema).min(3).max(6),
+    spares: z.array(SwapSpareSchema).min(3).max(6),
+    peekMs: z.number().positive(),
+    exit: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.posts.map((p) => p.id)).size === l.posts.length, {
+    message: '位置的 id 不能重复',
+    path: ['posts'],
+  })
+  .refine((l) => new Set(l.spares.map((s) => s.id)).size === l.spares.length, {
+    message: '替身的 id 不能重复',
+    path: ['spares'],
+  })
+  .refine((l) => l.posts.every((post) => l.spares.some((spare) => spare.kind === post.kind)), {
+    message: '有位置找不到同 kind 的替身 —— 这一关不可能全换好',
+    path: ['spares'],
+  });
+
+/* ---------------- chain：连环（假道伐虢） ---------------- */
+
+export const ChainGateSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 关口木牌上的短标签（双语可译，≤12 字） */
+  label: z.string().min(1).max(12),
+});
+
+/**
+ * 假道伐虢：先谈成借路，再按顺序取下沿途关口，最后回师。
+ * 顺序不能跳 —— 没借到路一个关口也拿不了；前一个没拿下，后一个动不了。
+ */
+export const ChainLevelSchema = z
+  .object({
+    mode: z.literal('pass'),
+    envoy: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    gates: z.array(ChainGateSchema).min(3).max(5),
+    home: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.gates.map((g) => g.id)).size === l.gates.length, {
+    message: '关口的 id 不能重复',
+    path: ['gates'],
+  });
+
+/* ---------------- siege 扩展：support（釜底抽薪）/ close（关门捉贼） ---------------- */
+
+export const SiegeLogSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 抽掉它火势降多少 */
+  relief: z.number().positive(),
+  /** 是不是"根上的那根柴"（抽掉它骤降） */
+  base: z.boolean(),
+});
+
+/** 釜底抽薪：不跟火硬碰，从底下把柴一根根抽走 */
+export const SiegeSupportSchema = z
+  .object({
+    mode: z.literal('support'),
+    fire: z.object({ x: z.number(), y: z.number(), level: z.number().positive() }),
+    logs: z.array(SiegeLogSchema).min(3).max(6),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.logs.map((x) => x.id)).size === l.logs.length, {
+    message: '柴的 id 不能重复',
+    path: ['logs'],
+  })
+  .refine((l) => l.logs.some((x) => x.base), {
+    message: '没有一根是"根上的柴" —— 这一计就没有落点',
+    path: ['logs'],
+  })
+  .refine((l) => l.logs.reduce((sum, x) => sum + x.relief, 0) >= l.fire.level, {
+    message: '把所有柴抽光火也灭不了 —— 这一关不可能过',
+    path: ['logs'],
+  });
+
+export const SiegeExitSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 关上这扇门要多久 */
+  closeMs: z.number().positive(),
+});
+
+/** 关门捉贼：抢在贼跑掉之前把所有出口关上 */
+export const SiegeCloseSchema = z
+  .object({
+    mode: z.literal('close'),
+    exits: z.array(SiegeExitSchema).min(3).max(5),
+    thief: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    /** 贼多久之后开始跑 */
+    escapeAfterMs: z.number().positive(),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.exits.map((x) => x.id)).size === l.exits.length, {
+    message: '出口的 id 不能重复',
+    path: ['exits'],
+  })
+  .refine((l) => l.exits.reduce((sum, x) => sum + x.closeMs, 0) < l.escapeAfterMs, {
+    message: '把所有门关一遍的时间比贼跑掉的时间还长 —— 这一关不可能过',
+    path: ['escapeAfterMs'],
+  });
+
+/* ---------------- matchup 扩展：order（远交近攻） ---------------- */
+
+export const MatchupNeighborSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  label: z.string().min(1).max(12),
+  /** 近的动手（attack）、远的先结好（ally） */
+  stance: z.enum(['attack', 'ally']),
+});
+
+/** 远交近攻：一圈势力，按"近的先解决、远的先结好"的顺序点过去 */
+export const MatchupOrderLevelSchema = z
+  .object({
+    mode: z.literal('order'),
+    neighbors: z.array(MatchupNeighborSchema).min(4).max(8),
+    /** 正确顺序（neighbor id 的排列） */
+    sequence: z.array(z.string().min(1)).min(4).max(8),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.neighbors.map((n) => n.id)).size === l.neighbors.length, {
+    message: '势力的 id 不能重复',
+    path: ['neighbors'],
+  })
+  .refine(
+    (l) =>
+      l.sequence.length === l.neighbors.length &&
+      new Set(l.sequence).size === l.sequence.length &&
+      l.sequence.every((id) => l.neighbors.some((n) => n.id === id)),
+    { message: '正确顺序必须把每个势力刚好排一次', path: ['sequence'] },
+  )
+  .refine((l) => l.neighbors.some((n) => n.stance === 'attack') && l.neighbors.some((n) => n.stance === 'ally'), {
+    message: '既要有"近的"也要有"远的" —— 否则这一计没有取舍',
+    path: ['neighbors'],
+  });
+
 export type RuseShell = z.infer<typeof RuseShellSchema>;
+export type SwapPost = z.infer<typeof SwapPostSchema>;
+export type SwapSpare = z.infer<typeof SwapSpareSchema>;
+export type SwapLevel = z.infer<typeof SwapLevelSchema>;
+export type ChainGate = z.infer<typeof ChainGateSchema>;
+export type ChainLevel = z.infer<typeof ChainLevelSchema>;
+export type SiegeLog = z.infer<typeof SiegeLogSchema>;
+export type SiegeSupportLevel = z.infer<typeof SiegeSupportSchema>;
+export type SiegeCloseLevel = z.infer<typeof SiegeCloseSchema>;
+export type MatchupNeighbor = z.infer<typeof MatchupNeighborSchema>;
+export type MatchupOrderLevel = z.infer<typeof MatchupOrderLevelSchema>;
 export type ProbePatch = z.infer<typeof ProbePatchSchema>;
 export type ProbeFigure = z.infer<typeof ProbeFigureSchema>;
 export type ProbeLevel = z.infer<typeof ProbeLevelSchema>;
@@ -1356,7 +1560,8 @@ export const templateSchemas: Record<string, z.ZodType> = {
   burrow: BurrowLevelSchema,
   butcher: ButcherLevelSchema,
   ruse: RuseLevelSchema,
-  siege: SiegeLevelSchema,
+  // siege / matchup 第四辑长出了新模式：老模式那份 schema 一个字没改，这里按并集登记
+  siege: z.union([SiegeLevelSchema, SiegeSupportSchema, SiegeCloseSchema]),
   // borrow 有两种模式：force（借刀杀人，既有）与 banner（借尸还魂）——
   // 两份 schema 分开写（force 那份一个字没改），这里按并集登记给构建期体检用。
   borrow: z.union([BorrowLevelSchema, BorrowBannerLevelSchema]),
@@ -1365,8 +1570,10 @@ export const templateSchemas: Record<string, z.ZodType> = {
   show: ShowLevelSchema,
   twoline: TwolineLevelSchema,
   read: ReadLevelSchema,
-  matchup: MatchupLevelSchema,
+  matchup: z.union([MatchupLevelSchema, MatchupOrderLevelSchema]),
   probe: ProbeLevelSchema,
   lure: LureLevelSchema,
   chase: ChaseLevelSchema,
+  swap: SwapLevelSchema,
+  chain: ChainLevelSchema,
 };

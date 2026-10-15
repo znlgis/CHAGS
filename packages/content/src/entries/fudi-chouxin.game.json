@@ -1,0 +1,136 @@
+{
+  "figures": [
+    "曹操",
+    "袁绍"
+  ],
+  "story": [
+    {
+      "id": "s1",
+      "title": "乌巢的粮山",
+      "text": "袁绍的粮草全屯在乌巢，堆得像小山，够他的大军吃很久。",
+      "narration": "官渡前线，两军对峙。曹操的兵少、粮也少，袁绍的粮草却一车一车运进乌巢，堆得像小山一样 —— 他耗得起，曹操耗不起。",
+      "illustration": "none"
+    },
+    {
+      "id": "s2",
+      "title": "夜里烧粮",
+      "text": "曹操不去硬碰他的大军，夜里带人摸到乌巢，点着了粮囤。",
+      "narration": "曹操没有去跟袁绍的大军硬碰。他挑了一支精兵，举着火把，夜里摸进乌巢，一把火烧了粮囤。粮没了，袁绍的大军自己就撑不住了。",
+      "illustration": "none"
+    }
+  ],
+  "keyMoment": {
+    "beatId": "s2",
+    "question": "袁绍兵多粮足，正面推不动。该往哪儿下手？",
+    "options": [
+      {
+        "id": "hard",
+        "text": "集中所有人，跟他正面拼一场",
+        "isCanonical": false,
+        "hint": "他人多粮足，硬拼我们撑不住。"
+      },
+      {
+        "id": "grain",
+        "text": "烧掉乌巢的粮草 —— 那是他撑着的根本",
+        "isCanonical": true,
+        "hint": ""
+      },
+      {
+        "id": "wait",
+        "text": "先退回去，等他慢慢变弱",
+        "isCanonical": false,
+        "hint": "退回去，他的粮还是一车车往前运。"
+      }
+    ],
+    "reveal": "不去扑火，把底下的柴抽走 —— 火自己就灭了。"
+  },
+  "misconceptions": [
+    "火大就只能用更大的力气去扑",
+    "打不过就先绕开，等等再说"
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "kind": "recall",
+      "question": "袁绍的粮草屯在哪里？",
+      "options": [
+        "乌巢",
+        "官渡",
+        "许都"
+      ],
+      "answer": 0,
+      "explanation": "粮草全在乌巢 —— 曹操夜里烧的就是那儿。"
+    },
+    {
+      "id": "q2",
+      "kind": "transfer",
+      "question": "锅里的汤太咸了，一直加水还是咸。怎么办更聪明？",
+      "options": [
+        "少放那把盐 —— 从根上解决",
+        "再加更多的水",
+        "把火开大一点"
+      ],
+      "answer": 0,
+      "explanation": "水加得再多，咸味还是从盐来的 —— 少放那把盐，才是从底下把柴抽走。"
+    }
+  ],
+  "game": {
+    "template": "siege",
+    "stages": [
+      {
+        "template": "siege",
+        "levelScript": {
+          "mode": "support",
+          "fire": {
+            "x": 375,
+            "y": 620,
+            "level": 100
+          },
+          "logs": [
+            {
+              "id": "l1",
+              "x": 170,
+              "y": 545,
+              "radius": 64,
+              "relief": 12,
+              "base": false
+            },
+            {
+              "id": "l2",
+              "x": 580,
+              "y": 545,
+              "radius": 64,
+              "relief": 14,
+              "base": false
+            },
+            {
+              "id": "l3",
+              "x": 170,
+              "y": 800,
+              "radius": 64,
+              "relief": 16,
+              "base": false
+            },
+            {
+              "id": "l4",
+              "x": 580,
+              "y": 800,
+              "radius": 64,
+              "relief": 18,
+              "base": false
+            },
+            {
+              "id": "l5",
+              "x": 375,
+              "y": 950,
+              "radius": 64,
+              "relief": 40,
+              "base": true
+            }
+          ],
+          "hint": "别扑火，把底下的柴抽走"
+        }
+      }
+    ]
+  }
+}

@@ -802,6 +802,13 @@ for (const [id, title] of [
   ['yuqin-guzong', '欲擒故纵'],
   ['paozhuan-yinyu', '抛砖引玉'],
   ['qinzei-qinwang', '擒贼擒王'],
+  // 第四辑（混战计 19–24）
+  ['fudi-chouxin', '釜底抽薪'],
+  ['hunshui-moyu', '混水摸鱼'],
+  ['jinchan-tuoqiao', '金蝉脱壳'],
+  ['guanmen-zhuozei', '关门捉贼'],
+  ['yuanjiao-jingong', '远交近攻'],
+  ['jiadao-faguo', '假道伐虢'],
 ] as const) {
   test('三十六计 · ' + title + ' autoplay 全流程', async ({ page }) => {
     await page.goto('/?autoplay=1#/play/' + id);

@@ -1,0 +1,94 @@
+{
+  "figures": [
+    "Duke Xian of Jin",
+    "Duke of Yu",
+    "Gong Zhiqi"
+  ],
+  "story": [
+    {
+      "title": "A Road to Borrow",
+      "text": "Between Jin and Guo lies Yu — so Duke Xian sends envoys to borrow a road.",
+      "narration": "Duke Xian of Jin wanted to attack Guo, but the state of Yu lay between the two. He sent envoys with rich gifts to the Duke of Yu, asking only to borrow a road through. Gong Zhiqi, a minister of Yu, warned his lord: Guo is Yu’s shield; if Guo is gone, Yu cannot stand. The Duke of Yu did not listen."
+    },
+    {
+      "title": "Whose Road Comes Back",
+      "text": "Jin’s army passes Yu Pass and Guo Pass; coming back, the road points at Yu.",
+      "narration": "The Jin army marched up the road it had borrowed, through Yu Pass and Guo Pass, all the way north. When the work was done and the army turned for home, it came back down that same borrowed road — and this time the gates along it stopped the state that had lent them. Only then did the Duke of Yu remember Gong Zhiqi’s words: when the lips are gone, the teeth feel the cold."
+    }
+  ],
+  "keyMoment": {
+    "question": "You are the Duke of Yu: Jin asks to borrow a road. Lend it or not?",
+    "options": [
+      {
+        "text": "Do not lend it — think first what his army will do on the way back",
+        "hint": ""
+      },
+      {
+        "text": "Lend it — the gifts are rich, and a road is only a road",
+        "hint": "Lend the road and his army passes your gate — and it will pass it again on the way home."
+      },
+      {
+        "text": "Lend it — it is Guo he wants, and Guo is far from Yu",
+        "hint": "Guo is right next door: once Guo is gone, Yu is next."
+      }
+    ],
+    "reveal": "A road lent out may come back pointing at you — before you lend anything, think what he will do with it."
+  },
+  "misconceptions": [
+    "Lending something out costs nothing — it is still yours",
+    "A big gift is hard to refuse; saying no would be rude",
+    "A road lent out is only a road, and none of my business"
+  ],
+  "quiz": [
+    {
+      "question": "Why did Duke Xian of Jin send envoys to see the Duke of Yu?",
+      "options": [
+        "Yu lies between Jin and Guo — he needed to borrow a road",
+        "Yu was an ally of Guo",
+        "He wanted to give the Duke of Yu a horse"
+      ],
+      "answer": 0,
+      "explanation": "Jin and Guo are separated by Yu: an army cannot get through without borrowing that road."
+    },
+    {
+      "question": "Why did Gong Zhiqi advise against lending the road?",
+      "options": [
+        "Guo was Yu’s shield: with Guo gone, Yu could not stand",
+        "He thought Jin’s gifts were too small",
+        "He wanted to see how strong Jin’s army was"
+      ],
+      "answer": 0,
+      "explanation": "When the lips are gone, the teeth feel the cold — take the neighbour away and you are next."
+    },
+    {
+      "question": "A classmate wants to borrow your new skateboard to ride it down a flight of steps. What do you do?",
+      "options": [
+        "Ask what he plans to do with it first, then decide",
+        "Lend it right away — it is rude to say no",
+        "Hide it and say nothing"
+      ],
+      "answer": 0,
+      "explanation": "Before lending anything, think what he will do with it — like the road Yu lent out."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Borrow first, then pass",
+          "gates": [
+            {
+              "label": "Yu Pass"
+            },
+            {
+              "label": "Guo Pass"
+            },
+            {
+              "label": "Shangyang"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "figures": [
+    "Sun Bin",
+    "Pang Juan"
+  ],
+  "story": [
+    {
+      "title": "The Narrow Pass at Maling",
+      "text": "The Maling road runs between two mountains — and Sun Bin knew Pang Juan would take it.",
+      "narration": "Sun Bin was sure Pang Juan would have to march home through the Maling road. It runs between two mountains, so narrow that only a column of men can pass, and the ridges on either side can hide an ambush.",
+      "illustration": "none"
+    },
+    {
+      "title": "Close the Doors First",
+      "text": "He did not block the front: he sealed both ends of the pass first, then closed in.",
+      "narration": "Sun Bin did not march out to fight at the head of the pass. He had both ends of the Maling road sealed, torches rose along the ridges on either side — and nobody who entered that road could get out.",
+      "illustration": "none"
+    }
+  ],
+  "keyMoment": {
+    "question": "Pang Juan's men are marching into the Maling road. What do you do first?",
+    "options": [
+      {
+        "text": "Seal both ends of the pass first, then move in",
+        "hint": ""
+      },
+      {
+        "text": "Charge straight in and block him head-on",
+        "hint": "Hit him at the front and he bolts out of the other end."
+      },
+      {
+        "text": "Shout at him from outside and make him come out",
+        "hint": "Then he gets to choose which way he runs."
+      }
+    ],
+    "reveal": "Seal the way out first, then move — with the doors shut, the thief has nowhere to run."
+  },
+  "misconceptions": [
+    "The moment you spot the enemy you should charge",
+    "Enough men will always catch him, wherever he runs"
+  ],
+  "quiz": [
+    {
+      "question": "Where did Sun Bin set his ambush?",
+      "options": [
+        "The Maling road",
+        "Below the walls of Handan",
+        "Outside Daliang"
+      ],
+      "answer": 0,
+      "explanation": "The Maling road is narrow and steep — once both ends are sealed, nobody inside can get out."
+    },
+    {
+      "question": "Your brother's marbles roll everywhere: two under the sofa, one toward the door. Which do you block first?",
+      "options": [
+        "Block the doorway first",
+        "Crawl under the sofa first",
+        "Chase the fastest marble first"
+      ],
+      "answer": 0,
+      "explanation": "Block the doorway and the rest can be picked up calmly — seal the way out, or they all roll away."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Shut every gate in time"
+        }
+      }
+    ]
+  }
+}

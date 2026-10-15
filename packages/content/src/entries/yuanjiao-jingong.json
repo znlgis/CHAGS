@@ -1,0 +1,29 @@
+{
+  "id": "yuanjiao-jingong",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "远交近攻",
+  "pinyin": "Yuǎn jiāo jìn gōng",
+  "dynasty": "战国",
+  "era": "战国·秦昭王时",
+  "yearApprox": -270,
+  "source": {
+    "book": "《三十六计·混战计》",
+    "chapter": "远交近攻",
+    "quote": "形禁势格，利从近取，害以远隔。上火下泽。"
+  },
+  "moral": "先做什么、后做什么，有讲究 —— 近的先解决，远的先结好。",
+  "keywords": [
+    "先后顺序",
+    "远交近攻",
+    "看地图"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 23,
+    "set": 4
+  }
+}

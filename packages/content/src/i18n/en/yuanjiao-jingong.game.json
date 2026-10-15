@@ -1,0 +1,102 @@
+{
+  "figures": [
+    "Fan Ju",
+    "King Zhao of Qin"
+  ],
+  "story": [
+    {
+      "title": "The Map Spread Open",
+      "text": "Fan Ju told King Zhao: befriend the far states first, then deal with the near ones.",
+      "narration": "Fan Ju came from Wei to Qin and was received by King Zhao. He spread the map open: if Qin wanted to move out, Han and Wei lay right across its door, while Qi, Chu and Yan were too far to reach — better to make friends with the far states first, and then give all its attention to the near ones."
+    },
+    {
+      "title": "One Step at a Time",
+      "text": "Qin did it in that order and walked out of the Hangu Pass, step by step.",
+      "narration": "King Zhao took Fan Ju's advice: first he sent envoys to befriend Qi, Chu and Yan in the distance, so that they would not step in; then he turned back and, from the nearest outward, settled the affairs of Han, Wei and Zhao one by one. Step by step, Qin walked out of the Hangu Pass."
+    }
+  ],
+  "keyMoment": {
+    "question": "Han and Wei block the door, and Qi and Chu are far away. Where do you start?",
+    "options": [
+      {
+        "text": "Befriend the far Qi and Chu first, then deal with the near states",
+        "hint": ""
+      },
+      {
+        "text": "Take the far Qi and Chu first",
+        "hint": "Reaching across other people's land to the far side — what you take you cannot hold."
+      },
+      {
+        "text": "Push on both ends at once",
+        "hint": "Pressing at both ends leaves neither end strong enough."
+      }
+    ],
+    "reveal": "What you do first and what you do later matters — settle the near first, and befriend the far ones first."
+  },
+  "misconceptions": [
+    "It makes no difference who you move on first — they all have to be moved on",
+    "Befriending the far states is about having warmer friends out there",
+    "What is too far to reach simply has to be endured"
+  ],
+  "quiz": [
+    {
+      "question": "Who did Fan Ju advise King Zhao to befriend first?",
+      "options": [
+        "The far states: Qi, Chu and Yan",
+        "The near states: Han, Wei and Zhao",
+        "Nobody — just move first"
+      ],
+      "answer": 0,
+      "explanation": "Befriend the far, attack the near: with the far states friendly, they will not step in to help the near ones."
+    },
+    {
+      "question": "Why does the Thirty-Six Stratagems say to take profit from the near?",
+      "options": [
+        "Ground taken nearby joins up with yours and can be held",
+        "Things are cheaper nearby",
+        "Nobody lives far away"
+      ],
+      "answer": 0,
+      "explanation": "Profit is taken from the near and harm is kept far off — reach across someone else's land to the far side, and even what you take cannot be held."
+    },
+    {
+      "question": "Two things to do this weekend: a dictation test due tomorrow, and a poster due next week. Which first?",
+      "options": [
+        "The dictation due tomorrow",
+        "The poster you enjoy",
+        "Both at the same time"
+      ],
+      "answer": 0,
+      "explanation": "Do the nearest and most pressing thing first — just like befriend the far, attack the near."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Near first, far allied",
+          "neighbors": [
+            {
+              "label": "Han · near"
+            },
+            {
+              "label": "Wei · near"
+            },
+            {
+              "label": "Zhao · near"
+            },
+            {
+              "label": "Chu · far"
+            },
+            {
+              "label": "Yan · far"
+            },
+            {
+              "label": "Qi · far"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "figures": [
+    "Bi Zaiyu"
+  ],
+  "story": [
+    {
+      "title": "The Drums Beat All Night",
+      "text": "The Song army faced the Jin. Night fell, and the drums never stopped.",
+      "narration": "In the Southern Song, the general Bi Zaiyu led his troops against the Jin. He had to slip away in the night, but the moment the drums stopped the other side would know the camp was empty. So he had goats hung above the drums: as the goats struggled they kicked the drums, and the drums beat on by themselves all night."
+    },
+    {
+      "title": "The Drums Still Beat, the Men Are Gone",
+      "text": "Only at dawn did the other side see: every post was held by a straw dummy.",
+      "narration": "The soldiers dressed straw dummies in armour and set one at each post, then slipped out through the camp gate. When morning came the other side understood: the drums were still beating, and not a single man was left."
+    }
+  ],
+  "keyMoment": {
+    "question": "You have to slip away in the night. How do you keep the other side from noticing?",
+    "options": [
+      {
+        "text": "Stand a double at every post and keep the look the same",
+        "hint": ""
+      },
+      {
+        "text": "Pack up the drums and banners and run, silent and fast",
+        "hint": "The moment the drums stop and the banners go, they know the camp is empty."
+      },
+      {
+        "text": "Leave a few men beating the drums while the rest go",
+        "hint": "That puts those men in danger — and one man short leaves a post empty."
+      }
+    ],
+    "reveal": "The drums that should sound still sound, the men who should stand still stand — leave without being seen."
+  },
+  "misconceptions": [
+    "Slipping away means running off without a sound",
+    "An empty camp does not matter, it is dark anyway"
+  ],
+  "quiz": [
+    {
+      "question": "Why did the drums in Bi Zaiyu's camp beat all night?",
+      "options": [
+        "Goats hung above them kicked them as they struggled",
+        "Soldiers took turns beating them all night",
+        "The wind made them sound by themselves"
+      ],
+      "answer": 0,
+      "explanation": "With goats hung above the drums, every struggle kicked a drum — and the other side heard a camp that was still full of men."
+    },
+    {
+      "question": "You want to move the models on your desk to the next room tonight without your family seeing that anything moved. What is better?",
+      "options": [
+        "Leave a few things in place, arranged just as they were",
+        "Grab it all in one go and run",
+        "Turn on the big light and carry them one by one"
+      ],
+      "answer": 0,
+      "explanation": "If the shape stays the same, nobody looks twice — that is the golden cicada shedding its shell."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Be quick, keep the look"
+        }
+      }
+    ]
+  }
+}

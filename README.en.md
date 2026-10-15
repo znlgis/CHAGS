@@ -38,7 +38,7 @@ The collection's first-level structure is **groups**, defined in one place — `
 | Group | Games | Notes |
 |---|---|---|
 | 典故 `allusion` | **17** (all live) | One story, one game; sorted by year |
-| 三十六计 `stratagem` | **18** (Volumes 1–3: 1–6, 7–12, 13–18) | Thirty-Six Stratagems, one game each; sorted by **stratagem number**, three more volumes to come |
+| 三十六计 `stratagem` | **24** (Volumes 1–4: 1–6, 7–12, 13–18, 19–24) | Thirty-Six Stratagems, one game each; sorted by **stratagem number**, two more volumes to come |
 
 The hall and the album render one section per group, and **a group with no content yet does not
 disappear**: it shows up as "coming soon".
@@ -52,8 +52,8 @@ has no default, so a stratagem can never be filed under "stories" by accident.
 
 ## Current status
 
-**Seventeen stories plus the first eighteen stratagems** are playable. `pnpm verify` is green (typecheck,
-lint, 702 unit tests, content check, build, size) and every game has a headless playthrough in the
+**Seventeen stories plus the first twenty-four stratagems** are playable. `pnpm verify` is green (typecheck,
+lint, 880 unit tests, content check, build, size) and every game has a headless playthrough in the
 end-to-end suite (`?autoplay=1` — a new template only counts once it implements `runAutoplay()`).
 
 The shell stays small: no Phaser, and no story or level-script content either. Each game's own
@@ -337,9 +337,33 @@ Volume 3 adds **three new templates** (`probe` / `lure` / `chase`) plus a `banne
 `borrow` (the `force` branch is untouched); the design note is
 [三十六计-第三辑方案.md](docs/三十六计-第三辑方案.md).
 
+## Thirty-Six Stratagems · Volume 4: the six Confusion Stratagems (19–24)
+
+| # | Stratagem | What the child actually does | Template |
+|---|---|---|---|
+| 19 | Pull the Firewood from Under the Pot | Do not fight the fire: pull the logs out from underneath, and the base log drops it fast | `siege` (support) |
+| 20 | Muddy the Water to Catch Fish | The window is **made by you**: stir the water, and only while it is muddy are the fish slow enough | `window` (stir) |
+| 21 | The Golden Cicada Sheds Its Shell | Swap each guard for a look-alike dummy; the inspector looks up every few seconds | `swap` |
+| 22 | Shut the Door to Catch the Thief | Shut every gate before he bolts; miss one and he runs — you simply start again | `siege` (close) |
+| 23 | Befriend the Far, Attack the Near | A ring of neighbours: settle the near ones, befriend the far ones — wrong order just means re-arranging | `matchup` (order) |
+| 24 | Borrow a Road to Attack Guo | Talk your way to a borrowed road, take the passes in order, then march home (Yu's lesson: chipped teeth feel the cold) | `chain` |
+
+| Under the pot | Muddy water | Shed the shell |
+|---|---|---|
+| ![logs](docs/screenshots/110-stratagem-19-fudi.png) | ![muddy](docs/screenshots/111-stratagem-20-hunshui.png) | ![shell](docs/screenshots/112-stratagem-21-jinchan.png) |
+
+| Shut the gates | Far and near | The borrowed road |
+|---|---|---|
+| ![gates](docs/screenshots/113-stratagem-22-guanmen.png) | ![map](docs/screenshots/114-stratagem-23-yuanjiao.png) | ![road](docs/screenshots/115-stratagem-24-jiadao.png) |
+
+Volume 4 adds **two new templates** (`swap` / `chain`) and **extends three** (`siege` gains
+support / close, `window` gains stir, `matchup` gains order). When extending, the older modes
+(`vital` / `fire` / `glimpse` / `pair`) keep their logic and tests untouched; the design note is
+[三十六计-第四辑方案.md](docs/三十六计-第四辑方案.md).
+
 ## Design principle: fewer words, more doing
 
-Across all thirty-five games there is almost no teaching text on screen: the two opening lines of a story,
+Across all forty-one games there is almost no teaching text on screen: the two opening lines of a story,
 and one short hint that appears when the level starts or when the child is stuck (tap the story page too early and it only says
 "Listen to the story first"). Everything else is shape, motion, sound and speech. Kids **work out** the idea
 instead of being told it.

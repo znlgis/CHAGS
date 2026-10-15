@@ -41,6 +41,12 @@ import rawDiaohu from './diaohu-lishan.json';
 import rawYuqin from './yuqin-guzong.json';
 import rawPaozhuan from './paozhuan-yinyu.json';
 import rawQinzei from './qinzei-qinwang.json';
+import rawFudi from './fudi-chouxin.json';
+import rawHunshui from './hunshui-moyu.json';
+import rawJinchan from './jinchan-tuoqiao.json';
+import rawGuanmen from './guanmen-zhuozei.json';
+import rawYuanjiao from './yuanjiao-jingong.json';
+import rawJiadao from './jiadao-faguo.json';
 
 /**
  * **摘要层**：大厅与图鉴要用的那一小部分（标题 / 拼音 / 年代 / 寓意 / 关键词 / 出处…）。
@@ -90,6 +96,12 @@ export const entrySummaries: EntrySummary[] = [
   EntrySummarySchema.parse(rawYuqin),
   EntrySummarySchema.parse(rawPaozhuan),
   EntrySummarySchema.parse(rawQinzei),
+  EntrySummarySchema.parse(rawFudi),
+  EntrySummarySchema.parse(rawHunshui),
+  EntrySummarySchema.parse(rawJinchan),
+  EntrySummarySchema.parse(rawGuanmen),
+  EntrySummarySchema.parse(rawYuanjiao),
+  EntrySummarySchema.parse(rawJiadao),
 ];
 
 /** 把某条摘要翻译成目标语言（没有译文就原样返回） */

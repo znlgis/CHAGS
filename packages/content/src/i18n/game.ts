@@ -34,6 +34,12 @@ import enDiaohuGame from './en/diaohu-lishan.game.json';
 import enYuqinGame from './en/yuqin-guzong.game.json';
 import enPaozhuanGame from './en/paozhuan-yinyu.game.json';
 import enQinzeiGame from './en/qinzei-qinwang.game.json';
+import enFudiGame from './en/fudi-chouxin.game.json';
+import enHunshuiGame from './en/hunshui-moyu.game.json';
+import enJinchanGame from './en/jinchan-tuoqiao.game.json';
+import enGuanmenGame from './en/guanmen-zhuozei.game.json';
+import enYuanjiaoGame from './en/yuanjiao-jingong.game.json';
+import enJiadaoGame from './en/jiadao-faguo.game.json';
 
 /**
  * 内容的**详情**译文（故事 / 关键抉择 / 复习题 / 关卡脚本文案）。
@@ -79,6 +85,12 @@ export const gamePatches: Partial<Record<Locale, Record<string, unknown>>> = {
     'yuqin-guzong': enYuqinGame,
     'paozhuan-yinyu': enPaozhuanGame,
     'qinzei-qinwang': enQinzeiGame,
+    'fudi-chouxin': enFudiGame,
+    'hunshui-moyu': enHunshuiGame,
+    'jinchan-tuoqiao': enJinchanGame,
+    'guanmen-zhuozei': enGuanmenGame,
+    'yuanjiao-jingong': enYuanjiaoGame,
+    'jiadao-faguo': enJiadaoGame,
   },
 };
 

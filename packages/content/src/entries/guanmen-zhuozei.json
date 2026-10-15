@@ -1,0 +1,29 @@
+{
+  "id": "guanmen-zhuozei",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "关门捉贼",
+  "pinyin": "Guān mén zhuō zéi",
+  "dynasty": "战国",
+  "era": "战国 · 周显王二十八年",
+  "yearApprox": -341,
+  "source": {
+    "book": "《三十六计·混战计》",
+    "chapter": "关门捉贼",
+    "quote": "小敌困之。剥，不利有攸往。"
+  },
+  "moral": "动手之前，先把他的退路想清楚。",
+  "keywords": [
+    "想退路",
+    "先关门",
+    "马陵"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 22,
+    "set": 4
+  }
+}

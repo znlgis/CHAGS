@@ -1,0 +1,29 @@
+{
+  "id": "hunshui-moyu",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "混水摸鱼",
+  "pinyin": "Hùn shuǐ mō yú",
+  "dynasty": "东晋",
+  "era": "东晋·太元八年",
+  "yearApprox": 383,
+  "source": {
+    "book": "《三十六计·混战计》",
+    "chapter": "混水摸鱼",
+    "quote": "乘其阴乱，利其弱而无主。随，以向晦入宴息。"
+  },
+  "moral": "局面乱的时候要更稳 —— 先把水搅浑，趁浑水把事办了。",
+  "keywords": [
+    "把水搅浑",
+    "趁乱办事",
+    "自己稳住"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 20,
+    "set": 4
+  }
+}

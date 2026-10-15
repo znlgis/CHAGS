@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { MatchupLevelSchema, bestMatchupWins } from './schemas';
+import { MatchupLevelSchema, MatchupOrderLevelSchema, bestMatchupWins } from './schemas';
+import type { MatchupNeighbor } from './schemas';
 import {
-  MATCHUP_TIMING, assign, bestRoster, bestWins, horseAtSlot, horseNear, isMatchupDone,
-  isRosterFull, lossesFor, matchupProgress, pairings, placements, resetRoster, resolve, rivalAt,
-  scaledMs, slotOfHorse, takeBack, winsFor, winsNeeded,
+  MATCHUP_ORDER_TIMING, MATCHUP_TIMING, assign, bestRoster, bestWins, expectedNext, horseAtSlot,
+  horseNear, isMatchupDone, isOrderDone, isRosterFull, lossesFor, matchupProgress, neighborAt,
+  neighborsInOrder, nextIdInOrder, noteWrongPick, orderProgress, orderStart, pairings, pick,
+  pickedCount, pickedOrder, placements, resetRoster, resolve, rivalAt, scaledMs, slotOfHorse,
+  takeBack, winsFor, winsNeeded, wrongPicks,
 } from './matchup.logic';
 
 /**
@@ -300,5 +303,208 @@ describe('schema：这一关一定赢得了（内容写错不该等孩子打到�
     expect(level.needWins).toBe(2);
     expect(level.hint.length).toBeLessThanOrEqual(24);
     for (const rival of level.rivals) expect(rival.label.length).toBeLessThanOrEqual(12);
+  });
+});
+/* ---------------- order（远交近攻）：一圈势力，按顺序点过去 ---------------- */
+
+/**
+ * 第 23 计 · 远交近攻：秦（地图中央 375 / 780）周围一圈六个势力 ——
+ * 近的三个（韩 / 魏 / 赵）要处理，远的三个（齐 / 燕 / 楚）先结好。
+ */
+const order = MatchupOrderLevelSchema.parse({
+  mode: 'order',
+  neighbors: [
+    { id: 'han', x: 375, y: 1010, radius: 66, label: '韩', stance: 'attack' },
+    { id: 'wei', x: 140, y: 720, radius: 66, label: '魏', stance: 'attack' },
+    { id: 'zhao', x: 620, y: 640, radius: 66, label: '赵', stance: 'attack' },
+    { id: 'chu', x: 375, y: 1265, radius: 66, label: '楚', stance: 'ally' },
+    { id: 'yan', x: 105, y: 400, radius: 66, label: '燕', stance: 'ally' },
+    { id: 'qi', x: 650, y: 430, radius: 66, label: '齐', stance: 'ally' },
+  ],
+  sequence: ['han', 'wei', 'zhao', 'chu', 'yan', 'qi'],
+  hint: '近的先解决，远的先结好',
+});
+
+/** 地图中央（秦都）与某个势力的距离 —— 近的一圈 / 远的一圈按它分 */
+const CENTER = { x: 375, y: 780 };
+function distanceOf(id: string): number {
+  const neighbor = order.neighbors.find((item) => item.id === id)!;
+  return Math.hypot(neighbor.x - CENTER.x, neighbor.y - CENTER.y);
+}
+
+/** 按正确顺序一路点完 */
+function walkOrder(state = orderStart(order)) {
+  let next = state;
+  for (const id of order.sequence) next = pick(next, id);
+  return next;
+}
+
+describe('order：一圈势力，按正确顺序点过去', () => {
+  it('下一个该点谁：从 sequence 的第一个开始，一个一个往后', () => {
+    let state = orderStart(order);
+    expect(nextIdInOrder(state)).toBe('han');
+    expect(expectedNext(order, state)?.label).toBe('韩');
+    for (const id of order.sequence) {
+      expect(expectedNext(order, state)?.id).toBe(id);
+      state = pick(state, id);
+    }
+    expect(nextIdInOrder(state)).toBeUndefined();
+    expect(expectedNext(order, state)).toBeUndefined();
+  });
+
+  it('点对了才记进去：pickedOrder 就是点中的先后', () => {
+    let state = orderStart(order);
+    expect(pickedCount(state)).toBe(0);
+    state = pick(state, 'han');
+    expect(pickedOrder(state)).toEqual(['han']);
+    expect(pickedCount(state)).toBe(1);
+    state = pick(state, 'wei');
+    expect(pickedOrder(state)).toEqual(['han', 'wei']);
+    expect(state.sequence).toEqual(order.sequence); // 顺序是关卡给的，点它不会改
+  });
+
+  it('点错了原样返回 —— 零惩罚，顺序可以重排', () => {
+    const state = orderStart(order);
+    // 该点韩，点了魏：什么也不发生（连对象都是同一个）
+    expect(pick(state, 'wei')).toBe(state);
+    expect(pick(state, 'qi')).toBe(state);
+    expect(pickedCount(state)).toBe(0);
+    // 换个不存在的 id 也一样
+    expect(pick(state, 'ghost')).toBe(state);
+    // 点错之后照样能按正确顺序接着走
+    const after = pick(state, 'han');
+    expect(pickedOrder(after)).toEqual(['han']);
+    expect(expectedNext(order, after)?.id).toBe('wei');
+  });
+
+  it('点错只记一笔（复盘用）：不扣星、不结束、已经点对的那些留着', () => {
+    let state = pick(pick(orderStart(order), 'han'), 'wei');
+    expect(wrongPicks(state)).toBe(0);
+    state = noteWrongPick(state); // 该点赵，点了韩 —— 场景这么记
+    expect(wrongPicks(state)).toBe(1);
+    expect(pickedOrder(state)).toEqual(['han', 'wei']);
+    expect(expectedNext(order, state)?.id).toBe('zhao');
+    state = pick(state, 'zhao');
+    expect(pickedOrder(state)).toEqual(['han', 'wei', 'zhao']);
+    expect(wrongPicks(state)).toBe(1);
+    // 后面接着点完，错的那一次只是记着，不影响成败
+    for (const id of ['chu', 'yan', 'qi']) state = pick(state, id);
+    expect(isOrderDone(order, state)).toBe(true);
+    expect(wrongPicks(state)).toBe(1);
+  });
+
+  it('一圈走完才算成：少一个都不算', () => {
+    let state = orderStart(order);
+    for (const id of ['han', 'wei', 'zhao', 'chu', 'yan']) {
+      state = pick(state, id);
+      expect(isOrderDone(order, state)).toBe(false);
+    }
+    expect(orderProgress(order, state)).toBeCloseTo(5 / 6, 6);
+    state = pick(state, 'qi');
+    expect(isOrderDone(order, state)).toBe(true);
+    expect(orderProgress(order, state)).toBe(1);
+    // 点完了再点谁都不动（零惩罚）
+    expect(pick(state, 'han')).toBe(state);
+  });
+});
+
+describe('order：顺序就是"近的先解决，远的先结好"', () => {
+  it('内圈三个是 attack，外圈三个是 ally：近的都比远的近', () => {
+    const attacks = order.neighbors.filter((item) => item.stance === 'attack').map((item) => item.id);
+    const allies = order.neighbors.filter((item) => item.stance === 'ally').map((item) => item.id);
+    expect(attacks.sort()).toEqual(['han', 'wei', 'zhao']);
+    expect(allies.sort()).toEqual(['chu', 'qi', 'yan']);
+    for (const near of attacks) {
+      for (const far of allies) expect(distanceOf(near)).toBeLessThan(distanceOf(far));
+    }
+  });
+
+  it('近的从近到远：韩 230 → 魏 242 → 赵 282', () => {
+    const near = ['han', 'wei', 'zhao'].map(distanceOf);
+    expect(near[0]).toBeCloseTo(230, 6);
+    expect(near[0]).toBeLessThan(near[1]!);
+    expect(near[1]).toBeLessThan(near[2]!);
+    // sequence 里就是按这个顺序排的
+    expect(order.sequence.slice(0, 3)).toEqual(['han', 'wei', 'zhao']);
+  });
+
+  it('远的从远到近：楚 485 → 燕 466 → 齐 445', () => {
+    const far = ['chu', 'yan', 'qi'].map(distanceOf);
+    expect(far[0]).toBeGreaterThan(far[1]!);
+    expect(far[1]).toBeGreaterThan(far[2]!);
+    expect(order.sequence.slice(3)).toEqual(['chu', 'yan', 'qi']);
+  });
+
+  it('neighborsInOrder 就是按 sequence 排好的那一圈（画面与小手都按它走）', () => {
+    expect(neighborsInOrder(order).map((item) => item.id)).toEqual(order.sequence);
+    expect(neighborsInOrder(order).map((item) => item.label)).toEqual(['韩', '魏', '赵', '楚', '燕', '齐']);
+  });
+
+  it('一局真的走得完：按 sequence 一个一个点，点完就成', () => {
+    const state = walkOrder();
+    expect(isOrderDone(order, state)).toBe(true);
+    expect(pickedOrder(state)).toEqual(order.sequence);
+    expect(wrongPicks(state)).toBe(0);
+  });
+});
+
+describe('order：手指粗也点得到（点空是零惩罚的）', () => {
+  it('按半径算命中；点空返回 undefined', () => {
+    expect(neighborAt(order, 375, 1010, 0)?.id).toBe('han');
+    expect(neighborAt(order, 140, 720, 0)?.id).toBe('wei');
+    expect(neighborAt(order, 650, 430, 0)?.id).toBe('qi');
+    expect(neighborAt(order, 375, 800, 0)).toBeUndefined();
+    // 给一点宽容度就能点到：小朋友不用对准
+    expect(neighborAt(order, 375, 1010 + 100, MATCHUP_ORDER_TIMING.tapForgive)?.id).toBe('han');
+    expect(neighborAt(order, 375, 1010 + 100, 0)).toBeUndefined();
+  });
+
+  it('离得近时拿最近的那一个', () => {
+    const between = neighborAt(order, 300, 730, 200);
+    expect(between?.id).toBe('wei');
+  });
+
+  it('势力之间离得够开：点到这个不会串到那个', () => {
+    for (let i = 0; i < order.neighbors.length; i += 1) {
+      for (let k = i + 1; k < order.neighbors.length; k += 1) {
+        const a = order.neighbors[i]!;
+        const b = order.neighbors[k]!;
+        const gap = Math.hypot(a.x - b.x, a.y - b.y) - (a.radius + b.radius);
+        expect(gap, a.id + ' 与 ' + b.id + ' 挨在一起了').toBeGreaterThan(40);
+      }
+    }
+  });
+});
+
+describe('order 的 schema 与边界', () => {
+  it('正确顺序必须把每个势力刚好排一次', () => {
+    expect(() => MatchupOrderLevelSchema.parse({ ...order, sequence: ['han', 'wei', 'zhao', 'chu', 'yan'] })).toThrow();
+    expect(() =>
+      MatchupOrderLevelSchema.parse({ ...order, sequence: ['han', 'wei', 'zhao', 'chu', 'yan', 'han'] }),
+    ).toThrow();
+    expect(() =>
+      MatchupOrderLevelSchema.parse({ ...order, sequence: ['han', 'wei', 'zhao', 'chu', 'yan', 'ghost'] }),
+    ).toThrow();
+  });
+
+  it('既要有近的也要有远的 —— 否则这一计没有取舍', () => {
+    const allAlly = order.neighbors.map((item) => ({ ...item, stance: 'ally' as const }));
+    expect(() => MatchupOrderLevelSchema.parse({ ...order, neighbors: allAlly })).toThrow();
+    const allAttack = order.neighbors.map((item) => ({ ...item, stance: 'attack' as const }));
+    expect(() => MatchupOrderLevelSchema.parse({ ...order, neighbors: allAttack })).toThrow();
+  });
+
+  it('势力的 id 不能重复', () => {
+    const dup: MatchupNeighbor[] = [...order.neighbors.slice(0, 5), { ...order.neighbors[5]!, id: 'han' }];
+    expect(() => MatchupOrderLevelSchema.parse({ ...order, neighbors: dup })).toThrow();
+  });
+
+  it('pair 那一套一个字没变：两种模式的节拍出自同一份', () => {
+    expect(MATCHUP_ORDER_TIMING.autoplayStepMs).toBe(MATCHUP_TIMING.autoplayStepMs);
+    expect(MATCHUP_ORDER_TIMING.idleMs).toBe(MATCHUP_TIMING.idleMs);
+    expect(MATCHUP_ORDER_TIMING.finaleHoldMs).toBe(MATCHUP_TIMING.finaleHoldMs);
+    // 马那一半照样算得出孙膑的两胜
+    expect(winsFor(level, sunBin)).toBe(2);
+    expect(isMatchupDone(level, winsFor(level, sunBin))).toBe(true);
   });
 });

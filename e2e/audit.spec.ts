@@ -521,6 +521,13 @@ const STRATAGEMS: [string, string][] = [
   ['yuqin-guzong', 'chase'],
   ['paozhuan-yinyu', 'lure'],
   ['qinzei-qinwang', 'probe'],
+  // 第四辑（混战计 19–24）
+  ['fudi-chouxin', 'siege'],
+  ['hunshui-moyu', 'window'],
+  ['jinchan-tuoqiao', 'swap'],
+  ['guanmen-zhuozei', 'siege'],
+  ['yuanjiao-jingong', 'matchup'],
+  ['jiadao-faguo', 'chain'],
 ];
 
 for (const locale of LOCALES) {

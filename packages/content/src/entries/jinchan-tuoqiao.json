@@ -1,0 +1,29 @@
+{
+  "id": "jinchan-tuoqiao",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "金蝉脱壳",
+  "pinyin": "Jīn chán tuō qiào",
+  "dynasty": "南宋",
+  "era": "南宋 · 开禧北伐",
+  "yearApprox": 1206,
+  "source": {
+    "book": "《三十六计·混战计》",
+    "chapter": "金蝉脱壳",
+    "quote": "存其形，完其势；友不疑，敌不动。巽而止，蛊。"
+  },
+  "moral": "走的时候别让人看出来 —— 样子照旧，人已经走了。",
+  "keywords": [
+    "替身",
+    "照旧",
+    "悄悄走"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 21,
+    "set": 4
+  }
+}

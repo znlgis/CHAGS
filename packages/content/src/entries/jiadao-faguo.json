@@ -1,0 +1,29 @@
+{
+  "id": "jiadao-faguo",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "假道伐虢",
+  "pinyin": "Jiǎ dào fá guó",
+  "dynasty": "春秋",
+  "era": "春秋 · 周惠王二十二年",
+  "yearApprox": -655,
+  "source": {
+    "book": "《三十六计·混战计》",
+    "chapter": "假道伐虢",
+    "quote": "两大之间，敌胁以从，我假以势。"
+  },
+  "moral": "借出去的东西，先想清楚他拿它去做什么。",
+  "keywords": [
+    "借路",
+    "想后果",
+    "唇亡齿寒"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 24,
+    "set": 4
+  }
+}
