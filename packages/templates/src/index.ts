@@ -157,6 +157,33 @@ export {
 } from './chase.logic';
 export type { ChaseBand, ChaseState } from './chase.logic';
 
+/* ---------- 第六辑（败战计 31–36）：每个分支只改自己那一行（其余行不许动） ---------- */
+// 31 lure.favor（美人计）：判定与账本 —— 场景工厂走上面的 export * from './lure'
+export {
+  FAVOR_TIMING, favorProgress, favorStart, favorsGiven, gazeAt, glanceAt, glanceAwayMs,
+  glanceCycleMs, glanceLeftMs, glanceOtherMs, glanceMs, glancePlan, giftAt, giftById, hintGift,
+  isFavorDone, nextGiftToOffer, offerFavor, wantedGift,
+} from './lure.logic';
+export type { LureFavorState, LureGaze } from './lure.logic';
+export {
+  CALM_MIN_GAP_MS, CALM_MIN_WATCH_MS, calmPhaseAt, calmPhaseProgress, calmProgress, calmRemainingMs,
+  calmSlotAt, calmStart, calmTick, calmTimeline, calmTotalMs, cleanWatches, effectiveCalmLevel,
+  hitGate, isCalmDone, openGate, replayCalm, tapCalm,
+} from './stillness.logic';
+export type { CalmPhase, CalmPhaseInfo, CalmSlot, CalmState } from './stillness.logic';
+export {
+  PLANT_TIMING, fitsInLookAway, hitRedirect, hitSpot, isLookingAway, isPlantDone, lookAwayLeftMs,
+  plantHold, plantProgress, plantRatio, plantStart, plantStep, redirectLook, visitorAt, visitorWalk,
+} from './twoline.logic';
+export type { PlantHoldResult, PlantTick, TwolinePlantState } from './twoline.logic';
+// 35 chain.domino（连环计）：判定与账本 —— 场景工厂走上面的 export * from './chain'
+export {
+  DOMINO_TIMING, advanceDomino, applyDomino, dominoPhaseAt, dominoStart, hasIgnited, igniteChain,
+  igniteHit, isDominoDone, isLinkLit, isNextLink, linkAt, linkById, linksLeft, litCount,
+  nextDominoMove, nextLink, settleDomino,
+} from './chain.logic';
+export type { ChainDominoLink, DominoMove, DominoPhase, DominoState, DominoVerdict } from './chain.logic';
+
 /* ---------- 三十六计（第四辑 · 混战计 19–24） ---------- */
 export * from './swap';
 export * from './chain';

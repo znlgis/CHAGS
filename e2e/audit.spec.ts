@@ -535,10 +535,17 @@ const STRATAGEMS: [string, string][] = [
   ['shangwu-chouti', 'siege'],
   ['shushang-kaihua', 'show'],
   ['fanke-weizhu', 'chain'],
+  // 第六辑（败战计 31–36）
+  ['meiren-ji', 'lure'],
+  ['kongcheng-ji', 'stillness'],
+  ['fanjian-ji', 'twoline'],
+  ['kurou-ji', 'split'],
+  ['lianhuan-ji', 'chain'],
+  ['zou-weishang', 'trace'],
 ];
 
 for (const locale of LOCALES) {
-  test('audit ' + locale + ' — 三十六计（第 1–30 计：版面 + 卡面）', async ({ page }) => {
+  test('audit ' + locale + ' — 三十六计（第 1–36 计：版面 + 卡面）', async ({ page }) => {
     test.setTimeout(600_000);
     await page.setViewportSize({ width: 430, height: 932 });
     const out = '.scratch/i18n-audit/' + locale;

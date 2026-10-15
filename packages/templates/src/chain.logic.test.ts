@@ -462,3 +462,335 @@ describe('反客为主 · 点选与边界', () => {
     expect(stepLevel.posts.every((item) => item.label.length <= 12)).toBe(true);
   });
 });
+
+/* ---------------- 第 35 计 连环计（domino）：新模式的判定 ---------------- */
+
+import { ChainDominoSchema } from './schemas';
+import type { ChainDominoLevel } from './schemas';
+import {
+  DOMINO_TIMING, advanceDomino, applyDomino, dominoPhaseAt, dominoStart, hasIgnited, igniteChain,
+  igniteHit, isDominoDone, isLinkLit, isNextLink, linkAt, linkById, linksLeft, litCount,
+  nextDominoMove, nextLink, settleDomino,
+} from './chain.logic';
+import type { DominoState, DominoVerdict } from './chain.logic';
+
+/** 第 35 计 · 连环计：先点岸边的火种起头，再按顺序把四环一环比一环接上 */
+const dominoLevel: ChainDominoLevel = ChainDominoSchema.parse({
+  mode: 'domino',
+  ignite: { x: 130, y: 1130, radius: 84 },
+  links: [
+    { id: 'l1', x: 380, y: 970, radius: 76 },
+    { id: 'l2', x: 620, y: 760, radius: 76 },
+    { id: 'l3', x: 300, y: 545, radius: 76 },
+    { id: 'l4', x: 560, y: 335, radius: 76 },
+  ],
+  windowMs: 2200,
+  breakLine: '断了一环，回到岸边重新点一次',
+  hint: '先点着火种，再一环一环往下接',
+});
+
+/** 一局里所有可能的判定结果 —— 用来钉住"点一下只有这四种结果" */
+const VERDICTS: DominoVerdict[] = ['ok', 'wrong', 'expired', 'notStarted'];
+
+/**
+ * 照真实操作走一局：起头 → 一环一环点亮（与场景的 runAutoplay 走的是同一条路，
+ * 连"点在哪一环上"都过一遍命中判定）。
+ */
+function runDomino(
+  level: ChainDominoLevel,
+  from: DominoState = dominoStart(),
+  startAt = 0,
+): { state: DominoState; at: number; moves: string[] } {
+  let state = from;
+  let t = startAt;
+  const moves: string[] = [];
+  for (let guard = 0; guard < 20 && !isDominoDone(level, state); guard += 1) {
+    const move = nextDominoMove(level, state, t);
+    if (move === undefined) break;
+    if (move.kind === 'ignite') {
+      moves.push('ignite');
+      state = igniteChain(level, state, t);
+    } else {
+      moves.push(move.link.id);
+      // 与场景同一条路：从"手指落在哪儿"开始判，而不是直接把 id 递进去
+      const hit = linkAt(level, move.link.x, move.link.y);
+      state = applyDomino(level, state, hit?.id ?? 'missed', t);
+    }
+    t += DOMINO_TIMING.autoplayStepMs;
+  }
+  return { state, at: t, moves };
+}
+
+describe('连环计 · 没起头，一环也点不亮', () => {
+  it('还没起头：点哪一环都是 notStarted，状态原样返回（零惩罚）', () => {
+    const start = dominoStart();
+    expect(hasIgnited(start)).toBe(false);
+    expect(dominoPhaseAt(dominoLevel, start, 0)).toEqual({
+      index: 0,
+      remainingMs: 0,
+      running: false,
+    });
+    for (const link of dominoLevel.links) {
+      expect(advanceDomino(dominoLevel, start, link.id, 0)).toBe('notStarted');
+      expect(applyDomino(dominoLevel, start, link.id, 0)).toBe(start);
+    }
+    expect(litCount(start)).toBe(0);
+    expect(linksLeft(dominoLevel, start)).toBe(4);
+    // 提示还是指着第一环（孩子一起头就能接）
+    expect(nextLink(dominoLevel, start)?.id).toBe('l1');
+    expect(nextDominoMove(dominoLevel, start, 0)).toEqual({ kind: 'ignite' });
+    expect(isDominoDone(dominoLevel, start)).toBe(false);
+  });
+
+  it('起头：链子从第一环开始走，时限从这一刻起算；再起一次头 = 从头再来', () => {
+    const started = igniteChain(dominoLevel, dominoStart(), 1000);
+    expect(started.ignited).toBe(true);
+    expect(started.ignitedAtMs).toBe(1000);
+    expect(started.lastAtMs).toBe(1000);
+    expect(started.lit).toEqual([]);
+    expect(started.ignites).toBe(1);
+    expect(started.breaks).toBe(0);
+    expect(hasIgnited(started)).toBe(true);
+    expect(dominoPhaseAt(dominoLevel, started, 1000)).toEqual({
+      index: 0,
+      remainingMs: dominoLevel.windowMs,
+      running: true,
+    });
+
+    // 走到第三环时再起一次头：已点亮的几环不算了，重新从第一环排队（零惩罚）
+    let state = applyDomino(dominoLevel, started, 'l1', 1100);
+    state = applyDomino(dominoLevel, state, 'l2', 1200);
+    expect(state.lit).toEqual(['l1', 'l2']);
+    const again = igniteChain(dominoLevel, state, 1500);
+    expect(again.lit).toEqual([]);
+    expect(again.ignites).toBe(2);
+    expect(again.lastAtMs).toBe(1500);
+    // 从头再来不记 break（断的是链子，不是"重新起头"这件事）
+    expect(again.breaks).toBe(0);
+    expect(isNextLink(dominoLevel, again, 'l1')).toBe(true);
+    expect(dominoPhaseAt(dominoLevel, again, 1500).remainingMs).toBe(dominoLevel.windowMs);
+  });
+});
+
+describe('连环计 · 只认"下一环"：顺序点错和不点一样', () => {
+  it('跳着点、回头点、点个不存在的：都是 wrong，而且状态原样返回（不扣星、不结束）', () => {
+    const state = applyDomino(dominoLevel, igniteChain(dominoLevel, dominoStart(), 0), 'l1', 100);
+    expect(state.lit).toEqual(['l1']);
+    expect(isNextLink(dominoLevel, state, 'l2')).toBe(true);
+    expect(isNextLink(dominoLevel, state, 'l3')).toBe(false);
+    expect(isLinkLit(state, 'l1')).toBe(true);
+
+    // 跳着点 / 回头点 / 点个不存在的：判定是 wrong，落账连对象都不换
+    expect(advanceDomino(dominoLevel, state, 'l3', 200)).toBe('wrong');
+    expect(advanceDomino(dominoLevel, state, 'l4', 200)).toBe('wrong');
+    expect(advanceDomino(dominoLevel, state, 'l1', 200)).toBe('wrong');
+    expect(advanceDomino(dominoLevel, state, 'no-such-link', 200)).toBe('wrong');
+    for (const wrong of ['l3', 'l4', 'l1', 'no-such-link']) {
+      expect(applyDomino(dominoLevel, state, wrong, 200)).toBe(state);
+    }
+    expect(litCount(state)).toBe(1);
+    expect(linksLeft(dominoLevel, state)).toBe(3);
+    expect(linkById(dominoLevel, 'no-such-link')).toBeUndefined();
+    // 点错不消耗时间：下一环照样接得上
+    expect(advanceDomino(dominoLevel, state, 'l2', 300)).toBe('ok');
+  });
+
+  it('一路乱点也照样走得完：乱点只是没进展', () => {
+    let state = igniteChain(dominoLevel, dominoStart(), 0);
+    for (const wrong of ['l4', 'l3', 'l2', 'l1', 'l1']) {
+      state = applyDomino(dominoLevel, state, wrong, 300);
+    }
+    // 乱点里 l1 会接上（它确实是下一环），其余全都没进展
+    expect(state.lit).toEqual(['l1']);
+    const { state: done } = runDomino(dominoLevel, state, 900);
+    expect(isDominoDone(dominoLevel, done)).toBe(true);
+    expect(done.lit).toEqual(['l1', 'l2', 'l3', 'l4']);
+    expect(done.breaks).toBe(0);
+  });
+});
+
+describe('连环计 · 超时就从 ignite 重来（零惩罚、记一笔 break）', () => {
+  it('正好在 windowMs 那一刻断了：链子回到"还没起头"，记一笔 break，重新起头又能走', () => {
+    let state = igniteChain(dominoLevel, dominoStart(), 0);
+    state = applyDomino(dominoLevel, state, 'l1', 0);
+    // 差一毫秒还在：接得上
+    expect(dominoPhaseAt(dominoLevel, state, dominoLevel.windowMs - 1).remainingMs).toBe(1);
+    expect(advanceDomino(dominoLevel, state, 'l2', dominoLevel.windowMs - 1)).toBe('ok');
+    // 正好到点（或者过了）：断了
+    expect(dominoPhaseAt(dominoLevel, state, dominoLevel.windowMs).remainingMs).toBe(0);
+    expect(dominoPhaseAt(dominoLevel, state, dominoLevel.windowMs).running).toBe(false);
+    expect(advanceDomino(dominoLevel, state, 'l2', dominoLevel.windowMs)).toBe('expired');
+
+    const broken = applyDomino(dominoLevel, state, 'l2', dominoLevel.windowMs);
+    expect(broken).not.toBe(state);
+    expect(broken.breaks).toBe(1);
+    expect(broken.ignited).toBe(false);
+    expect(broken.ignitedAtMs).toBe(-1);
+    expect(broken.lit).toEqual([]);
+    // 断了的这一下：什么也没扣（没有分数、没有结束、没有锁）—— 状态里只有"记下来的事"
+    expect(Object.keys(broken).sort()).toEqual([
+      'breaks', 'ignited', 'ignitedAtMs', 'ignites', 'lastAtMs', 'lit',
+    ]);
+    expect(isDominoDone(dominoLevel, broken)).toBe(false);
+    expect(hasIgnited(broken)).toBe(true); // 起过头（复盘看的是这个过程）
+
+    // 断了之后点哪一环都点不亮：得先重新起头
+    expect(advanceDomino(dominoLevel, broken, 'l1', dominoLevel.windowMs + 100)).toBe('notStarted');
+    // 重新起头（零惩罚）：又是第一环，接着走，最后照样能成
+    const restarted = igniteChain(dominoLevel, broken, dominoLevel.windowMs + 200);
+    expect(restarted.lit).toEqual([]);
+    expect(restarted.ignites).toBe(2);
+    expect(restarted.breaks).toBe(1);
+    const { state: done } = runDomino(dominoLevel, restarted, dominoLevel.windowMs + 200);
+    expect(isDominoDone(dominoLevel, done)).toBe(true);
+    expect(done.lit).toEqual(['l1', 'l2', 'l3', 'l4']);
+    expect(done.breaks).toBe(1);
+    expect(done.ignites).toBe(2);
+  });
+
+  it('断了两次记两笔 break，从来不结束：断一次重来一次，照样走得完', () => {
+    let state = igniteChain(dominoLevel, dominoStart(), 0);
+    state = applyDomino(dominoLevel, state, 'l1', 0);
+    state = applyDomino(dominoLevel, state, 'l2', dominoLevel.windowMs); // 断一次
+    expect(state.breaks).toBe(1);
+    expect(state.ignited).toBe(false);
+    state = igniteChain(dominoLevel, state, 5000);
+    state = applyDomino(dominoLevel, state, 'l1', 5000);
+    state = applyDomino(dominoLevel, state, 'l2', 5000 + dominoLevel.windowMs); // 再断一次
+    expect(state.breaks).toBe(2);
+    expect(state.lit).toEqual([]);
+    expect(isDominoDone(dominoLevel, state)).toBe(false);
+    const { state: done } = runDomino(dominoLevel, igniteChain(dominoLevel, state, 9000), 9000);
+    expect(isDominoDone(dominoLevel, done)).toBe(true);
+    expect(done.breaks).toBe(2);
+    expect(done.ignites).toBe(3);
+  });
+
+  it('tick 里每帧调 settleDomino：没断原样返回，断了只记一笔，不会重复记账', () => {
+    const running = applyDomino(dominoLevel, igniteChain(dominoLevel, dominoStart(), 0), 'l1', 0);
+    // 还在走：原样返回同一个对象（场景据此知道"什么都没发生"）
+    expect(settleDomino(dominoLevel, running, 1000)).toBe(running);
+    // 到点：断一次
+    const broken = settleDomino(dominoLevel, running, dominoLevel.windowMs);
+    expect(broken).not.toBe(running);
+    expect(broken.breaks).toBe(1);
+    // 断了之后再调它（每一帧都调）：原样返回，不会又记一笔
+    expect(settleDomino(dominoLevel, broken, dominoLevel.windowMs + 16)).toBe(broken);
+    expect(settleDomino(dominoLevel, broken, 99_999).breaks).toBe(1);
+    // 一局都没起头的空状态：也不会被"断"
+    const start = dominoStart();
+    expect(settleDomino(dominoLevel, start, 5000)).toBe(start);
+  });
+
+  it('时间往回走（单测里回看）时按"整段时限还完整"算，不会崩', () => {
+    const state = igniteChain(dominoLevel, dominoStart(), 5000);
+    expect(dominoPhaseAt(dominoLevel, state, 0).remainingMs).toBe(dominoLevel.windowMs);
+    expect(dominoPhaseAt(dominoLevel, state, 4999).remainingMs).toBe(dominoLevel.windowMs);
+    expect(settleDomino(dominoLevel, state, 0)).toBe(state);
+    expect(applyDomino(dominoLevel, state, 'l1', 0)).not.toBe(state);
+  });
+});
+
+describe('连环计 · 一环一环接完 = 成了', () => {
+  it('一局真的走得完：起头 → 四环按顺序 → 成了（与场景同一条路）', () => {
+    const { state, moves, at } = runDomino(dominoLevel);
+    expect(moves).toEqual(['ignite', 'l1', 'l2', 'l3', 'l4']);
+    expect(litCount(state)).toBe(4);
+    expect(linksLeft(dominoLevel, state)).toBe(0);
+    expect(isDominoDone(dominoLevel, state)).toBe(true);
+    expect(state.lit).toEqual(['l1', 'l2', 'l3', 'l4']);
+    expect(nextLink(dominoLevel, state)).toBeUndefined();
+    expect(nextDominoMove(dominoLevel, state, at)).toBeUndefined();
+    expect(dominoPhaseAt(dominoLevel, state, at)).toEqual({
+      index: 4,
+      remainingMs: 0,
+      running: false,
+    });
+    expect(state.breaks).toBe(0);
+    expect(at + DOMINO_TIMING.finaleHoldMs).toBeLessThan(30_000);
+  });
+
+  it('成了之后再点哪一环都是 wrong：不再重复记账', () => {
+    const { state } = runDomino(dominoLevel);
+    for (const link of dominoLevel.links) {
+      expect(advanceDomino(dominoLevel, state, link.id, 99_999)).toBe('wrong');
+      expect(applyDomino(dominoLevel, state, link.id, 99_999)).toBe(state);
+    }
+    // 成了之后再点火种也不重来（这一局已经完了）
+    expect(igniteChain(dominoLevel, state, 99_999)).toBe(state);
+    expect(state.lit).toEqual(['l1', 'l2', 'l3', 'l4']);
+  });
+
+  it('autoplay 每一步都远在 windowMs 之前 —— 不然无头验证自己就把链子走断了', () => {
+    expect(DOMINO_TIMING.autoplayStepMs).toBeLessThan(dominoLevel.windowMs);
+    expect(DOMINO_TIMING.autoplayStepMs).toBeGreaterThanOrEqual(
+      Math.max(DOMINO_TIMING.igniteMs, DOMINO_TIMING.linkMs),
+    );
+    const { state, at } = runDomino(dominoLevel);
+    expect(state.breaks).toBe(0);
+    expect(isDominoDone(dominoLevel, state)).toBe(true);
+    expect(at + DOMINO_TIMING.finaleHoldMs).toBeLessThan(30_000);
+  });
+
+  it('点一下只有这四种结果 —— 判定不会冒出第五种', () => {
+    const seen = new Set<DominoVerdict>();
+    const fresh = dominoStart();
+    const started = igniteChain(dominoLevel, fresh, 0);
+    const mid = applyDomino(dominoLevel, started, 'l1', 0);
+    const done = runDomino(dominoLevel).state;
+    const broken = applyDomino(dominoLevel, mid, 'l2', dominoLevel.windowMs);
+    const cases: Array<{ state: DominoState; id: string; t: number }> = [
+      { state: fresh, id: 'l1', t: 0 },
+      { state: started, id: 'l3', t: 0 },
+      { state: started, id: 'l1', t: 0 },
+      { state: mid, id: 'l2', t: dominoLevel.windowMs },
+      { state: broken, id: 'l1', t: 9999 },
+      { state: done, id: 'l4', t: 9999 },
+    ];
+    for (const item of cases) seen.add(advanceDomino(dominoLevel, item.state, item.id, item.t));
+    expect([...seen].sort()).toEqual([...VERDICTS].sort());
+  });
+});
+
+describe('连环计 · 点选与边界', () => {
+  it('点亮哪一环 / 起头处：圆心与边缘都算，最近的优先，手指粗也点得到', () => {
+    for (const link of dominoLevel.links) {
+      expect(linkAt(dominoLevel, link.x, link.y, 0)?.id).toBe(link.id);
+      expect(linkAt(dominoLevel, link.x + link.radius, link.y, 0)?.id).toBe(link.id);
+      expect(linkAt(dominoLevel, link.x + link.radius + 1, link.y, 0)).toBeUndefined();
+      expect(linkAt(dominoLevel, link.x + link.radius + 30, link.y, 30)?.id).toBe(link.id);
+    }
+    expect(linkAt(dominoLevel, 375, 700, 0)).toBeUndefined();
+    expect(igniteHit(dominoLevel, 130, 1130, 0)).toBe(true);
+    expect(igniteHit(dominoLevel, 130 + 84, 1130, 0)).toBe(true);
+    expect(igniteHit(dominoLevel, 130 + 85, 1130, 0)).toBe(false);
+    expect(igniteHit(dominoLevel, 130 + 120, 1130, 40)).toBe(true);
+    // 站在起头的火种上，不会顺手点到哪一环
+    expect(linkAt(dominoLevel, dominoLevel.ignite.x, dominoLevel.ignite.y, 46)).toBeUndefined();
+  });
+
+  it('关卡数据体检：windowMs 不到 0.9 秒就是"比手速"，环也要三到五个而且 id 不重复', () => {
+    expect(() => ChainDominoSchema.parse({ ...dominoLevel, windowMs: 899 })).toThrow();
+    expect(() => ChainDominoSchema.parse({ ...dominoLevel, windowMs: 900 })).not.toThrow();
+    const link = (id: string) => ({ id, x: 200, y: 800, radius: 70 });
+    expect(() => ChainDominoSchema.parse({ ...dominoLevel, links: [link('a'), link('b')] })).toThrow();
+    expect(() =>
+      ChainDominoSchema.parse({
+        ...dominoLevel,
+        links: [link('a'), link('b'), link('c'), link('d'), link('e'), link('f')],
+      }),
+    ).toThrow();
+    expect(() =>
+      ChainDominoSchema.parse({ ...dominoLevel, links: [link('a'), link('b'), link('a')] }),
+    ).toThrow();
+    // 断了时那句话与提示语都要短（孩子一眼看得完）
+    expect(() => ChainDominoSchema.parse({ ...dominoLevel, hint: '太长的提示语'.repeat(6) })).toThrow();
+    expect(() =>
+      ChainDominoSchema.parse({ ...dominoLevel, breakLine: '断了一环'.repeat(14) }),
+    ).toThrow();
+    expect(dominoLevel.hint.length).toBeLessThanOrEqual(24);
+    expect(dominoLevel.breakLine.length).toBeLessThanOrEqual(48);
+    expect(dominoLevel.links).toHaveLength(4);
+    expect(dominoLevel.windowMs).toBe(2200);
+  });
+});

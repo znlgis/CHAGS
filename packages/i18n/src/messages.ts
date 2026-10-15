@@ -27,7 +27,7 @@ export const messages = {
     'group.allusion.empty': '这一组还在准备。',
     'group.stratagem.title': '三十六计',
     'group.stratagem.note': '三十六条计策，一条一个游戏。',
-    'group.stratagem.empty': '第一批计策正在赶工，很快就能玩了。',
+    'group.stratagem.empty': '三十六计都在这里了。',
 
     // 三十六计：卡上的"第 n 计"与六套的套名（少写一套，下面编译报错）
     'stratagem.card': '第 {n} 计',
@@ -70,6 +70,7 @@ export const messages = {
     'scene.burrow': '凿一凿',
     'scene.practice': '练一练',
     'scene.butcher': '游一游',
+    'scene.retreat': '退一退',
     'aim.stepBack': '再退十步',
     'scene.reward': '典故卡',
     'sort.tasteFirst': '先尝一口',
@@ -102,7 +103,7 @@ export const messages = {
     'group.allusion.empty': 'This group is still being prepared.',
     'group.stratagem.title': 'Thirty-Six Stratagems',
     'group.stratagem.note': 'Thirty-six stratagems, one game each.',
-    'group.stratagem.empty': 'The first stratagems are being built — coming soon.',
+    'group.stratagem.empty': 'All thirty-six stratagems are here.',
 
     'stratagem.card': 'Stratagem {n}',
     'stratagem.set.1': 'Advantageous Stratagems',
@@ -144,6 +145,7 @@ export const messages = {
     'scene.burrow': 'Dig a Burrow',
     'scene.practice': 'Practise',
     'scene.butcher': 'Glide the Blade',
+    'scene.retreat': 'Step Back',
     'aim.stepBack': 'Ten paces back',
     'scene.reward': 'Story Card',
     'sort.tasteFirst': 'Taste it first',

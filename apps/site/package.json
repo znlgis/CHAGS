@@ -62,7 +62,14 @@
     "@chags/game-jiachi-budian": "workspace:*",
     "@chags/game-shangwu-chouti": "workspace:*",
     "@chags/game-shushang-kaihua": "workspace:*",
-    "@chags/game-fanke-weizhu": "workspace:*"
+    "@chags/game-fanke-weizhu": "workspace:*",
+    "@chags/game-meiren-ji": "workspace:*",
+    "@chags/game-kongcheng-ji": "workspace:*",
+    "@chags/game-fanjian-ji": "workspace:*",
+    "@chags/game-kurou-ji": "workspace:*",
+    "@chags/game-lianhuan-ji": "workspace:*",
+    "@chags/game-zou-weishang": "workspace:*"
+
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

@@ -16,6 +16,13 @@ import type { FeignPhase, FeignState } from './stillness.logic';
 import type { StillnessLevel } from './schemas';
 import type { StillnessFeignLevel } from './schemas';
 import type { SessionState } from './session';
+// calm（空城计）：第六辑给 stillness 加的第三个模式 —— 判定同样在 stillness.logic 里
+import {
+  calmPhaseAt, calmPhaseProgress, calmRemainingMs, calmStart, calmTick, effectiveCalmLevel,
+  hitGate, isCalmDone, openGate, replayCalm, tapCalm,
+} from './stillness.logic';
+import type { CalmPhase, CalmState } from './stillness.logic';
+import type { StillnessCalmLevel } from './schemas';
 
 /**
  * 模板常量放在模板自己文件里（不挤进 layout.ts，免得新模板之间互相踩）。
@@ -412,7 +419,7 @@ export interface StillnessFeignConfig {
 }
 
 /** 两个模式的配置合起来 —— createStillnessScene 按 level.mode 分派 */
-export type StillnessAnyConfig = StillnessConfig | StillnessFeignConfig;
+export type StillnessAnyConfig = StillnessConfig | StillnessFeignConfig | StillnessCalmConfig;
 
 /**
  * 忍：最难的动作是不动。两个模式说的是同一句话，玩法却正相反：
@@ -437,8 +444,13 @@ export function createStillnessScene(
 ): Phaser.Types.Scenes.SceneType;
 export function createStillnessScene(
   ctx: GameContext,
+  cfg: StillnessCalmConfig,
+): Phaser.Types.Scenes.SceneType;
+export function createStillnessScene(
+  ctx: GameContext,
   cfg: StillnessAnyConfig,
 ): Phaser.Types.Scenes.SceneType {
+  if (isCalmConfig(cfg)) return createStillnessCalmScene(ctx, cfg);
   if (isFeignConfig(cfg)) return createStillnessFeignScene(ctx, cfg);
   return createStillnessBideScene(ctx, cfg);
 }
@@ -450,6 +462,11 @@ export function createStillnessScene(
  */
 function isFeignConfig(cfg: StillnessAnyConfig): cfg is StillnessFeignConfig {
   return cfg.level.mode === 'feign';
+}
+
+/** 同上：calm（空城计）那一份配置的判别式也在 level.mode 里 */
+function isCalmConfig(cfg: StillnessAnyConfig): cfg is StillnessCalmConfig {
+  return cfg.level.mode === 'calm';
 }
 
 /**
@@ -736,6 +753,388 @@ function createStillnessFeignScene(
           if (!feignCanAct(this.level, this.elapsed())) return;
           const { action } = this.level;
           this.pressAt(action.x, action.y);
+        },
+      });
+    }
+  };
+}
+
+/* ---------------- calm：空城计（第 32 计） ---------------- */
+
+/**
+ * 空城计（calm）自己的手感常量。
+ * **bide 的 STILLNESS 与 feign 的 FEIGN 一个字没动** —— 这个模式等的东西与前两个都不一样：
+ * 老的等的是"该出手的那一瞬"，feign 等的是"他走开的那一小段"，
+ * 这一关等的是"他盯着看的时候，你什么都不做"。
+ */
+export const CALM = {
+  /** 点城门的宽容度：手指粗也点得到 */
+  tapForgive: 56,
+  /** 一轮全看完还没忍够：他再从头盯一遍（**零惩罚**，也绝不会卡死） */
+  replayHoldMs: 1800,
+  /** 提示气泡的高度 */
+  hintY: 268,
+  /** 他退走时那句话在屏幕上留多久，之后换成本计的揭晓语 */
+  leaveLineMs: 1800,
+} as const;
+
+/** 交给游戏画的一切：城门开了没有、他正盯着还是移开了目光、忍住了几轮 */
+export interface StillnessCalmStageState {
+  /** 城门大开没有 —— 画面上的两扇门按它开合 */
+  gateOpen: boolean;
+  /** gate = 还没开门；watch = 他正盯着；gap = 他移开了目光；done = 全看完了 */
+  phase: CalmPhase;
+  /** 这是第几轮（0 起）；还没开门是 0，全走完 = watches.length */
+  index: number;
+  /** 此刻是哪一轮；还没开门 / 全走完是 null */
+  watchId: string | null;
+  /** 这一轮走到几分了（0..1）：他目光扫过来的那道光按它推 */
+  pulse: number;
+  /** 忍住了几轮 / 一共要忍住几轮 */
+  endured: number;
+  needed: number;
+  /** 动了几次（零惩罚的那笔账） */
+  slips: number;
+  /** 哪几轮动过 —— 画面上那几笔账画在哪一轮 */
+  slipWatchIds: string[];
+  /** 刚刚动了一下；还没动过是 null */
+  lastSlip: boolean | null;
+  /** 刚刚那一下过去多久了 —— 表演按它衰减 */
+  sinceActionMs: number;
+  /** 距离他目光移开（盯着时）/ 再看过来（空档时）还有多久 */
+  remainingMs: number;
+  elapsedMs: number;
+  /** 这一局过了 */
+  done: boolean;
+  /** 一轮全看完了、还没忍够（要重来）—— 零惩罚 */
+  roundOver: boolean;
+}
+
+export interface StillnessCalmConfig {
+  level: StillnessCalmLevel;
+  session: SessionState;
+  nextSceneKey: string;
+  /** 顶栏上的名字；不传就把整屏交给 drawWorld */
+  title?: string;
+  drawWorld: (g: Phaser.GameObjects.Graphics, state: StillnessCalmStageState) => void;
+  /** 他盯过来（watch）/ 移开目光（gap）—— 游戏可以让那个人走近、把火把举起来 */
+  onPhase?: (phase: CalmPhase, api: { scene: Phaser.Scene }) => void;
+  /** 城门大开（开局唯一那个动作） */
+  onGate?: (api: { scene: Phaser.Scene }) => void;
+  /** 他盯着的时候动了一下 —— 零惩罚，只记一笔 */
+  onSlip?: (api: { scene: Phaser.Scene }) => void;
+  drawFinale?: (g: Phaser.GameObjects.Graphics, state: StillnessCalmStageState) => void;
+  /** 过了之后念的那句话（关键抉择的揭晓语） */
+  reveal?: string;
+  finaleHoldMs?: number;
+}
+
+/**
+ * 空城计：该不动的时候一下都不能动。
+ *
+ * 四条刻意的设计：
+ * - **判定全在 stillness.logic 里**：场景只把墙钟（从城门大开那一刻算起）喂给
+ *   calmTick / calmPhaseAt / tapCalm，单测与画面用的是同一份判定，不会跑偏。
+ * - **开局只有一个动作**：大开城门。小手一直放在城门上，门一开手就收起来 ——
+ *   收起来本身就是"从现在起什么都别做"的信号。
+ * - **盯着的时候点哪儿都算"动了"，但零惩罚**：不扣星、不结束、不锁操作，只记一笔账 ——
+ *   这一轮白忍了，下一轮照样能赢。孩子自己会发现"忍住那几秒，他就先疑心了"。
+ * - **一轮全看完还没忍够就再来一遍**：忍住的轮数留着，账也留着（**零惩罚，也绝不会卡死**）。
+ */
+function createStillnessCalmScene(
+  ctx: GameContext,
+  cfg: StillnessCalmConfig,
+): Phaser.Types.Scenes.SceneType {
+  return class StillnessCalmScene extends BaseScene {
+    private level: StillnessCalmLevel = cfg.level;
+    private state: CalmState = calmStart();
+    private startedAt = 0;
+    /** 城门大开的那一刻：判定里的 t 从这儿算起（见 stillness.logic 的 calmPhaseAt） */
+    private gateOpenedAt = 0;
+    private finished = false;
+    private roundOver = false;
+    private lastPhase: CalmPhase | null = null;
+    private lastWatchId: string | null = null;
+    private lastSlip: boolean | null = null;
+    private lastActionAt = 0;
+    private idleMs = 0;
+    private worldGfx: Phaser.GameObjects.Graphics | null = null;
+    private cueGfx: Phaser.GameObjects.Graphics | null = null;
+    private hand: Phaser.GameObjects.Graphics | null = null;
+
+    constructor() {
+      super(SCENE_KEYS.stillness, ctx);
+    }
+
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.stillness });
+      this.level = effectiveCalmLevel(cfg.level, this.autoplay, STILLNESS.autoplayFactor);
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title);
+      this.worldGfx = this.add.graphics().setDepth(2);
+      this.cueGfx = this.add.graphics().setDepth(60);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
+        this.pressAt(pointer.x, pointer.y),
+      );
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
+      else this.showHint(cfg.level.hint, 2600, CALM.hintY);
+    }
+
+    /** 场景自己的墙钟：画面上的呼吸、闪光按它走 */
+    private elapsed(): number {
+      return Math.max(0, this.ctx.services.now() - this.startedAt);
+    }
+
+    /** 判定里的 t：**从城门大开那一刻算起**；门还没开就是 0（那一段没有时间轴） */
+    private calmElapsed(): number {
+      if (!this.state.gateOpen) return 0;
+      return Math.max(0, this.ctx.services.now() - this.gateOpenedAt);
+    }
+
+    // ---------------- 每一帧 ----------------
+
+    private tick(delta: number): void {
+      const t = this.calmElapsed();
+      if (!this.finished) {
+        // 把墙钟喂给判定：他已经看完的每一轮，只要这期间没见你动，就记一笔"忍住"
+        this.state = calmTick(this.level, this.state, t);
+        const info = calmPhaseAt(this.level, this.state, t);
+        this.syncPhase(info.watchId, info.phase);
+        if (isCalmDone(this.level, this.state)) this.finish();
+        else if (info.phase === 'done') {
+          if (!this.roundOver) this.replay();
+        } else {
+          this.watch(delta);
+        }
+      }
+      this.redraw(t);
+    }
+
+    /** 他盯过来 / 移开目光：发事件、出声 —— 每一轮都一样，不泄露"还有几轮" */
+    private syncPhase(watchId: string | null, phase: CalmPhase): void {
+      if (watchId === this.lastWatchId && phase === this.lastPhase) return;
+      const newWatch = watchId !== this.lastWatchId;
+      this.lastWatchId = watchId;
+      this.lastPhase = phase;
+      if (phase === 'done' || phase === 'gate' || watchId === null) return;
+      if (newWatch) {
+        // 他盯过来了：脚步停住、目光扫过来 —— 这一段里一下都不能动
+        this.ctx.services.audio.tone(240, 150);
+        this.ctx.emit('beat:enter', { beatId: 'stillness:watch:' + watchId });
+        cfg.onPhase?.('watch', { scene: this });
+        return;
+      }
+      if (phase === 'gap') {
+        // 他把目光移开了：这一小段可以松口气（但动手也没用 —— 他没看）
+        this.ctx.services.audio.tone(480, 120);
+        this.ctx.emit('beat:enter', { beatId: 'stillness:gap:' + watchId });
+        cfg.onPhase?.('gap', { scene: this });
+      }
+    }
+
+    /**
+     * 小手只在**城门还没开**的时候出现：门一开，手就收起来 ——
+     * 收起来本身就是"从现在起什么都别做"的信号（这一关没有"该点的地方"）。
+     */
+    private watch(delta: number): void {
+      if (this.state.gateOpen) this.hideHand();
+      else this.showHand();
+
+      this.idleMs += delta;
+      if (this.idleMs < STILLNESS.idleMs) return;
+      this.idleMs = 0;
+      this.showHint(cfg.level.hint, 2600, CALM.hintY);
+    }
+
+    private redraw(t: number): void {
+      const state = this.stageState(t);
+      if (this.worldGfx) {
+        this.worldGfx.clear();
+        cfg.drawWorld(this.worldGfx, state);
+      }
+      const cue = this.cueGfx;
+      if (!cue) return;
+      cue.clear();
+      const { width, height } = this.ctx.manifest.designSize;
+      // 他盯着的时候，屏幕边上亮起一圈红边 —— "现在哪儿都不能点"。
+      // 提示给在"别动"上，而不是指一个地方（这一关压根没有该点的地方）。
+      if (state.phase === 'watch' && !state.done) {
+        const breathe = 0.5 + 0.5 * Math.sin(state.elapsedMs / 260);
+        cue.lineStyle(14, THEME.redDeep, 0.18 + 0.24 * breathe);
+        cue.strokeRoundedRect(10, 158, width - 20, height - 172, 40);
+      }
+      // 忍住了几轮 / 还要忍住几轮：右上角一排小灯（不泄露每一轮他看多久）
+      const lit = Math.min(state.endured, state.needed);
+      for (let i = 0; i < state.needed; i += 1) {
+        const cx = width - 62 - i * 62;
+        cue.fillStyle(i < lit ? THEME.gold : THEME.inkSoft, i < lit ? 1 : 0.16);
+        cue.fillCircle(cx, 196, 17);
+        cue.lineStyle(5, THEME.outline, 0.65);
+        cue.strokeCircle(cx, 196, 17);
+      }
+    }
+
+    private stageState(t: number): StillnessCalmStageState {
+      const info = calmPhaseAt(this.level, this.state, t);
+      return {
+        gateOpen: this.state.gateOpen,
+        phase: info.phase,
+        index: info.index,
+        watchId: info.watchId,
+        pulse: calmPhaseProgress(this.level, this.state, t),
+        endured: this.state.endured,
+        needed: this.level.needed,
+        slips: this.state.slips,
+        slipWatchIds: this.state.slipWatchIds,
+        lastSlip: this.lastSlip,
+        sinceActionMs:
+          this.lastSlip === null ? Number.POSITIVE_INFINITY : t - this.lastActionAt,
+        remainingMs: calmRemainingMs(this.level, this.state, t),
+        elapsedMs: this.elapsed(),
+        done: this.finished && isCalmDone(this.level, this.state),
+        roundOver: this.roundOver,
+      };
+    }
+
+    // ---------------- 手指 ----------------
+
+    /**
+     * 手指落在屏幕上：
+     * - **城门还没开**：只有点在城门上才算 —— 那是开局唯一的动作；
+     * - **门开了以后**：点哪儿都算"他盯着的时候动了"（零惩罚，只记一笔）；
+     *   他移开目光的那一段点一下什么也不算 —— 他没看见。
+     */
+    private pressAt(x: number, y: number): void {
+      if (this.finished || this.roundOver) return;
+      this.idleMs = 0;
+      if (!this.state.gateOpen) {
+        if (!hitGate(x, y, this.level, CALM.tapForgive)) return;
+        this.raiseGate();
+        return;
+      }
+      const t = this.calmElapsed();
+      const before = this.state;
+      this.state = tapCalm(this.level, this.state, t);
+      if (this.state === before) return;
+      this.flinch(t);
+    }
+
+    /** 大开城门 —— 开局唯一那个动作（真实操作与无头验证走的是同一条路） */
+    private raiseGate(): void {
+      if (this.finished || this.roundOver || this.state.gateOpen) return;
+      this.state = openGate(this.level, this.state);
+      this.gateOpenedAt = this.ctx.services.now();
+      this.hideHand();
+      this.sfx('correct');
+      this.ctx.emit('beat:enter', { beatId: 'stillness:gate' });
+      cfg.onGate?.({ scene: this });
+    }
+
+    /** 他盯着的时候动了一下：只记一笔账 —— 这一轮白忍了，等下一轮 */
+    private flinch(t: number): void {
+      const info = calmPhaseAt(this.level, this.state, t);
+      this.lastSlip = true;
+      this.lastActionAt = t;
+      this.idleMs = 0;
+      this.ctx.emit('beat:enter', { beatId: 'stillness:slip:' + (info.watchId ?? '') });
+      this.ctx.emit('choice:made', {
+        beatId: info.watchId ?? '',
+        choiceId: 'slip',
+        correct: false,
+        latencyMs: t,
+      });
+      this.sfx('tap');
+      this.cameras.main.shake(90, 0.0016);
+      this.showHint(cfg.level.doubtLine, 2200, CALM.hintY);
+      if (!this.autoplay) this.speak(cfg.level.doubtLine);
+      cfg.onSlip?.({ scene: this });
+    }
+
+    /** 一轮全看完了还没忍够：他再从头盯一遍 —— 忍住的轮数留着（零惩罚，也绝不会卡死） */
+    private replay(): void {
+      this.roundOver = true;
+      this.hideHand();
+      this.ctx.emit('beat:enter', { beatId: 'stillness:round:miss' });
+      this.showHint(cfg.level.hint, 2400, CALM.hintY);
+      const hold = this.autoplay
+        ? Math.max(200, Math.round(CALM.replayHoldMs / STILLNESS.autoplayFactor))
+        : CALM.replayHoldMs;
+      this.time.delayedCall(hold, () => {
+        if (this.finished) return;
+        const now = this.ctx.services.now();
+        this.startedAt = now;
+        this.gateOpenedAt = now;
+        this.roundOver = false;
+        this.idleMs = 0;
+        this.state = replayCalm(this.state);
+        this.lastPhase = null;
+        this.lastWatchId = null;
+        this.lastSlip = null;
+        this.ctx.emit('beat:enter', { beatId: 'stillness:restart' });
+      });
+    }
+
+    private finish(): void {
+      if (this.finished) return;
+      this.finished = true;
+      this.hideHand();
+      this.sfx('complete');
+      this.cameras.main.flash(320, 255, 250, 220);
+      sparkleAt(this, this.level.gate.x, this.level.gate.y - 180, THEME.gold, 12);
+      cfg.session.total += 1;
+      cfg.session.correct += 1;
+      this.ctx.emit('beat:enter', { beatId: 'stillness:done' });
+      const finale = this.add.graphics().setDepth(40);
+      cfg.drawFinale?.(finale, this.stageState(this.calmElapsed()));
+      // 他退走时说的那句话，然后是这一计的揭晓语
+      this.showHint(cfg.level.leaveLine, CALM.leaveLineMs, CALM.hintY);
+      if (!this.autoplay) this.speak(cfg.level.leaveLine);
+      if (cfg.reveal !== undefined) {
+        this.time.delayedCall(CALM.leaveLineMs, () =>
+          this.showHint(cfg.reveal as string, 3200, CALM.hintY),
+        );
+      }
+      this.time.delayedCall(cfg.finaleHoldMs ?? STILLNESS.finaleHoldMs, () =>
+        this.scene.start(cfg.nextSceneKey),
+      );
+    }
+
+    // ---------------- 小手 ----------------
+
+    private showHand(): void {
+      if (this.hand) return;
+      const { gate } = this.level;
+      this.hand = createHand(this, gate.x, gate.y - gate.radius - 34, 1.15);
+    }
+
+    private hideHand(): void {
+      if (!this.hand) return;
+      this.tweens.killTweensOf(this.hand);
+      this.hand.destroy();
+      this.hand = null;
+    }
+
+    // ---------------- 无头验证 ----------------
+
+    /**
+     * 无头验证：先把城门打开（与孩子走的是同一条路，连命中的宽容判定都走一遍），
+     * **然后一下都不点** —— 忍住就是这一关的答案。
+     */
+    private runAutoplay(): void {
+      this.time.addEvent({
+        delay: STILLNESS.autoplayLookMs,
+        loop: true,
+        callback: () => {
+          if (this.finished || this.roundOver) return;
+          if (this.state.gateOpen) return;
+          this.pressAt(this.level.gate.x, this.level.gate.y);
         },
       });
     }

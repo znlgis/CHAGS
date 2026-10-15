@@ -38,7 +38,7 @@ The collection's first-level structure is **groups**, defined in one place — `
 | Group | Games | Notes |
 |---|---|---|
 | 典故 `allusion` | **17** (all live) | One story, one game; sorted by year |
-| 三十六计 `stratagem` | **30** (Volumes 1–5: 1–6, 7–12, 13–18, 19–24, 25–30) | Thirty-Six Stratagems, one game each; sorted by **stratagem number**, one more volume to come |
+| 三十六计 `stratagem` | **36** (Volumes 1–6: 1–6, 7–12, 13–18, 19–24, 25–30, 31–36) | Thirty-Six Stratagems, one game each; sorted by **stratagem number** — all six volumes are live |
 
 The hall and the album render one section per group, and **a group with no content yet does not
 disappear**: it shows up as "coming soon".
@@ -53,7 +53,7 @@ has no default, so a stratagem can never be filed under "stories" by accident.
 ## Current status
 
 **Seventeen stories plus the first twenty-four stratagems** are playable. `pnpm verify` is green (typecheck,
-lint, 1045 unit tests, content check, build, size) and every game has a headless playthrough in the
+lint, 1208 unit tests, content check, build, size) and every game has a headless playthrough in the
 end-to-end suite (`?autoplay=1` — a new template only counts once it implements `runAutoplay()`).
 
 The shell stays small: no Phaser, and no story or level-script content either. Each game's own
@@ -287,8 +287,8 @@ and where the wording of that source could not be verified word for word, the st
 instead of inventing a quotation.
 
 This volume adds **five new gameplay templates** (`ruse` / `siege` / `borrow` / `stillness` /
-`window`). The remaining thirty stratagems arrive five volumes at a time, reusing `wait` / `split` /
-`trace` as well. Each volume starts with a design note, e.g.
+`window`). The remaining thirty then arrived five volumes at a time, adding fourteen templates in all;
+of `wait` / `split` / `trace`, two ended up reused whole (34 and 36). Each volume starts with a design note, e.g.
 [三十六计-第一辑方案.md](docs/三十六计-第一辑方案.md).
 
 ## Thirty-Six Stratagems · Volume 2: the six Opportunistic Stratagems (7–12)
@@ -386,9 +386,47 @@ The older modes (`swap.shell` / `probe.knock`·`spot` / `stillness.bide` /
 `siege.vital`·`support`·`close` / `show.draw` / `chain.pass`) keep their logic and their existing
 tests untouched; the design note is [三十六计-第五辑方案.md](docs/三十六计-第五辑方案.md).
 
+## Thirty-Six Stratagems · Volume 6: the six Desperate Stratagems (31–36) — all six volumes done
+
+| # | Stratagem | What the child actually does | Template |
+|---|---|---|---|
+| 31 | The Beauty Trap | His gaze keeps resting on **the one thing he cares about**: notice it, then hand that over; a wrong gift simply comes back | `lure` (favor) |
+| 32 | The Empty Fort | Once the gates are open, **do not move at all**: any tap while he watches spoils that round — sit through two clean rounds and he leaves | `stillness` (calm) |
+| 33 | Turn Their Spy Around | Make a noise so he turns away, then hold to slide the letter into view — let him **see it himself** | `twoline` (plant) |
+| 34 | Pay a Real Price | Two trays: what you keep / what you give away. **He only believes a gift that really costs you** — and you cannot give everything | *reuse* `split` |
+| 35 | Interlocking Stratagems | Light the first ring, then link the rest in order — **break the chain and you start again from the bank** | `chain` (domino) |
+| 36 | Retreat Is the Best Course | Trace the road back, one stage at a time: after three stages the men and the baggage are safe | *reuse* `trace` |
+
+| Beauty trap | Empty fort | Turn the spy |
+|---|---|---|
+| ![beauty](docs/screenshots/122-stratagem-31-meiren.png) | ![fort](docs/screenshots/123-stratagem-32-kongcheng.png) | ![spy](docs/screenshots/124-stratagem-33-fanjian.png) |
+
+| Real price | Interlocking | Retreat |
+|---|---|---|
+| ![price](docs/screenshots/125-stratagem-34-kurou.png) | ![chain](docs/screenshots/126-stratagem-35-lianhuan.png) | ![retreat](docs/screenshots/127-stratagem-36-zou.png) |
+
+The final volume again adds **no new templates**: four modes on existing templates (`lure.favor` /
+`stillness.calm` / `twoline.plant` / `chain.domino`) plus two straight reuses (34 uses `split`,
+36 uses `trace`, both untouched). The older modes stayed untouched too — in this volume the existing
+test files lost **zero lines**, and the only edited line of logic was one import. The design note is
+[三十六计-第六辑方案.md](docs/三十六计-第六辑方案.md).
+
+### All thirty-six, by volume
+
+| Volume | Stratagems | Templates |
+|---|---|---|
+| Advantageous | 1–6 | `ruse` `siege` `borrow` `stillness` `window` |
+| Opportunistic | 7–12 | `show` `twoline` `wait` `read` `matchup` `window` |
+| Offensive | 13–18 | `probe` `borrow` `lure` `chase` |
+| Confusion | 19–24 | `siege` `window` `swap` `matchup` `chain` |
+| Annexation | 25–30 | `swap` `probe` `stillness` `siege` `show` `chain` |
+| Desperate | 31–36 | `lure` `stillness` `twoline` `split` `chain` `trace` |
+
+One stratagem, one game, one verb — and the six volume names are the sections you see in the hall.
+
 ## Design principle: fewer words, more doing
 
-Across all forty-seven games there is almost no teaching text on screen: the two opening lines of a story,
+Across all fifty-three games there is almost no teaching text on screen: the two opening lines of a story,
 and one short hint that appears when the level starts or when the child is stuck (tap the story page too early and it only says
 "Listen to the story first"). Everything else is shape, motion, sound and speech. Kids **work out** the idea
 instead of being told it.

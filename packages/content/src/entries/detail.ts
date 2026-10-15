@@ -62,6 +62,12 @@ import rawJiachi from './jiachi-budian.game.json';
 import rawShangwu from './shangwu-chouti.game.json';
 import rawShushang from './shushang-kaihua.game.json';
 import rawFanke from './fanke-weizhu.game.json';
+import rawMeirenGame from './meiren-ji.game.json';
+import rawKongchengGame from './kongcheng-ji.game.json';
+import rawFanjianGame from './fanjian-ji.game.json';
+import rawKurouGame from './kurou-ji.game.json';
+import rawLianhuanGame from './lianhuan-ji.game.json';
+import rawZouGame from './zou-weishang.game.json';
 
 /**
  * **详情层**：故事 / 关键抉择 / 复习题 / 误解 / 关卡脚本。
@@ -118,6 +124,12 @@ export const entryDetails: Record<string, EntryDetail> = {
   'shangwu-chouti': EntryDetailSchema.parse(rawShangwu),
   'shushang-kaihua': EntryDetailSchema.parse(rawShushang),
   'fanke-weizhu': EntryDetailSchema.parse(rawFanke),
+  'meiren-ji': EntryDetailSchema.parse(rawMeirenGame),
+  'kongcheng-ji': EntryDetailSchema.parse(rawKongchengGame),
+  'fanjian-ji': EntryDetailSchema.parse(rawFanjianGame),
+  'kurou-ji': EntryDetailSchema.parse(rawKurouGame),
+  'lianhuan-ji': EntryDetailSchema.parse(rawLianhuanGame),
+  'zou-weishang': EntryDetailSchema.parse(rawZouGame),
 };
 
 /** 完整条目：摘要 + 详情（两条记录合并之后再过一次完整 schema） */

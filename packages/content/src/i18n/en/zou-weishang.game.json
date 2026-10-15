@@ -1,0 +1,79 @@
+{
+  "figures": [
+    "Duke Wen of Jin",
+    "Zifan",
+    "Ziyu"
+  ],
+  "story": [
+    {
+      "title": "They Are Closing In",
+      "text": "The Chu army came on. Duke Wen of Jin gave the order: withdraw — three marches.",
+      "narration": "Jin and Chu faced each other at Chengpu. The Chu army followed hard after the Jin army, yet Duke Wen gave the order to withdraw. His officers could not understand: no blows had been struck, so why fall back first? Zifan said: years ago, when our lord was in exile, Chu helped him, and he promised that if the two armies ever met he would give way three marches. Keeping that promise was also a chance for the weary army to catch its breath."
+    },
+    {
+      "title": "Back to a Safe Place",
+      "text": "One march, two, three — all the way to Chengpu, to stand with their friends.",
+      "narration": "A march is thirty li. One march back, then another, ninety li in all, until they reached Chengpu. There the walls were high, the grain was enough, and friendly armies were already waiting. The Chu army had chased far and was worn out, while the Jin army had rested and taken its stand — not one person, not one supply lost. To give way in time is not to admit defeat: it is to keep yourself, and choose your next move from firm ground."
+    }
+  ],
+  "keyMoment": {
+    "question": "The Chu army was closing in. Why did Duke Wen withdraw three marches?",
+    "options": [
+      {
+        "text": "He was afraid and wanted to run home to Jin",
+        "hint": "He withdrew to Chengpu, not to the Jin capital."
+      },
+      {
+        "text": "It kept his promise and brought him to Chengpu: walls, grain and friends",
+        "hint": ""
+      },
+      {
+        "text": "He wanted to wear the Chu army out along the road",
+        "hint": "He withdrew in good order and lost nothing at all."
+      }
+    ],
+    "reveal": "Retreat is not defeat: fall back to where people and supplies are safe, then take your stand and think."
+  },
+  "misconceptions": [
+    "To retreat is to lose; not one step may be given",
+    "Retreat means running away — the farther the better"
+  ],
+  "quiz": [
+    {
+      "question": "How far is one march (one she), and how many marches did Duke Wen give way?",
+      "options": [
+        "One march is thirty li; he gave way three marches",
+        "One march is ten li; he gave way three marches",
+        "One march is a hundred li; he gave way ninety marches"
+      ],
+      "explanation": "One march is thirty li, so three marches is ninety li — hence 'to give way three marches'."
+    },
+    {
+      "question": "What kind of place was Chengpu, where Duke Wen withdrew to?",
+      "options": [
+        "High walls, plenty of grain, and friendly armies",
+        "Barren hills with nothing at all",
+        "The main camp of the Chu army"
+      ],
+      "explanation": "He fell back to walls, grain and friends — his people and supplies were kept safe."
+    },
+    {
+      "question": "Someone chases you in the corridor at break. What is closest to 'retreat is the best course'?",
+      "options": [
+        "Stand there and argue with them",
+        "Walk away first, to where teachers and classmates are",
+        "Turn round and shove them, to see who is tougher"
+      ],
+      "explanation": "Leave the bad spot first and nothing is lost — giving way is not admitting defeat."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Drag on, march by march"
+        }
+      }
+    ]
+  }
+}

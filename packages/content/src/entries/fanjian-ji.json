@@ -1,0 +1,29 @@
+{
+  "id": "fanjian-ji",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "反间计",
+  "pinyin": "Fǎn jiàn jì",
+  "dynasty": "秦末",
+  "era": "秦末 · 楚汉相争",
+  "yearApprox": -204,
+  "source": {
+    "book": "《三十六计·败战计》",
+    "chapter": "反间计",
+    "quote": "疑中之疑。比之自内，不自失也。"
+  },
+  "moral": "让他自己看到，比说给他听有用。",
+  "keywords": [
+    "自己看到",
+    "空档",
+    "摆上去"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 33,
+    "set": 6
+  }
+}

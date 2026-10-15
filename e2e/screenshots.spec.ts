@@ -746,6 +746,13 @@ for (const [id, scene, file] of [
   ['shangwu-chouti', 'siege', '119-stratagem-28-shangwu.png'],
   ['shushang-kaihua', 'show', '120-stratagem-29-shushang.png'],
   ['fanke-weizhu', 'chain', '121-stratagem-30-fanke.png'],
+  // 第六辑（败战计 31–36）
+  ['meiren-ji', 'lure', '122-stratagem-31-meiren.png'],
+  ['kongcheng-ji', 'stillness', '123-stratagem-32-kongcheng.png'],
+  ['fanjian-ji', 'twoline', '124-stratagem-33-fanjian.png'],
+  ['kurou-ji', 'split', '125-stratagem-34-kurou.png'],
+  ['lianhuan-ji', 'chain', '126-stratagem-35-lianhuan.png'],
+  ['zou-weishang', 'trace', '127-stratagem-36-zou.png'],
 ] as const) {
   test('capture stratagem screenshots: ' + id, async ({ page }) => {
     await page.setViewportSize({ width: 430, height: 932 });

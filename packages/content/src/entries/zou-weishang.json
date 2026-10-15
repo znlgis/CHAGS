@@ -1,0 +1,28 @@
+{
+  "id": "zou-weishang",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "走为上",
+  "pinyin": "Zǒu wéi shàng",
+  "dynasty": "春秋",
+  "era": "春秋 · 周襄王二十年",
+  "yearApprox": -632,
+  "source": {
+    "book": "《左传·僖公二十八年》",
+    "quote": "退三舍辟之，所以报也。"
+  },
+  "moral": "退不是输：该退的时候退一步，人和东西都保住，才有下一次。",
+  "keywords": [
+    "先退一步",
+    "保住人和东西",
+    "不是输"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 36,
+    "set": 6
+  }
+}

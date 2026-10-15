@@ -192,3 +192,229 @@ export function hitReal(level: TwolineLevel, x: number, y: number, forgive = 0):
   const { x: rx, y: ry, radius } = level.real;
   return Math.hypot(x - rx, y - ry) <= radius + forgive;
 }
+
+/* ---------------- twoline 扩展：plant（第 33 计 · 反间计） ---------------- */
+
+// 老模式（stack）的判定与类型一个字没动：新模式的类型另起一段引入
+import type { TwolinePlantLevel } from './schemas';
+
+/**
+ * 反间计（plant）：**让来访的人自己看到**你想让他看到的东西。
+ *
+ * 他来回踱步、时不时瞟一眼案上；点 `redirect`（弄出点动静）他会转头去看别处 `lookAwayMs` ——
+ * **趁这个空档按住 `spot`**，把东西一点一点摆到他"自己会看到"的地方。
+ * 摆到一半他回过头（空档结束）= 被你手忙脚乱的样子露了馅：进度清零、记一笔 caught，
+ * **零惩罚** —— 不扣星、不结束、不锁操作：重新弄出动静、重新按住就是。
+ *
+ * 三条刻意的设计：
+ * - **判定全按时间轴算**（t 是从这一局开始算起的毫秒数）：空档什么时候开、什么时候关、
+ *   进度攒到多少，全由这几个纯函数算；场景每帧把墙钟喂进来，单测直接喂数字 —— 同一份判定。
+ * - **只有"按住 && 他在看别处"才往前走**：松手只是停下来（进度留着，再按住接着摆），
+ *   他正看着的时候按下去什么都不发生 —— 两条合起来才是"趁空档"的分量。
+ * - **露馅只在他回过头、而手上已经有进度的时候记**：还没动手就被回头看一眼，什么都不算。
+ *   零惩罚这条线划在"没做成"上，不划在"孩子的手放错过地方"上。
+ *
+ * **不 import Phaser**：判定比画面重要得多。
+ */
+
+/** 反间计的手感常量（场景、单测、无头验证共用同一份） */
+export const PLANT_TIMING = {
+  /** 一局的开场：过一会儿就把小手放到该动的地方（不让孩子干等） */
+  introHandMs: 900,
+  /**
+   * 无头验证：隔多久看一次"该弄动静还是该按住"。
+   * 它**不是点击的节奏** —— 按住之后由每一帧的 plantStep 往前推，
+   * 这个步长只决定"空档开没开、摆好了没有"多久看一遍。
+   */
+  autoplayStepMs: 260,
+  /** 露馅之后红光闪多久（不是惩罚，只是把"刚才被看见了"说出来） */
+  caughtFlashMs: 1100,
+  /** 多久没动静就把小手重新放上去 */
+  idleMs: 9000,
+  /** 打赢之后看一眼再进典故卡 */
+  finaleHoldMs: 4200,
+  /** 提示气泡的高度 */
+  hintY: 268,
+} as const;
+
+/**
+ * 一局里攒下来的东西：都是"记下来的事"，没有一样是惩罚。
+ */
+export interface TwolinePlantState {
+  /** 已经摆上去多少毫秒（按住 && 他在看别处 才涨；松手留着，被撞见清零） */
+  progressMs: number;
+  /** 摆好了没有 */
+  planted: boolean;
+  /** 他转头看别处到什么时候（毫秒，从这一局开始算起）；没在转头就是 -1 */
+  awayUntilMs: number;
+  /** 点了几次 redirect（复盘用） */
+  redirects: number;
+  /** 被他回过头撞见几次（零惩罚，只用来复盘）—— 这一计最诚实的一笔账 */
+  caught: number;
+  /** 上一次被撞见是什么时候；还没被撞见过就是 -1 */
+  lastCaughtAtMs: number;
+  /** 摆好的时刻；还没摆好就是 -1 */
+  plantedAtMs: number;
+}
+
+/** 一帧的判定结果：正在摆 / 露馅了 / 什么都没发生 */
+export type PlantHoldResult = 'planting' | 'exposed' | 'idle';
+
+/** 一帧的账：新的账本 + 这一帧算哪一种（场景两样都要） */
+export interface PlantTick {
+  state: TwolinePlantState;
+  result: PlantHoldResult;
+}
+
+/** 浮点容差：1600 毫秒一帧一帧地加，不会正好落在整头上 */
+const PLANT_EPS = 1e-9;
+
+function plantClampMs(t: number): number {
+  return Number.isNaN(t) ? 0 : Math.max(0, t);
+}
+
+/** 开一局：还什么都没摆上，他也没转头（空档要自己点出来） */
+export function plantStart(): TwolinePlantState {
+  return {
+    progressMs: 0,
+    planted: false,
+    awayUntilMs: -1,
+    redirects: 0,
+    caught: 0,
+    lastCaughtAtMs: -1,
+    plantedAtMs: -1,
+  };
+}
+
+/**
+ * 他此刻踱到哪儿了：from → to → from 是一个来回（walkMs），返回 0..1。
+ * 画面把他画在这儿，单测也拿它验"被模拟的人真的在动"（§7.10 的那条教训）。
+ */
+export function visitorWalk(level: TwolinePlantLevel, t: number): number {
+  const period = level.visitor.walkMs > 0 ? level.visitor.walkMs : 1;
+  const phase = ((plantClampMs(t) % period) + period) % period;
+  const k = (phase * 2) / period;
+  return k <= 1 ? k : 2 - k;
+}
+
+/** 他此刻在哪儿（from 与 to 之间来回走） */
+export function visitorAt(level: TwolinePlantLevel, t: number): { x: number; y: number } {
+  const k = visitorWalk(level, t);
+  return {
+    x: level.visitor.from.x + (level.visitor.to.x - level.visitor.from.x) * k,
+    y: level.visitor.from.y + (level.visitor.to.y - level.visitor.from.y) * k,
+  };
+}
+
+/** 他此刻转过头去没有（空档开着没有） */
+export function isLookingAway(state: TwolinePlantState, t: number): boolean {
+  return lookAwayLeftMs(state, t) > 0;
+}
+
+/** 这个空档还剩多久（0 = 他正看着；画面上的那个钟按它画） */
+export function lookAwayLeftMs(state: TwolinePlantState, t: number): number {
+  if (state.awayUntilMs < 0) return 0;
+  return Math.max(0, state.awayUntilMs - plantClampMs(t));
+}
+
+/**
+ * 弄出点动静：他转过头去看别处，空档从**此刻**起算。
+ * 已经摆好了就原样返回（这一局已经成了，谁也不用再转头）。
+ * 空档还开着再点一次：从此刻重新算 —— 这是从宽不是惩罚（手快多点一下不该吃亏）。
+ */
+export function redirectLook(
+  level: TwolinePlantLevel,
+  state: TwolinePlantState,
+  t: number,
+): TwolinePlantState {
+  if (state.planted) return state;
+  return {
+    ...state,
+    awayUntilMs: plantClampMs(t) + level.redirect.lookAwayMs,
+    redirects: state.redirects + 1,
+  };
+}
+
+/**
+ * 一帧的账（场景、无头验证、单测都走它）：
+ * - **按住 && 空档开着** → 往前摆 dtMs；摆满 plantMs 就是摆好了（progressMs 封顶在 plantMs）；
+ * - **按住 && 他回过头（空档结束）&& 手上已经有进度** → 露馅：进度清零、记一笔 caught
+ *   （零惩罚：不结束、不扣星，重新弄出动静、重新按住就是）；
+ * - 其余（没按住 / 刚开始按、一点进度都还没有）→ 什么都不发生。
+ *
+ * 顺序是刻意的：**先算"空档开着"，再算"回过头的代价"** ——
+ * 恰好卡在空档最后一帧摆满的那一下算摆好了（从宽，零惩罚）。
+ */
+export function plantStep(
+  level: TwolinePlantLevel,
+  state: TwolinePlantState,
+  t: number,
+  dtMs: number,
+  holding: boolean,
+): PlantTick {
+  const now = plantClampMs(t);
+  if (state.planted || !holding) return { state, result: 'idle' };
+  if (isLookingAway(state, now)) {
+    const progressMs = Math.min(level.spot.plantMs, state.progressMs + Math.max(0, dtMs));
+    if (progressMs + PLANT_EPS >= level.spot.plantMs) {
+      return {
+        state: { ...state, progressMs: level.spot.plantMs, planted: true, plantedAtMs: now },
+        result: 'planting',
+      };
+    }
+    return { state: { ...state, progressMs }, result: 'planting' };
+  }
+  if (state.progressMs > 0) {
+    // 他回过头，而你还按着、手上还有进度：被看见了（零惩罚，账要记）
+    return {
+      state: { ...state, progressMs: 0, caught: state.caught + 1, lastCaughtAtMs: now },
+      result: 'exposed',
+    };
+  }
+  return { state, result: 'idle' };
+}
+
+/**
+ * 规格书里的那一个判定：这一帧算 'planting' / 'exposed' / 'idle'。
+ * 它就是 plantStep 的结果 —— 账本由 plantStep 一起交回，两处永远说的是同一件事。
+ */
+export function plantHold(
+  level: TwolinePlantLevel,
+  state: TwolinePlantState,
+  t: number,
+  dtMs: number,
+  holding: boolean,
+): PlantHoldResult {
+  return plantStep(level, state, t, dtMs, holding).result;
+}
+
+/** 已经摆上去多少毫秒（进度环与提示都按它算） */
+export function plantProgress(state: TwolinePlantState): number {
+  return state.progressMs;
+}
+
+/** 摆到几成了（0..1）—— 画面上那圈进度环用它 */
+export function plantRatio(level: TwolinePlantLevel, state: TwolinePlantState): number {
+  if (level.spot.plantMs <= 0) return 1;
+  return Math.min(1, Math.max(0, state.progressMs / level.spot.plantMs));
+}
+
+/** 摆好了没有（摆满就算 —— 摆上去的东西谁也拿不下来） */
+export function isPlantDone(level: TwolinePlantLevel, state: TwolinePlantState): boolean {
+  return state.planted || state.progressMs + PLANT_EPS >= level.spot.plantMs;
+}
+
+/** 一个空档够不够摆完（schema 守着 plantMs ≤ lookAwayMs；提示语与单测看它） */
+export function fitsInLookAway(level: TwolinePlantLevel): boolean {
+  return level.spot.plantMs <= level.redirect.lookAwayMs;
+}
+
+/** 手指落在案上那块地方没有（要按住的就是这里；宽容度让小朋友不用对准） */
+export function hitSpot(level: TwolinePlantLevel, x: number, y: number, forgive = 0): boolean {
+  return Math.hypot(x - level.spot.x, y - level.spot.y) <= level.spot.radius + forgive;
+}
+
+/** 手指落在"弄出点动静"的那一处没有 */
+export function hitRedirect(level: TwolinePlantLevel, x: number, y: number, forgive = 0): boolean {
+  return Math.hypot(x - level.redirect.x, y - level.redirect.y) <= level.redirect.radius + forgive;
+}

@@ -348,3 +348,242 @@ describe('假痴不癫 · 手感与边界', () => {
     ).toThrow();
   });
 });
+
+/* ---------------- 第 32 计 · 空城计（calm） ---------------- */
+
+import { StillnessCalmSchema } from './schemas';
+import {
+  CALM_MIN_GAP_MS, CALM_MIN_WATCH_MS, calmPhaseAt, calmPhaseProgress, calmProgress,
+  calmRemainingMs, calmSlotAt, calmStart, calmTick, calmTimeline, calmTotalMs, cleanWatches,
+  effectiveCalmLevel, hitGate, isCalmDone, openGate, replayCalm, tapCalm,
+} from './stillness.logic';
+
+/** 空城计的三轮（与第 32 计的关卡一致）：他盯着 3400/3000/2600，移开目光 1800/1600/1600 */
+const calm = StillnessCalmSchema.parse({
+  mode: 'calm',
+  gate: { x: 375, y: 820, radius: 150 },
+  watches: [
+    { id: 'w1', watchMs: 3400, gapMs: 1800 },
+    { id: 'w2', watchMs: 3000, gapMs: 1600 },
+    { id: 'w3', watchMs: 2600, gapMs: 1600 },
+  ],
+  needed: 2,
+  doubtLine: '他朝营门多看了一眼……',
+  leaveLine: '曹军退了。',
+  hint: '他盯着的时候，一下都别动',
+});
+
+/** 城门大开之后的时间轴：三轮的"盯着"各从哪儿开始、"移开目光"各从哪儿开始 */
+const WATCH_ENDS = [3400, 8200, 12400];
+const WATCH_AT = [1500, 6000, 11000];
+const GAP_AT = [4000, 9000, 13200];
+
+describe('空城计 · 城门与时间轴', () => {
+  it('城门没开之前没有时间轴：一直停在 gate（开一次就够）', () => {
+    expect(calmPhaseAt(calm, calmStart(), 0)).toEqual({ watchId: null, index: 0, phase: 'gate' });
+    expect(calmPhaseAt(calm, calmStart(), 99999).phase).toBe('gate');
+
+    const opened = openGate(calm, calmStart());
+    expect(opened.gateOpen).toBe(true);
+    expect(openGate(calm, opened)).toBe(opened);
+    expect(calmPhaseAt(calm, opened, 0)).toEqual({ watchId: 'w1', index: 0, phase: 'watch' });
+  });
+
+  it('一轮接一轮：盯着在前、移开目光在后，位置是累积出来的', () => {
+    const slots = calmTimeline(calm);
+    expect(slots.map((s) => s.watchStartMs)).toEqual([0, 5200, 9800]);
+    expect(slots.map((s) => s.gapStartMs)).toEqual(WATCH_ENDS);
+    expect(slots.map((s) => s.endMs)).toEqual([5200, 9800, 14000]);
+    expect(calmTotalMs(calm)).toBe(14000);
+  });
+
+  it('盯着 = watch，移开目光 = gap，全走完 = done', () => {
+    const state = openGate(calm, calmStart());
+    expect(calmPhaseAt(calm, state, 0)).toEqual({ watchId: 'w1', index: 0, phase: 'watch' });
+    expect(calmPhaseAt(calm, state, 3399).phase).toBe('watch');
+    expect(calmPhaseAt(calm, state, 3400)).toEqual({ watchId: 'w1', index: 0, phase: 'gap' });
+    expect(calmPhaseAt(calm, state, 5199).phase).toBe('gap');
+    expect(calmPhaseAt(calm, state, 5200)).toEqual({ watchId: 'w2', index: 1, phase: 'watch' });
+    expect(calmPhaseAt(calm, state, 12400)).toEqual({ watchId: 'w3', index: 2, phase: 'gap' });
+    expect(calmPhaseAt(calm, state, 14000)).toEqual({
+      watchId: null, index: 3, phase: 'done',
+    });
+    expect(calmSlotAt(calm, 14000)).toBeNull();
+  });
+
+  it('时钟只往一个方向走：t 比 0 还小，算在第一轮的开头', () => {
+    const state = openGate(calm, calmStart());
+    expect(calmPhaseAt(calm, state, -500)).toEqual({ watchId: 'w1', index: 0, phase: 'watch' });
+    expect(tapCalm(calm, state, -500).slipWatchIds).toEqual(['w1']);
+  });
+});
+
+describe('空城计 · 盯着的时候点一下就白忍一轮', () => {
+  it('盯着的时候点一下：记一笔 slip，这一轮就不算"忍住"了（零惩罚）', () => {
+    let state = openGate(calm, calmStart());
+    state = tapCalm(calm, state, WATCH_AT[0]!);
+    expect(state.slips).toBe(1);
+    expect(state.slipWatchIds).toEqual(['w1']);
+
+    // 这一轮看完：白忍了 —— 忍住的轮数一步都不涨，但账留着、人也没被怎么样
+    state = calmTick(calm, state, WATCH_ENDS[0]!);
+    expect(state.settled).toBe(1);
+    expect(cleanWatches(state)).toBe(0);
+    expect(isCalmDone(calm, state)).toBe(false);
+    expect(calmProgress(calm, state)).toBe(0);
+
+    // 下一轮忍住 —— 还是有机会：第二、第三轮各攒下一轮
+    state = calmTick(calm, state, WATCH_ENDS[1]!);
+    expect(cleanWatches(state)).toBe(1);
+    expect(isCalmDone(calm, state)).toBe(false);
+    state = calmTick(calm, state, WATCH_ENDS[2]!);
+    expect(cleanWatches(state)).toBe(2);
+    expect(isCalmDone(calm, state)).toBe(true);
+  });
+
+  it('同一轮里连点：只记一笔（这一轮反正白忍了，账不用记花）', () => {
+    let state = openGate(calm, calmStart());
+    state = tapCalm(calm, state, 200);
+    state = tapCalm(calm, state, 900);
+    state = tapCalm(calm, state, 3300);
+    expect(state.slips).toBe(1);
+    expect(state.slipWatchIds).toEqual(['w1']);
+  });
+
+  it('他移开目光的时候点一下：什么也不记 —— 他没看见', () => {
+    let state = openGate(calm, calmStart());
+    state = tapCalm(calm, state, GAP_AT[0]!);
+    expect(state.slips).toBe(0);
+    expect(state.slipWatchIds).toEqual([]);
+    // 空档里点过了，这一轮照样算忍住
+    state = calmTick(calm, state, 5200);
+    expect(cleanWatches(state)).toBe(1);
+  });
+
+  it('城门还没开的时候点：什么也不记（还没轮到"忍住"）', () => {
+    expect(tapCalm(calm, calmStart(), 500)).toEqual(calmStart());
+  });
+});
+
+describe('空城计 · 忍住 needed 轮他就退', () => {
+  it('一下都没动：第一轮看完记一次，第二轮看完他就退了', () => {
+    let state = openGate(calm, calmStart());
+    expect(cleanWatches(calmTick(calm, state, 0))).toBe(0);
+    state = calmTick(calm, state, WATCH_ENDS[0]!);
+    expect(cleanWatches(state)).toBe(1);
+    expect(isCalmDone(calm, state)).toBe(false);
+    state = calmTick(calm, state, WATCH_ENDS[1]!);
+    expect(cleanWatches(state)).toBe(2);
+    expect(isCalmDone(calm, state)).toBe(true);
+    expect(calmProgress(calm, state)).toBe(1);
+    // 他退了：再喂墙钟也不会多算一笔
+    expect(calmTick(calm, state, 14000)).toBe(state);
+  });
+
+  it('一口气喂到底：只攒到 needed 轮就停（不用把三轮都看完）', () => {
+    const state = calmTick(calm, openGate(calm, calmStart()), 99999);
+    expect(cleanWatches(state)).toBe(calm.needed);
+    expect(state.settled).toBe(2);
+    expect(isCalmDone(calm, state)).toBe(true);
+  });
+
+  it('还没走到这一轮的 gapStart：一轮都不算（什么也没变就原样返回）', () => {
+    let state = openGate(calm, calmStart());
+    state = calmTick(calm, state, 3399);
+    expect(state.settled).toBe(0);
+    expect(calmTick(calm, state, 0)).toBe(state);
+  });
+
+  it('三轮全看完还没忍够：他再从头盯一遍，忍住的轮数留着（零惩罚，也不会卡死）', () => {
+    // 第一、二轮动了，第三轮忍住 → 只攒下 1 轮
+    let state = openGate(calm, calmStart());
+    state = tapCalm(calm, state, WATCH_AT[0]!);
+    state = tapCalm(calm, state, WATCH_AT[1]!);
+    state = calmTick(calm, state, 14000);
+    expect(cleanWatches(state)).toBe(1);
+    expect(isCalmDone(calm, state)).toBe(false);
+    expect(calmPhaseAt(calm, state, 14000).phase).toBe('done');
+
+    // 重开一遍：slips 那几笔账留着，这一遍的轮次重新数
+    const again = replayCalm(state);
+    expect(again.endured).toBe(1);
+    expect(again.slips).toBe(2);
+    expect(again.slipWatchIds).toEqual([]);
+    expect(again.settled).toBe(0);
+
+    const next = calmTick(calm, again, WATCH_ENDS[0]!);
+    expect(cleanWatches(next)).toBe(2);
+    expect(isCalmDone(calm, next)).toBe(true);
+  });
+});
+
+describe('空城计 · 手感与边界', () => {
+  it('手指落在城门上，宽容度让小朋友不用对准', () => {
+    expect(hitGate(375, 820, calm)).toBe(true);
+    expect(hitGate(375, 820, calm, 60)).toBe(true);
+    expect(hitGate(375, 820 + 150 + 61, calm, 60)).toBe(false);
+    expect(hitGate(100, 820, calm)).toBe(false);
+  });
+
+  it('剩余时间与分段进度：从"他盯着"走到"他移开目光"，再走到整局结束', () => {
+    const state = openGate(calm, calmStart());
+    expect(calmRemainingMs(calm, state, 0)).toBe(3400);
+    expect(calmRemainingMs(calm, state, 3400)).toBe(1800);
+    expect(calmRemainingMs(calm, state, 14000)).toBe(0);
+    expect(calmRemainingMs(calm, calmStart(), 100)).toBe(0);
+
+    expect(calmPhaseProgress(calm, state, 0)).toBe(0);
+    expect(calmPhaseProgress(calm, state, 1700)).toBeCloseTo(0.5, 2);
+    expect(calmPhaseProgress(calm, state, 4300)).toBeCloseTo(0.5, 2);
+    expect(calmPhaseProgress(calm, state, 14000)).toBe(1);
+    expect(calmPhaseProgress(calm, calmStart(), 100)).toBe(0);
+  });
+
+  it('无头验证把两段都压成几分之一，但压过之后仍然过 schema、照样走得完', () => {
+    const fast = effectiveCalmLevel(calm, true, 5);
+    // 3400/5 = 680 太短，落在地板上；schema 也要求 watchMs >= 1200
+    expect(fast.watches.map((w) => w.watchMs)).toEqual([1200, 1200, 1200]);
+    expect(fast.watches.map((w) => w.gapMs)).toEqual([360, 320, 320]);
+    expect(fast.watches.every((w) => w.watchMs >= CALM_MIN_WATCH_MS)).toBe(true);
+    expect(fast.watches.every((w) => w.gapMs >= CALM_MIN_GAP_MS)).toBe(true);
+    expect(StillnessCalmSchema.parse(fast)).toBeTruthy();
+    expect(effectiveCalmLevel(calm, false, 5)).toBe(calm);
+
+    // 压过之后照样走得完：第一轮看完、第二轮看完，他就退了
+    let state = openGate(fast, calmStart());
+    state = calmTick(fast, state, 1200);
+    expect(isCalmDone(fast, state)).toBe(false);
+    state = calmTick(fast, state, 1200 + 360 + 1200);
+    expect(isCalmDone(fast, state)).toBe(true);
+  });
+});
+
+describe('空城计 · schema', () => {
+  it('挡住"要忍住的轮数比试探还多"', () => {
+    expect(() => StillnessCalmSchema.parse({ ...calm, needed: 4 })).toThrow();
+  });
+
+  it('挡住"盯着不到 1.2 秒"（那就不算一次忍住）', () => {
+    expect(() =>
+      StillnessCalmSchema.parse({
+        ...calm,
+        watches: [
+          { id: 'w1', watchMs: 900, gapMs: 1600 },
+          { id: 'w2', watchMs: 3000, gapMs: 1600 },
+        ],
+      }),
+    ).toThrow();
+  });
+
+  it('挡住重复的轮次 id', () => {
+    expect(() =>
+      StillnessCalmSchema.parse({
+        ...calm,
+        watches: [
+          { id: 'w1', watchMs: 2600, gapMs: 1800 },
+          { id: 'w1', watchMs: 2400, gapMs: 1600 },
+        ],
+      }),
+    ).toThrow();
+  });
+});

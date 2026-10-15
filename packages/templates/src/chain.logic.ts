@@ -386,3 +386,269 @@ export function nextStep(
   if (post === undefined) return undefined;
   return { kind: 'post', post };
 }
+
+/* ---------------- domino：连环计（第 35 计） ---------------- */
+
+import type { ChainDominoLevel } from './schemas';
+
+/**
+ * 连环计（domino）：环环相扣 —— 先点 `ignite` 起头，再**按顺序**一环一环点亮 `links`。
+ *
+ * 三条刻意的设计（与 pass / step 都不同）：
+ * - **顺序照旧不能跳**：没起头，点哪一环都没反应（'notStarted'）；起头之后只认"下一环"，
+ *   顺序点错和不点一样，只是没反应（'wrong'）—— 前一步为后一步铺路。
+ * - **一环点亮后，下一环要在 windowMs 之内点上**：超时这一环就接不上，链子**从起头重来**
+ *   （'expired'），记一笔 break。零惩罚：不扣星、不结束、不锁操作，小手马上放回起头的地方，
+ *   重新点一次就好。schema 里还卡了一道 windowMs ≥ 900 —— 时限短于这个数就不是"一环接一环"，
+ *   而是比手速了。
+ * - **判定一处、落账一处**：`advanceDomino` 只判"这一下会怎么样"，
+ *   `applyDomino` 按它落账（与 stillness 的 strikeAt / applyStrike 同一个做法）——
+ *   场景只把墙钟喂进来，单测、画面与无头验证走的是同一份判定。
+ */
+
+/** domino（连环计）的节拍（场景、单测、无头验证共用同一份） */
+export const DOMINO_TIMING = {
+  /** 起头的那一下（点着岸边的火种）：画面按它演 */
+  igniteMs: 900,
+  /** 点亮一环的演出 */
+  linkMs: 700,
+  /** 断了之后，过一会儿再把小手放回起头的地方 */
+  breakHintMs: 1000,
+  /** 无头验证：隔多久走一步 —— 必须远小于关卡的 windowMs，不然还没点就断了 */
+  autoplayStepMs: 900,
+  /** 开局过一会儿就把小手放到该动的地方 */
+  introHandMs: 650,
+  /** 多久没动静就把小手重新放上去 */
+  idleMs: 9000,
+  /** 成了之后看一眼再进典故卡 */
+  finaleHoldMs: 4200,
+  /** 提示气泡的高度 */
+  hintY: 268,
+} as const;
+
+/** 一环：脚本里的 id / 位置 / 命中半径 */
+export type ChainDominoLink = ChainDominoLevel['links'][number];
+
+/** 一局里攒下来的东西：都是"记下来的事"，没有一样是惩罚 */
+export interface DominoState {
+  /** 此刻链子起着头没有（断了就回到 false，等重新起头） */
+  ignited: boolean;
+  /** 起头的时刻；还没起头就是 -1 */
+  ignitedAtMs: number;
+  /** 按顺序点亮的几环（id，按点亮的先后） */
+  lit: string[];
+  /** 最近一次点亮（或者起头）的时刻 —— 下一环的时限从它起算 */
+  lastAtMs: number;
+  /** 断了几次（零惩罚，只记一笔，复盘用） */
+  breaks: number;
+  /** 起头了几次（重新起头也算，复盘用） */
+  ignites: number;
+}
+
+/** 链子此刻的样子：下一环是第几个、这一环还剩多久、还在不在走 */
+export interface DominoPhase {
+  /** 下一环在 links 里的下标（= 已经点亮了几环）；全点亮了就是 links.length */
+  index: number;
+  /** 这一环还剩多久；没起头 / 断了 / 全点亮了都是 0 */
+  remainingMs: number;
+  /** 链子正在走（起了头、还没全点亮、还有时间） */
+  running: boolean;
+}
+
+/** 点一下会怎么样：接上了 / 不是这一环 / 已经断了 / 还没起头 */
+export type DominoVerdict = 'ok' | 'wrong' | 'expired' | 'notStarted';
+
+/** 开一局：还没起头，一环也没点亮 */
+export function dominoStart(): DominoState {
+  return { ignited: false, ignitedAtMs: -1, lit: [], lastAtMs: -1, breaks: 0, ignites: 0 };
+}
+
+/**
+ * 这一局里起过头没有 —— 断过也算"起过"（复盘看的是这个过程，不是惩罚）。
+ * 此刻链子在不在走，看 dominoPhaseAt().running。
+ */
+export function hasIgnited(state: DominoState): boolean {
+  return state.ignites > 0;
+}
+
+// ---------------- 找东西 ----------------
+
+/** 这是哪一环（脚本里写了不存在的 id 就给 undefined，不抛） */
+export function linkById(level: ChainDominoLevel, linkId: string): ChainDominoLink | undefined {
+  return level.links.find((link) => link.id === linkId);
+}
+
+/** 手指落在哪一环上（拿最近的那一个）；forgive 让手指粗一点也点得到 */
+export function linkAt(
+  level: ChainDominoLevel,
+  x: number,
+  y: number,
+  forgive = 0,
+): ChainDominoLink | undefined {
+  let best: ChainDominoLink | undefined;
+  let bestDist = Number.POSITIVE_INFINITY;
+  for (const link of level.links) {
+    const dist = Math.hypot(x - link.x, y - link.y);
+    if (dist <= link.radius + forgive && dist < bestDist) {
+      best = link;
+      bestDist = dist;
+    }
+  }
+  return best;
+}
+
+/** 手指点在起头的地方没有 */
+export function igniteHit(level: ChainDominoLevel, x: number, y: number, forgive = 0): boolean {
+  return Math.hypot(x - level.ignite.x, y - level.ignite.y) <= level.ignite.radius + forgive;
+}
+
+// ---------------- 起头 ----------------
+
+/**
+ * 起头：点着岸边的火种，链子从第一环重新开始走（时限从这一刻起算）。
+ * - 已经全点亮了就不再来一遍（原样返回）；
+ * - 走到一半再点一次起头 = **从头再来**：已经点亮的几环不算了，重新排队 ——
+ *   零惩罚，也没有便宜可占（重来就是重来）。
+ */
+export function igniteChain(level: ChainDominoLevel, state: DominoState, t: number): DominoState {
+  if (isDominoDone(level, state)) return state;
+  const at = clampMs(t);
+  return {
+    ignited: true,
+    ignitedAtMs: at,
+    lit: [],
+    lastAtMs: at,
+    breaks: state.breaks,
+    ignites: state.ignites + 1,
+  };
+}
+
+// ---------------- 链子走到哪儿了 ----------------
+
+/** 下一环；全点亮了就是 undefined */
+export function nextLink(level: ChainDominoLevel, state: DominoState): ChainDominoLink | undefined {
+  return level.links.find((link) => !state.lit.includes(link.id));
+}
+
+/** 这是不是"下一环" */
+export function isNextLink(level: ChainDominoLevel, state: DominoState, linkId: string): boolean {
+  return nextLink(level, state)?.id === linkId;
+}
+
+/** 这一环点亮了没有 */
+export function isLinkLit(state: DominoState, linkId: string): boolean {
+  return state.lit.includes(linkId);
+}
+
+/** 点亮了几环 */
+export function litCount(state: DominoState): number {
+  return state.lit.length;
+}
+
+/** 还剩几环没点亮 */
+export function linksLeft(level: ChainDominoLevel, state: DominoState): number {
+  return level.links.filter((link) => !state.lit.includes(link.id)).length;
+}
+
+/** 全点亮了 = 这一局成了 */
+export function isDominoDone(level: ChainDominoLevel, state: DominoState): boolean {
+  return state.ignited && level.links.every((link) => state.lit.includes(link.id));
+}
+
+/**
+ * 链子此刻的样子：下一环是第几个、这一环还剩多久、还在不在走。
+ * 时间往回走（单测里回看）时按"整段时限还完整"算 —— 不会冒出一个比 windowMs 还长的数。
+ */
+export function dominoPhaseAt(
+  level: ChainDominoLevel,
+  state: DominoState,
+  t: number,
+): DominoPhase {
+  if (isDominoDone(level, state)) {
+    return { index: level.links.length, remainingMs: 0, running: false };
+  }
+  if (!state.ignited) return { index: 0, remainingMs: 0, running: false };
+  const since = clampMs(t) - state.lastAtMs;
+  const remaining = since < 0 ? level.windowMs : Math.max(0, level.windowMs - since);
+  return { index: state.lit.length, remainingMs: remaining, running: remaining > 0 };
+}
+
+/**
+ * 链子断了没有：断了就落账 —— 回到"还没起头"，记一笔 break（零惩罚）。
+ * 没断就**原样返回同一个对象**：场景据此知道"刚刚断了一下"，只播一次提示；
+ * 每一帧调它也不会重复记账（断了之后 ignited 已经是 false）。
+ */
+export function settleDomino(level: ChainDominoLevel, state: DominoState, t: number): DominoState {
+  if (!state.ignited || isDominoDone(level, state)) return state;
+  if (dominoPhaseAt(level, state, t).remainingMs > 0) return state;
+  return {
+    ...state,
+    ignited: false,
+    ignitedAtMs: -1,
+    lit: [],
+    lastAtMs: -1,
+    breaks: state.breaks + 1,
+  };
+}
+
+/**
+ * 点这一环会怎么样 —— **判定只有这一处**：
+ * - 'notStarted'：还没起头（点哪一环都没反应）；
+ * - 'expired'：上一环点亮之后过了 windowMs —— 链子断了，得从起头重来；
+ * - 'ok'：正好是下一环，接上了；
+ * - 'wrong'：不是下一环（跳着点 / 回头点已经亮的 / 点了个不存在的），或者已经全点亮了。
+ *
+ * 四种都**不扣星、不结束**：前三种只是没进展，'expired' 也只是重来一遍。
+ */
+export function advanceDomino(
+  level: ChainDominoLevel,
+  state: DominoState,
+  linkId: string,
+  t: number,
+): DominoVerdict {
+  if (!state.ignited) return 'notStarted';
+  if (isDominoDone(level, state)) return 'wrong';
+  if (dominoPhaseAt(level, state, t).remainingMs <= 0) return 'expired';
+  return nextLink(level, state)?.id === linkId ? 'ok' : 'wrong';
+}
+
+/**
+ * 按判定的结果落账（判定与落账用的是同一处判定，不会两处打架）：
+ * - 'ok' → 点亮这一环，时限从这一刻重新起算；
+ * - 'expired' → 链子断了：从起头重来，记一笔 break；
+ * - 'wrong' / 'notStarted' → 原样返回（连对象都不换，场景据此知道"这一下没进展"）。
+ */
+export function applyDomino(
+  level: ChainDominoLevel,
+  state: DominoState,
+  linkId: string,
+  t: number,
+): DominoState {
+  const verdict = advanceDomino(level, state, linkId, t);
+  if (verdict === 'notStarted' || verdict === 'wrong') return state;
+  if (verdict === 'expired') return settleDomino(level, state, t);
+  const link = nextLink(level, state);
+  if (link === undefined) return state;
+  return { ...state, lit: [...state.lit, link.id], lastAtMs: clampMs(t) };
+}
+
+// ---------------- 无头验证与小手共用的"下一步" ----------------
+
+/** 该动的地方：起头 / 点亮下一环 */
+export type DominoMove = { kind: 'ignite' } | { kind: 'link'; link: ChainDominoLink };
+
+/**
+ * 下一步该干什么 —— 小手、提示与无头验证都用它（与孩子走的是同一条路）：
+ * 链子没在走（还没起头、或者断了）就先去起头；走着就去点亮下一环。
+ */
+export function nextDominoMove(
+  level: ChainDominoLevel,
+  state: DominoState,
+  t: number,
+): DominoMove | undefined {
+  if (isDominoDone(level, state)) return undefined;
+  if (!dominoPhaseAt(level, state, t).running) return { kind: 'ignite' };
+  const link = nextLink(level, state);
+  if (link === undefined) return undefined;
+  return { kind: 'link', link };
+}

@@ -57,4 +57,10 @@ export const registry: Record<string, () => Promise<{ default: GameModule }>> = 
   'shangwu-chouti': () => import('@chags/game-shangwu-chouti'),
   'shushang-kaihua': () => import('@chags/game-shushang-kaihua'),
   'fanke-weizhu': () => import('@chags/game-fanke-weizhu'),
+  'meiren-ji': () => import('@chags/game-meiren-ji'),
+  'kongcheng-ji': () => import('@chags/game-kongcheng-ji'),
+  'fanjian-ji': () => import('@chags/game-fanjian-ji'),
+  'kurou-ji': () => import('@chags/game-kurou-ji'),
+  'lianhuan-ji': () => import('@chags/game-lianhuan-ji'),
+  'zou-weishang': () => import('@chags/game-zou-weishang'),
 };

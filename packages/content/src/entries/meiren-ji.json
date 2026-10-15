@@ -1,0 +1,29 @@
+{
+  "id": "meiren-ji",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "美人计",
+  "pinyin": "Měi rén jì",
+  "dynasty": "春秋",
+  "era": "春秋 · 越王勾践年间",
+  "yearApprox": -490,
+  "source": {
+    "book": "《三十六计·败战计》",
+    "chapter": "美人计（史源：勾践献西施，见《吴越春秋》—— 后世所辑，多有存疑）",
+    "quote": "兵强者，攻其将；将智者，伐其情。将弱兵颓，其势自萎。利用御寇，顺相保也。"
+  },
+  "moral": "先弄清别人在意什么，再送那一样 —— 送得多，不如送得对。",
+  "keywords": [
+    "先看他在看什么",
+    "送对那一样",
+    "投其所好"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 31,
+    "set": 6
+  }
+}

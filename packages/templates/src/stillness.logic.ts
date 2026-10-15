@@ -368,3 +368,256 @@ export function effectiveFeignLevel(
     })),
   };
 }
+
+/* ---------------- calm：空城计（第 32 计） ---------------- */
+
+/**
+ * 空城计（calm）的账本：**该不动的时候一下都不能动**。
+ *
+ * 与 feign 正相反：feign 是"他走开的空档里才能动手"，calm 是"他盯着的时候**什么都别动**"——
+ * 城门大开、旗子放倒、鼓不敲，他看几轮都看不出破绽，自己就先疑心退了。
+ *
+ * 四条刻意的设计：
+ * - **时间轴就是关卡数据**：每一轮"他盯着看 watchMs、移开目光 gapMs"，位置是累积算出来的。
+ *   t 从**城门大开**那一刻算起（开局那一下之前没有时间轴）——场景把墙钟喂进来，单测直接喂数字，
+ *   两边用的是同一份判定。
+ * - **"什么都没做"也算一笔账**：一轮的"盯着"看完、这期间一下都没点，这一轮就记成"忍住"。
+ *   进度是随时间长的，所以有一条 calmTick(level, state, t) 专门把墙钟喂进来
+ *   （与 chase 的 tick 同一个路数：判定与画面不会跑偏）。
+ * - **盯着的时候点一下 = 这一轮白忍**：记一笔 slip、这一轮不算"忍住"（**零惩罚**：不扣星、不结束、
+ *   也不锁操作，下一轮照样能赢）；他移开目光的那一段里点一下什么也不算 —— 他没看见。
+ * - **忍够 needed 轮他就退**：cleanWatches(state) 数的是"忍住的那几轮"，一局里最多 needed。
+ *
+ * **不 import Phaser**：判定比画面重要得多。
+ *
+ * 本文件第一个用到下面这两个类型的是 calm，所以单独 import 一次 ——
+ * 上面 bide / feign 那一行一个字没动。
+ */
+import type { StillnessCalmLevel, StillnessWatch } from './schemas';
+
+export type CalmPhase = 'gate' | 'watch' | 'gap' | 'done';
+
+export interface CalmPhaseInfo {
+  /** 此刻是哪一轮（城门还没开就是 null） */
+  watchId: string | null;
+  /** 这是第几轮（0 起）；城门还没开是 0，全走完是 watches.length */
+  index: number;
+  phase: CalmPhase;
+}
+
+/** 一局里攒下来的东西：忍住了几轮、动了几次 —— 两个数都不带惩罚 */
+export interface CalmState {
+  /** 城门大开 —— 开了才有后面那几轮盯着看 */
+  gateOpen: boolean;
+  /** 动了几次（零惩罚，只用来复盘；同一轮里连点也只记一笔） */
+  slips: number;
+  /** 每一次"动了"是在哪一轮上 */
+  slipWatchIds: string[];
+  /** 已经走过去并算过账的轮数（他看完一轮、目光移开） */
+  settled: number;
+  /** 这几轮里忍住了几轮 —— 他看不见你动，才算数 */
+  endured: number;
+}
+
+/** 一轮在时间轴上的位置（关卡数据里只写时长，位置是累积算出来的） */
+export interface CalmSlot {
+  watch: StillnessWatch;
+  index: number;
+  /** 他盯过来：这一段里任何一下点击都算"动了" */
+  watchStartMs: number;
+  /** 他移开目光：这一段里点一下什么也不算（他没看见） */
+  gapStartMs: number;
+  /** 整轮走完（他的目光再移回来就是下一轮） */
+  endMs: number;
+}
+
+/** 无头验证时"盯着"至少留这么久 —— schema 里也是这个数（不到 1.2 秒就不算一次忍住） */
+export const CALM_MIN_WATCH_MS = 1200;
+/** 无头验证时"移开目光"至少留这么久，否则空档短得看不见 */
+export const CALM_MIN_GAP_MS = 240;
+
+export function calmStart(): CalmState {
+  return { gateOpen: false, slips: 0, slipWatchIds: [], settled: 0, endured: 0 };
+}
+
+export function calmTimeline(level: StillnessCalmLevel): CalmSlot[] {
+  let cursor = 0;
+  return level.watches.map((watch, index) => {
+    const watchStartMs = cursor;
+    const gapStartMs = watchStartMs + watch.watchMs;
+    const endMs = gapStartMs + watch.gapMs;
+    cursor = endMs;
+    return { watch, index, watchStartMs, gapStartMs, endMs };
+  });
+}
+
+/** 几轮盯着看全走完总共多久 */
+export function calmTotalMs(level: StillnessCalmLevel): number {
+  const slots = calmTimeline(level);
+  return slots.length === 0 ? 0 : slots[slots.length - 1]!.endMs;
+}
+
+/** 此刻落在哪一轮上（他盯着、或者他移开目光的空档）；全走完就是 null */
+export function calmSlotAt(level: StillnessCalmLevel, t: number): CalmSlot | null {
+  const ms = Math.max(0, t);
+  return calmTimeline(level).find((slot) => ms < slot.endMs) ?? null;
+}
+
+/**
+ * 此刻是"他正盯着"还是"他移开了目光"。
+ * **城门没开之前没有时间轴**：这一整段都算 gate（孩子还在找城门在哪儿）。
+ */
+export function calmPhaseAt(
+  level: StillnessCalmLevel,
+  state: CalmState,
+  t: number,
+): CalmPhaseInfo {
+  if (!state.gateOpen) return { watchId: null, index: 0, phase: 'gate' };
+  const slot = calmSlotAt(level, t);
+  if (!slot) return { watchId: null, index: level.watches.length, phase: 'done' };
+  return {
+    watchId: slot.watch.id,
+    index: slot.index,
+    phase: Math.max(0, t) < slot.gapStartMs ? 'watch' : 'gap',
+  };
+}
+
+/** 大开城门 —— 开局唯一那个动作（level 先留着：签名与其它模式一致，改关卡不用改调用处） */
+export function openGate(_level: StillnessCalmLevel, state: CalmState): CalmState {
+  return state.gateOpen ? state : { ...state, gateOpen: true };
+}
+
+/** 手指落在城门上（宽容度让小朋友不用对准） */
+export function hitGate(
+  x: number,
+  y: number,
+  level: StillnessCalmLevel,
+  forgive = 0,
+): boolean {
+  const { gate } = level;
+  return Math.hypot(x - gate.x, y - gate.y) <= gate.radius + forgive;
+}
+
+/**
+ * 把墙钟喂进来（每帧）：他**已经看完**的每一轮，只要这期间你一下都没点，就记一笔"忍住"。
+ * 忍够 needed 轮就停下 —— 他退了，不用再数下去。
+ */
+export function calmTick(
+  level: StillnessCalmLevel,
+  state: CalmState,
+  t: number,
+): CalmState {
+  if (!state.gateOpen || state.endured >= level.needed) return state;
+  const ms = Math.max(0, t);
+  let settled = state.settled;
+  let endured = state.endured;
+  for (const slot of calmTimeline(level)) {
+    if (slot.index < settled) continue;
+    if (ms < slot.gapStartMs) break;
+    settled = slot.index + 1;
+    if (!state.slipWatchIds.includes(slot.watch.id)) endured += 1;
+    if (endured >= level.needed) break;
+  }
+  if (settled === state.settled && endured === state.endured) return state;
+  return { ...state, settled, endured };
+}
+
+/**
+ * 动了一下手（真实操作与无头验证走的是同一条路）：
+ * - **他盯着的时候**：记一笔 slip，这一轮就不算"忍住"了（**零惩罚**：不打断、不结束、不锁操作）；
+ * - **他移开目光的时候**：什么也不记 —— 他没看见；
+ * - **城门还没开**：什么也不记（还没轮到"忍住"）。
+ */
+export function tapCalm(
+  level: StillnessCalmLevel,
+  state: CalmState,
+  t: number,
+): CalmState {
+  const info = calmPhaseAt(level, state, t);
+  if (info.phase !== 'watch' || info.watchId === null) return state;
+  // 同一轮里连点：只记一笔 —— 反正这一轮白忍了，账不用记花
+  if (state.slipWatchIds.includes(info.watchId)) return state;
+  return {
+    ...state,
+    slips: state.slips + 1,
+    slipWatchIds: [...state.slipWatchIds, info.watchId],
+  };
+}
+
+/** 忍住了几轮 —— "忍住"是这一关唯一的成绩 */
+export function cleanWatches(state: CalmState): number {
+  return state.endured;
+}
+
+/** 忍够 needed 轮：他看不出破绽，自己就退了 */
+export function isCalmDone(level: StillnessCalmLevel, state: CalmState): boolean {
+  return state.endured >= level.needed;
+}
+
+/** 0..1：忍住了几成（画面上的进度按它画） */
+export function calmProgress(level: StillnessCalmLevel, state: CalmState): number {
+  if (level.needed <= 0) return 1;
+  return Math.min(1, Math.max(0, state.endured / level.needed));
+}
+
+/**
+ * 几轮都看过去了还没忍够：他再从头盯一遍 ——
+ * **忍住的轮数留着**，这一遍的账重新记（零惩罚，也绝不会卡死）。
+ */
+export function replayCalm(state: CalmState): CalmState {
+  return { ...state, slipWatchIds: [], settled: 0 };
+}
+
+/** 距离他目光移开（他还盯着）/ 再看过来（空档）还有多久 */
+export function calmRemainingMs(
+  level: StillnessCalmLevel,
+  state: CalmState,
+  t: number,
+): number {
+  if (!state.gateOpen) return 0;
+  const slot = calmSlotAt(level, t);
+  if (!slot) return 0;
+  const ms = Math.max(0, t);
+  return ms < slot.gapStartMs
+    ? Math.max(0, slot.gapStartMs - ms)
+    : Math.max(0, slot.endMs - ms);
+}
+
+/** 这一刻这一轮走到几分了（0..1）—— 他目光扫过来的那道光按它推 */
+export function calmPhaseProgress(
+  level: StillnessCalmLevel,
+  state: CalmState,
+  t: number,
+): number {
+  if (!state.gateOpen) return 0;
+  const slot = calmSlotAt(level, t);
+  if (!slot) return 1;
+  const ms = Math.max(0, t);
+  if (ms < slot.gapStartMs) {
+    const span = slot.gapStartMs - slot.watchStartMs;
+    return span <= 0 ? 1 : Math.min(1, Math.max(0, (ms - slot.watchStartMs) / span));
+  }
+  const span = slot.endMs - slot.gapStartMs;
+  return span <= 0 ? 1 : Math.min(1, Math.max(0, (ms - slot.gapStartMs) / span));
+}
+
+/**
+ * 无头验证：把"盯着"与"移开目光"都压成几分之一 ——
+ * 但**压过之后仍要过 schema**（watchMs >= 1200），否则 e2e 跑的是一个不合法的关卡。
+ */
+export function effectiveCalmLevel(
+  level: StillnessCalmLevel,
+  autoplay: boolean,
+  factor = 5,
+): StillnessCalmLevel {
+  if (!autoplay || factor <= 1) return level;
+  const scale = (ms: number, floor: number): number => Math.max(floor, Math.round(ms / factor));
+  return {
+    ...level,
+    watches: level.watches.map((watch) => ({
+      ...watch,
+      watchMs: scale(watch.watchMs, CALM_MIN_WATCH_MS),
+      gapMs: scale(watch.gapMs, CALM_MIN_GAP_MS),
+    })),
+  };
+}

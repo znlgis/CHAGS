@@ -1,4 +1,6 @@
-import type { LureBait, LureLevel, LureOffer, LureReturn } from './schemas';
+import type {
+  LureBait, LureFavorLevel, LureGift, LureLevel, LureOffer, LureReturn,
+} from './schemas';
 
 /**
  * 诱饵（lure）的纯判定：两种模式共用一句话 —— **把他引开，或者先给一点点**。
@@ -399,4 +401,227 @@ export function lureAutoplayLevel(
       needMs: Math.min(scale(level.prize.needMs, LURE_TIMING.autoplayMinNeedMs), longest),
     },
   };
+}
+
+// ---------------- favor：先看清他最在意什么，再送对那一样（第六辑 · 第 31 计 美人计） ----------------
+
+/**
+ * 美人计的判定，与 decoy / trade 说的是同一句话的第三种说法：
+ * **不必把他引开，也不必换回什么 —— 送对那一样就行；难在"先看清他在意哪一样"。**
+ *
+ * 三条刻意的设计：
+ * - **线索全在他的目光里**：他每隔一个周期就把目光落回 `target.wants` 那一样
+ *   （`glanceAt`）—— 落得**比别的东西久得多**，孩子盯一会儿就看出来了。
+ *   判定与画面用的是同一个 `glanceAt`，所以"看得出他在意什么"这件事不靠美术、也不靠文案。
+ * - **送错只是白送**：东西回到手里（`offerFavor` 返回 'refused'），不扣星、不结束、不锁操作，
+ *   连"试过几样"都只是记账（`state.offered`）。
+ * - **他一动不动，孩子也不用赶时间**：这一关没有倒计时，只有一个"看谁看得久"的观察。
+ *
+ * 判定全部按**时间轴**算（t 是从这一局开始算起的毫秒数），场景只把墙钟喂进来；**不 import Phaser**。
+ */
+
+/** 他的目光在**最在意的那一样**上停多久（毫秒）—— 一个周期里最长的一段 */
+export const glanceMs = 1500;
+/** 目光扫过别的东西有多短 —— 与 glanceMs 拉开差距，"他在意哪一样"才看得出来 */
+export const glanceOtherMs = 260;
+/** 目光离开所有东西（低头 / 看别处）多久 */
+export const glanceAwayMs = 700;
+
+/** 美人计的时间常量（场景、单测、无头验证共用同一份） */
+export const FAVOR_TIMING = {
+  /** 他看一样东西要多久（就是最长的那一段） */
+  glanceMs,
+  /** 目光扫过别的东西 */
+  glanceOtherMs,
+  /** 目光离开所有东西 */
+  glanceAwayMs,
+  /** 递出去那一下在画面上演多久（收下 / 还回来都按它衰减） */
+  offerFlashMs: 1200,
+  /** 打动他之后看一眼再进典故卡 */
+  finaleHoldMs: 4200,
+  /** 无头验证：隔多久递一次（送对一次就成，只是别在第一帧就赢） */
+  autoplayOfferMs: 480,
+  /** 多久没动静就把提示与小手放出来 */
+  idleMs: 9000,
+  /** 提示气泡的高度 */
+  hintY: 268,
+} as const;
+
+/** 一局 favor 里攒下来的东西：他收下过几次、递过哪几样 */
+export interface LureFavorState {
+  mode: 'favor';
+  /** 他收下过几次（送对几次）—— `needOffers` 次就算打动了他 */
+  loved: number;
+  /** 递出去过的东西（按先后；送错的也记 —— 零惩罚，只记账） */
+  offered: string[];
+  /** 递了几次 */
+  offers: number;
+  /** 刚刚这一下他收下了没有；还没递过 = null */
+  lastLoved: boolean | null;
+  /** 打动他了 */
+  done: boolean;
+}
+
+export function favorStart(): LureFavorState {
+  return { mode: 'favor', loved: 0, offered: [], offers: 0, lastLoved: null, done: false };
+}
+
+/** 这样东西长什么样；id 不存在 = undefined（内容写错不该在玩法里悄悄生效） */
+export function giftById(level: LureFavorLevel, giftId: string): LureGift | undefined {
+  return level.gifts.find((gift) => gift.id === giftId);
+}
+
+/**
+ * 他最在意的那一样东西 —— `kind` 对上 `target.wants` 的那个。
+ * schema 保证了它一定存在，所以这一关一定有解；这里仍保留 undefined 的返回类型，
+ * 让"内容写错"在类型上就看得见，而不是在玩法里变成一次隐形失败。
+ */
+export function wantedGift(level: LureFavorLevel): LureGift | undefined {
+  return level.gifts.find((gift) => gift.kind === level.target.wants);
+}
+
+/** 手指落在哪一样东西上（拿最近的那个）；forgive 让小朋友不用对准 */
+export function giftAt(
+  level: LureFavorLevel,
+  x: number,
+  y: number,
+  forgive = 0,
+): LureGift | undefined {
+  let best: LureGift | undefined;
+  let bestDist = Number.POSITIVE_INFINITY;
+  for (const gift of level.gifts) {
+    const dist = Math.hypot(x - gift.x, y - gift.y);
+    if (dist <= gift.radius + forgive && dist < bestDist) {
+      best = gift;
+      bestDist = dist;
+    }
+  }
+  return best;
+}
+
+/**
+ * 一个周期里，他的目光一段一段落在哪儿（按先后）：
+ * **先落在最在意的那一样上（最长），再把别的扫一眼，最后看别处**。
+ *
+ * 这就是"看得出他在意什么"的全部依据 —— 它由关卡数据（`target.wants`）决定，
+ * 画面照着它演，单测照着它验：谁都不许另写一套。
+ */
+export function glancePlan(level: LureFavorLevel): { gift: LureGift | null; ms: number }[] {
+  const wanted = wantedGift(level);
+  const plan: { gift: LureGift | null; ms: number }[] = [];
+  if (wanted !== undefined) plan.push({ gift: wanted, ms: glanceMs });
+  for (const gift of level.gifts) {
+    if (gift === wanted) continue;
+    plan.push({ gift, ms: glanceOtherMs });
+  }
+  plan.push({ gift: null, ms: glanceAwayMs });
+  return plan;
+}
+
+/** 目光走完一圈要多久（毫秒）—— 画面上的"等下一眼"按它算 */
+export function glanceCycleMs(level: LureFavorLevel): number {
+  return glancePlan(level).reduce((sum, step) => sum + step.ms, 0);
+}
+
+/** 此刻的目光：看着哪一样、这一段总共多久、还剩多久 */
+export interface LureGaze {
+  gift: LureGift | null;
+  totalMs: number;
+  leftMs: number;
+}
+
+/** t 这一刻他的目光在哪儿（左闭右开：每一段 [开始, 开始 + ms)） */
+export function gazeAt(level: LureFavorLevel, t: number): LureGaze {
+  const plan = glancePlan(level);
+  const cycle = plan.reduce((sum, step) => sum + step.ms, 0);
+  if (cycle <= 0) return { gift: null, totalMs: 0, leftMs: 0 };
+  let at = Math.max(0, t) % cycle;
+  for (const step of plan) {
+    if (at < step.ms) return { gift: step.gift, totalMs: step.ms, leftMs: step.ms - at };
+    at -= step.ms;
+  }
+  const last = plan[plan.length - 1]!;
+  return { gift: last.gift, totalMs: last.ms, leftMs: 0 };
+}
+
+/** 他此刻在看哪一样东西（看着别处 = null）—— "先弄清别人在意什么"就靠它 */
+export function glanceAt(level: LureFavorLevel, t: number): LureGift | null {
+  return gazeAt(level, t).gift;
+}
+
+/** 目光在这一样上还要停多久 —— 画面上那根条按它走（停得越久，越说明他在意） */
+export function glanceLeftMs(level: LureFavorLevel, t: number): number {
+  return gazeAt(level, t).leftMs;
+}
+
+/**
+ * 递出一样东西：**就地**把这一笔记在 state 上，返回他这一下的反应
+ * （'loved' 收下 / 'refused' 还回来）。
+ *
+ * 为什么是"就地记账 + 返回反应"：场景要的是反应（好演那一下），而账本要一路攒着
+ * （`favorsGiven` / `isFavorDone` 都读同一个 state）—— 返回 state 就拿不到反应，
+ * 返回反应就只能就地记账。送错的那条路（东西回到手里、可以再送）因此也就不可能被漏记。
+ *
+ * 三条规矩：
+ * - **kind 对上 `target.wants` 才算送对** —— 判据只有关卡数据这一个来源；
+ * - **送错零惩罚**：只多记一笔 `offered`，可以接着送别的（也可以再送它一遍）；
+ * - **不存在的 id / 已经打动他之后**：什么都不改，按 'refused' 返回（场景据此不表演）。
+ */
+export function offerFavor(
+  level: LureFavorLevel,
+  state: LureFavorState,
+  giftId: string,
+): 'loved' | 'refused' {
+  const gift = giftById(level, giftId);
+  if (gift === undefined || state.done) return 'refused';
+  const loved = gift.kind === level.target.wants;
+  state.offered.push(gift.id);
+  state.offers += 1;
+  state.lastLoved = loved;
+  if (!loved) return 'refused';
+  state.loved += 1;
+  state.done = state.loved + EPS >= level.needOffers;
+  return 'loved';
+}
+
+/** 他收下过几次（送对几次）—— 打动他只认这一笔账 */
+export function favorsGiven(state: LureFavorState): number {
+  return state.loved;
+}
+
+/** 送对了 `needOffers` 次 = 打动他了 */
+export function isFavorDone(level: LureFavorLevel, state: LureFavorState): boolean {
+  return state.loved + EPS >= level.needOffers;
+}
+
+/** 打动了几成（0..1）—— 他身边那圈进度按它画 */
+export function favorProgress(level: LureFavorLevel, state: LureFavorState): number {
+  if (level.needOffers <= 0) return 1;
+  return Math.min(1, Math.max(0, state.loved / level.needOffers));
+}
+
+/**
+ * 还没递过的那一样 —— 小手与提示第一眼指它。
+ * 注意它**不按 wants 排**：哪一样才是他在意的，要孩子自己从他的目光里看出来。
+ */
+export function nextGiftToOffer(
+  level: LureFavorLevel,
+  state: LureFavorState,
+): LureGift | undefined {
+  return level.gifts.find((gift) => !state.offered.includes(gift.id));
+}
+
+/**
+ * 卡住时小手该指哪儿：
+ * - **一次都还没递过**：他现在看着哪一样就指哪一样 —— "看他在看什么"就是这个游戏的线索；
+ *   他正看着别处就指还没递过的那样（绝不提示"哪一样才对"）；
+ * - **试过之后**：指他最在意的那一样（孩子已经自己看过一遍了，这是陪着走完最后一步）。
+ */
+export function hintGift(
+  level: LureFavorLevel,
+  state: LureFavorState,
+  t: number,
+): LureGift | undefined {
+  if (state.offers > 0) return wantedGift(level);
+  return glanceAt(level, t) ?? nextGiftToOffer(level, state);
 }

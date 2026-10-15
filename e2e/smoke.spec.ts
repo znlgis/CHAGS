@@ -816,6 +816,13 @@ for (const [id, title] of [
   ['shangwu-chouti', '上屋抽梯'],
   ['shushang-kaihua', '树上开花'],
   ['fanke-weizhu', '反客为主'],
+  // 第六辑（败战计 31–36）
+  ['meiren-ji', '美人计'],
+  ['kongcheng-ji', '空城计'],
+  ['fanjian-ji', '反间计'],
+  ['kurou-ji', '苦肉计'],
+  ['lianhuan-ji', '连环计'],
+  ['zou-weishang', '走为上'],
 ] as const) {
   test('三十六计 · ' + title + ' autoplay 全流程', async ({ page }) => {
     await page.goto('/?autoplay=1#/play/' + id);

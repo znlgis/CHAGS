@@ -46,6 +46,12 @@ import enJiachi from './en/jiachi-budian.json';
 import enShangwu from './en/shangwu-chouti.json';
 import enShushang from './en/shushang-kaihua.json';
 import enFanke from './en/fanke-weizhu.json';
+import enMeiren from './en/meiren-ji.json';
+import enKongcheng from './en/kongcheng-ji.json';
+import enFanjian from './en/fanjian-ji.json';
+import enKurou from './en/kurou-ji.json';
+import enLianhuan from './en/lianhuan-ji.json';
+import enZou from './en/zou-weishang.json';
 
 /**
  * 典故内容的翻译补丁。结构镜像原文，只写需要翻译的字段。
@@ -100,6 +106,12 @@ export const patches: Partial<Record<Locale, Record<string, unknown>>> = {
     'shangwu-chouti': enShangwu,
     'shushang-kaihua': enShushang,
     'fanke-weizhu': enFanke,
+    'meiren-ji': enMeiren,
+    'kongcheng-ji': enKongcheng,
+    'fanjian-ji': enFanjian,
+    'kurou-ji': enKurou,
+    'lianhuan-ji': enLianhuan,
+    'zou-weishang': enZou,
   },
 };
 

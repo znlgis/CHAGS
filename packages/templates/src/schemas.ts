@@ -1669,6 +1669,158 @@ export const MatchupOrderLevelSchema = z
     path: ['neighbors'],
   });
 
+/* ---------------- 第六辑（败战计）：四个新模式 ---------------- */
+
+/** 美人计：手里几样东西，先看清他最在意哪一样 */
+export const LureGiftSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 这份东西是什么：silk 丝绸 / horse 骏马 / sword 宝剑 */
+  kind: z.string().min(1),
+  /** 递过去时的一句话（双语可译） */
+  speak: z.string().min(1).max(48),
+});
+
+/**
+ * 美人计：投其所好 —— 他平时目光就落在**他最在意的那一样**上（glanceAt 周期回到它），
+ * 孩子先看出来，再送对；送错只是东西回到手里（零惩罚）。
+ */
+export const LureFavorSchema = z
+  .object({
+    mode: z.literal('favor'),
+    gifts: z.array(LureGiftSchema).min(2).max(4),
+    target: z.object({
+      x: z.number(),
+      y: z.number(),
+      radius: z.number().positive(),
+      /** 他最在意的那一样（要对得上某个 gift 的 kind） */
+      wants: z.string().min(1),
+    }),
+    /** 送对几次才算打动他 */
+    needOffers: z.number().int().min(1).max(3).default(1),
+    /** 送错时他说的那句话（只陈述，不评价） */
+    refuseLine: z.string().min(1).max(48),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.gifts.map((g) => g.id)).size === l.gifts.length, {
+    message: '礼物的 id 不能重复',
+    path: ['gifts'],
+  })
+  .refine((l) => new Set(l.gifts.map((g) => g.kind)).size === l.gifts.length, {
+    message: '两样东西的 kind 一样 —— 孩子分不出哪样是他想要的',
+    path: ['gifts'],
+  })
+  .refine((l) => l.gifts.some((g) => g.kind === l.target.wants), {
+    message: '没有任何一样是他想要的 —— 这一关不可能过（wants 对不上任何 kind）',
+    path: ['target', 'wants'],
+  });
+
+/** 空城计：他盯着看的这一段里，点哪里都算"动了" */
+export const StillnessWatchSchema = z.object({
+  id: z.string().min(1),
+  /** 他盯着看多久 */
+  watchMs: z.number().positive(),
+  /** 他移开目光多久 */
+  gapMs: z.number().positive(),
+});
+
+/** 空城计：大开城门之后，忍住 needed 轮不动，他就退了 */
+export const StillnessCalmSchema = z
+  .object({
+    mode: z.literal('calm'),
+    gate: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    watches: z.array(StillnessWatchSchema).min(2).max(4),
+    needed: z.number().int().min(1).max(4),
+    doubtLine: z.string().min(1).max(48),
+    leaveLine: z.string().min(1).max(48),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.watches.map((w) => w.id)).size === l.watches.length, {
+    message: '每一轮的 id 不能重复',
+    path: ['watches'],
+  })
+  .refine((l) => l.needed <= l.watches.length, {
+    message: '要忍住的轮数比试探还多 —— 这一关不可能过',
+    path: ['needed'],
+  })
+  .refine((l) => l.watches.every((w) => w.watchMs >= 1200), {
+    message: '"盯着"的时间不到 1.2 秒 —— 忍住就不算一个动作了',
+    path: ['watches'],
+  });
+
+/** 反间计：趁他转头看别处，把东西摆到他"会自己看到"的地方 */
+export const TwolinePlantSchema = z
+  .object({
+    mode: z.literal('plant'),
+    visitor: z.object({
+      from: z.object({ x: z.number(), y: z.number() }),
+      to: z.object({ x: z.number(), y: z.number() }),
+      walkMs: z.number().positive(),
+      radius: z.number().positive(),
+    }),
+    spot: z.object({
+      x: z.number(),
+      y: z.number(),
+      radius: z.number().positive(),
+      plantMs: z.number().positive(),
+    }),
+    redirect: z.object({
+      x: z.number(),
+      y: z.number(),
+      radius: z.number().positive(),
+      lookAwayMs: z.number().positive(),
+    }),
+    caughtLine: z.string().min(1).max(48),
+    plantedLine: z.string().min(1).max(48),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => l.spot.plantMs <= l.redirect.lookAwayMs, {
+    message: '一个空档里摆不完（plantMs > lookAwayMs）—— 这一关不可能过',
+    path: ['spot', 'plantMs'],
+  })
+  .refine((l) => l.redirect.lookAwayMs >= 900, {
+    message: '空档不到 0.9 秒 —— 那就变成比手速了',
+    path: ['redirect', 'lookAwayMs'],
+  });
+
+/** 连环计：一环点亮后，下一环必须在 windowMs 之内点上 */
+export const ChainDominoSchema = z
+  .object({
+    mode: z.literal('domino'),
+    ignite: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    links: z
+      .array(
+        z.object({
+          id: z.string().min(1),
+          x: z.number(),
+          y: z.number(),
+          radius: z.number().positive(),
+        }),
+      )
+      .min(3)
+      .max(5),
+    windowMs: z.number().positive(),
+    breakLine: z.string().min(1).max(48),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.links.map((x) => x.id)).size === l.links.length, {
+    message: '环的 id 不能重复',
+    path: ['links'],
+  })
+  .refine((l) => l.windowMs >= 900, {
+    message: '每一环只给不到 0.9 秒 —— 那就变成比手速了',
+    path: ['windowMs'],
+  });
+
+export type LureGift = z.infer<typeof LureGiftSchema>;
+export type LureFavorLevel = z.infer<typeof LureFavorSchema>;
+export type StillnessWatch = z.infer<typeof StillnessWatchSchema>;
+export type StillnessCalmLevel = z.infer<typeof StillnessCalmSchema>;
+export type TwolinePlantLevel = z.infer<typeof TwolinePlantSchema>;
+export type ChainDominoLevel = z.infer<typeof ChainDominoSchema>;
+
 export type RuseShell = z.infer<typeof RuseShellSchema>;
 export type SwapBeamLevel = z.infer<typeof SwapBeamSchema>;
 export type ProbeHintLevel = z.infer<typeof ProbeHintSchema>;
@@ -1771,16 +1923,17 @@ export const templateSchemas: Record<string, z.ZodType> = {
   // borrow 有两种模式：force（借刀杀人，既有）与 banner（借尸还魂）——
   // 两份 schema 分开写（force 那份一个字没改），这里按并集登记给构建期体检用。
   borrow: z.union([BorrowLevelSchema, BorrowBannerLevelSchema]),
-  stillness: z.union([StillnessLevelSchema, StillnessFeignSchema]),
+  stillness: z.union([StillnessLevelSchema, StillnessFeignSchema, StillnessCalmSchema]),
   window: WindowLevelSchema,
   show: z.union([ShowLevelSchema, ShowBorrowSchema]),
-  twoline: TwolineLevelSchema,
+  // 第六辑同前：老模式那份 schema 一个字没改，新模式的并在这里
+  twoline: z.union([TwolineLevelSchema, TwolinePlantSchema]),
   read: ReadLevelSchema,
   matchup: z.union([MatchupLevelSchema, MatchupOrderLevelSchema]),
   probe: z.union([ProbeLevelSchema, ProbeHintSchema]),
-  lure: LureLevelSchema,
+  lure: z.union([LureLevelSchema, LureFavorSchema]),
   chase: ChaseLevelSchema,
   // 第五辑给六个模板各加了一个模式：老模式那份 schema 一个字没改，这里按并集登记
   swap: z.union([SwapLevelSchema, SwapBeamSchema]),
-  chain: z.union([ChainLevelSchema, ChainStepSchema]),
+  chain: z.union([ChainLevelSchema, ChainStepSchema, ChainDominoSchema]),
 };

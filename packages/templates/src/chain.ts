@@ -18,6 +18,13 @@ import type { StepState } from './chain.logic';
 import type { ChainGate, ChainLevel, ChainStepLevel } from './schemas';
 import type { ChainStepPost } from './chain.logic';
 import type { SessionState } from './session';
+// 第 35 计连环计（domino）的判定与类型：与 pass / step 那两段并列，互不影响
+import {
+  DOMINO_TIMING, advanceDomino, applyDomino, dominoPhaseAt, dominoStart, igniteChain, igniteHit,
+  isDominoDone, linkAt, litCount, nextDominoMove, nextLink, settleDomino,
+} from './chain.logic';
+import type { ChainDominoLink, DominoState } from './chain.logic';
+import type { ChainDominoLevel } from './schemas';
 
 /**
  * step（反客为主）的岗位类型从逻辑层原样再导出一份：游戏包要用它给 `chainStepLevel()` 收窄返回类型，
@@ -1042,6 +1049,512 @@ function createStepChainScene(
   };
 }
 
+/* ---------------- domino：连环计（第 35 计） ---------------- */
+
+/**
+ * domino（连环计）每一帧交给游戏画的一切：点亮到第几环了、这一环还剩多久。
+ * 画面完全由游戏决定（江面怎么画、船怎么连都是它的事），模板只管这一份数。
+ */
+export interface ChainDominoMetrics {
+  width: number;
+  height: number;
+  /** 这一局过了多久（墙钟，从开局算起） */
+  elapsedMs: number;
+  /** 按顺序点亮的几环（id，按点亮的先后） */
+  lit: string[];
+  litCount: number;
+  total: number;
+  /** 下一环该点哪儿；全点亮了就是 null */
+  nextLink: ChainDominoLink | null;
+  /** 此刻这一环还剩多久（没起头 / 断了 / 全点亮了都是 0） */
+  remainingMs: number;
+  /** 一环点亮之后下一环的时限（关卡脚本里的 windowMs）—— 沙漏按它画 */
+  windowMs: number;
+  /** 此刻链子在走吗 */
+  running: boolean;
+  /** 起过头没有（断过也算 —— 复盘看的是这个过程） */
+  ignited: boolean;
+  /** 断了几次（零惩罚，只记一笔） */
+  breaks: number;
+  /** 起头了几次（重新起头也算） */
+  ignites: number;
+  /** 刚点亮的那一环 / 什么时候点亮的（画一次"这里接上了"的强调） */
+  lastLinkId: string | null;
+  lastLinkAtMs: number;
+  /** 上一次"还轮不到这里"发生在什么时候（晃一下，不扣星） */
+  lastWrongAtMs: number;
+  /** 点空了几次：只是复盘用，不扣星也不结束 */
+  misses: number;
+  /** 这一局成了 */
+  done: boolean;
+}
+
+export interface ChainDominoApi {
+  scene: Phaser.Scene;
+  stage: ChainDominoMetrics;
+}
+
+/**
+ * domino（连环计）这一路的配置 —— 与 pass 的 `ChainConfig`、step 的 `ChainStepConfig`
+ * 是三份（各自的字段互不牵动），多出来的这些只有 domino 用得上。
+ */
+export interface ChainDominoConfig {
+  level: ChainDominoLevel;
+  session: SessionState;
+  nextSceneKey: string;
+  /** 顶栏上的名字；不传就用内容自己的标题 */
+  title?: string;
+  /** 这个世界：江面、铁索、连环的船团与岸边的火种（画一次） */
+  drawWorld: (g: Phaser.GameObjects.Graphics, level: ChainDominoLevel) => void;
+  /** 每帧重画：哪几环亮着、铁索走到哪儿了、这一环还剩多久 */
+  drawStage: (
+    g: Phaser.GameObjects.Graphics,
+    stage: ChainDominoMetrics,
+    level: ChainDominoLevel,
+  ) => void;
+  /** 起头的那一下（画面让岸边的火种亮起来） */
+  onIgnite?: (api: ChainDominoApi) => void;
+  /** 收尾：四环全亮了之后的样子 */
+  drawFinale?: (
+    g: Phaser.GameObjects.Graphics,
+    stage: ChainDominoMetrics,
+    level: ChainDominoLevel,
+  ) => void;
+  /** 打赢之后念的那句话（关键抉择点的揭晓语） */
+  reveal?: string;
+  finaleHoldMs?: number;
+}
+
+/** 进度槽：点亮了几环（0..total）—— 游戏包的 drawStage 用它（口径与判定同一份） */
+export function chainDominoBar(
+  g: Phaser.GameObjects.Graphics,
+  level: ChainDominoLevel,
+  lit: number,
+): void {
+  const { x, y, w, h } = CHAIN_DOMINO.progress;
+  roundRect(g, x, y, w, h, h / 2, shade(THEME.card, 0.96), THEME.outline, 5);
+  const total = Math.max(1, level.links.length);
+  const fill = ((w - 12) * Math.min(Math.max(0, lit), total)) / total;
+  if (fill > 6) roundRect(g, x + 6, y + 6, fill, h - 12, (h - 12) / 2, THEME.gold, null, 0);
+}
+
+/** 这一环的沙漏：还剩多久 —— 游戏包的 drawStage 用它 */
+export function chainDominoWindowBar(
+  g: Phaser.GameObjects.Graphics,
+  level: ChainDominoLevel,
+  leftMs: number,
+): void {
+  const { x, y, w, h } = CHAIN_DOMINO.windowBar;
+  roundRect(g, x, y, w, h, h / 2, shade(THEME.card, 0.96), THEME.outline, 5);
+  const ratio = Math.min(1, Math.max(0, leftMs / level.windowMs));
+  const fill = (w - 12) * ratio;
+  if (fill > 6) roundRect(g, x + 6, y + 6, fill, h - 12, (h - 12) / 2, THEME.red, null, 0);
+}
+
+/** domino（连环计）那一半的画法与节拍常量（节拍沿用 chain.logic 的 DOMINO_TIMING） */
+export const CHAIN_DOMINO = {
+  ...DOMINO_TIMING,
+  /** 点的宽容度：船团不小，手指粗也点得到（与 pass / step 同一个数） */
+  tapForgive: CHAIN.tapForgive,
+  /** 小手放在目标下面多少 / 提示光圈比目标大多少 / 涟漪亮多久 */
+  handDrop: CHAIN.handDrop,
+  ringPad: CHAIN.ringPad,
+  rippleMs: CHAIN.rippleMs,
+  /** 起头的那处（岸边的火种）外面那圈比它大多少 */
+  igniteRingPad: 26,
+  /** 这一环还剩多久 —— 沙漏画在底部（游戏包的 drawStage 用 chainDominoWindowBar） */
+  windowBar: { x: 150, y: 1256, w: 450, h: 44 },
+  /** 进度槽（点亮了几环）画在顶部（游戏包的 drawStage 用 chainDominoBar） */
+  progress: { x: 150, y: 196, w: 450, h: 38 },
+} as const;
+
+/**
+ * 连环计：环环相扣 —— 先点岸边的火种起头，再**按顺序**一环一环点亮。
+ *
+ * 三条刻意的设计：
+ * - **顺序就是这一关**：没起头，点哪一环都没反应；起头之后只认"下一环"，
+ *   顺序点错和不点一样，只是没反应。判定全在 chain.logic 里，场景只把墙钟喂给它。
+ * - **一环接一环**：每一环点亮之后，下一环要在关卡的 windowMs 之内点上 ——
+ *   超时链子就断了，**从起头重来**（零惩罚，只记一笔 break）。所以这一关的节奏是
+ *   "快而不乱"：急，但每一步都得落在点上（第 35 计的落点）。
+ * - **断了零惩罚**：不扣星、不结束、不锁操作；断的那一刻只播一句关卡自己的 breakLine，
+ *   小手马上放回起头的地方，重新点一次就好。breaks 只用来复盘。
+ */
+function createDominoChainScene(
+  ctx: GameContext,
+  cfg: ChainDominoConfig,
+): Phaser.Types.Scenes.SceneType {
+  return class ChainDominoScene extends BaseScene {
+    private level: ChainDominoLevel = cfg.level;
+    private state: DominoState = dominoStart();
+    private startedAt = 0;
+    private done = false;
+    private idleMs = 0;
+    private misses = 0;
+    private lastLinkId: string | null = null;
+    private lastLinkAt = -1;
+    private lastWrongAt = -1;
+    private worldGfx: Phaser.GameObjects.Graphics | null = null;
+    private stageGfx: Phaser.GameObjects.Graphics | null = null;
+    private markGfx: Phaser.GameObjects.Graphics | null = null;
+    private finaleGfx: Phaser.GameObjects.Graphics | null = null;
+    private ring: Phaser.GameObjects.Graphics | null = null;
+    private hand: Phaser.GameObjects.Graphics | null = null;
+
+    constructor() {
+      super(SCENE_KEYS.chain, ctx);
+    }
+
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.chain });
+      this.level = cfg.level;
+      this.state = dominoStart();
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      this.markGfx = this.add.graphics().setDepth(60);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
+        this.pressAt(pointer.x, pointer.y),
+      );
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.time.delayedCall(CHAIN_DOMINO.introHandMs, () => {
+          this.showHint(cfg.level.hint, 3000, CHAIN_DOMINO.hintY);
+          this.pointAtNext();
+        });
+      }
+    }
+
+    private now(): number {
+      return Math.max(0, this.ctx.services.now() - this.startedAt);
+    }
+
+    // ---------------- 每一帧 ----------------
+
+    private tick(delta: number): void {
+      const t = this.now();
+      if (!this.done) {
+        // 链子断了：落账（回到"还没起头"，记一笔 break —— 零惩罚）—— 每一帧都调，只记一次
+        const settled = settleDomino(this.level, this.state, t);
+        if (settled !== this.state) {
+          this.state = settled;
+          this.ctx.emit('beat:enter', { beatId: 'chain:break:' + this.state.breaks });
+          this.ctx.services.audio.tone(240, 200);
+          this.showHint(cfg.level.breakLine, 2600, CHAIN_DOMINO.hintY);
+          this.pointAtNext();
+        }
+        // 卡住了：把关卡自己的那句话再亮一遍，并指一指该动的地方
+        this.idleMs += delta;
+        if (this.idleMs >= CHAIN_DOMINO.idleMs) {
+          this.idleMs = 0;
+          this.showHint(this.level.hint, 2600, CHAIN_DOMINO.hintY);
+          this.pointAtNext();
+        }
+      }
+      this.redraw(t);
+    }
+
+    private redraw(t: number): void {
+      const stage = this.stageState(t);
+      if (this.stageGfx) {
+        this.stageGfx.clear();
+        cfg.drawStage(this.stageGfx, stage, this.level);
+      }
+      this.drawMarks(stage);
+      if (this.done && this.finaleGfx) {
+        this.finaleGfx.clear();
+        cfg.drawFinale?.(this.finaleGfx, stage, this.level);
+      }
+    }
+
+    private stageState(t: number): ChainDominoMetrics {
+      const phase = dominoPhaseAt(this.level, this.state, t);
+      return {
+        width: this.W,
+        height: this.H,
+        elapsedMs: t,
+        lit: [...this.state.lit],
+        litCount: litCount(this.state),
+        total: this.level.links.length,
+        nextLink: nextLink(this.level, this.state) ?? null,
+        remainingMs: phase.remainingMs,
+        windowMs: this.level.windowMs,
+        running: phase.running,
+        ignited: this.state.ignited,
+        breaks: this.state.breaks,
+        ignites: this.state.ignites,
+        lastLinkId: this.lastLinkId,
+        lastLinkAtMs: this.lastLinkAt,
+        lastWrongAtMs: this.lastWrongAt,
+        misses: this.misses,
+        done: this.done,
+      };
+    }
+
+    /**
+     * 模板自己画的那一点反馈：
+     * 刚点亮的那一环往外扩的一圈火光、"还轮不到这里"的灰圈 ——
+     * 环本身的火（亮着 / 就是它 / 还没轮到）由 drawStage 画。
+     */
+    private drawMarks(stage: ChainDominoMetrics): void {
+      const g = this.markGfx;
+      if (!g) return;
+      g.clear();
+      const t = stage.elapsedMs;
+
+      const link = this.level.links.find((item) => item.id === stage.lastLinkId);
+      const since = t - stage.lastLinkAtMs;
+      if (link !== undefined && since >= 0 && since <= CHAIN_DOMINO.linkMs) {
+        const p = since / CHAIN_DOMINO.linkMs;
+        g.lineStyle(10, THEME.gold, 0.9 * (1 - p));
+        g.strokeCircle(link.x, link.y, link.radius + 16 + 56 * p);
+        g.lineStyle(6, THEME.red, 0.5 * (1 - p));
+        g.strokeCircle(link.x, link.y, link.radius + 44 + 74 * p);
+      }
+
+      if (stage.lastWrongAtMs >= 0 && t - stage.lastWrongAtMs <= 460) {
+        const p = (t - stage.lastWrongAtMs) / 460;
+        const wrong = stage.nextLink ?? this.level.ignite;
+        g.lineStyle(7, THEME.inkSoft, 0.5 * (1 - p));
+        g.strokeCircle(wrong.x, wrong.y, 56 + 90 * (1 - p));
+      }
+    }
+
+    // ---------------- 点 ----------------
+
+    private pressAt(x: number, y: number): void {
+      if (this.done) return;
+      this.idleMs = 0;
+      const link = linkAt(this.level, x, y, CHAIN_DOMINO.tapForgive);
+      if (link !== undefined) {
+        this.pressLink(link);
+        return;
+      }
+      if (igniteHit(this.level, x, y, CHAIN_DOMINO.tapForgive)) {
+        this.pressIgnite();
+        return;
+      }
+      this.nothing(x, y);
+    }
+
+    /** 起头（真实操作与无头验证同一条路）：链子从第一环重新走，时限从此刻起算 */
+    private pressIgnite(): void {
+      if (this.done) return;
+      const t = this.now();
+      const before = this.state;
+      this.state = igniteChain(this.level, this.state, t);
+      if (this.state === before) return; // 已经全点亮了：这一局不再重来
+      this.idleMs = 0;
+      this.sfx('unlock');
+      sparkleAt(this, this.level.ignite.x, this.level.ignite.y, THEME.gold, 5);
+      this.ctx.emit('beat:enter', { beatId: 'chain:ignite:' + this.state.ignites });
+      cfg.onIgnite?.({ scene: this, stage: this.stageState(t) });
+      this.pointAtNext();
+    }
+
+    /**
+     * 点亮一环：**只认"下一环 + 还在时限里"**。
+     * 没起头 / 不是这一环 / 已经断了 —— 都不扣星、不结束：前两种只是没进展，
+     * 断了就回起头重来（场景提示 breakLine 的那一句）。
+     */
+    private pressLink(link: ChainDominoLink): void {
+      if (this.done) return;
+      const t = this.now();
+      const verdict = advanceDomino(this.level, this.state, link.id, t);
+      if (verdict !== 'ok') {
+        this.state = applyDomino(this.level, this.state, link.id, t);
+        if (verdict === 'expired') this.broken(link);
+        else this.rejected(link);
+        return;
+      }
+      this.state = applyDomino(this.level, this.state, link.id, t);
+      this.lastLinkId = link.id;
+      this.lastLinkAt = t;
+      this.idleMs = 0;
+      this.sfx('correct');
+      sparkleAt(this, link.x, link.y, THEME.gold, 6);
+      this.ctx.emit('beat:enter', { beatId: 'chain:light:' + link.id });
+      this.ctx.emit('choice:made', {
+        beatId: 'chain:light',
+        choiceId: link.id,
+        correct: true,
+        latencyMs: t,
+      });
+      cfg.session.total += 1;
+      cfg.session.correct += 1;
+      this.hideHand();
+      this.redraw(t);
+      if (isDominoDone(this.level, this.state)) {
+        this.finish();
+        return;
+      }
+      this.pointAtNext();
+    }
+
+    /** 链子断了（零惩罚）：只是回到起头，指一指岸边那处火种 */
+    private broken(link: ChainDominoLink): void {
+      this.idleMs = 0;
+      this.ctx.services.audio.tone(240, 200);
+      this.ripple(link.x, link.y, 52, THEME.inkSoft);
+      this.ctx.emit('beat:enter', { beatId: 'chain:break:' + this.state.breaks });
+      this.showHint(this.level.breakLine, 2600, CHAIN_DOMINO.hintY);
+      this.pointAtNext();
+    }
+
+    /** 还轮不到这一环（零惩罚）：只是没进展，指一指该动的地方 */
+    private rejected(link: ChainDominoLink): void {
+      this.lastWrongAt = this.now();
+      this.idleMs = 0;
+      this.sfx('tap');
+      this.ripple(link.x, link.y, 48, THEME.inkSoft);
+      this.ctx.emit('beat:enter', { beatId: 'chain:reject:' + link.id });
+      this.showHint(this.level.hint, 2200, CHAIN_DOMINO.hintY);
+      this.pointAtNext();
+    }
+
+    /** 点了空处：只是没收获 —— 不扣星、不结束 */
+    private nothing(x: number, y: number): void {
+      if (this.done) return;
+      this.misses += 1;
+      this.idleMs = 0;
+      this.sfx('tap');
+      this.ripple(x, y, 44, THEME.inkSoft);
+      this.ctx.emit('beat:enter', { beatId: 'chain:miss:' + this.misses });
+    }
+
+    // ---------------- 收尾 ----------------
+
+    private finish(): void {
+      if (this.done || !isDominoDone(this.level, this.state)) return;
+      this.done = true;
+      this.clearRing();
+      this.hideHand();
+      this.sfx('complete');
+      this.cameras.main.flash(320, 255, 250, 220);
+      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
+      this.ctx.emit('beat:enter', { beatId: 'chain:domino:done' });
+      this.ctx.emit('choice:made', {
+        beatId: 'chain:light',
+        choiceId: 'done',
+        correct: true,
+        latencyMs: this.now(),
+      });
+      this.redraw(this.now());
+      const reveal = cfg.reveal;
+      if (reveal !== undefined) {
+        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, CHAIN_DOMINO.hintY));
+      }
+      this.time.delayedCall(cfg.finaleHoldMs ?? CHAIN_DOMINO.finaleHoldMs, () =>
+        this.scene.start(cfg.nextSceneKey),
+      );
+    }
+
+    // ---------------- 小手与提示 ----------------
+
+    /** 把小手放到"该动的那一处"：链子没在走就去起头，走着就点亮下一环 */
+    private pointAtNext(): void {
+      if (this.done) return;
+      const target = this.nextTarget();
+      if (target === null) {
+        this.clearRing();
+        this.hideHand();
+        return;
+      }
+      this.clearRing();
+      const ring = this.add.graphics().setDepth(50);
+      ring.setPosition(target.x, target.y);
+      ring.lineStyle(9, THEME.gold, 0.95);
+      ring.strokeCircle(0, 0, target.radius + target.pad);
+      this.ring = ring;
+      this.tweens.add({
+        targets: ring,
+        scale: 1.14,
+        alpha: 0.4,
+        duration: 520,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      this.hideHand();
+      this.hand = createHand(this, target.x, target.y + target.radius + CHAIN_DOMINO.handDrop, 1.1);
+    }
+
+    private nextTarget(): { x: number; y: number; radius: number; pad: number } | null {
+      const move = nextDominoMove(this.level, this.state, this.now());
+      if (move === undefined) return null;
+      if (move.kind === 'ignite') {
+        return {
+          x: this.level.ignite.x,
+          y: this.level.ignite.y,
+          radius: this.level.ignite.radius,
+          pad: CHAIN_DOMINO.igniteRingPad,
+        };
+      }
+      return {
+        x: move.link.x,
+        y: move.link.y,
+        radius: move.link.radius,
+        pad: CHAIN_DOMINO.ringPad,
+      };
+    }
+
+    private clearRing(): void {
+      if (!this.ring) return;
+      this.tweens.killTweensOf(this.ring);
+      this.ring.destroy();
+      this.ring = null;
+    }
+
+    private hideHand(): void {
+      if (!this.hand) return;
+      this.tweens.killTweensOf(this.hand);
+      this.hand.destroy();
+      this.hand = null;
+    }
+
+    private ripple(x: number, y: number, radius: number, color: number): void {
+      const g = tapRipple(this, x, y, radius, color);
+      this.time.delayedCall(CHAIN_DOMINO.rippleMs, () => g.destroy());
+    }
+
+    // ---------------- 无头验证 ----------------
+
+    /**
+     * 无头验证：起头 → 一环一环点亮 —— 与孩子走的是同一条路
+     * （连"点在哪一环上"都走一遍命中判定）。
+     */
+    private runAutoplay(): void {
+      this.time.addEvent({
+        delay: CHAIN_DOMINO.autoplayStepMs,
+        loop: true,
+        callback: () => this.autoStep(),
+      });
+    }
+
+    private autoStep(): void {
+      if (this.done) return;
+      const move = nextDominoMove(this.level, this.state, this.now());
+      if (move === undefined) return;
+      if (move.kind === 'ignite') {
+        this.pressAt(this.level.ignite.x, this.level.ignite.y);
+        return;
+      }
+      this.pressAt(move.link.x, move.link.y);
+    }
+  };
+}
+
 /**
  * 连环：两种玩法共用一个场景键（SCENE_KEYS.chain），按 level.mode 分派。
  * - pass（假道伐虢）：借路 → 按顺序过关口 → 回师 —— 既有路径，一行未改；
@@ -1057,10 +1570,17 @@ export function createChainScene(
   ctx: GameContext,
   cfg: ChainStepConfig,
 ): Phaser.Types.Scenes.SceneType;
+// domino（连环计）：第三种玩法也挂在这个场景键上，按 level.mode 分派（pass / step 两条路径一行未改）。
 export function createChainScene(
   ctx: GameContext,
-  cfg: ChainConfig | ChainStepConfig,
+  cfg: ChainDominoConfig,
+): Phaser.Types.Scenes.SceneType;
+export function createChainScene(
+  ctx: GameContext,
+  cfg: ChainConfig | ChainStepConfig | ChainDominoConfig,
 ): Phaser.Types.Scenes.SceneType {
+  // domino 先判：pass / step 的两行判定一个字没动（domino 的 level 有自己的 ignite / links 字段）
+  if (cfg.level.mode === 'domino') return createDominoChainScene(ctx, cfg as ChainDominoConfig);
   if (cfg.level.mode === 'step') return createStepChainScene(ctx, cfg as ChainStepConfig);
   return createPassChainScene(ctx, cfg as ChainConfig);
 }

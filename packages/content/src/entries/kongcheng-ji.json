@@ -1,0 +1,29 @@
+{
+  "id": "kongcheng-ji",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "空城计",
+  "pinyin": "Kōng chéng jì",
+  "dynasty": "三国",
+  "era": "三国 · 建安二十四年",
+  "yearApprox": 219,
+  "source": {
+    "book": "《三十六计·败战计》",
+    "chapter": "空城计",
+    "quote": "虚者虚之，疑中生疑；刚柔之际，奇而复奇。"
+  },
+  "moral": "越是紧张，越不能乱动。",
+  "keywords": [
+    "沉住气",
+    "不乱动",
+    "让他自己起疑"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 32,
+    "set": 6
+  }
+}

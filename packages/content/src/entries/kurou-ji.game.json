@@ -1,0 +1,127 @@
+{
+  "figures": [
+    "黄盖",
+    "周瑜",
+    "曹操"
+  ],
+  "story": [
+    {
+      "id": "s1",
+      "title": "对面凭什么信",
+      "text": "黄盖要过江去，可曹操多疑：空着手来，凭什么信？",
+      "narration": "那年冬天，黄盖和周瑜商量好一个法子：假意过江，去找曹操。可曹操是个多疑的人 —— 一位老将空着手过来，他凭什么信？",
+      "illustration": "none"
+    },
+    {
+      "id": "s2",
+      "title": "先送出去一份",
+      "text": "他把自己营里的一份，当着大家的面装上船，送过江去。",
+      "narration": "黄盖说：光写信不够，得让人看见一份真的。他把自己营里的粮草当众分出一份，装船运过江去。对岸的探子天天望着江面 —— 送出去的那一份，谁在对面都看得见。",
+      "illustration": "none"
+    }
+  ],
+  "keyMoment": {
+    "beatId": "s2",
+    "question": "要让对面相信黄盖是真心来投，最有用的是哪一样？",
+    "options": [
+      {
+        "id": "letter",
+        "text": "多写几封信，说自己真心",
+        "isCanonical": false,
+        "hint": "信上写得再满，对面也看不见。"
+      },
+      {
+        "id": "send",
+        "text": "当众把自己营里的一份送过江",
+        "isCanonical": true,
+        "hint": ""
+      },
+      {
+        "id": "boat",
+        "text": "把船造得更大更多",
+        "isCanonical": false,
+        "hint": "船大船小，跟信不信没关系。"
+      }
+    ],
+    "reveal": "说一百句真心，不如把看得见的一份送出去 —— 看见了，才肯信。"
+  },
+  "misconceptions": [
+    "话说得越满，别人越相信",
+    "真心不用拿出来，别人自然会知道"
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "kind": "recall",
+      "question": "黄盖要让对面相信什么？",
+      "options": [
+        "他是真心要过去投靠",
+        "他有很多条船",
+        "他不认识周瑜"
+      ],
+      "answer": 0,
+      "explanation": "他要让曹操相信：自己是真的要过江去。"
+    },
+    {
+      "id": "q2",
+      "kind": "recall",
+      "question": "他为什么把自己营里的一份送过江去？",
+      "options": [
+        "让对面看得见，才肯信他是真心",
+        "因为自己营里用不完",
+        "为了换回更多的粮草"
+      ],
+      "answer": 0,
+      "explanation": "送出去的那一份是真的、看得见的 —— 看见了，对面才肯信。"
+    },
+    {
+      "id": "q3",
+      "kind": "transfer",
+      "question": "同桌不信你真的愿意和他一起值日。怎么办最像黄盖的做法？",
+      "options": [
+        "再说一遍“我真的愿意”",
+        "先把扫帚拿过来，和他一起扫起来",
+        "等他扫完了再解释"
+      ],
+      "answer": 1,
+      "explanation": "做出来的那一件小事谁都看得见 —— 比说十遍都管用。"
+    }
+  ],
+  "game": {
+    "template": "split",
+    "stages": [
+      {
+        "template": "split",
+        "levelScript": {
+          "total": 8,
+          "bins": [
+            {
+              "id": "kept",
+              "kind": "kept",
+              "x": 110,
+              "y": 700,
+              "label": "留给自己的"
+            },
+            {
+              "id": "given",
+              "kind": "given",
+              "x": 640,
+              "y": 700,
+              "label": "送出去的"
+            }
+          ],
+          "initialLeft": 8,
+          "minPerSide": 1,
+          "audience": {
+            "watchedBinId": "given",
+            "happyAt": 5,
+            "happyLine": "送过来的这一份是真的 —— 我信了。",
+            "angryLine": "就这么一点，哪像真心来投？",
+            "greedyLine": "全送出去了，自己人拿什么过冬。"
+          },
+          "hint": "挪木牌，送到他信"
+        }
+      }
+    ]
+  }
+}

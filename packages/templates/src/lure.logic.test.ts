@@ -7,6 +7,14 @@ import {
   placeBait, prizeHit, releaseGrab, tradeProgress, tradeStart,
 } from './lure.logic';
 import type { LureDecoyLevel, LureDecoyState, LureTradeLevel, LureTradeState } from './lure.logic';
+// 第六辑 · 第 31 计 美人计（favor）：新判定单独 import —— 上面老模式那几行一行没动
+import { LureFavorSchema } from './schemas';
+import type { LureFavorLevel } from './schemas';
+import {
+  FAVOR_TIMING, favorProgress, favorStart, favorsGiven, gazeAt, giftAt, giftById, glanceAt,
+  glanceCycleMs, glanceLeftMs, glanceOtherMs, glanceMs, glancePlan, hintGift, isFavorDone,
+  nextGiftToOffer, offerFavor, wantedGift,
+} from './lure.logic';
 
 /** 第 15 计 · 调虎离山：三个诱饵点，只有一个够久的那两个拿得走 */
 const decoy: LureDecoyLevel = LureDecoySchema.parse({
@@ -490,5 +498,254 @@ describe('schema：这一关必须有解（内容写错不该等孩子玩到一�
     expect(trade.needed).toBe(6);
     expect(decoy.hint.length).toBeLessThanOrEqual(24);
     expect(trade.hint.length).toBeLessThanOrEqual(24);
+  });
+});
+
+// ---------------- 第六辑 · 第 31 计 美人计（favor）：上面那一份老模式的测试一个字没动 ----------------
+
+/** 第 31 计 · 美人计：手里三样东西，他最在意的是丝绸 —— 线索只在他的目光里 */
+const favor: LureFavorLevel = LureFavorSchema.parse({
+  mode: 'favor',
+  gifts: [
+    { id: 'horse', x: 170, y: 1010, radius: 88, kind: 'horse', speak: '这匹骏马跑得飞快' },
+    { id: 'silk', x: 375, y: 1010, radius: 88, kind: 'silk', speak: '这匹丝绸又轻又软' },
+    { id: 'sword', x: 580, y: 1010, radius: 88, kind: 'sword', speak: '这口宝剑亮闪闪的' },
+  ],
+  target: { x: 375, y: 520, radius: 96, wants: 'silk' },
+  needOffers: 1,
+  refuseLine: '他把东西还了回来',
+  hint: '先看他在看什么，再送那一样',
+});
+
+/** 把一整圈的目光按 50 毫秒采一遍：每一样东西各被看了多久（教学点的机器验法） */
+function gazeTotals(level: LureFavorLevel): Record<string, number> {
+  const totals: Record<string, number> = {};
+  const step = 50;
+  for (let t = 0; t < glanceCycleMs(level); t += step) {
+    const gaze = glanceAt(level, t);
+    if (gaze === null) continue;
+    totals[gaze.id] = (totals[gaze.id] ?? 0) + step;
+  }
+  return totals;
+}
+
+describe('美人计 · 教育点：他的目光落在最在意的那一样上（"先弄清别人在意什么"）', () => {
+  it('一个周期：先落在它上面（最长），再把另外两样各扫一眼，最后看别处', () => {
+    const plan = glancePlan(favor);
+    expect(plan.map((step) => step.gift?.id ?? 'away')).toEqual(['silk', 'horse', 'sword', 'away']);
+    expect(plan.map((step) => step.ms)).toEqual([
+      glanceMs, glanceOtherMs, glanceOtherMs, FAVOR_TIMING.glanceAwayMs,
+    ]);
+    expect(glanceCycleMs(favor)).toBe(glanceMs + glanceOtherMs * 2 + FAVOR_TIMING.glanceAwayMs);
+  });
+
+  it('被看得最久的就是他在意的那一样 —— 而且比别的东西久得多（看得出来，不是猜出来）', () => {
+    const totals = gazeTotals(favor);
+    const wanted = wantedGift(favor);
+    expect(wanted?.id).toBe('silk');
+    expect(wanted?.kind).toBe(favor.target.wants);
+    const ranked = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+    expect(ranked[0]?.[0]).toBe('silk');
+    for (const gift of favor.gifts) {
+      if (gift.id === 'silk') continue;
+      expect(totals['silk']!).toBeGreaterThanOrEqual((totals[gift.id] ?? 0) * 3);
+    }
+  });
+
+  it('目光周期性回到它上面：一圈走完还是它（t 回看开局前也算一圈的开头）', () => {
+    const cycle = glanceCycleMs(favor);
+    expect(glanceAt(favor, 0)?.id).toBe('silk');
+    expect(glanceAt(favor, cycle)?.id).toBe('silk');
+    expect(glanceAt(favor, cycle * 3)?.id).toBe('silk');
+    expect(glanceAt(favor, -1000)?.id).toBe('silk');
+  });
+
+  it('看着别处的时候就是"谁也没看"（null）—— 不许随便指一样冒充', () => {
+    const away = glanceCycleMs(favor) - 10;
+    expect(glanceAt(favor, away)).toBeNull();
+    expect(gazeAt(favor, away).gift).toBeNull();
+  });
+
+  it('每一段都是左闭右开：剩下的时间一路减到 0，再切到下一段', () => {
+    expect(glanceLeftMs(favor, 0)).toBe(glanceMs);
+    expect(glanceLeftMs(favor, glanceMs - 1)).toBe(1);
+    expect(glanceLeftMs(favor, glanceMs)).toBe(glanceOtherMs);
+    expect(gazeAt(favor, glanceMs).gift?.id).toBe('horse');
+    expect(gazeAt(favor, glanceMs).totalMs).toBe(glanceOtherMs);
+  });
+
+  it('换一样 wants，他就盯着换的那一样 —— 线索只来自关卡数据，不写死在代码里', () => {
+    const sword = LureFavorSchema.parse({
+      ...favor,
+      target: { ...favor.target, wants: 'sword' },
+    });
+    expect(wantedGift(sword)?.id).toBe('sword');
+    expect(glanceAt(sword, 0)?.id).toBe('sword');
+    const totals = gazeTotals(sword);
+    expect(totals['sword']!).toBeGreaterThan(totals['silk'] ?? 0);
+    expect(totals['sword']!).toBeGreaterThan(totals['horse'] ?? 0);
+  });
+});
+
+describe('美人计 · 先看清他在意什么，再送对那一样', () => {
+  it('送对一样：他收下了（kind 对上 wants 才算）', () => {
+    const state = favorStart();
+    expect(offerFavor(favor, state, 'silk')).toBe('loved');
+    expect(favorsGiven(state)).toBe(1);
+    expect(state.lastLoved).toBe(true);
+    expect(state.offered).toEqual(['silk']);
+    expect(isFavorDone(favor, state)).toBe(true);
+    expect(favorProgress(favor, state)).toBe(1);
+  });
+
+  it('送错：东西回到手里，只多记一笔 —— 不扣星、不结束（零惩罚）', () => {
+    const state = favorStart();
+    expect(offerFavor(favor, state, 'sword')).toBe('refused');
+    expect(state.lastLoved).toBe(false);
+    expect(favorsGiven(state)).toBe(0);
+    expect(state.offered).toEqual(['sword']);
+    expect(state.offers).toBe(1);
+    expect(isFavorDone(favor, state)).toBe(false);
+    expect(favorProgress(favor, state)).toBe(0);
+    // 三样都试过（同一样也可以再送一遍）也只是三笔账
+    expect(offerFavor(favor, state, 'horse')).toBe('refused');
+    expect(offerFavor(favor, state, 'sword')).toBe('refused');
+    expect(state.offers).toBe(3);
+    expect(state.offered).toEqual(['sword', 'horse', 'sword']);
+    expect(favorsGiven(state)).toBe(0);
+    expect(isFavorDone(favor, state)).toBe(false);
+  });
+
+  it('送错之后照样能送对：这一关永远不会被关掉', () => {
+    const state = favorStart();
+    offerFavor(favor, state, 'horse');
+    offerFavor(favor, state, 'sword');
+    expect(offerFavor(favor, state, 'silk')).toBe('loved');
+    expect(isFavorDone(favor, state)).toBe(true);
+    expect(state.offers).toBe(3);
+    expect(favorsGiven(state)).toBe(1);
+  });
+
+  it('不存在的礼物 / 已经打动他之后：什么都不改', () => {
+    const state = favorStart();
+    expect(offerFavor(favor, state, 'ghost')).toBe('refused');
+    expect(state.offers).toBe(0);
+    expect(state.offered).toEqual([]);
+    expect(giftById(favor, 'ghost')).toBeUndefined();
+    expect(offerFavor(favor, state, 'silk')).toBe('loved');
+    const after = { ...state, offered: [...state.offered] };
+    expect(offerFavor(favor, state, 'horse')).toBe('refused');
+    expect(state).toEqual(after);
+  });
+
+  it('needOffers 2：要送对两次才打动他（内容是数据说了算的）', () => {
+    const twice = LureFavorSchema.parse({ ...favor, needOffers: 2 });
+    const state = favorStart();
+    expect(offerFavor(twice, state, 'silk')).toBe('loved');
+    expect(isFavorDone(twice, state)).toBe(false);
+    expect(favorProgress(twice, state)).toBeCloseTo(0.5);
+    expect(offerFavor(twice, state, 'silk')).toBe('loved');
+    expect(isFavorDone(twice, state)).toBe(true);
+    expect(favorsGiven(state)).toBe(2);
+  });
+
+  it('favor 有自己的账本（老的两套账本一个字没动）', () => {
+    const state = favorStart();
+    expect(state).toEqual({
+      mode: 'favor', loved: 0, offered: [], offers: 0, lastLoved: null, done: false,
+    });
+    expect(lureStart(decoy).mode).toBe('decoy');
+    expect(lureStart(trade).mode).toBe('trade');
+  });
+});
+
+describe('美人计 · 点选与小手：手指粗也能点得到', () => {
+  it('三样东西的圆心与边缘都算，离得远就是没点着', () => {
+    expect(giftAt(favor, 375, 1010)?.id).toBe('silk');
+    expect(giftAt(favor, 170, 1010)?.id).toBe('horse');
+    expect(giftAt(favor, 170 + 88, 1010)?.id).toBe('horse');
+    expect(giftAt(favor, 375 + 88, 1010)?.id).toBe('silk');
+    expect(giftAt(favor, 170, 1010 - 89)).toBeUndefined();
+    expect(giftAt(favor, 375, 300)).toBeUndefined();
+    expect(giftAt(favor, 375, 1010 - 88 - 30, 44)?.id).toBe('silk');
+  });
+
+  it('一次都还没递过：小手指他此刻正在看的那一样 —— 教的就是"看他在看什么"', () => {
+    const state = favorStart();
+    expect(hintGift(favor, state, 0)?.id).toBe('silk');
+    expect(hintGift(favor, state, glanceMs)?.id).toBe('horse'); // 这一瞬他扫到马
+    // 他正看着别处就指还没递过的那样 —— 绝不提示"哪一样才对"
+    const away = glanceCycleMs(favor) - 10;
+    expect(glanceAt(favor, away)).toBeNull();
+    expect(hintGift(favor, state, away)?.id).toBe('horse');
+  });
+
+  it('试过一次之后：小手直接指他最在意的那一样', () => {
+    const state = favorStart();
+    offerFavor(favor, state, 'horse');
+    expect(nextGiftToOffer(favor, state)?.id).toBe('silk');
+    // 这一瞬他的目光在马上，小手却指丝绸 —— 试过之后是"陪着走完最后一步"
+    expect(glanceAt(favor, glanceMs)?.id).toBe('horse');
+    expect(hintGift(favor, state, glanceMs)?.id).toBe('silk');
+    offerFavor(favor, state, 'silk');
+    expect(nextGiftToOffer(favor, state)?.id).toBe('sword');
+  });
+});
+
+describe('美人计 · 无头验证：一局真的走得完（照场景 autoplay 的同一条路）', () => {
+  it('autoplay 直接送他最在意的那一样 —— 一次就成，绝不会转不完', () => {
+    const state = favorStart();
+    let offers = 0;
+    while (!isFavorDone(favor, state) && offers < 10) {
+      expect(offerFavor(favor, state, wantedGift(favor)?.id ?? '')).toBe('loved');
+      offers += 1;
+    }
+    expect(offers).toBe(1);
+    expect(favorsGiven(state)).toBe(1);
+    expect(state.done).toBe(true);
+  });
+
+  it('这一关没有倒计时：一直不送也不会失败（零惩罚）', () => {
+    const state = favorStart();
+    const cycle = glanceCycleMs(favor);
+    expect(glanceAt(favor, cycle * 100)?.id).toBe('silk'); // 目光一直在走
+    expect(giftAt(favor, 375, 1010)?.id).toBe('silk'); // 想送随时能送
+    expect(isFavorDone(favor, state)).toBe(false);
+    expect(favorsGiven(state)).toBe(0);
+  });
+});
+
+describe('美人计 · schema：这一关必须有解（内容写错不该等孩子玩到一半才发现）', () => {
+  it('wants 对不上任何 kind → 直接报错', () => {
+    expect(() =>
+      LureFavorSchema.parse({ ...favor, target: { ...favor.target, wants: 'jade' } }),
+    ).toThrow();
+  });
+
+  it('两样东西 kind 一样 → 直接报错（孩子分不出哪样才是他在意的）', () => {
+    expect(() =>
+      LureFavorSchema.parse({
+        ...favor,
+        gifts: [favor.gifts[0]!, { ...favor.gifts[1]!, kind: 'horse' }],
+      }),
+    ).toThrow();
+  });
+
+  it('礼物 id 不能重复', () => {
+    expect(() =>
+      LureFavorSchema.parse({
+        ...favor,
+        gifts: [favor.gifts[0]!, { ...favor.gifts[1]!, id: 'horse' }],
+      }),
+    ).toThrow();
+  });
+
+  it('关卡脚本里长什么样（与内容 JSON 共用的口径）', () => {
+    expect(favor.gifts.map((gift) => gift.kind)).toEqual(['horse', 'silk', 'sword']);
+    expect(favor.target).toMatchObject({ x: 375, y: 520, radius: 96, wants: 'silk' });
+    expect(favor.needOffers).toBe(1);
+    expect(favor.hint.length).toBeLessThanOrEqual(24);
+    expect(favor.refuseLine.length).toBeLessThanOrEqual(48);
+    for (const gift of favor.gifts) expect(gift.speak.length).toBeLessThanOrEqual(48);
   });
 });

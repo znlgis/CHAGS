@@ -1,0 +1,92 @@
+{
+  "figures": [
+    "Huang Gai",
+    "Zhou Yu",
+    "Cao Cao"
+  ],
+  "story": [
+    {
+      "title": "Why Would He Believe It?",
+      "text": "Huang Gai meant to cross the river. Why would Cao Cao believe him?",
+      "narration": "That winter, Huang Gai and Zhou Yu agreed on a plan: he would pretend to cross the river and go over to Cao Cao. But Cao Cao trusted no one easily — an old general arriving empty-handed, why should he believe him?"
+    },
+    {
+      "title": "Send Something Over First",
+      "text": "He loaded a share of his own camp onto boats and sent it across.",
+      "narration": "Huang Gai said: a letter is not enough; they must see something real. He set aside a share of his own camp's grain in front of everyone, loaded it onto boats and sent it across the river. The scouts on the far bank watched the water every day — that share, given away, was plain for anyone over there to see."
+    }
+  ],
+  "keyMoment": {
+    "question": "What would best convince the far bank that Huang Gai truly meant to come over?",
+    "options": [
+      {
+        "text": "Write more letters saying he means it",
+        "hint": "No matter how full the letters are, the far bank cannot see them."
+      },
+      {
+        "text": "Give away a share of his own camp, in front of everyone",
+        "hint": ""
+      },
+      {
+        "text": "Build more and bigger boats",
+        "hint": "Big boats or small, it has nothing to do with belief."
+      }
+    ],
+    "reveal": "A hundred words of sincerity are worth less than one share sent where it can be seen — seeing it, they believed."
+  },
+  "misconceptions": [
+    "The bigger the talk, the more people believe it",
+    "Sincerity needs no showing; people will simply know"
+  ],
+  "quiz": [
+    {
+      "question": "What did Huang Gai want the far bank to believe?",
+      "options": [
+        "That he truly meant to come over",
+        "That he had many boats",
+        "That he did not know Zhou Yu"
+      ],
+      "explanation": "He wanted Cao Cao to believe that he really was crossing the river to join him."
+    },
+    {
+      "question": "Why did he send a share of his own camp across the river?",
+      "options": [
+        "So the far bank could see it and believe he meant it",
+        "Because his own camp had more than it could use",
+        "To trade it back for more grain"
+      ],
+      "explanation": "That share was real and could be seen — and seeing it, the far bank believed."
+    },
+    {
+      "question": "Your deskmate does not believe you really want to share the cleaning duty. What is closest to Huang Gai's way?",
+      "options": [
+        "Say 'I really do want to' one more time",
+        "Pick up a broom first and start sweeping together",
+        "Explain it after they finish sweeping"
+      ],
+      "explanation": "One small thing done is plain for anyone to see — worth more than saying it ten times."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "bins": [
+            {
+              "label": "We keep"
+            },
+            {
+              "label": "We give"
+            }
+          ],
+          "audience": {
+            "happyLine": "This share is real — I believe him.",
+            "angryLine": "Only this much? That is no true surrender.",
+            "greedyLine": "All sent — what will his own camp eat?"
+          },
+          "hint": "Slide until he believes"
+        }
+      }
+    ]
+  }
+}

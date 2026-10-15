@@ -10,6 +10,13 @@ import {
 import type { LureDecoyState, LureTradeState } from './lure.logic';
 import type { LureBait, LureLevel, LureOffer, LureReturn } from './schemas';
 import type { SessionState } from './session';
+// 第六辑 · 第 31 计 美人计（favor）：新判定单独 import —— 上面那一行老模式的 import 一字没动
+import {
+  FAVOR_TIMING, favorProgress, favorStart, favorsGiven, gazeAt, giftAt, hintGift, isFavorDone,
+  offerFavor, wantedGift,
+} from './lure.logic';
+import type { LureFavorState } from './lure.logic';
+import type { LureFavorLevel, LureGift } from './schemas';
 
 /**
  * 诱饵模板自己的布局与手感常量 —— 不挤进 layout.ts，免得新模板之间互相踩。
@@ -128,7 +135,7 @@ export interface LureConfig {
  *   所以这一关考的不是手快，是"挑一个能空够久的诱饵点"。
  * - **零惩罚**：选错诱饵点只是白等一场，挑错砖只是再挑一次 —— 不扣星、不结束、不锁操作。
  */
-export function createLureScene(ctx: GameContext, cfg: LureConfig): Phaser.Types.Scenes.SceneType {
+function createLureDecoyTradeScene(ctx: GameContext, cfg: LureConfig): Phaser.Types.Scenes.SceneType {
   return class LureScene extends BaseScene {
     private level: LureLevel = cfg.level;
     private decoyState: LureDecoyState = decoyStart();
@@ -590,4 +597,459 @@ export function createLureScene(ctx: GameContext, cfg: LureConfig): Phaser.Types
       });
     }
   };
+}
+
+// ---------------- 第六辑 · 第 31 计 美人计（favor）：先看清他在意什么，再送对那一样 ----------------
+
+/**
+ * 美人计自己的布局与手感常量 —— 与 decoy / trade 的那一份（LURE）分开，
+ * 免得新模式的几个数挤进老模式的常量里互相踩。
+ * 那几个"看多久"（glanceMs / glanceOtherMs / glanceAwayMs）来自 lure.logic，
+ * 单测、画面与无头验证用的是同一份。
+ */
+export const LURE_FAVOR = {
+  /** 点礼物 / 点他的宽容度：手指粗也能点到 */
+  tapForgive: 56,
+  /**
+   * 他头顶那根条：他的目光此刻停在哪一样上、还要停多久。
+   * 高度是量过的：再高就压住提示气泡（气泡中心在 268），再低就碰到他的冕。
+   */
+  gazeBar: { w: 200, h: 24, aboveTarget: 110 },
+  /** 被看着的那一样外面那圈金环离它多远 */
+  gazeRing: 26,
+  /** 刚递出去那一下：那一圈从多远处扩出去（收下 / 还回来都按它演） */
+  offerRing: 70,
+  /** 开局过一会儿就把小手放出来（不让孩子干等） */
+  introHintMs: 1400,
+  /** 多久没动静就把提示与小手放出来 */
+  idleMs: FAVOR_TIMING.idleMs,
+  /** 打动他之后看一眼再进典故卡 */
+  finaleHoldMs: FAVOR_TIMING.finaleHoldMs,
+  /** 提示气泡的高度 */
+  hintY: FAVOR_TIMING.hintY,
+} as const;
+
+/**
+ * 交给游戏画的 favor 那一半：他此刻在看哪一样、送出去的是哪一样、他收下了没有。
+ * （怎么画"他""那几样东西""他看过去的那道目光"全在游戏包里。）
+ */
+export interface LureFavorStage {
+  mode: 'favor';
+  /** 这一局过了多久（墙钟，从开局算起） */
+  elapsedMs: number;
+  /** 他此刻在看哪一样东西（看着别处 = null）—— **这一关唯一的线索** */
+  gaze: LureGift | null;
+  /** 目光在这一样上还要停多久（画面上那根条按它走：停得越久，越说明他在意） */
+  gazeLeftMs: number;
+  /** 目光在这一样上原本要停多久 */
+  gazeTotalMs: number;
+  /** 递出去过的东西（按先后；送错的也在里面） */
+  offered: string[];
+  /** 刚刚递出去的是哪一样；还没递过 = null */
+  lastGift: LureGift | null;
+  /** 刚刚那一下他收下了没有；还没递过 = null */
+  lastLoved: boolean | null;
+  /** 刚刚那一下过去多久了 —— 表演按它衰减 */
+  sinceOfferMs: number;
+  /** 他收下过几次 */
+  loved: number;
+  /** 要送对几次才算打动他 */
+  needed: number;
+  /** 打动了几成（0..1） */
+  ratio: number;
+  /** 打动他了 */
+  done: boolean;
+}
+
+export interface LureFavorApi {
+  scene: Phaser.Scene;
+  stage: LureFavorStage;
+}
+
+export interface LureFavorConfig {
+  level: LureFavorLevel;
+  session: SessionState;
+  nextSceneKey: string;
+  /** 顶栏上的名字；不传就用内容自己的标题 */
+  title?: string;
+  /** 这个世界：他坐在哪儿、屋里是什么样子 —— 画一次 */
+  drawWorld: (g: Phaser.GameObjects.Graphics, level: LureFavorLevel) => void;
+  /** 每帧重画：他此刻在看哪一样、那几样东西、他手里收下了什么 */
+  drawStage: (g: Phaser.GameObjects.Graphics, state: LureFavorStage, level: LureFavorLevel) => void;
+  /** 递出去那一下：他收下了（loved）还是把东西还了回来（refused）—— 由游戏包自己演 */
+  onOffer?: (gift: LureGift, verdict: 'loved' | 'refused', api: LureFavorApi) => void;
+  drawFinale?: (g: Phaser.GameObjects.Graphics, state: LureFavorStage, level: LureFavorLevel) => void;
+  /** 打动他之后念的那句话（关键抉择点的揭晓语） */
+  reveal?: string;
+  finaleHoldMs?: number;
+}
+
+/** 两个模式（老的两条路 + 新的一条）的配置合起来 —— createLureScene 按 level.mode 分派 */
+export type LureAnyConfig = LureConfig | LureFavorConfig;
+
+/**
+ * 美人计：**先看清他最在意什么，再送对那一样**。
+ *
+ * 四条刻意的设计：
+ * - **判定全在 lure.logic 里**：场景只把墙钟喂给 gazeAt / offerFavor，
+ *   单测与画面用的是同一份"他的目光落在哪儿"—— 所以"看得出他在意什么"不靠美术、也不靠文案。
+ * - **线索是看得见的**：他头顶那根条 + 被看着的那样东西外面那圈金环，都由同一个 gaze 画出来；
+ *   停得最久的那一样就是他在意的（别的东西只被扫一眼就过去了）。
+ * - **送错只是白送**：东西回到手里（refused），他说一句 refuseLine ——
+ *   不扣星、不结束、不锁操作，连"试过几样"都只是记账。
+ * - **没有倒计时**：这一关考的是"看"，不是手快。孩子想看多久就看多久。
+ */
+export function createLureFavorScene(
+  ctx: GameContext,
+  cfg: LureFavorConfig,
+): Phaser.Types.Scenes.SceneType {
+  return class LureFavorScene extends BaseScene {
+    private level: LureFavorLevel = cfg.level;
+    private state: LureFavorState = favorStart();
+    private startedAt = 0;
+    private finished = false;
+    private lastGift: LureGift | null = null;
+    private lastLoved: boolean | null = null;
+    private lastOfferAt = Number.NEGATIVE_INFINITY;
+    private idleMs = 0;
+    private worldGfx: Phaser.GameObjects.Graphics | null = null;
+    private stageGfx: Phaser.GameObjects.Graphics | null = null;
+    private markGfx: Phaser.GameObjects.Graphics | null = null;
+    private finaleGfx: Phaser.GameObjects.Graphics | null = null;
+    private ring: Phaser.GameObjects.Graphics | null = null;
+    private hand: Phaser.GameObjects.Graphics | null = null;
+
+    constructor() {
+      super(SCENE_KEYS.lure, ctx);
+    }
+
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.lure });
+      this.level = cfg.level;
+      this.state = favorStart();
+      this.startedAt = this.ctx.services.now();
+      this.finished = false;
+      this.lastGift = null;
+      this.lastLoved = null;
+      this.lastOfferAt = Number.NEGATIVE_INFINITY;
+      this.idleMs = 0;
+      this.ring = null;
+      this.hand = null;
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(30);
+      this.markGfx = this.add.graphics().setDepth(60);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onDown(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.showHint(this.level.hint, 2600, LURE_FAVOR.hintY);
+        this.time.delayedCall(LURE_FAVOR.introHintMs, () => this.pointAtNext());
+      }
+    }
+
+    private now(): number {
+      return Math.max(0, this.ctx.services.now() - this.startedAt);
+    }
+
+    // ---------------- 每一帧 ----------------
+
+    /** 这一关没有"该动的时候"：每一帧只是把目光画出来，等他被送对那一次打动 */
+    private tick(delta: number): void {
+      const t = this.now();
+      if (!this.finished) {
+        this.idleMs += delta;
+        if (this.idleMs >= LURE_FAVOR.idleMs) {
+          this.idleMs = 0;
+          this.showHint(this.level.hint, 2600, LURE_FAVOR.hintY);
+          this.pointAtNext();
+        }
+        if (isFavorDone(this.level, this.state)) this.finish();
+      }
+      this.redraw(t);
+    }
+
+    private redraw(t: number): void {
+      const stage = this.stageState(t);
+      if (this.stageGfx) {
+        this.stageGfx.clear();
+        cfg.drawStage(this.stageGfx, stage, this.level);
+      }
+      this.drawMarks(t, stage);
+      if (this.finished && this.finaleGfx) {
+        this.finaleGfx.clear();
+        cfg.drawFinale?.(this.finaleGfx, stage, this.level);
+      }
+    }
+
+    private stageState(t: number): LureFavorStage {
+      const level = this.level;
+      const gaze = gazeAt(level, t);
+      return {
+        mode: 'favor',
+        elapsedMs: t,
+        gaze: gaze.gift,
+        gazeLeftMs: gaze.leftMs,
+        gazeTotalMs: gaze.totalMs,
+        offered: [...this.state.offered],
+        lastGift: this.lastGift,
+        lastLoved: this.lastLoved,
+        sinceOfferMs:
+          this.lastOfferAt === Number.NEGATIVE_INFINITY
+            ? Number.POSITIVE_INFINITY
+            : t - this.lastOfferAt,
+        loved: favorsGiven(this.state),
+        needed: level.needOffers,
+        ratio: favorProgress(level, this.state),
+        done: isFavorDone(level, this.state),
+      };
+    }
+
+    /**
+     * 判定之外那些"看得见"的：
+     * - 他被看着的那样东西外面一圈金环 + 他头顶一根条 —— **停得最久的那一样就是他在意的**；
+     * - 刚递出去那一下：收下了 = 金圈扩出去，还回来了 = 墨色的圈缩回来。
+     */
+    private drawMarks(t: number, stage: LureFavorStage): void {
+      const g = this.markGfx;
+      if (!g) return;
+      g.clear();
+      const level = this.level;
+
+      if (stage.gaze !== null && !stage.done) {
+        const gift = stage.gaze;
+        const ratio =
+          stage.gazeTotalMs > 0
+            ? Math.min(1, Math.max(0, stage.gazeLeftMs / stage.gazeTotalMs))
+            : 0;
+        // 那圈金环很轻地呼吸一下：他的目光正停在这一样上（越接近这一段末尾越淡）
+        const pulse = 1 + 0.05 * Math.sin(t / 240);
+        g.lineStyle(9, THEME.gold, 0.35 + 0.5 * ratio);
+        g.strokeCircle(gift.x, gift.y, (gift.radius + LURE_FAVOR.gazeRing) * pulse);
+        const { w, h, aboveTarget } = LURE_FAVOR.gazeBar;
+        const x = level.target.x - w / 2;
+        // 画在他头顶之上 —— 那是"他的目光"，不是他身上的一根血条
+        const y = level.target.y - level.target.radius - aboveTarget;
+        roundRect(g, x, y, w, h, h / 2, shade(THEME.card, 0.96), THEME.outline, 5);
+        const fill = (w - 12) * ratio;
+        if (fill > 6) {
+          roundRect(g, x + 6, y + 6, fill, h - 12, (h - 12) / 2, THEME.gold, null, 0);
+        }
+      }
+
+      // 打动了几成：他身边那圈金环（needOffers 次里收下了几次）
+      if (!stage.done && stage.ratio > 0) {
+        g.lineStyle(13, THEME.gold, 0.95);
+        g.beginPath();
+        g.arc(
+          level.target.x,
+          level.target.y,
+          level.target.radius + 34,
+          -Math.PI / 2,
+          -Math.PI / 2 + Math.PI * 2 * stage.ratio,
+          false,
+        );
+        g.strokePath();
+      }
+
+      // 刚递出去那一下：东西从他面前出去，或者回到手里
+      if (stage.lastGift !== null && stage.sinceOfferMs <= FAVOR_TIMING.offerFlashMs) {
+        const p = 1 - stage.sinceOfferMs / FAVOR_TIMING.offerFlashMs;
+        const color = stage.lastLoved === true ? THEME.gold : THEME.inkSoft;
+        g.lineStyle(10, color, 0.85 * p);
+        g.strokeCircle(
+          stage.lastGift.x,
+          stage.lastGift.y,
+          stage.lastGift.radius + LURE_FAVOR.offerRing * (1 - p) + 10,
+        );
+      }
+    }
+
+    // ---------------- 点 ----------------
+
+    private onDown(pointer: Phaser.Input.Pointer): void {
+      this.idleMs = 0;
+      if (this.finished) return;
+      const t = this.now();
+      const gift = giftAt(this.level, pointer.x, pointer.y, LURE_FAVOR.tapForgive);
+      if (gift !== undefined) this.giveGift(gift, t);
+    }
+
+    /**
+     * 递出一样东西（真实操作与无头验证走的是同一条路）。
+     * 送对 / 送错的判定只在 offerFavor 里，场景拿到的只是"他这一下的反应"。
+     */
+    private giveGift(gift: LureGift, t: number): void {
+      const level = this.level;
+      const verdict = offerFavor(level, this.state, gift.id);
+      this.lastGift = gift;
+      this.lastLoved = verdict === 'loved';
+      this.lastOfferAt = t;
+      this.idleMs = 0;
+      this.hideHand();
+      this.clearRing();
+      this.ctx.emit('beat:enter', { beatId: 'lure:favor:' + gift.id });
+      this.ctx.emit('choice:made', {
+        beatId: 'lure:favor',
+        choiceId: gift.kind,
+        // 送错了只是东西回到手里（零惩罚）—— correct 只用来复盘
+        correct: verdict === 'loved',
+        latencyMs: t,
+      });
+      if (verdict === 'loved') {
+        this.sfx('correct');
+        tapRipple(this, gift.x, gift.y, gift.radius + 18, THEME.gold);
+        sparkleAt(this, level.target.x, level.target.y - 120, THEME.gold, 6);
+        this.showHint(gift.speak, 2600, LURE_FAVOR.hintY);
+      } else {
+        // 他把东西还了回来：不扣星、不结束、不锁操作 —— 只是白送一次
+        this.sfx('tap');
+        tapRipple(this, gift.x, gift.y, gift.radius + 10, THEME.inkSoft);
+        this.showHint(level.refuseLine, 2200, LURE_FAVOR.hintY);
+      }
+      cfg.onOffer?.(gift, verdict, this.api(t));
+      this.redraw(t);
+    }
+
+    // ---------------- 收尾 ----------------
+
+    private finish(): void {
+      if (this.finished) return;
+      this.finished = true;
+      this.clearRing();
+      this.hideHand();
+      this.sfx('complete');
+      this.cameras.main.flash(320, 255, 250, 220);
+      sparkleAt(this, this.level.target.x, this.level.target.y, THEME.gold, 12);
+      cfg.session.total += 1;
+      cfg.session.correct += 1;
+      this.ctx.emit('beat:enter', { beatId: 'lure:done' });
+      this.redraw(this.now());
+      const reveal = cfg.reveal;
+      if (reveal !== undefined) {
+        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, LURE_FAVOR.hintY));
+      }
+      this.time.delayedCall(cfg.finaleHoldMs ?? LURE_FAVOR.finaleHoldMs, () =>
+        this.scene.start(cfg.nextSceneKey),
+      );
+    }
+
+    // ---------------- 小手与光圈 ----------------
+
+    /**
+     * 卡住时指哪儿（判定在 lure.logic 的 hintGift 里）：
+     * 一次都没递过 → 指他**此刻正在看**的那一样（"看他在看什么"就是这个游戏的线索）；
+     * 他正看着别处 → 指还没递过的那样；试过之后 → 指他最在意的那一样。
+     */
+    private pointAtNext(): void {
+      if (this.finished) return;
+      this.clearRing();
+      const gift = hintGift(this.level, this.state, this.now());
+      if (gift !== undefined) this.pointAt(gift.x, gift.y, gift.radius + 16);
+    }
+
+    private pointAt(x: number, y: number, radius: number): void {
+      const ring = this.add.graphics().setDepth(70);
+      ring.setPosition(x, y);
+      ring.lineStyle(9, THEME.gold, 0.95);
+      ring.strokeCircle(0, 0, radius);
+      this.ring = ring;
+      this.tweens.add({
+        targets: ring,
+        scale: 1.14,
+        alpha: 0.4,
+        duration: 520,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      this.showHandAt(x, y + radius + 34);
+    }
+
+    private showHandAt(x: number, y: number): void {
+      this.hideHand();
+      this.hand = createHand(this, x, y, 1.05);
+    }
+
+    private clearRing(): void {
+      if (!this.ring) return;
+      this.tweens.killTweensOf(this.ring);
+      this.ring.destroy();
+      this.ring = null;
+    }
+
+    private hideHand(): void {
+      if (!this.hand) return;
+      this.tweens.killTweensOf(this.hand);
+      this.hand.destroy();
+      this.hand = null;
+    }
+
+    private api(t: number): LureFavorApi {
+      return { scene: this, stage: this.stageState(t) };
+    }
+
+    // ---------------- 无头验证 ----------------
+
+    /**
+     * 无头验证：机器不用"看"—— 直接送他最在意的那一样（孩子得自己从他的目光里看出来），
+     * 而且走的是与孩子同一条 giveGift 的路（判定、记账、事件一个都不少）。
+     */
+    private runAutoplay(): void {
+      this.time.addEvent({
+        delay: FAVOR_TIMING.autoplayOfferMs,
+        loop: true,
+        callback: () => {
+          if (this.finished) return;
+          if (isFavorDone(this.level, this.state)) return;
+          const gift = wantedGift(this.level);
+          if (gift !== undefined) this.giveGift(gift, this.now());
+        },
+      });
+    }
+  };
+}
+
+/**
+ * 诱饵：**把他引开、先给一点点，或者先看清他在意什么**。
+ *
+ * 按 level.mode 分派到各自的场景。三条路共用同一条"零惩罚"的口径与同一套收尾流程
+ * （结算 → 揭晓语 → 下一幕）；**decoy / trade（第 15 计调虎离山、第 17 计抛砖引玉）
+ * 那条路径一个字没动** —— 它只是被 mode 判断包起来了（本文件里唯一被改到的一行，
+ * 是那个函数的名字）。
+ */
+// 重载（而不是只写联合类型）：老模式那一份配置照旧**原样**收上下文类型 ——
+// 游戏包里 drawWorld / drawStage 的参数不用手写类型，与扩展之前一字不差。
+export function createLureScene(
+  ctx: GameContext,
+  cfg: LureConfig,
+): Phaser.Types.Scenes.SceneType;
+export function createLureScene(
+  ctx: GameContext,
+  cfg: LureFavorConfig,
+): Phaser.Types.Scenes.SceneType;
+export function createLureScene(
+  ctx: GameContext,
+  cfg: LureAnyConfig,
+): Phaser.Types.Scenes.SceneType {
+  if (isFavorConfig(cfg)) return createLureFavorScene(ctx, cfg);
+  return createLureDecoyTradeScene(ctx, cfg);
+}
+
+/**
+ * 两个模式的配置是"按关卡模式分"的联合类型。
+ * 判别式藏在 cfg.level.mode 里（两层），所以显式写成类型守卫 ——
+ * 这样每条分支里 cfg 的类型都收窄成对应模式那一份，不用强转。
+ */
+function isFavorConfig(cfg: LureAnyConfig): cfg is LureFavorConfig {
+  return cfg.level.mode === 'favor';
 }

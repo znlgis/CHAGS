@@ -46,6 +46,12 @@ import enJiachiGame from './en/jiachi-budian.game.json';
 import enShangwuGame from './en/shangwu-chouti.game.json';
 import enShushangGame from './en/shushang-kaihua.game.json';
 import enFankeGame from './en/fanke-weizhu.game.json';
+import enMeirenGame from './en/meiren-ji.game.json';
+import enKongchengGame from './en/kongcheng-ji.game.json';
+import enFanjianGame from './en/fanjian-ji.game.json';
+import enKurouGame from './en/kurou-ji.game.json';
+import enLianhuanGame from './en/lianhuan-ji.game.json';
+import enZouGame from './en/zou-weishang.game.json';
 
 /**
  * 内容的**详情**译文（故事 / 关键抉择 / 复习题 / 关卡脚本文案）。
@@ -103,6 +109,12 @@ export const gamePatches: Partial<Record<Locale, Record<string, unknown>>> = {
     'shangwu-chouti': enShangwuGame,
     'shushang-kaihua': enShushangGame,
     'fanke-weizhu': enFankeGame,
+    'meiren-ji': enMeirenGame,
+    'kongcheng-ji': enKongchengGame,
+    'fanjian-ji': enFanjianGame,
+    'kurou-ji': enKurouGame,
+    'lianhuan-ji': enLianhuanGame,
+    'zou-weishang': enZouGame,
   },
 };
 

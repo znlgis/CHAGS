@@ -29,6 +29,8 @@ export interface SplitConfig {
   session: SessionState;
   nextSceneKey: string;
   titleKey: MessageKey;
+  /** 顶栏上的名字；不传就用 titleKey 的界面文案（计策游戏传自己的计名，与第五辑一致） */
+  title?: string;
   /** 这个世界：树、猴子、草地 */
   drawWorld?: (g: Phaser.GameObjects.Graphics, state: SplitStageState) => void;
   /** 每一颗是什么样子（默认画一颗圆圆的果子） */
@@ -91,7 +93,7 @@ export function createSplitScene(ctx: GameContext, cfg: SplitConfig): Phaser.Typ
 
     create(): void {
       this.ctx.emit('scene:enter', { scene: SCENE_KEYS.split });
-      this.drawBackdrop(this.tr(cfg.titleKey));
+      this.drawBackdrop(cfg.title ?? this.tr(cfg.titleKey));
 
       this.worldGfx = this.add.graphics().setDepth(1);
       this.ropeGfx = this.add.graphics().setDepth(3);

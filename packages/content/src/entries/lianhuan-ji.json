@@ -1,0 +1,29 @@
+{
+  "id": "lianhuan-ji",
+  "group": "stratagem",
+  "kind": "strategy",
+  "title": "连环计",
+  "pinyin": "Lián huán jì",
+  "dynasty": "东汉",
+  "era": "东汉 · 建安十三年",
+  "yearApprox": 208,
+  "source": {
+    "book": "《三十六计·败战计》",
+    "chapter": "连环计 —— 战例取自《三国演义》赤壁铁索连船（演义，非正史）",
+    "quote": "将多兵众，不可以敌，使其自累，以杀其势。在师中吉，承天宠也。"
+  },
+  "moral": "一件事接一件事地安排，中间不断，整件事才连得起来。",
+  "keywords": [
+    "一环接一环",
+    "按顺序",
+    "不断档"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "stratagem": {
+    "number": 35,
+    "set": 6
+  }
+}

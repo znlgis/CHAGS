@@ -29,6 +29,8 @@ export interface TraceConfig {
   session: SessionState;
   nextSceneKey: string;
   titleKey: MessageKey;
+  /** 顶栏上的名字；不传就用 titleKey 的界面文案（计策游戏传自己的计名，与第五辑一致） */
+  title?: string;
   /** 这个世界长什么样：洪水、山、村庄 */
   drawWorld?: (scene: Phaser.Scene) => void;
   /** 每帧重画：水位、流水、露出来的土地都按 metrics 画 */
@@ -76,7 +78,7 @@ export function createTraceScene(ctx: GameContext, cfg: TraceConfig): Phaser.Typ
 
     create(): void {
       this.ctx.emit('scene:enter', { scene: SCENE_KEYS.trace });
-      this.drawBackdrop(this.tr(cfg.titleKey));
+      this.drawBackdrop(cfg.title ?? this.tr(cfg.titleKey));
       cfg.drawWorld?.(this);
 
       this.stageGfx = this.add.graphics().setDepth(2);
