@@ -28,6 +28,12 @@ import enGean from './en/gean-guanhuo.json';
 import enXiaoli from './en/xiaoli-cangdao.json';
 import enLidai from './en/lidai-taojiang.json';
 import enShunshou from './en/shunshou-qianyang.json';
+import enDacao from './en/dacao-jingshe.json';
+import enJieshi from './en/jieshi-huanhun.json';
+import enDiaohu from './en/diaohu-lishan.json';
+import enYuqin from './en/yuqin-guzong.json';
+import enPaozhuan from './en/paozhuan-yinyu.json';
+import enQinzei from './en/qinzei-qinwang.json';
 
 /**
  * 典故内容的翻译补丁。结构镜像原文，只写需要翻译的字段。
@@ -64,6 +70,12 @@ export const patches: Partial<Record<Locale, Record<string, unknown>>> = {
     'xiaoli-cangdao': enXiaoli,
     'lidai-taojiang': enLidai,
     'shunshou-qianyang': enShunshou,
+    'dacao-jingshe': enDacao,
+    'jieshi-huanhun': enJieshi,
+    'diaohu-lishan': enDiaohu,
+    'yuqin-guzong': enYuqin,
+    'paozhuan-yinyu': enPaozhuan,
+    'qinzei-qinwang': enQinzei,
   },
 };
 

@@ -793,6 +793,13 @@ for (const [id, title] of [
   ['xiaoli-cangdao', '笑里藏刀'],
   ['lidai-taojiang', '李代桃僵'],
   ['shunshou-qianyang', '顺手牵羊'],
+  // 第三辑（攻战计 13–18）
+  ['dacao-jingshe', '打草惊蛇'],
+  ['jieshi-huanhun', '借尸还魂'],
+  ['diaohu-lishan', '调虎离山'],
+  ['yuqin-guzong', '欲擒故纵'],
+  ['paozhuan-yinyu', '抛砖引玉'],
+  ['qinzei-qinwang', '擒贼擒王'],
 ] as const) {
   test('三十六计 · ' + title + ' autoplay 全流程', async ({ page }) => {
     await page.goto('/?autoplay=1#/play/' + id);

@@ -25,6 +25,9 @@ export const SCENE_KEYS = {
   twoline: 'twoline',
   read: 'read',
   matchup: 'matchup',
+  probe: 'probe',
+  lure: 'lure',
+  chase: 'chase',
   quiz: 'quiz',
   reward: 'reward',
 } as const;

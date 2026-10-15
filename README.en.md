@@ -38,7 +38,7 @@ The collection's first-level structure is **groups**, defined in one place — `
 | Group | Games | Notes |
 |---|---|---|
 | 典故 `allusion` | **17** (all live) | One story, one game; sorted by year |
-| 三十六计 `stratagem` | **12** (Volume 1 · Advantageous 1–6, Volume 2 · Opportunistic 7–12) | Thirty-Six Stratagems, one game each; sorted by **stratagem number**, four more volumes to come |
+| 三十六计 `stratagem` | **18** (Volumes 1–3: 1–6, 7–12, 13–18) | Thirty-Six Stratagems, one game each; sorted by **stratagem number**, three more volumes to come |
 
 The hall and the album render one section per group, and **a group with no content yet does not
 disappear**: it shows up as "coming soon".
@@ -52,8 +52,8 @@ has no default, so a stratagem can never be filed under "stories" by accident.
 
 ## Current status
 
-**Seventeen stories plus the first twelve stratagems** are playable. `pnpm verify` is green (typecheck,
-lint, 546 unit tests, content check, build, size) and every game has a headless playthrough in the
+**Seventeen stories plus the first eighteen stratagems** are playable. `pnpm verify` is green (typecheck,
+lint, 702 unit tests, content check, build, size) and every game has a headless playthrough in the
 end-to-end suite (`?autoplay=1` — a new template only counts once it implements `runAutoplay()`).
 
 The shell stays small (Phaser is not in it). Each game's own business code is only a few KB;
@@ -313,9 +313,32 @@ Volume 2 adds **four new templates** (`show` / `twoline` / `read` / `matchup`) p
 mode on `window`; the design note is
 [三十六计-第二辑方案.md](docs/三十六计-第二辑方案.md).
 
+## Thirty-Six Stratagems · Volume 3: the six Offensive Stratagems (13–18)
+
+| # | Stratagem | What the child actually does | Template |
+|---|---|---|---|
+| 13 | Beating the Grass to Startle the Snake | Tap one clump of grass at a time — hit a snake and the clumps nearby are wrecked too (probing has a cost) | `probe` |
+| 14 | A Borrowed Name | Raise the old banner and the scattered people come back on their own | `borrow` (banner) |
+| 15 | Lure the Tiger from the Mountain | Draw the guard away, then take the thing in the gap — pick the bait that buys enough time | `lure` |
+| 16 | Let Him Go to Win Him Over | Hold to close in, release to fall back: keep the distance inside the band — too close and he fights, too far and he is gone | `chase` |
+| 17 | Cast a Brick to Attract Jade | Offer one small thing and he answers with something better — the plainest brick brings back the most | `lure` (trade) |
+| 18 | Catch the Ringleader | One row of identical figures: find the leader with a harmless reed arrow | `probe` (spot) |
+
+| Startle the snake | A borrowed name | Lure the tiger |
+|---|---|---|
+| ![grass](docs/screenshots/104-stratagem-13-dacao.png) | ![banner](docs/screenshots/105-stratagem-14-jieshi.png) | ![lure](docs/screenshots/106-stratagem-15-diaohu.png) |
+
+| Keep your distance | A brick for jade | Find the leader |
+|---|---|---|
+| ![chase](docs/screenshots/107-stratagem-16-yuqin.png) | ![brick](docs/screenshots/108-stratagem-17-paozhuan.png) | ![leader](docs/screenshots/109-stratagem-18-qinzei.png) |
+
+Volume 3 adds **three new templates** (`probe` / `lure` / `chase`) plus a `banner` mode on
+`borrow` (the `force` branch is untouched); the design note is
+[三十六计-第三辑方案.md](docs/三十六计-第三辑方案.md).
+
 ## Design principle: fewer words, more doing
 
-Across all twenty-nine games there is almost no teaching text on screen: the two opening lines of a story,
+Across all thirty-five games there is almost no teaching text on screen: the two opening lines of a story,
 and one short hint that appears when the level starts or when the child is stuck (tap the story page too early and it only says
 "Listen to the story first"). Everything else is shape, motion, sound and speech. Kids **work out** the idea
 instead of being told it.

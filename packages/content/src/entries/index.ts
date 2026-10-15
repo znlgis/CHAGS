@@ -28,6 +28,12 @@ import rawGean from './gean-guanhuo.json';
 import rawXiaoli from './xiaoli-cangdao.json';
 import rawLidai from './lidai-taojiang.json';
 import rawShunshou from './shunshou-qianyang.json';
+import rawDacao from './dacao-jingshe.json';
+import rawJieshi from './jieshi-huanhun.json';
+import rawDiaohu from './diaohu-lishan.json';
+import rawYuqin from './yuqin-guzong.json';
+import rawPaozhuan from './paozhuan-yinyu.json';
+import rawQinzei from './qinzei-qinwang.json';
 import { groupBy } from '../groups';
 import type { GameGroup } from '../groups';
 import { patchFor } from '../i18n';
@@ -74,6 +80,12 @@ export const entries: ContentEntry[] = [
   ContentEntrySchema.parse(rawXiaoli),
   ContentEntrySchema.parse(rawLidai),
   ContentEntrySchema.parse(rawShunshou),
+  ContentEntrySchema.parse(rawDacao),
+  ContentEntrySchema.parse(rawJieshi),
+  ContentEntrySchema.parse(rawDiaohu),
+  ContentEntrySchema.parse(rawYuqin),
+  ContentEntrySchema.parse(rawPaozhuan),
+  ContentEntrySchema.parse(rawQinzei),
 ];
 
 /** 取某条内容里指定模板的阶段脚本；缺了就早失败，别等玩到一半才发现 */

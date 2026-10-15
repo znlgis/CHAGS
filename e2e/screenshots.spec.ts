@@ -725,6 +725,13 @@ for (const [id, scene, file] of [
   ['xiaoli-cangdao', 'read', '101-stratagem-10-xiaoli.png'],
   ['lidai-taojiang', 'matchup', '102-stratagem-11-lidai.png'],
   ['shunshou-qianyang', 'window', '103-stratagem-12-shunshou.png'],
+  // 第三辑（攻战计 13–18）
+  ['dacao-jingshe', 'probe', '104-stratagem-13-dacao.png'],
+  ['jieshi-huanhun', 'borrow', '105-stratagem-14-jieshi.png'],
+  ['diaohu-lishan', 'lure', '106-stratagem-15-diaohu.png'],
+  ['yuqin-guzong', 'chase', '107-stratagem-16-yuqin.png'],
+  ['paozhuan-yinyu', 'lure', '108-stratagem-17-paozhuan.png'],
+  ['qinzei-qinwang', 'probe', '109-stratagem-18-qinzei.png'],
 ] as const) {
   test('capture stratagem screenshots: ' + id, async ({ page }) => {
     await page.setViewportSize({ width: 430, height: 932 });

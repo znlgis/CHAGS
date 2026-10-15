@@ -1043,7 +1043,251 @@ export const MatchupLevelSchema = z
     path: ['needWins'],
   });
 
+/* ---------------- probe：试探（打草惊蛇 / 擒贼擒王） ---------------- */
+
+export const ProbePatchSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 这丛草里有什么：snake 有蛇 / clear 空的 */
+  has: z.enum(['snake', 'clear']),
+});
+
+/** 打草惊蛇：一处一处敲过去；敲到蛇，附近的草丛一起被搅乱 —— 这就是"打草"的代价 */
+export const ProbeKnockSchema = z
+  .object({
+    mode: z.literal('knock'),
+    patches: z.array(ProbePatchSchema).min(3).max(6),
+    scareRadius: z.number().positive(),
+    /** 确认安全之后走到这里 */
+    exit: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.patches.map((p) => p.id)).size === l.patches.length, {
+    message: '草丛的 id 不能重复',
+    path: ['patches'],
+  })
+  .refine((l) => l.patches.some((p) => p.has === 'clear'), {
+    message: '一处安全的草丛都没有 —— 这一关不可能过',
+    path: ['patches'],
+  })
+  .refine(
+    (l) => {
+      const snakes = l.patches.filter((p) => p.has === 'snake');
+      return l.patches
+        .filter((p) => p.has === 'clear')
+        .some((safe) => snakes.every((s) => Math.hypot(safe.x - s.x, safe.y - s.y) > l.scareRadius));
+    },
+    {
+      message: '每一处安全的草丛都落在某条蛇的惊吓范围里 —— 一敲就会被搅乱，这一关可能无解',
+      path: ['scareRadius'],
+    },
+  );
+
+export const ProbeFigureSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  isKing: z.boolean(),
+});
+
+/** 擒贼擒王：一排一模一样的身影，用没有杀伤的蒿箭一个个试出王 */
+export const ProbeSpotSchema = z
+  .object({
+    mode: z.literal('spot'),
+    figures: z.array(ProbeFigureSchema).min(3).max(7),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.figures.map((f) => f.id)).size === l.figures.length, {
+    message: '身影的 id 不能重复',
+    path: ['figures'],
+  })
+  .refine((l) => l.figures.filter((f) => f.isKing).length === 1, {
+    message: '恰好要有一个是王（多一个少一个都不行）',
+    path: ['figures'],
+  });
+
+export const ProbeLevelSchema = z.union([ProbeKnockSchema, ProbeSpotSchema]);
+
+/* ---------------- lure：诱饵（调虎离山 / 抛砖引玉） ---------------- */
+
+export const LureBaitSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 放这里能让岗位空多久 */
+  awayMs: z.number().positive(),
+});
+
+/** 调虎离山：把看守引开，趁空档把东西拿走 —— 拿东西要连续的空档时间 */
+export const LureDecoySchema = z
+  .object({
+    mode: z.literal('decoy'),
+    guard: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    baits: z.array(LureBaitSchema).min(2).max(4),
+    prize: z.object({
+      x: z.number(),
+      y: z.number(),
+      radius: z.number().positive(),
+      needMs: z.number().positive(),
+    }),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.baits.map((b) => b.id)).size === l.baits.length, {
+    message: '诱饵点的 id 不能重复',
+    path: ['baits'],
+  })
+  .refine((l) => l.baits.some((b) => b.awayMs >= l.prize.needMs), {
+    message: '没有一处诱饵能让岗位空够久 —— 这一关不可能过',
+    path: ['baits'],
+  });
+
+export const LureOfferSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 这块"砖"是什么：paper 纸 / ink 墨 / brush 笔 */
+  kind: z.string().min(1),
+});
+
+export const LureReturnSchema = z.object({
+  offerId: z.string().min(1),
+  /** 对方还回来的"玉" */
+  kind: z.string().min(1),
+  value: z.number().positive(),
+});
+
+/** 抛砖引玉：先给一块砖，对方拿出更好的来换 —— 难在挑对那块砖 */
+export const LureTradeSchema = z
+  .object({
+    mode: z.literal('trade'),
+    partner: z.object({ x: z.number(), y: z.number() }),
+    offers: z.array(LureOfferSchema).min(2).max(4),
+    returns: z.array(LureReturnSchema).min(2).max(4),
+    needed: z.number().positive(),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.offers.map((o) => o.id)).size === l.offers.length, {
+    message: '东西的 id 不能重复',
+    path: ['offers'],
+  })
+  .refine((l) => l.offers.every((o) => l.returns.some((r) => r.offerId === o.id)), {
+    message: '有一样东西递过去没人接 —— 每块"砖"都要写明换回什么',
+    path: ['returns'],
+  })
+  .refine((l) => new Set(l.returns.map((r) => r.offerId)).size === l.returns.length, {
+    message: '一样东西只能换回一件',
+    path: ['returns'],
+  })
+  .refine((l) => l.returns.some((r) => r.value >= l.needed), {
+    message: '怎么换都到不了 needed —— 这一关不可能过',
+    path: ['needed'],
+  });
+
+export const LureLevelSchema = z.union([LureDecoySchema, LureTradeSchema]);
+
+/* ---------------- chase：追而不逼（欲擒故纵） ---------------- */
+
+export const ChaseLevelSchema = z
+  .object({
+    mode: z.literal('hold'),
+    start: z.object({ distance: z.number().positive(), stamina: z.number().positive() }),
+    /** 要维持的距离区间（0–100） */
+    keepMin: z.number().nonnegative(),
+    keepMax: z.number().positive(),
+    /** 按住缩得多快、松手拉得多快 */
+    closePerSec: z.number().positive(),
+    farPerSec: z.number().positive(),
+    /** 距离在区间内：对方体力每秒掉多少 */
+    drainPerSec: z.number().positive(),
+    /** 逼太近：体力每秒回多少 */
+    recoverPerSec: z.number().positive(),
+    /** 跟丢：这段追逐的进度每秒退多少 */
+    losePerSec: z.number().positive(),
+    hold: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => l.keepMin < l.keepMax, {
+    message: 'keepMin 不小于 keepMax —— 那就没有"要维持的区间"了',
+    path: ['keepMin'],
+  })
+  .refine((l) => l.recoverPerSec < l.drainPerSec, {
+    message: '逼太近时体力回得比掉得还快 —— 这一关没有张力（甚至不可能过）',
+    path: ['recoverPerSec'],
+  })
+  .refine((l) => l.keepMax <= 100 && l.start.distance <= 100, {
+    message: '距离按 0–100 算，keepMax / start.distance 不能超过 100',
+    path: ['keepMax'],
+  })
+  .refine((l) => l.start.distance > l.keepMin && l.start.distance <= l.keepMax, {
+    message: '开局的距离要在区间里（不能一上来就已经逼太近 / 跟丢）',
+    path: ['start', 'distance'],
+  });
+
+/* ---------------- borrow 扩展：banner（借尸还魂） ---------------- */
+
+export const BorrowFlagSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 这面旗能召回多少人 */
+  rally: z.number().int().positive(),
+});
+
+export const BorrowScatteredSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+});
+
+/**
+ * 借尸还魂：把旧旗竖起来，散掉的人自己归队。
+ * 与 force（借力：支点 + 力源）是两个模式 —— `BorrowLevelSchema`（force）一个字没改。
+ */
+export const BorrowBannerLevelSchema = z
+  .object({
+    mode: z.literal('banner'),
+    pole: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    flags: z.array(BorrowFlagSchema).min(2).max(4),
+    scattered: z.array(BorrowScatteredSchema).min(3).max(8),
+    needed: z.number().int().positive(),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.flags.map((f) => f.id)).size === l.flags.length, {
+    message: '旗的 id 不能重复',
+    path: ['flags'],
+  })
+  .refine((l) => new Set(l.scattered.map((s) => s.id)).size === l.scattered.length, {
+    message: '散落的人 id 不能重复',
+    path: ['scattered'],
+  })
+  .refine((l) => l.needed <= l.scattered.length, {
+    message: '要召回的人比散在外面的还多',
+    path: ['needed'],
+  })
+  .refine((l) => l.flags.reduce((sum, f) => sum + f.rally, 0) >= l.needed, {
+    message: '所有旗加起来也召不够 needed —— 这一关不可能过',
+    path: ['needed'],
+  });
+
 export type RuseShell = z.infer<typeof RuseShellSchema>;
+export type ProbePatch = z.infer<typeof ProbePatchSchema>;
+export type ProbeFigure = z.infer<typeof ProbeFigureSchema>;
+export type ProbeLevel = z.infer<typeof ProbeLevelSchema>;
+export type LureBait = z.infer<typeof LureBaitSchema>;
+export type LureOffer = z.infer<typeof LureOfferSchema>;
+export type LureReturn = z.infer<typeof LureReturnSchema>;
+export type LureLevel = z.infer<typeof LureLevelSchema>;
+export type ChaseLevel = z.infer<typeof ChaseLevelSchema>;
+export type BorrowFlag = z.infer<typeof BorrowFlagSchema>;
+export type BorrowScattered = z.infer<typeof BorrowScatteredSchema>;
+export type BorrowBannerLevel = z.infer<typeof BorrowBannerLevelSchema>;
 export type ShowSlot = z.infer<typeof ShowSlotSchema>;
 export type ShowLevel = z.infer<typeof ShowLevelSchema>;
 export type TwolineLevel = z.infer<typeof TwolineLevelSchema>;
@@ -1113,11 +1357,16 @@ export const templateSchemas: Record<string, z.ZodType> = {
   butcher: ButcherLevelSchema,
   ruse: RuseLevelSchema,
   siege: SiegeLevelSchema,
-  borrow: BorrowLevelSchema,
+  // borrow 有两种模式：force（借刀杀人，既有）与 banner（借尸还魂）——
+  // 两份 schema 分开写（force 那份一个字没改），这里按并集登记给构建期体检用。
+  borrow: z.union([BorrowLevelSchema, BorrowBannerLevelSchema]),
   stillness: StillnessLevelSchema,
   window: WindowLevelSchema,
   show: ShowLevelSchema,
   twoline: TwolineLevelSchema,
   read: ReadLevelSchema,
   matchup: MatchupLevelSchema,
+  probe: ProbeLevelSchema,
+  lure: LureLevelSchema,
+  chase: ChaseLevelSchema,
 };

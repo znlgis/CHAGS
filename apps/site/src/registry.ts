@@ -36,4 +36,11 @@ export const registry: Record<string, () => Promise<{ default: GameModule }>> = 
   'xiaoli-cangdao': () => import('@chags/game-xiaoli-cangdao'),
   'lidai-taojiang': () => import('@chags/game-lidai-taojiang'),
   'shunshou-qianyang': () => import('@chags/game-shunshou-qianyang'),
+  // 三十六计 · 第三辑（攻战计 13–18）
+  'dacao-jingshe': () => import('@chags/game-dacao-jingshe'),
+  'jieshi-huanhun': () => import('@chags/game-jieshi-huanhun'),
+  'diaohu-lishan': () => import('@chags/game-diaohu-lishan'),
+  'yuqin-guzong': () => import('@chags/game-yuqin-guzong'),
+  'paozhuan-yinyu': () => import('@chags/game-paozhuan-yinyu'),
+  'qinzei-qinwang': () => import('@chags/game-qinzei-qinwang'),
 };

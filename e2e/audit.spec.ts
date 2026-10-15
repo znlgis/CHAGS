@@ -514,6 +514,13 @@ const STRATAGEMS: [string, string][] = [
   ['xiaoli-cangdao', 'read'],
   ['lidai-taojiang', 'matchup'],
   ['shunshou-qianyang', 'window'],
+  // 第三辑（攻战计 13–18）
+  ['dacao-jingshe', 'probe'],
+  ['jieshi-huanhun', 'borrow'],
+  ['diaohu-lishan', 'lure'],
+  ['yuqin-guzong', 'chase'],
+  ['paozhuan-yinyu', 'lure'],
+  ['qinzei-qinwang', 'probe'],
 ];
 
 for (const locale of LOCALES) {

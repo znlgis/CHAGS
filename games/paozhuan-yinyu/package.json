@@ -1,0 +1,20 @@
+{
+  "name": "@chags/game-paozhuan-yinyu",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "vue-tsc --noEmit -p ../../tsconfig.json"
+  },
+  "dependencies": {
+    "@chags/content": "workspace:*",
+    "@chags/game-kit": "workspace:*",
+    "@chags/phaser-kit": "workspace:*",
+    "@chags/templates": "workspace:*",
+    "phaser": "^4.2.1"
+  }
+}

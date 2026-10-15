@@ -64,8 +64,11 @@ export type { SiegeState } from './siege.logic';
 export {
   borrowStart, canLift, connectProp, disconnectProp, hasFulcrum, isBorrowDone, isLifted,
   nextPropToConnect, propAt, pull, selfPower, suggestedConnections, totalPower,
+  // banner 模式（借尸还魂）：旗号能把散掉的人聚回来
+  availableFlags, bannerStart, flagAt, isBannerDone, isFlagRaised, isPersonRallied, nextFlagToRaise,
+  personAt, poleAt, raiseFlag, ralliedCount, ralliedRatio,
 } from './borrow.logic';
-export type { BorrowPull, BorrowState } from './borrow.logic';
+export type { BannerRaise, BannerState, BorrowPull, BorrowState } from './borrow.logic';
 export {
   STILLNESS_MIN_BEAT_MS, applyStrike, beatMarks, beatProgress, canStrikeAt, correctBeat,
   effectiveLevel, hitAction, isStillnessDone, remainingInBeatMs, slotAt, stillnessStart, strikeAt,
@@ -116,3 +119,30 @@ export {
   rivalAt, scaledMs, slotOfHorse, takeBack, winsFor, winsNeeded,
 } from './matchup.logic';
 export type { RaceResult, Roster } from './matchup.logic';
+
+/* ---------- 三十六计（第三辑 · 攻战计 13–18） ---------- */
+export * from './probe';
+export * from './lure';
+export * from './chase';
+// tick 在 show（造势）与 chase（追而不逼）里同名：语义不同，这里改名再导出
+export {
+  PROBE_TIMING, canCross, cross, crossablePatches, figureAt, figureById, hasSnake, isFigureTried,
+  isKingFigure, isKnockDone, isKnocked, isSpooked, knock, knockOrder, nextFigureToShoot,
+  nextKnockStep, nextPatchToKnock, patchById, probeAt, probeStart, remainingFigures, shoot,
+} from './probe.logic';
+export type { KnockLevel, ProbeState, ProbeStep, SpotLevel } from './probe.logic';
+export {
+  LURE_TIMING, awayLeftMs, awayTotalMs, baitAt, baitById, baitsLongEnough, bestBait, bestOffer,
+  decoyStart, give, givenReturnFor, grabAt, grabProgress, guardBack, isAway, isDecoyDone,
+  isTradeDone, lureAutoplayLevel, lureStart, nextOfferToGive, offerAt, offerById, offerFor,
+  placeBait, prizeHit, releaseGrab, tradeProgress, tradeStart,
+} from './lure.logic';
+export type {
+  LureDecoyLevel, LureDecoyState, LureState, LureTradeLevel, LureTradeState,
+} from './lure.logic';
+export {
+  CHASE_MAX_DISTANCE, CHASE_TIMING, bandOf, chaseAutoplayLevel, chaseMid, chaseStart, distanceBand,
+  hitHold, holdWanted, isChaseDone, lostCount, progressRatio, pushyCount, staminaRatio,
+  tick as chaseTick,
+} from './chase.logic';
+export type { ChaseBand, ChaseState } from './chase.logic';

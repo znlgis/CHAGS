@@ -1,0 +1,85 @@
+{
+  "title": "Lure the Tiger from the Mountain",
+  "dynasty": "Late Eastern Han",
+  "era": "Late Eastern Han · Jian'an, year 4",
+  "figures": [
+    "Sun Ce",
+    "Liu Xun"
+  ],
+  "source": {
+    "book": "The Thirty-Six Stratagems, Attacking Stratagems",
+    "chapter": "Lure the Tiger from the Mountain",
+    "quote": "Wait for the right season to trap him, use people to lure him. When the going is blocked, come back in force."
+  },
+  "moral": "Draw him away, and the road opens.",
+  "keywords": [
+    "A decoy",
+    "An open window",
+    "Draw him off"
+  ],
+  "story": [
+    {
+      "title": "One Step from the Pass",
+      "text": "The guard at the mountain pass never leaves his post.",
+      "narration": "Near the end of the Eastern Han, Sun Ce wanted to march through the mountain pass. But the guard, Liu Xun, stood right in it and never left his post. Charging straight through would cost both sides dearly."
+    },
+    {
+      "title": "A Stir Beyond the Mountain",
+      "text": "Something stirred beyond the mountain. The guard went to look — and the pass stood empty.",
+      "narration": "Sun Ce sent a generous gift, and had lamps lit and cooking smoke raised on the far side of the mountain. Liu Xun saw the stir in the distance and took his men to look. When he turned back, the pass was empty."
+    }
+  ],
+  "keyMoment": {
+    "question": "The guard never leaves the pass. How do you get through?",
+    "options": [
+      {
+        "text": "Leave a decoy beyond the mountain and draw him off",
+        "hint": ""
+      },
+      {
+        "text": "Charge straight through",
+        "hint": "He is standing right in the gap — a charge would cost us."
+      },
+      {
+        "text": "Wait for him to walk away on his own",
+        "hint": "He never leaves his post, so waiting gets us nowhere."
+      }
+    ],
+    "reveal": "Draw him away, and the road opens."
+  },
+  "misconceptions": [
+    "If you cannot get past, you can only charge",
+    "Someone on guard duty never leaves the post"
+  ],
+  "quiz": [
+    {
+      "question": "Why did the guard leave the mountain pass?",
+      "options": [
+        "Something stirred beyond the mountain, so he went to look",
+        "He was tired and went to rest",
+        "Someone called him away to eat"
+      ],
+      "answer": 0,
+      "explanation": "The lamps and the cooking smoke were the decoy — as soon as he went to look, the pass stood open."
+    },
+    {
+      "question": "Mum is standing right in the kitchen doorway and you need to carry the bowls out. What is the smarter way?",
+      "options": [
+        "Ask her to take a phone call, and carry the bowls out while the doorway is clear",
+        "Squeeze past her with the bowls",
+        "Stand at the doorway and wait for her to move"
+      ],
+      "answer": 0,
+      "explanation": "Squeezing past spills the bowls and waiting gets you nowhere — give her something more urgent to do, and the doorway clears by itself."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Draw him off, then grab"
+        }
+      }
+    ]
+  }
+}

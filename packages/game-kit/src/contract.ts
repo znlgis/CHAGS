@@ -11,7 +11,9 @@ export type TemplateId =
   // 三十六计：示形 / 要害 / 借力 / 忍 / 时机窗口
   | 'ruse' | 'siege' | 'borrow' | 'stillness' | 'window'
   // 三十六计第二辑：造势 / 双线 / 识破 / 配对编排
-  | 'show' | 'twoline' | 'read' | 'matchup';
+  | 'show' | 'twoline' | 'read' | 'matchup'
+  // 三十六计第三辑：试探 / 诱饵 / 追而不逼
+  | 'probe' | 'lure' | 'chase';
 
 export interface GameManifest {
   id: string;
