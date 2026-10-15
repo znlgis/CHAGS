@@ -1,3 +1,4 @@
+import { GROUPS, isGroupId } from './groups';
 import { z } from 'zod';
 
 /** 记忆巩固题 / 迁移题 —— kind: 'transfer' 才是真正“记住了”的证据 */
@@ -50,6 +51,17 @@ export const GameStageSchema = z.object({
 export const AllusionSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9-]+$/, 'id 只能是小写字母、数字与连字符'),
+    /**
+     * 属于哪个分组（典故 / 三十六计 / …）。**刻意不给默认值**：
+     * 以后新增一组的游戏时忘了写，应该在这里当场报错，
+     * 而不是被默认值悄悄归到"典故"里去。
+     */
+    group: z
+      .string()
+      .min(1)
+      .refine(isGroupId, {
+        message: '分组没有登记：' + GROUPS.map((g) => g.id).join(' / ') + '（见 groups.ts）',
+      }),
     /** 信史 / 神话 / 传说 / 寓言：历史长卷要分开呈现（神话落在最左端，寓言是"讲道理的故事"） */
     kind: z.enum(['history', 'myth', 'legend', 'fable']).default('history'),
     title: z.string().min(1),

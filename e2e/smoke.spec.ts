@@ -100,6 +100,42 @@ test('故事必须听完：旁白没念完之前，怎么点都不翻页', async
   await expect.poll(() => events(page), { timeout: 20_000 }).toContain('scene:enter:substitution');
 });
 
+/**
+ * 分组：小游戏合集的第一层结构。
+ * 分组表在 packages/content/src/groups.ts —— 这里守的是"用户真的看得见分组"：
+ * 有内容的组正常列游戏，还没有内容的组显示"敬请期待"而不是消失。
+ */
+test('分组：典故与三十六计各占一块，空组显示"敬请期待"', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByTestId('hall')).toBeVisible();
+
+  const allusionGroup = page.getByTestId('group-allusion');
+  const stratagemGroup = page.getByTestId('group-stratagem');
+  await expect(allusionGroup).toBeVisible();
+  await expect(stratagemGroup).toBeVisible();
+  await expect(allusionGroup.getByRole('heading', { level: 2 })).toHaveText('典故');
+  await expect(stratagemGroup.getByRole('heading', { level: 2 })).toHaveText('三十六计');
+
+  // 典故这一组：每个典故一个入口（数量跟内容目录对齐，别写死）
+  await expect(allusionGroup.getByRole('button', { name: '开始玩' })).toHaveCount(
+    allAllusionIds().length,
+  );
+  await expect(page.getByTestId('start-pangu')).toBeVisible();
+
+  // 三十六计还没有游戏：显示"敬请期待"和一句说明，而且没有任何入口
+  await expect(stratagemGroup).toContainText('敬请期待');
+  await expect(page.getByTestId('group-empty-stratagem')).toBeVisible();
+  await expect(stratagemGroup.getByRole('button', { name: '开始玩' })).toHaveCount(0);
+
+  // 英文下分组名与"敬请期待"也跟着变
+  await page.goto('/?lang=en');
+  await expect(page.getByTestId('group-stratagem')).toContainText('Thirty-Six Stratagems');
+  await expect(page.getByTestId('group-stratagem')).toContainText('Coming soon');
+  await expect(page.getByTestId('group-allusion').getByRole('heading', { level: 2 })).toHaveText(
+    'Stories',
+  );
+});
+
 test('autoplay 全流程 + 刷新后进度还在', async ({ page }) => {
   await page.goto('/?autoplay=1#/play/caochong-elephant');
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('level:complete');
@@ -176,7 +212,7 @@ test('中英文切换：界面与典故内容都跟着变，并且记得住选�
   // ?lang=en 优先
   await page.goto('/?lang=en');
   await expect(page.getByTestId('hall')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Story Hall' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Games' })).toBeVisible();
   await expect(page.getByText('Cao Chong Weighs the Elephant')).toBeVisible();
   await expect(page.getByText('Pangu Splits Heaven and Earth')).toBeVisible();
   await expect(page.getByTestId('start-pangu')).toHaveText('Play');
@@ -191,17 +227,17 @@ test('中英文切换：界面与典故内容都跟着变，并且记得住选�
 
   // 切回中文
   await page.getByTestId('nav-lang').click();
-  await expect(page.getByRole('heading', { name: '我的典故图鉴' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '我的图鉴' })).toBeVisible();
 
-  // 不带 ?lang= 重新进入（会回到典故馆）：应该记得刚才选的"中文"
+  // 不带 ?lang= 重新进入（会回到游戏馆）：应该记得刚才选的"中文"
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: '典故馆' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '游戏馆' })).toBeVisible();
 
   // 再切到英文，同样记得住
   await page.getByTestId('nav-lang').click();
-  await expect(page.getByRole('heading', { name: 'Story Hall' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Games' })).toBeVisible();
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Story Hall' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Games' })).toBeVisible();
 });
 interface AimScript {
   targets: { id: string; x: number; y: number }[];

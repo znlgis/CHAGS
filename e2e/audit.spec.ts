@@ -308,7 +308,7 @@ for (const locale of LOCALES) {
       await page.screenshot({ path: out + '/' + game.id + '-3-mid.png' });
 
       // 二、手动玩到典故卡。
-      // 这里**不能**用 autoplay：自动通关下卡片只停 200ms 就被跳过了，截到的是典故馆。
+      // 这里**不能**用 autoplay：自动通关下卡片只停 200ms 就被跳过了，截到的是游戏馆。
       // 也不能批量连点：卡片出现后剩下的几下正好把「收下」也点了，同样截不到卡片。
       await open(game.id);
       await page.waitForSelector('canvas');

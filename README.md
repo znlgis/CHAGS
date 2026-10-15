@@ -28,9 +28,34 @@ pnpm dist:apk       # 打包安卓 apk（直接安装）
 
 调试直达链接：`/?autoplay=1#/play/caochong-elephant`（自动通关，用于无头验证）
 
+## 分组：现在两组，以后还会有更多
+
+小游戏合集的第一层结构是**分组**，唯一的事实来源是 [groups.ts](packages/content/src/groups.ts)：
+
+| 分组 | 现在有几部 | 说明 |
+|---|---|---|
+| 典故 `allusion` | **17**（全部已上线） | 一个典故一个游戏；组内按年代排（从盘古开天到庖丁解牛） |
+| 三十六计 `stratagem` | 0（占位） | 三十六条计策，一条一个游戏；**游戏在后续任务里加** |
+
+游戏馆与图鉴都按这张表分区渲染 —— **空组不会消失**，而是显示成"敬请期待"，
+所以"三十六计"的位置现在就能看见：
+
+![分组：滚到底就是三十六计的占位](docs/screenshots/91-hall-groups.png)
+
+加一个新分组只要三步：
+
+1. 在 `GROUPS` 里加一行（`id` / `order` / `orderBy`：组内按年代还是按登记顺序）；
+2. 在 [messages.ts](packages/i18n/src/messages.ts) 补 `group.<id>.title` / `.note` / `.empty`
+   —— 少写一个就**编译报错**（和英文表完整性同一个套路）；
+3. 把内容加进来并登记 —— 每条内容必须写明 `"group": "<id>"`。schema **刻意不给默认值**：
+   忘了写就在构建期报错，免得三十六计的游戏被悄悄归到"典故"里。
+
+`pnpm content:check` 会打印每一组的条目数，并拦住没登记的分组 id。
+
 ## 当前进度
 
 **十七个典故**全部跑通，`pnpm verify` 全绿，端到端里每部游戏都有真实鼠标操作的通关用例。
+（它们全在"典故"这一组；"三十六计"这一组已经占好位置，等后续任务往里加游戏。）
 首屏 shell 仍然很小（不含 Phaser）；每部游戏自己的业务 chunk 只有几 KB，
 Phaser 是共享 chunk，只在进入游戏时加载 —— 具体数字看 `pnpm size`。
 
@@ -271,7 +296,7 @@ Phaser 是共享 chunk，只在进入游戏时加载 —— 具体数字看 `pnp
 ## 目录结构
 
 ```
-apps/site                  Vue 3.5 外壳：典故馆 / 游戏宿主 / 图鉴
+apps/site                  Vue 3.5 外壳：游戏馆（按分组分区）/ 游戏宿主 / 图鉴
 packages/game-kit          契约层（GameModule / GameContext / 事件），不含 Phaser
 packages/content           典故数据 + zod schema
 packages/templates         玩法模板：story / substitution / tap / place / aim / sort / trace / wait / mark / split / burrow / butcher / quiz / reward

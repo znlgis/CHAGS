@@ -1,5 +1,7 @@
+import { GROUPS } from '@chags/content';
 import { describe, expect, it } from 'vitest';
 import { LOCALES, createTranslator, localeFromSearch, messages } from './index';
+import { groupMessageKey } from './messages';
 import type { MessageKey } from './messages';
 
 describe('界面文案表', () => {
@@ -20,6 +22,23 @@ describe('界面文案表', () => {
       (key) => (messages['zh-CN'][key] as string) === (messages.en[key] as string),
     );
     expect(identical).toEqual([]);
+  });
+
+  it('每个分组都有 title / note / empty，两种语言都不一样', () => {
+    for (const group of GROUPS) {
+      for (const field of ['title', 'note', 'empty'] as const) {
+        const key = groupMessageKey(group.id, field);
+        expect(key, group.id + ' 的 ' + field + ' 没有变成文案键').toBe(
+          'group.' + group.id + '.' + field,
+        );
+        for (const locale of LOCALES) {
+          const text = messages[locale][key] as string | undefined;
+          expect(text, locale + ' 缺少 ' + key).toBeTruthy();
+          expect(String(text).trim().length, key + ' 是空的').toBeGreaterThan(0);
+        }
+        expect(messages['zh-CN'][key]).not.toBe(messages.en[key]);
+      }
+    }
   });
 
   it('取词器按语言返回，未知语言回落到中文', () => {

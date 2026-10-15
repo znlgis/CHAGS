@@ -31,10 +31,29 @@ Handy debug links:
 - `/?autoplay=1#/play/caochong-elephant` — play the whole game automatically (used for headless verification)
 - `/?lang=en` — force English
 
+## Groups: two today, more later
+
+The collection's first-level structure is **groups**, defined in one place — `packages/content/src/groups.ts`:
+
+| Group | Games | Notes |
+|---|---|---|
+| 典故 `allusion` | **17** (all live) | One story, one game; sorted by year |
+| 三十六计 `stratagem` | 0 (reserved) | Thirty-Six Stratagems, one game each — **games come in a later task** |
+
+The hall and the album render one section per group, and **an empty group does not disappear**:
+it shows up as "coming soon", so the stratagem slot is already visible today.
+
+![Groups: scroll to the bottom for the reserved stratagem slot](docs/screenshots/91-hall-groups.png)
+
+Adding a group takes three steps: add a row to `GROUPS` (`id` / `order` / `orderBy`), add
+`group.<id>.title` / `.note` / `.empty` to `packages/i18n/src/messages.ts` (missing one is a
+**compile error**), and give every new content entry a `"group": "<id>"` — the schema deliberately
+has no default, so a stratagem can never be filed under "stories" by accident.
+
 ## Current status
 
-**Twelve stories** are playable. `pnpm verify` is green and every story has a real-mouse-input
-playthrough in the end-to-end suite.
+**Seventeen stories** are playable (all of them in the `allusion` group). `pnpm verify` is green and
+every story has a real-mouse-input playthrough in the end-to-end suite.
 
 The shell stays small (Phaser is not in it). Each game's own business code is only a few KB;
 Phaser is a shared chunk loaded only when a game starts — see `pnpm size` for the exact numbers.

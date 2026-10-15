@@ -15,6 +15,8 @@ import rawZhaosanmusi from './zhaosanmusi.json';
 import rawJiaotu from './jiaotu.json';
 import rawYangyouji from './yangyouji.json';
 import rawPaoding from './paoding.json';
+import { groupBy } from '../groups';
+import type { GameGroup } from '../groups';
 import { patchFor } from '../i18n';
 import { DEFAULT_LOCALE } from '../locale';
 import type { Locale } from '../locale';
@@ -73,4 +75,22 @@ export function allusionsFor(locale: Locale = DEFAULT_LOCALE): AllusionContent[]
 /** 按年代排序，供历史长卷使用 */
 export function allusionsByYear(locale: Locale = DEFAULT_LOCALE): AllusionContent[] {
   return [...allusionsFor(locale)].sort((a, b) => a.yearApprox - b.yearApprox);
+}
+
+/**
+ * 大厅与图鉴用：把全部内容按分组归档。
+ * **空组也会返回** —— 三十六计现在还没有游戏，但它必须在大厅里占一个位置，
+ * 否则"分组"就只是数据结构里的一行，用户看不到。
+ * 组内顺序由分组自己的 orderBy 决定（典故按年代，三十六计按登记顺序 / 计策序号）。
+ */
+export function gameGroups(
+  locale: Locale = DEFAULT_LOCALE,
+): { group: GameGroup; games: AllusionContent[] }[] {
+  return groupBy(allusionsFor(locale)).map(({ group, items }) => ({
+    group,
+    games:
+      group.orderBy === 'year'
+        ? [...items].sort((a, b) => a.yearApprox - b.yearApprox)
+        : items,
+  }));
 }

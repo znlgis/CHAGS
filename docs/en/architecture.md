@@ -321,9 +321,15 @@ sound stay bespoke. Target ratio: **60% reuse / 40% custom**.
 
 Content is fully separated from code; a non-programmer can edit it, and `content:check` blocks mistakes at build time.
 
+Every entry declares its **group** (`allusion` today, `stratagem` reserved). The group table lives in
+`packages/content/src/groups.ts`; group labels live in `packages/i18n` (`group.<id>.title/note/empty`,
+enforced by the type system); the hall and the album simply iterate the table, so a third or fourth
+group needs no UI change. Empty groups are rendered as "coming soon" rather than hidden.
+
 ```jsonc
 {
   "id": "pangu",
+  "group": "allusion",               // ★ group: allusion | stratagem | … (see groups.ts, no default)
   "title": "盘古开天辟地",
   "kind": "myth",                    // 'history' (default) | 'myth'
   "yearApprox": -9999,               // timeline ordering only; myths sit at the far left

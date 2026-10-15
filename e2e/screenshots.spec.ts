@@ -77,6 +77,16 @@ interface PlaceScript2 {
 
 const panguPlaceScript = panguJson.game.stages[1]!.levelScript as unknown as PlaceScript2;
 
+test('capture hall group screenshots', async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 932 });
+  // 给 README 的"分组"一节用：滚到最底，看还没有游戏的"三十六计"那一组长什么样
+  await page.goto('/');
+  await page.waitForSelector('[data-testid="hall"]');
+  await page.locator('main').evaluate((el) => el.scrollTo(0, el.scrollHeight));
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: 'docs/screenshots/91-hall-groups.png' });
+});
+
 test('capture story gate screenshots', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
   // 这一条刻意**不带** ?story=instant：要拍的就是"听完才能继续"那一刻的样子

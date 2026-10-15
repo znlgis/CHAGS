@@ -1,30 +1,41 @@
+import { GROUPS } from '@chags/content';
+
 /** 界面文案表。典故本身的文字在内容 JSON 里，不在这里。 */
 export const messages = {
   'zh-CN': {
     'app.title': '中国历史典故',
     'app.subtitle': '给小朋友的典故游戏合集',
-    'nav.hall': '典故馆',
+    'nav.hall': '游戏馆',
     'nav.album': '我的图鉴',
     'nav.switchTo': 'English',
 
-    'hall.title': '典故馆',
+    'hall.title': '游戏馆',
     'hall.collected': '已收集',
-    'hall.unit': '个典故',
+    'hall.unit': '个游戏',
     'hall.start': '开始玩',
     'hall.ages': '岁',
+    'hall.soon': '敬请期待',
     'hall.myth': '神话',
     'hall.legend': '传说',
     'hall.history': '信史',
     'hall.fable': '寓言',
 
-    'album.title': '我的典故图鉴',
-    'album.empty': '还没有收集到典故卡，去典故馆玩一局吧！',
+    // 分组文案：id 与 groups.ts 一一对应（少了 title/note/empty 任意一个，下面就编译报错）
+    'group.allusion.title': '典故',
+    'group.allusion.note': '一个典故一个游戏：先听完故事，再亲手做一遍。',
+    'group.allusion.empty': '这一组还在准备。',
+    'group.stratagem.title': '三十六计',
+    'group.stratagem.note': '三十六条计策，一条一个游戏。',
+    'group.stratagem.empty': '第一批计策正在赶工，很快就能玩了。',
+
+    'album.title': '我的图鉴',
+    'album.empty': '还没有收集到图鉴卡，去游戏馆玩一局吧！',
     'album.source': '出处',
 
-    'play.loadFailed': '这个典故暂时打不开',
-    'play.backToHall': '回典故馆',
+    'play.loadFailed': '这个游戏暂时打不开',
+    'play.backToHall': '回游戏馆',
     'play.retry': '再试一次',
-    'play.notFound': '找不到这个典故：',
+    'play.notFound': '找不到这个游戏：',
 
     'scene.story': '看故事',
     'story.listenFirst': '先听完这个故事',
@@ -60,28 +71,36 @@ export const messages = {
   en: {
     'app.title': 'Chinese Tales',
     'app.subtitle': 'History and myth, played',
-    'nav.hall': 'Stories',
+    'nav.hall': 'Games',
     'nav.album': 'My Album',
     'nav.switchTo': '中文',
 
-    'hall.title': 'Story Hall',
+    'hall.title': 'Games',
     'hall.collected': 'Collected',
-    'hall.unit': 'stories',
+    'hall.unit': 'games',
     'hall.start': 'Play',
     'hall.ages': 'yrs',
+    'hall.soon': 'Coming soon',
     'hall.myth': 'Myth',
     'hall.legend': 'Legend',
     'hall.history': 'History',
     'hall.fable': 'Fable',
 
-    'album.title': 'My Story Cards',
+    'group.allusion.title': 'Stories',
+    'group.allusion.note': 'One story, one game: hear it through, then do it yourself.',
+    'group.allusion.empty': 'This group is still being prepared.',
+    'group.stratagem.title': 'Thirty-Six Stratagems',
+    'group.stratagem.note': 'Thirty-six stratagems, one game each.',
+    'group.stratagem.empty': 'The first stratagems are being built — coming soon.',
+
+    'album.title': 'My Cards',
     'album.empty': 'No cards yet — go and play one!',
     'album.source': 'Source',
 
-    'play.loadFailed': 'This story will not open',
-    'play.backToHall': 'Back to Stories',
+    'play.loadFailed': 'This game will not open',
+    'play.backToHall': 'Back to Games',
     'play.retry': 'Try again',
-    'play.notFound': 'Story not found: ',
+    'play.notFound': 'Game not found: ',
 
     'scene.story': 'The Story',
     'story.listenFirst': 'Listen to the story first',
@@ -121,5 +140,19 @@ export type MessageKey = keyof (typeof messages)['zh-CN'];
 /** 编译期保证英文表不缺键：缺一个就类型报错 */
 const englishCompleteness: Record<MessageKey, string> = messages.en;
 void englishCompleteness;
+
+/**
+ * 分组文案的键。新增一个分组时，title / note / empty 少写任何一个，
+ * 这里的类型就对不上，编译当场失败 —— 和英文表完整性同一个套路。
+ */
+type GroupField = 'title' | 'note' | 'empty';
+type GroupMessageKey = `group.${(typeof GROUPS)[number]['id']}.${GroupField}`;
+const groupCompleteness: Record<GroupMessageKey, string> = messages['zh-CN'];
+void groupCompleteness;
+
+/** 分组文案的键。分组 id 来自内容数据（运行时才知道是哪一组），这里做一次窄化 */
+export function groupMessageKey(id: string, field: GroupField): MessageKey {
+  return ('group.' + id + '.' + field) as MessageKey;
+}
 
 export type Translator = (key: MessageKey) => string;

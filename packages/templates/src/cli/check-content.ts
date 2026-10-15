@@ -3,6 +3,8 @@ import {
   DEFAULT_LOCALE,
   LOCALES,
   allusions,
+  groupBy,
+  isGroupId,
   mergeLocalized,
   patches,
   validatePatch,
@@ -32,7 +34,7 @@ function fail(message: string): void {
   errors += 1;
 }
 
-console.log('校验 ' + allusions.length + ' 个典故…\n');
+console.log('校验 ' + allusions.length + ' 个内容条目…\n');
 
 for (const allusion of allusions) {
   console.log('· ' + allusion.title + ' (' + allusion.id + ')');
@@ -82,6 +84,26 @@ for (const allusion of allusions) {
       ' / ' + allusion.game.stages.length + ' 段玩法：' +
       allusion.game.stages.map((s) => s.template).join(' → '),
   );
+}
+
+// ---------- 分组体检：每条内容都要落在一个登记过的分组里 ----------
+// 空组不算错：三十六计现在就是空的，大厅会把它显示成"敬请期待"。
+console.log('\n分组：');
+for (const { group, items } of groupBy(allusions)) {
+  console.log(
+    '  · ' +
+      group.id +
+      '（' +
+      items.length +
+      ' 个' +
+      (items.length === 0 ? '，空组 → 大厅显示"敬请期待"' : '') +
+      '）',
+  );
+}
+for (const allusion of allusions) {
+  if (!isGroupId(allusion.group)) {
+    fail(allusion.id + ' 的分组没有登记："' + allusion.group + '"，见 packages/content/src/groups.ts');
+  }
 }
 
 // ---------- 翻译体检：缺译文 / 结构对不上 / 译文超长，都在构建期拦下 ----------
