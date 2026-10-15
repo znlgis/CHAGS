@@ -1,11 +1,11 @@
-import { getAllusion } from '@chags/content';
+import { getEntry } from '@chags/content';
 import { ButcherLevelSchema } from '@chags/templates/schemas';
 import { describe, expect, it } from 'vitest';
 import { KNIFE, PIECES, PUSH } from './layout';
 import { angleGapDeg, isButcherComplete, isHintless, nickCount, pieceAt, pushOutcome } from './logic';
 
 function levelOf(): ReturnType<typeof ButcherLevelSchema.parse> {
-  const raw = getAllusion('paoding');
+  const raw = getEntry('paoding');
   return ButcherLevelSchema.parse(raw!.game.stages[0]!.levelScript);
 }
 

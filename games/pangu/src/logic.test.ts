@@ -1,11 +1,11 @@
-import { getAllusion } from '@chags/content';
+import { getEntry } from '@chags/content';
 import { tapsNeeded } from '@chags/templates/tap.logic';
 import { slotFor } from '@chags/templates/place.logic';
 import { describe, expect, it } from 'vitest';
 import { placeLevel, tapLevel } from './logic';
 
 describe('盘古开天辟地 · 关卡数据', () => {
-  const raw = getAllusion('pangu');
+  const raw = getEntry('pangu');
 
   it('典故被标记为神话，排在信史之前', () => {
     expect(raw?.kind).toBe('myth');

@@ -1,4 +1,4 @@
-import { GROUPS } from '@chags/content';
+import { GROUPS, STRATAGEM_SETS } from '@chags/content';
 
 /** 界面文案表。典故本身的文字在内容 JSON 里，不在这里。 */
 export const messages = {
@@ -19,6 +19,7 @@ export const messages = {
     'hall.legend': '传说',
     'hall.history': '信史',
     'hall.fable': '寓言',
+    'hall.strategy': '兵法',
 
     // 分组文案：id 与 groups.ts 一一对应（少了 title/note/empty 任意一个，下面就编译报错）
     'group.allusion.title': '典故',
@@ -27,6 +28,15 @@ export const messages = {
     'group.stratagem.title': '三十六计',
     'group.stratagem.note': '三十六条计策，一条一个游戏。',
     'group.stratagem.empty': '第一批计策正在赶工，很快就能玩了。',
+
+    // 三十六计：卡上的"第 n 计"与六套的套名（少写一套，下面编译报错）
+    'stratagem.card': '第 {n} 计',
+    'stratagem.set.1': '胜战计',
+    'stratagem.set.2': '敌战计',
+    'stratagem.set.3': '攻战计',
+    'stratagem.set.4': '混战计',
+    'stratagem.set.5': '并战计',
+    'stratagem.set.6': '败战计',
 
     'album.title': '我的图鉴',
     'album.empty': '还没有收集到图鉴卡，去游戏馆玩一局吧！',
@@ -85,6 +95,7 @@ export const messages = {
     'hall.legend': 'Legend',
     'hall.history': 'History',
     'hall.fable': 'Fable',
+    'hall.strategy': 'Strategy',
 
     'group.allusion.title': 'Stories',
     'group.allusion.note': 'One story, one game: hear it through, then do it yourself.',
@@ -92,6 +103,14 @@ export const messages = {
     'group.stratagem.title': 'Thirty-Six Stratagems',
     'group.stratagem.note': 'Thirty-six stratagems, one game each.',
     'group.stratagem.empty': 'The first stratagems are being built — coming soon.',
+
+    'stratagem.card': 'Stratagem {n}',
+    'stratagem.set.1': 'Advantageous Stratagems',
+    'stratagem.set.2': 'Opportunistic Stratagems',
+    'stratagem.set.3': 'Offensive Stratagems',
+    'stratagem.set.4': 'Confusion Stratagems',
+    'stratagem.set.5': 'Annexation Stratagems',
+    'stratagem.set.6': 'Desperate Stratagems',
 
     'album.title': 'My Cards',
     'album.empty': 'No cards yet — go and play one!',
@@ -153,6 +172,37 @@ void groupCompleteness;
 /** 分组文案的键。分组 id 来自内容数据（运行时才知道是哪一组），这里做一次窄化 */
 export function groupMessageKey(id: string, field: GroupField): MessageKey {
   return ('group.' + id + '.' + field) as MessageKey;
+}
+
+/**
+ * 三十六计的六套套名：套号（1–6）与 groups.ts 的 STRATAGEM_SETS 是同一个约定，
+ * 少写一套、或者多写一套（内容层的套数改了），messages.test.ts 会当场红。
+ */
+type StratagemSetIndex = 1 | 2 | 3 | 4 | 5 | 6;
+type StratagemSetKey = `stratagem.set.${StratagemSetIndex}`;
+const stratagemSetCompleteness: Record<StratagemSetKey, string> = messages['zh-CN'];
+
+// 类型能挡住"少写一套"，挡不住"内容层的套数变了" —— 这一句补上：
+// 改了 STRATAGEM_SETS 却忘了加/删套名，页面一进来就报错，而不是悄悄少显示一套。
+// 注意：这里数的是整张表里以 stratagem.set. 开头的键（不是整张表的条数）。
+const declaredSets = Object.keys(stratagemSetCompleteness).filter((key) =>
+  key.startsWith('stratagem.set.'),
+);
+if (declaredSets.length !== STRATAGEM_SETS) {
+  throw new Error(
+    '三十六计套数与文案表对不上：STRATAGEM_SETS = ' + STRATAGEM_SETS +
+      '，stratagem.set.* 有 ' + declaredSets.length + ' 条',
+  );
+}
+
+/** 套号 → 文案键（套号来自内容数据，这里做一次窄化） */
+export function stratagemSetKey(set: number): MessageKey {
+  return ('stratagem.set.' + set) as MessageKey;
+}
+
+/** "第 {n} 计"：中英句式不同，所以模板放在文案表里，数字由这里填 */
+export function stratagemLabel(template: string, number: number): string {
+  return template.replace('{n}', String(number));
 }
 
 export type Translator = (key: MessageKey) => string;

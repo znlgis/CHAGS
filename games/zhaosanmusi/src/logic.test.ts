@@ -1,11 +1,11 @@
-import { getAllusion } from '@chags/content';
+import { getEntry } from '@chags/content';
 import { countsFor, happyLeft, isSplitSolved, mood, splitState } from '@chags/templates/split.logic';
 import { describe, expect, it } from 'vitest';
 import { LEFT_X, RIGHT_X, ROPE_Y } from './layout';
 import { splitLevel } from './logic';
 
 describe('朝三暮四 · 关卡数据', () => {
-  const raw = getAllusion('zhaosanmusi');
+  const raw = getEntry('zhaosanmusi');
   const level = splitLevel(raw!);
 
   it('开局就是原文的分法：朝三暮四', () => {

@@ -1,0 +1,168 @@
+{
+  "id": "shengdong-jixi",
+  "group": "stratagem",
+  "kind": "strategy",
+  "stratagem": {
+    "number": 6,
+    "set": 1
+  },
+  "title": "声东击西",
+  "pinyin": "Shēng dōng jī xī",
+  "dynasty": "东汉",
+  "era": "东汉·汉章帝年间",
+  "yearApprox": 87,
+  "figures": [
+    "班超"
+  ],
+  "source": {
+    "book": "《三十六计·胜战计》",
+    "chapter": "声东击西",
+    "quote": "敌志乱萃，不虞……利其不自主而取之。"
+  },
+  "moral": "把热闹摆在一头，让看守看着那边，人从另一边过去。",
+  "keywords": [
+    "看这边",
+    "从那边走",
+    "声东击西"
+  ],
+  "ageRange": [
+    8,
+    12
+  ],
+  "story": [
+    {
+      "id": "s1",
+      "title": "到处说要往东走",
+      "text": "班超让人到处说：我们要往东边走。",
+      "narration": "班超在西域，想让守军把眼睛都挪到东边去。他叫人到处说：我们要往东边走啦！守军一听，把兵都调到东边守着。",
+      "illustration": "none"
+    },
+    {
+      "id": "s2",
+      "title": "连夜从西边过去",
+      "text": "他连夜从西边过去了。",
+      "narration": "当天夜里，班超带着人从西边悄悄地过去了。守军还盯着东边，那里什么也没有 —— 等他明白过来，班超早就走远了。",
+      "illustration": "none"
+    }
+  ],
+  "keyMoment": {
+    "beatId": "s1",
+    "question": "想让看守往东边看，怎么做？",
+    "options": [
+      {
+        "id": "noise",
+        "text": "把热闹都摆到东边",
+        "isCanonical": true,
+        "hint": ""
+      },
+      {
+        "id": "shout",
+        "text": "从东边喊他过去",
+        "isCanonical": false,
+        "hint": "喊一声，他一看就明白你在骗他。"
+      },
+      {
+        "id": "rush",
+        "text": "直接冲过去",
+        "isCanonical": false,
+        "hint": "灯正照着你呢 —— 一冲就被看见。"
+      }
+    ],
+    "reveal": "灯照的是东边，你走的是西边 —— 热闹在哪儿，眼睛就在哪儿。"
+  },
+  "misconceptions": [
+    "声东击西不是乱跑，是先把对方的注意力引到另一边，再从这一边走",
+    "要等对方真的看过去了，才能从另一边动身"
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "kind": "recall",
+      "question": "班超到处说要往东边走，敌人把兵调到了哪边？",
+      "options": [
+        "东边",
+        "西边",
+        "留在原地不动"
+      ],
+      "answer": 0,
+      "explanation": "班超把热闹都摆到东边 —— 敌人的兵就都调到东边去守着了。"
+    },
+    {
+      "id": "q2",
+      "kind": "transfer",
+      "question": "想悄悄把礼物放上桌，怎么让弟弟不看这边？",
+      "options": [
+        "把他最喜欢的玩具放到另一边去",
+        "叫他别回头",
+        "把灯关掉"
+      ],
+      "answer": 0,
+      "explanation": "把弟弟的注意力引到另一边，你这边的事就悄悄做完了 —— 这就是声东击西。"
+    }
+  ],
+  "game": {
+    "template": "ruse",
+    "stages": [
+      {
+        "template": "ruse",
+        "levelScript": {
+          "mode": "divert",
+          "gate": {
+            "x": 600,
+            "y": 400,
+            "radius": 90
+          },
+          "items": [
+            {
+              "id": "cart",
+              "kind": "cart",
+              "x": 620,
+              "y": 1000
+            },
+            {
+              "id": "torch",
+              "kind": "torch",
+              "x": 520,
+              "y": 1130
+            },
+            {
+              "id": "waterskin",
+              "kind": "waterskin",
+              "x": 660,
+              "y": 1130
+            }
+          ],
+          "lamp": {
+            "intervalMs": 3400,
+            "warnMs": 900
+          },
+          "gaze": {
+            "left": {
+              "x": 170,
+              "y": 500
+            },
+            "right": {
+              "x": 580,
+              "y": 500
+            }
+          },
+          "noises": [
+            {
+              "id": "gong-left",
+              "x": 120,
+              "y": 980,
+              "holdMs": 2600
+            },
+            {
+              "id": "drum-left",
+              "x": 230,
+              "y": 1080,
+              "holdMs": 2600
+            }
+          ],
+          "hint": "敲锣把灯引到左边，再从右边走"
+        }
+      }
+    ]
+  }
+}

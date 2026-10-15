@@ -1,0 +1,84 @@
+{
+  "title": "Make a Noise in the East, Attack in the West",
+  "dynasty": "Eastern Han",
+  "era": "Eastern Han · Emperor Zhang",
+  "figures": [
+    "Ban Chao"
+  ],
+  "source": {
+    "book": "The Thirty-Six Stratagems · Winning Stratagems",
+    "chapter": "Make a Noise in the East, Attack in the West",
+    "quote": "When the enemy's will is in confusion and he takes no precautions … seize him while he cannot command himself."
+  },
+  "moral": "Put the bustle on one side, let the guard watch there, and slip past on the other.",
+  "keywords": [
+    "Look over there",
+    "Go the other way",
+    "A noise in the east"
+  ],
+  "story": [
+    {
+      "title": "Word Goes Out That They Are Heading East",
+      "text": "Ban Chao had it said everywhere: we are going east.",
+      "narration": "Ban Chao was far away in the western lands, and he wanted the guards to look east. He sent word everywhere: we are marching east! The guards heard it and moved all their soldiers east to watch."
+    },
+    {
+      "title": "That Night He Went West",
+      "text": "That very night he slipped away to the west.",
+      "narration": "That night Ban Chao led his men quietly away to the west. The guards were still staring east, where there was nothing at all — and by the time they understood, he was long gone."
+    }
+  ],
+  "keyMoment": {
+    "question": "How do you make the guard look east?",
+    "options": [
+      {
+        "text": "Put all the bustle on the east side",
+        "hint": ""
+      },
+      {
+        "text": "Shout at him from the east",
+        "hint": "One shout and he knows he is being tricked."
+      },
+      {
+        "text": "Just charge straight through",
+        "hint": "The light is on you — charge and you are seen at once."
+      }
+    ],
+    "reveal": "The light looks east; you walk west. Where the bustle is, there the eyes go."
+  },
+  "misconceptions": [
+    "Making a noise in the east is not running about: first draw their eyes away, then take the other side",
+    "Wait until they are really looking away before you set off"
+  ],
+  "quiz": [
+    {
+      "question": "Ban Chao said he was going east. Where did the enemy move their soldiers?",
+      "options": [
+        "To the east",
+        "To the west",
+        "They stayed where they were"
+      ],
+      "answer": 0,
+      "explanation": "He put all the bustle in the east, so the enemy moved every soldier east to watch."
+    },
+    {
+      "question": "You want to put a present on the table without your little brother seeing. What do you do?",
+      "options": [
+        "Put his favourite toy on the other side of the room",
+        "Tell him not to look",
+        "Turn off the light"
+      ],
+      "answer": 0,
+      "explanation": "Draw his eyes to the other side and your own job gets done quietly — that is making a noise in the east."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Knock first, pass right"
+        }
+      }
+    ]
+  }
+}

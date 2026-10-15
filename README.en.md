@@ -38,10 +38,10 @@ The collection's first-level structure is **groups**, defined in one place — `
 | Group | Games | Notes |
 |---|---|---|
 | 典故 `allusion` | **17** (all live) | One story, one game; sorted by year |
-| 三十六计 `stratagem` | 0 (reserved) | Thirty-Six Stratagems, one game each — **games come in a later task** |
+| 三十六计 `stratagem` | **6** (Volume 1 · the six Advantageous Stratagems) | Thirty-Six Stratagems, one game each; sorted by **stratagem number**, five more volumes to come |
 
-The hall and the album render one section per group, and **an empty group does not disappear**:
-it shows up as "coming soon", so the stratagem slot is already visible today.
+The hall and the album render one section per group, and **a group with no content yet does not
+disappear**: it shows up as "coming soon".
 
 ![Groups: scroll to the bottom for the reserved stratagem slot](docs/screenshots/91-hall-groups.png)
 
@@ -52,8 +52,9 @@ has no default, so a stratagem can never be filed under "stories" by accident.
 
 ## Current status
 
-**Seventeen stories** are playable (all of them in the `allusion` group). `pnpm verify` is green and
-every story has a real-mouse-input playthrough in the end-to-end suite.
+**Seventeen stories plus the first six stratagems** are playable. `pnpm verify` is green (typecheck,
+lint, 387 unit tests, content check, build, size) and every game has a headless playthrough in the
+end-to-end suite (`?autoplay=1` — a new template only counts once it implements `runAutoplay()`).
 
 The shell stays small (Phaser is not in it). Each game's own business code is only a few KB;
 Phaser is a shared chunk loaded only when a game starts — see `pnpm size` for the exact numbers.
@@ -254,10 +255,45 @@ after nineteen years.
 |---|---|
 | ![cut](docs/screenshots/87-paoding-first-cut.png) | ![skeleton](docs/screenshots/88-paoding-skeleton.png) |
 
+## Thirty-Six Stratagems · Volume 1: the six Advantageous Stratagems
+
+The first volume is live: **one game per stratagem, each with its own verb**.
+They are not "stories" but "strategy" (`kind: strategy`) and sit in their own group in the hall,
+sorted by stratagem number.
+
+| # | Stratagem | What the child actually does | Template |
+|---|---|---|---|
+| 1 | Crossing the Sea Under Camouflage | Give each obvious object its most ordinary-looking shell, then slip it past a patrolling lamp | `ruse` |
+| 2 | Besiege Wei to Rescue Zhao | The front will not budge: tap the two places he *must* save, and his guard pulls back | `siege` |
+| 3 | A Borrowed Sword | A boulder on a building site: set a fulcrum, hook up a pole and a water wheel, borrow their strength | `borrow` |
+| 4 | Wait Till They Tire | Three drum rolls: hold still for the first two, strike only in the window after the third | `stillness` |
+| 5 | Strike While the Fire Burns | The camp swings between calm and chaos; work only gets done in the short window while it is in chaos | `window` |
+| 6 | Make a Noise in the East, Attack in the West | Bang the gong to hold the lamp on the left, walk past on the right; being seen only sends you back | `ruse` (divert) |
+
+| Slip past the check | Hit what he must save | Borrowed strength |
+|---|---|---|
+| ![camouflage](docs/screenshots/92-stratagem-01-mantian.png) | ![siege](docs/screenshots/93-stratagem-02-weiwei.png) | ![lever](docs/screenshots/94-stratagem-03-jiedao.png) |
+
+| The third drum roll | The window | Noise in the east |
+|---|---|---|
+| ![drums](docs/screenshots/95-stratagem-04-yiyi.png) | ![window](docs/screenshots/96-stratagem-05-chenhuo.png) | ![divert](docs/screenshots/97-stratagem-06-shengdong.png) |
+
+**For children** (the six hard rules live in [docs/三十六计方案.md](docs/三十六计方案.md)): the Chinese
+names and the original text stay; conflict is abstracted into puzzles, races and building sites, with no
+blood and no death; the defensive stratagems (hide a knife behind a smile, sow discord, play on desire,
+the self-harm ruse) teach **spotting** them, not using them. Every stratagem carries a historical source —
+and where the wording of that source could not be verified word for word, the stratagem's own text is used
+instead of inventing a quotation.
+
+This volume adds **five new gameplay templates** (`ruse` / `siege` / `borrow` / `stillness` /
+`window`). The remaining thirty stratagems arrive five volumes at a time, reusing `wait` / `split` /
+`trace` as well. Each volume starts with a design note, e.g.
+[三十六计-第一辑方案.md](docs/三十六计-第一辑方案.md).
+
 ## Design principle: fewer words, more doing
 
-Across all seventeen stories there is almost no teaching text on screen: the two opening lines of a story,
-and one short hint that only appears if the child is stuck (tap the story page too early and it only says
+Across all twenty-three games there is almost no teaching text on screen: the two opening lines of a story,
+and one short hint that appears when the level starts or when the child is stuck (tap the story page too early and it only says
 "Listen to the story first"). Everything else is shape, motion, sound and speech. Kids **work out** the idea
 instead of being told it.
 
@@ -280,7 +316,7 @@ instead of being told it.
 | Layer | How |
 |---|---|
 | UI strings | `@chags/i18n` — one flat key→text catalog per language |
-| Story content | Chinese lives in `allusions/*.json`; translations live in `i18n/en/*.json` as structural mirrors |
+| Story content | Chinese lives in `entries/*.json`; translations live in `i18n/en/*.json` as structural mirrors |
 | Narration | `AudioBus.speak(text, locale)` — TTS picks a `zh-CN` / `en-US` voice |
 | Docs | `README.md` / `README.en.md`, `docs/` and `docs/en/` |
 

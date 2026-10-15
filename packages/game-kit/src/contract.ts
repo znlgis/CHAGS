@@ -1,4 +1,4 @@
-import type { AllusionContent, Locale } from '@chags/content';
+import type { ContentEntry, Locale } from '@chags/content';
 
 export type { Locale };
 export { speechLang } from '@chags/content';
@@ -7,7 +7,9 @@ export type TemplateId =
   | 'story' | 'substitution' | 'tap' | 'place' | 'aim' | 'quiz' | 'match' | 'order' | 'drag'
   | 'board' | 'timing' | 'react' | 'branch' | 'build' | 'grow'
   | 'sort' | 'trace' | 'wait' | 'beacon'
-  | 'mark' | 'split' | 'burrow' | 'butcher';
+  | 'mark' | 'split' | 'burrow' | 'butcher'
+  // 三十六计：示形 / 要害 / 借力 / 忍 / 时机窗口
+  | 'ruse' | 'siege' | 'borrow' | 'stillness' | 'window';
 
 export interface GameManifest {
   id: string;
@@ -39,7 +41,7 @@ export interface GameEventMap {
     total: number;
     durationMs: number;
   };
-  'card:unlocked': { allusionId: string; cardId: string };
+  'card:unlocked': { entryId: string; cardId: string };
   'session:exit': { reason: 'complete' | 'quit' | 'background'; progress: number };
 }
 
@@ -52,8 +54,8 @@ export interface ReviewState {
   reviews: number;
 }
 
-export interface AllusionProgress {
-  allusionId: string;
+export interface EntryProgress {
+  entryId: string;
   stars: 0 | 1 | 2 | 3;
   completions: number;
   lastPlayedAt: number | null;
@@ -64,7 +66,13 @@ export const SAVE_SCHEMA_VERSION = 1;
 
 export interface SaveData {
   schemaVersion: number;
-  allusions: Record<string, AllusionProgress>;
+  /**
+   * 每条内容的进度，键是内容 id。
+   * **字段名刻意保留 `allusions`**：改名会让所有老存档读不出来 ——
+   * 玩家的星星不能因为一次重命名凭空消失。
+   * 内容侧的重命名（allusions → entries）只动类型与目录，不动这里。
+   */
+  allusions: Record<string, EntryProgress>;
   updatedAt: number;
 }
 
@@ -131,12 +139,18 @@ export interface DebugOptions {
    * 玩家在界面上拿不到这个开关，只有 URL 参数能给。
    */
   storyInstant?: boolean;
+  /**
+   * ?card=hold（双语版面巡检用）：自动通关照跑，但**停在典故卡上**不自动返回。
+   * 自动通关下卡片只停 200ms，卡面（双语长标题 / 出处 / 关键词）的版面拍不到 ——
+   * 三十六计每个游戏的卡面都靠它巡检。玩家界面上同样没有这个开关。
+   */
+  cardHold?: boolean;
 }
 
 export interface GameContext {
   container: HTMLElement;
   manifest: GameManifest;
-  content: AllusionContent;
+  content: ContentEntry;
   services: PlatformServices;
   locale: Locale;
   reducedMotion: boolean;

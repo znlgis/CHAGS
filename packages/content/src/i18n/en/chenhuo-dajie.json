@@ -1,0 +1,95 @@
+{
+  "title": "Strike While the Fire Burns",
+  "dynasty": "Spring and Autumn",
+  "era": "Late Spring and Autumn · Wu",
+  "figures": [
+    "King Goujian of Yue",
+    "King Fuchai of Wu"
+  ],
+  "source": {
+    "book": "The Thirty-Six Stratagems, Winning Stratagems",
+    "chapter": "Strike While the Fire Burns",
+    "quote": "When the enemy is in great trouble, take the advantage the moment offers — the firm prevails over the yielding."
+  },
+  "moral": "Watch for the moment to move — a step early or a step late, and it is wasted.",
+  "keywords": [
+    "Timing",
+    "A window",
+    "Watch closely"
+  ],
+  "story": [
+    {
+      "title": "The Best Troops Have Gone",
+      "text": "Wu's best troops went north to a meeting, leaving only a few guards behind.",
+      "narration": "King Fuchai of Wu took his best troops north to a meeting of lords, and only a few guards were left in the city. King Goujian of Yue stood by the river and watched for a long time — this was the window."
+    },
+    {
+      "title": "Away by Night",
+      "text": "Yue's boats set out by night and finished the business before dawn.",
+      "narration": "Yue's boats set out under cover of night and reached the walls of Wu before daybreak, and the business was done. Watch for the moment: a step early or a step late, and it is wasted."
+    }
+  ],
+  "keyMoment": {
+    "question": "When do we move?",
+    "options": [
+      {
+        "text": "The moment he leaves",
+        "hint": "The guards have not gone far, and the gates are still shut tight."
+      },
+      {
+        "text": "Wait until Wu's best troops are far away",
+        "hint": ""
+      },
+      {
+        "text": "Wait until he comes back",
+        "hint": "Once the best troops come back, the window is shut — and the chance is gone."
+      }
+    ],
+    "reveal": "Watch for the moment to move — a step early or a step late, and it is wasted."
+  },
+  "misconceptions": [
+    "Sooner is always better than later",
+    "Striking while the fire burns means grabbing what you can from someone's trouble"
+  ],
+  "quiz": [
+    {
+      "question": "What did Yue wait for before it moved?",
+      "options": [
+        "Wu's best troops had gone north to a meeting",
+        "Wu had mended its city gates",
+        "A heavy rain had fallen"
+      ],
+      "answer": 0,
+      "explanation": "Wu's best troops had marched north, and the city was nearly empty — that was the window."
+    },
+    {
+      "question": "What does the Thirty-Six Stratagems say to do when the fire burns?",
+      "options": [
+        "Take the advantage the moment offers",
+        "Attack head-on with your main force",
+        "Wait until the other side is ready"
+      ],
+      "answer": 0,
+      "explanation": "When the enemy is in great trouble, take the advantage the moment offers — that is the stratagem."
+    },
+    {
+      "question": "You want to finish your building blocks in peace. When is the best time?",
+      "options": [
+        "When your little brother is busy with something else",
+        "When your little brother sits beside you watching",
+        "When your little brother has just woken up"
+      ],
+      "answer": 0,
+      "explanation": "When his attention is somewhere else — that is your window."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Wait till the lamp moves"
+        }
+      }
+    ]
+  }
+}

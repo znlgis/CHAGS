@@ -16,6 +16,11 @@ export const SCENE_KEYS = {
   split: 'split',
   burrow: 'burrow',
   butcher: 'butcher',
+  ruse: 'ruse',
+  siege: 'siege',
+  borrow: 'borrow',
+  stillness: 'stillness',
+  window: 'window',
   quiz: 'quiz',
   reward: 'reward',
 } as const;

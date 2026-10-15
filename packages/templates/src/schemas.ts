@@ -607,6 +607,273 @@ export const ButcherLevelSchema = z
     path: ['pieces'],
   });
 
+/**
+ * ruse 模板：示形 —— 我做我的，你看到的是我想让你看到的。
+ *
+ * 两个模式：
+ * - hide（瞒天过海）：每件显眼的东西选一个"最平常的外壳"，灯扫过来时外壳不对就被退回；
+ * - divert（声东击西）：靠时机 —— 灯照哪一侧，另一侧才走得通；敲锣能把灯留在左侧。
+ * 被识破 = 退回原位，**零惩罚**（不扣星、不结束）。
+ */
+export const RuseShellSchema = z.object({
+  id: z.string().min(1),
+  /** 外壳长什么样：straw 柴捆 / sack 米袋 / net 渔网 */
+  kind: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+});
+
+export const RuseItemSchema = z.object({
+  id: z.string().min(1),
+  /** 这件东西本身是什么：drum 大鼓 / banner 长旗 / armor 盔甲架 */
+  kind: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  /** hide 模式：它该装成什么样（必须与某个外壳的 kind 相同，否则这一关无解） */
+  disguiseAs: z.string().min(1).optional(),
+  shells: z.array(RuseShellSchema).max(3).default([]),
+});
+
+export const RuseNoiseSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  /** 敲一下，灯留在这一侧多久 */
+  holdMs: z.number().positive(),
+});
+
+export const RuseLevelSchema = z
+  .object({
+    mode: z.enum(['hide', 'divert']),
+    /** 检查口：把东西拖过它就永久安全 */
+    gate: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    items: z.array(RuseItemSchema).min(2).max(6),
+    /** 灯：每 intervalMs 亮一次，亮之前 warnMs 有征兆 */
+    lamp: z.object({ intervalMs: z.number().positive(), warnMs: z.number().nonnegative() }),
+    /** divert：灯照左 / 照右 */
+    gaze: z
+      .object({
+        left: z.object({ x: z.number(), y: z.number() }),
+        right: z.object({ x: z.number(), y: z.number() }),
+      })
+      .optional(),
+    noises: z.array(RuseNoiseSchema).max(3).default([]),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.items.map((i) => i.id)).size === l.items.length, {
+    message: '东西的 id 不能重复',
+    path: ['items'],
+  })
+  .refine((l) => new Set(l.noises.map((n) => n.id)).size === l.noises.length, {
+    message: '锣鼓的 id 不能重复',
+    path: ['noises'],
+  })
+  .refine(
+    (l) =>
+      l.mode !== 'hide' ||
+      l.items.every(
+        (i) => i.disguiseAs !== undefined && i.shells.some((s) => s.kind === i.disguiseAs),
+      ),
+    {
+      message: 'hide 模式：每件东西都要写 disguiseAs，而且外壳里必须有一个正好是它',
+      path: ['items'],
+    },
+  )
+  .refine(
+    (l) =>
+      l.mode !== 'hide' ||
+      l.items.every((i) => i.shells.filter((s) => s.kind === i.disguiseAs).length === 1),
+    { message: 'hide 模式：正确的外壳只能有一个（否则"哪个才对"就没有答案）', path: ['items'] },
+  )
+  .refine((l) => l.mode !== 'divert' || (l.gaze !== undefined && l.noises.length >= 1), {
+    message: 'divert 模式：必须有 gaze（灯照左/照右）与至少一个可敲的锣鼓',
+    path: ['gaze'],
+  })
+  .refine((l) => l.mode !== 'divert' || l.items.every((i) => i.shells.length === 0), {
+    message: 'divert 模式不换外壳：靠的是时机，不是伪装',
+    path: ['items'],
+  });
+
+/** 正面推一次的增量：阻力越大，推得越少（siege 与关卡验算共用） */
+export function siegeGain(resistance: number): number {
+  return Math.max(0.2, 1 - resistance / 10);
+}
+
+/**
+ * siege 模板：打要害 —— 正面硬推推不动，去动他非救不可的地方。
+ * 本辑只有 vital 模式；断退路 / 抽支撑 / 收梯子在后续批次扩。
+ */
+export const SiegeVitalSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 点中它，正面阻力降多少 */
+  relief: z.number().positive(),
+});
+
+export const SiegeLevelSchema = z
+  .object({
+    mode: z.enum(['vital']),
+    front: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    vital: z.array(SiegeVitalSchema).min(1).max(3),
+    /** 正面阻力 0–10：越大越推不动 */
+    resistance: z.number().min(0).max(10),
+    goal: z.number().positive(),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.vital.map((v) => v.id)).size === l.vital.length, {
+    message: '要害的 id 不能重复',
+    path: ['vital'],
+  })
+  .refine(
+    (l) => {
+      const left = Math.max(0, l.resistance - l.vital.reduce((sum, v) => sum + v.relief, 0));
+      return Math.ceil(l.goal / siegeGain(left)) <= 40;
+    },
+    {
+      message: '点完所有要害之后，正面还要推 40 次以上 —— 这一关太磨人',
+      path: ['goal'],
+    },
+  );
+
+/**
+ * borrow 模板：借力 —— 力不一定要自己出。
+ * 自己出力（self）永远不够；要有支点（fulcrum）+ 力源（source）凑够 needed 才抬得起来。
+ */
+export const BorrowPropSchema = z.object({
+  id: z.string().min(1),
+  kind: z.enum(['self', 'fulcrum', 'source']),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 连上它贡献多少力 */
+  power: z.number().nonnegative(),
+});
+
+export const BorrowLevelSchema = z
+  .object({
+    mode: z.enum(['force']),
+    load: z.object({
+      x: z.number(),
+      y: z.number(),
+      radius: z.number().positive(),
+      weight: z.number().positive(),
+    }),
+    props: z.array(BorrowPropSchema).min(2).max(6),
+    needed: z.number().positive(),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.props.map((p) => p.id)).size === l.props.length, {
+    message: '支点 / 力源的 id 不能重复',
+    path: ['props'],
+  })
+  .refine((l) => l.props.some((p) => p.kind === 'fulcrum'), {
+    message: '没有支点：杠杆总得有个垫脚的地方',
+    path: ['props'],
+  })
+  .refine((l) => l.props.some((p) => p.kind === 'self'), {
+    message: '至少要有一个"自己出力"的选项 —— 不然孩子体会不到"自己不够"',
+    path: ['props'],
+  })
+  .refine(
+    (l) => l.props.filter((p) => p.kind === 'self').reduce((sum, p) => sum + p.power, 0) < l.needed,
+    { message: '光靠自己就够力了 —— "借力"这件事就不成立了', path: ['needed'] },
+  )
+  .refine(
+    (l) =>
+      l.props.filter((p) => p.kind === 'source').reduce((sum, p) => sum + p.power, 0) >= l.needed,
+    { message: '把所有力源都借来也不够 —— 这一关无解', path: ['needed'] },
+  );
+
+/**
+ * stillness 模板：忍 —— 最难的动作是不动。
+ * 本辑只有 bide（以逸待劳：一鼓作气，再而衰，三而竭）；空城计 / 假痴不癫在后续批次扩。
+ */
+export const StillnessBeatSchema = z.object({
+  id: z.string().min(1),
+  /** 鼓响多久：这段时间里出击 = 白费力气 */
+  drumMs: z.number().positive(),
+  /** 鼓停之后的窗口 */
+  windowMs: z.number().positive(),
+  /** 这一通的窗口该不该出击：只有一通是真的 */
+  correct: z.boolean(),
+});
+
+export const StillnessLevelSchema = z
+  .object({
+    mode: z.enum(['bide']),
+    beats: z.array(StillnessBeatSchema).min(2).max(4),
+    action: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.beats.map((b) => b.id)).size === l.beats.length, {
+    message: '每一通鼓的 id 不能重复',
+    path: ['beats'],
+  })
+  .refine((l) => l.beats.filter((b) => b.correct).length === 1, {
+    message: '恰好要有一通鼓的窗口是对的（多一个少一个都不行）',
+    path: ['beats'],
+  })
+  .refine((l) => l.beats[l.beats.length - 1]!.correct, {
+    message: '该出击的那一通必须是最后一通 —— 一鼓作气，再而衰，三而竭',
+    path: ['beats'],
+  });
+
+/**
+ * window 模板：时机窗口 —— 窗口只开一小会儿，早了晚了都白费。
+ * 本辑只有 fire（趁火打劫）；顺手牵羊（glimpse）/ 混水摸鱼（stir）在后续批次扩。
+ */
+export const WindowJobSchema = z.object({
+  id: z.string().min(1),
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().positive(),
+  /** 这件活儿要干多久 */
+  workMs: z.number().positive(),
+});
+
+export const WindowLevelSchema = z
+  .object({
+    mode: z.enum(['fire']),
+    /** 稳多久、乱多久 */
+    cycle: z.object({ calmMs: z.number().positive(), windowMs: z.number().positive() }),
+    jobs: z.array(WindowJobSchema).min(2).max(4),
+    /** 点一下推进多少毫秒的活儿 */
+    workTapMs: z.number().positive(),
+    goal: z.number().int().positive(),
+    hint: z.string().min(1).max(24),
+  })
+  .refine((l) => new Set(l.jobs.map((j) => j.id)).size === l.jobs.length, {
+    message: '活儿的 id 不能重复',
+    path: ['jobs'],
+  })
+  .refine((l) => l.goal <= l.jobs.length, {
+    message: '要干的活儿比摆出来的还多',
+    path: ['goal'],
+  })
+  .refine((l) => l.jobs.every((j) => j.workMs <= l.cycle.windowMs), {
+    message: '有活儿在一个窗口里根本干不完 —— 那就不是"抓时机"，是"不可能"',
+    path: ['jobs'],
+  })
+  .refine((l) => l.workTapMs < l.cycle.windowMs, {
+    message: '点一下就用掉整个窗口 —— 一件也干不完',
+    path: ['workTapMs'],
+  });
+
+export type RuseShell = z.infer<typeof RuseShellSchema>;
+export type RuseItem = z.infer<typeof RuseItemSchema>;
+export type RuseNoise = z.infer<typeof RuseNoiseSchema>;
+export type RuseLevel = z.infer<typeof RuseLevelSchema>;
+export type SiegeVital = z.infer<typeof SiegeVitalSchema>;
+export type SiegeLevel = z.infer<typeof SiegeLevelSchema>;
+export type BorrowProp = z.infer<typeof BorrowPropSchema>;
+export type BorrowLevel = z.infer<typeof BorrowLevelSchema>;
+export type StillnessBeat = z.infer<typeof StillnessBeatSchema>;
+export type StillnessLevel = z.infer<typeof StillnessLevelSchema>;
+export type WindowJob = z.infer<typeof WindowJobSchema>;
+export type WindowLevel = z.infer<typeof WindowLevelSchema>;
+
 export type StoneDef = z.infer<typeof StoneSchema>;
 export type SubstitutionLevel = z.infer<typeof SubstitutionLevelSchema>;
 export type TapMilestone = z.infer<typeof TapMilestoneSchema>;
@@ -654,4 +921,9 @@ export const templateSchemas: Record<string, z.ZodType> = {
   split: SplitLevelSchema,
   burrow: BurrowLevelSchema,
   butcher: ButcherLevelSchema,
+  ruse: RuseLevelSchema,
+  siege: SiegeLevelSchema,
+  borrow: BorrowLevelSchema,
+  stillness: StillnessLevelSchema,
+  window: WindowLevelSchema,
 };

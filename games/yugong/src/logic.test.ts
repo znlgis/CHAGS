@@ -1,9 +1,9 @@
-import { getAllusion } from '@chags/content';
+import { getEntry } from '@chags/content';
 import { describe, expect, it } from 'vitest';
 import { tapLevel } from './logic';
 
 describe('愚公移山 · 关卡数据', () => {
-  const raw = getAllusion('yugong');
+  const raw = getEntry('yugong');
 
   it('连点挖山，四十担挖平', () => {
     const level = tapLevel(raw!);

@@ -1,11 +1,11 @@
-import { getAllusion } from '@chags/content';
+import { getEntry } from '@chags/content';
 import { neededBurrows, openCount, waveResult } from '@chags/templates/burrow.logic';
 import { describe, expect, it } from 'vitest';
 import { MEADOW_Y } from './layout';
 import { burrowLevel } from './logic';
 
 describe('狡兔三窟 · 关卡数据', () => {
-  const raw = getAllusion('jiaotu');
+  const raw = getEntry('jiaotu');
   const level = burrowLevel(raw!);
 
   it('三个土坡，每个挖四铲', () => {

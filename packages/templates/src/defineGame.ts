@@ -54,7 +54,7 @@ export function defineGame(definition: GameDefinition): GameModule {
           }),
           ...stage.scenes,
           createRewardScene(ctx, {
-            allusionId: ctx.content.id,
+            entryId: ctx.content.id,
             title: ctx.content.title,
             pinyin: ctx.content.pinyin,
             moral: ctx.content.moral,

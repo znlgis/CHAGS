@@ -248,14 +248,14 @@ export interface GameEventMap {
   'choice:made':    { beatId: string; choiceId: string; correct: boolean; latencyMs: number };
   'hint:used':      { beatId: string; level: number };
   'level:complete': { levelId: string; stars: 0|1|2|3; mistakes: number; correct: number; total: number; durationMs: number };
-  'card:unlocked':  { allusionId: string; cardId: string };
+  'card:unlocked':  { entryId: string; cardId: string };
   'session:exit':   { reason: 'complete'|'quit'|'background'; progress: number };
 }
 
 export interface GameContext {
   container: HTMLElement;
   manifest: GameManifest;
-  content: AllusionContent;      // already localised — the game never knows a language exists
+  content: ContentEntry;      // already localised — the game never knows a language exists
   services: PlatformServices;    // storage / audio / lifecycle / share / telemetry
   locale: Locale;
   reducedMotion: boolean;
@@ -520,13 +520,13 @@ a 60.6 KB gzip shell and 3 KB / 7 KB game chunks.
 | Layer | Approach | Why |
 |---|---|---|
 | **UI strings** | New `@chags/i18n`: one flat key→text catalog per language | Generic labels don't belong in story JSON |
-| **Story content** | Chinese stays in `allusions/*.json`; translations live in `i18n/en/*.json` as structural mirrors | Keeps source readable; an untranslated story still runs |
+| **Story content** | Chinese stays in `entries/*.json`; translations live in `i18n/en/*.json` as structural mirrors | Keeps source readable; an untranslated story still runs |
 | **Narration** | `AudioBus.speak(text, locale)` returns a `SpeechHandle`; TTS picks a `zh-CN`/`en-US` voice | Recorded audio will follow the same locale switch; the story gate needs `done` |
 | **Docs** | `README.md` / `README.en.md`; `docs/` and `docs/en/` | Each language reads as its own document |
 
 **Key design points**
 
-1. **Games never know a language exists.** The shell hands over the result of `getAllusion(id, locale)` — already
+1. **Games never know a language exists.** The shell hands over the result of `getEntry(id, locale)` — already
    translated. Adding a language is adding one JSON file; zero game code changes.
 2. **Translation completeness is enforced at build time.** `pnpm content:check` verifies, per story: missing
    translations, structural mismatches, array lengths, and over-long text after merging. The message catalog is checked at

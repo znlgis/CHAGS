@@ -6,7 +6,7 @@ import { starsFor } from './session';
 import type { SessionState } from './session';
 
 export interface RewardConfig {
-  allusionId: string;
+  entryId: string;
   title: string;
   pinyin: string;
   moral: string;
@@ -102,7 +102,7 @@ export function createRewardScene(ctx: GameContext, cfg: RewardConfig): Phaser.T
       if (starLine) sparkleAt(this, this.W / 2, starLine.y + starLine.height / 2, THEME.gold, 8);
 
       const now = this.ctx.services.now();
-      this.ctx.emit('card:unlocked', { allusionId: cfg.allusionId, cardId: cfg.allusionId });
+      this.ctx.emit('card:unlocked', { entryId: cfg.entryId, cardId: cfg.entryId });
       this.ctx.emit('level:complete', {
         levelId: 'main',
         stars,
@@ -114,7 +114,10 @@ export function createRewardScene(ctx: GameContext, cfg: RewardConfig): Phaser.T
       this.sfx('complete');
       if (!this.autoplay) this.speak(cfg.moral);
 
-      if (this.autoplay) this.time.delayedCall(200, () => this.done());
+      // ?card=hold：自动通关也停在卡片上（双语版面巡检要拍卡面）
+      if (this.autoplay && this.ctx.debug?.cardHold !== true) {
+        this.time.delayedCall(200, () => this.done());
+      }
     }
 
     private done(): void {

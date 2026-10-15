@@ -1,9 +1,9 @@
 import { stageScript } from '@chags/content';
-import type { AllusionContent } from '@chags/content';
+import type { ContentEntry } from '@chags/content';
 import { AimLevelSchema } from '@chags/templates/schemas';
 import type { AimLevel } from '@chags/templates/schemas';
 
 /** 纯逻辑：不碰 Phaser，可以直接单测 */
-export function aimLevel(content: AllusionContent): AimLevel {
+export function aimLevel(content: ContentEntry): AimLevel {
   return AimLevelSchema.parse(stageScript(content, 'aim'));
 }

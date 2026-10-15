@@ -1,9 +1,9 @@
-import { getAllusion } from '@chags/content';
+import { getEntry } from '@chags/content';
 import { describe, expect, it } from 'vitest';
 import { aimLevel } from './logic';
 
 describe('后羿射日 · 关卡数据', () => {
-  const raw = getAllusion('houyi');
+  const raw = getEntry('houyi');
 
   it('十日并出，但只需要射下九个', () => {
     const level = aimLevel(raw!);

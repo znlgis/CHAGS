@@ -1,9 +1,9 @@
-import { getAllusion } from '@chags/content';
+import { getEntry } from '@chags/content';
 import { describe, expect, it } from 'vitest';
 import { tapLevel } from './logic';
 
 describe('夸父追日 · 关卡数据', () => {
-  const raw = getAllusion('kuafu');
+  const raw = getEntry('kuafu');
 
   it('长按模式 —— 手感上就该是一直跑，而不是一直点', () => {
     const level = tapLevel(raw!);

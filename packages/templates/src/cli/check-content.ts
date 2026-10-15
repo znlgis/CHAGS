@@ -1,8 +1,8 @@
 import {
-  AllusionSchema,
+  ContentEntrySchema,
   DEFAULT_LOCALE,
   LOCALES,
-  allusions,
+  entries,
   groupBy,
   isGroupId,
   mergeLocalized,
@@ -34,13 +34,13 @@ function fail(message: string): void {
   errors += 1;
 }
 
-console.log('校验 ' + allusions.length + ' 个内容条目…\n');
+console.log('校验 ' + entries.length + ' 个内容条目…\n');
 
-for (const allusion of allusions) {
-  console.log('· ' + allusion.title + ' (' + allusion.id + ')');
+for (const entry of entries) {
+  console.log('· ' + entry.title + ' (' + entry.id + ')');
 
   // 1) 每一段关卡脚本都必须符合它声明的模板
-  for (const stage of allusion.game.stages) {
+  for (const stage of entry.game.stages) {
     const schema = templateSchemas[stage.template];
     if (!schema) {
       fail('未知玩法模板 "' + stage.template + '"，请在 packages/templates/src/schemas.ts 登记');
@@ -55,41 +55,43 @@ for (const allusion of allusions) {
   }
 
   // 2) 关键抉择点：现在是“动手做出来”的关键动作，数据用于揭晓语与复习题
-  if (!allusion.story.some((b) => b.id === allusion.keyMoment.beatId)) {
+  if (!entry.story.some((b) => b.id === entry.keyMoment.beatId)) {
     fail('keyMoment.beatId 不在 story 中');
   }
 
   // 3) 迁移题是“真的记住”的证据，不能只有记忆题
-  if (!allusion.quiz.some((q) => q.kind === 'transfer')) {
+  if (!entry.quiz.some((q) => q.kind === 'transfer')) {
     fail('缺少 transfer（迁移）题');
   }
 
   // 4) 声明了插图就必须存在对应文件（阶段 0 用 none 占位）
-  const beats = allusion.story.filter((b) => b.illustration !== 'none');
+  const beats = entry.story.filter((b) => b.illustration !== 'none');
   if (beats.length > 0) {
-    console.log('  · 有 ' + beats.length + ' 幕使用图片资源，确认已放入 games/' + allusion.id + '/public');
+    console.log('  · 有 ' + beats.length + ' 幕使用图片资源，确认已放入 games/' + entry.id + '/public');
   }
 
   console.log(
     '  · ' +
-      (allusion.kind === 'myth'
+      (entry.kind === 'myth'
         ? '神话'
-        : allusion.kind === 'legend'
+        : entry.kind === 'legend'
           ? '传说'
-          : allusion.kind === 'fable'
+          : entry.kind === 'fable'
             ? '寓言'
-            : '信史') +
-      ' / ' + allusion.story.length + ' 幕故事' +
-      ' / ' + allusion.quiz.length + ' 道复习题' +
-      ' / ' + allusion.game.stages.length + ' 段玩法：' +
-      allusion.game.stages.map((s) => s.template).join(' → '),
+            : entry.kind === 'strategy'
+              ? '兵法·第 ' + (entry.stratagem?.number ?? '?') + ' 计'
+              : '信史') +
+      ' / ' + entry.story.length + ' 幕故事' +
+      ' / ' + entry.quiz.length + ' 道复习题' +
+      ' / ' + entry.game.stages.length + ' 段玩法：' +
+      entry.game.stages.map((s) => s.template).join(' → '),
   );
 }
 
 // ---------- 分组体检：每条内容都要落在一个登记过的分组里 ----------
 // 空组不算错：三十六计现在就是空的，大厅会把它显示成"敬请期待"。
 console.log('\n分组：');
-for (const { group, items } of groupBy(allusions)) {
+for (const { group, items } of groupBy(entries)) {
   console.log(
     '  · ' +
       group.id +
@@ -100,9 +102,31 @@ for (const { group, items } of groupBy(allusions)) {
       '）',
   );
 }
-for (const allusion of allusions) {
-  if (!isGroupId(allusion.group)) {
-    fail(allusion.id + ' 的分组没有登记："' + allusion.group + '"，见 packages/content/src/groups.ts');
+for (const entry of entries) {
+  if (!isGroupId(entry.group)) {
+    fail(entry.id + ' 的分组没有登记："' + entry.group + '"，见 packages/content/src/groups.ts');
+  }
+}
+
+// ---------- 三十六计体检：序号、套、登记顺序 ----------
+// 组内按**登记顺序**排（groups.ts 的 orderBy: 'index'），
+// 所以"第几计"必须等于它在数组里的位置，否则大厅里的顺序和计策序号会对不上。
+const stratagems = entries.filter((entry) => entry.stratagem !== undefined);
+if (stratagems.length > 0) {
+  console.log('\n三十六计：' + stratagems.length + ' 计');
+  const numbers = stratagems.map((entry) => entry.stratagem!.number);
+  const expected = numbers.map((_, index) => index + 1);
+  if (numbers.join(',') !== expected.join(',')) {
+    fail(
+      '三十六计的登记顺序必须与计策序号一致：期望 ' +
+        expected.join(',') +
+        '，实际 ' +
+        numbers.join(','),
+    );
+  }
+  for (const entry of stratagems) {
+    const { number, set } = entry.stratagem!;
+    console.log('  · 第 ' + number + ' 计（第 ' + set + ' 套）' + entry.title);
   }
 }
 
@@ -111,25 +135,25 @@ for (const locale of LOCALES) {
   if (locale === DEFAULT_LOCALE) continue;
   const table = patches[locale];
   if (!table) {
-    fail('语言 ' + locale + ' 没有任何典故译文');
+    fail('语言 ' + locale + ' 没有任何译文');
     continue;
   }
   console.log('\n语言 ' + locale + '：');
-  for (const allusion of allusions) {
-    const patch = table[allusion.id];
+  for (const entry of entries) {
+    const patch = table[entry.id];
     if (patch === undefined) {
-      fail(allusion.id + ' 缺少 ' + locale + ' 译文');
+      fail(entry.id + ' 缺少 ' + locale + ' 译文');
       continue;
     }
-    const issues = validatePatch(allusion, patch);
+    const issues = validatePatch(entry, patch);
     for (const issue of issues) {
-      fail(allusion.id + ' 译文 ' + (issue.path || '(根)') + '：' + issue.message);
+      fail(entry.id + ' 译文 ' + (issue.path || '(根)') + '：' + issue.message);
     }
     // 合并之后仍须通过内容 schema —— 译文太长同样会挡住
-    const merged = AllusionSchema.safeParse(mergeLocalized(allusion, patch));
+    const merged = ContentEntrySchema.safeParse(mergeLocalized(entry, patch));
     if (!merged.success) {
       for (const issue of merged.error.issues) {
-        fail(allusion.id + ' 译文 ' + issue.path.join('.') + '：' + issue.message);
+        fail(entry.id + ' 译文 ' + issue.path.join('.') + '：' + issue.message);
       }
     } else {
       // 合并之后，每一段关卡脚本还要重新过一遍模板 schema。
@@ -142,7 +166,7 @@ for (const locale of LOCALES) {
         if (!result.success) {
           for (const issue of result.error.issues) {
             fail(
-              allusion.id + ' ' + locale + ' 玩法脚本[' + index + '] ' +
+              entry.id + ' ' + locale + ' 玩法脚本[' + index + '] ' +
                 (issue.path.join('.') || '(根)') + '：' + issue.message,
             );
           }
@@ -153,7 +177,7 @@ for (const locale of LOCALES) {
       const leaks = findCjk(merged.data);
       if (leaks.length > 0) {
         fail(
-          allusion.id + ' 的 ' + locale + ' 版里还有中文，漏翻字段：' + leaks.join('、'),
+          entry.id + ' 的 ' + locale + ' 版里还有中文，漏翻字段：' + leaks.join('、'),
         );
       } else {
         console.log('  · ' + merged.data.title);

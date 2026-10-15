@@ -1,7 +1,7 @@
-import { GROUPS } from '@chags/content';
+import { GROUPS, STRATAGEM_SETS } from '@chags/content';
 import { describe, expect, it } from 'vitest';
 import { LOCALES, createTranslator, localeFromSearch, messages } from './index';
-import { groupMessageKey } from './messages';
+import { groupMessageKey, stratagemLabel, stratagemSetKey } from './messages';
 import type { MessageKey } from './messages';
 
 describe('界面文案表', () => {
@@ -39,6 +39,27 @@ describe('界面文案表', () => {
         expect(messages['zh-CN'][key]).not.toBe(messages.en[key]);
       }
     }
+  });
+
+  it('三十六计六套套名齐全，套数与内容层的 STRATAGEM_SETS 一致', () => {
+    for (let set = 1; set <= STRATAGEM_SETS; set += 1) {
+      const key = stratagemSetKey(set);
+      for (const locale of LOCALES) {
+        const text = messages[locale][key] as string | undefined;
+        expect(text, locale + ' 缺少 ' + key).toBeTruthy();
+      }
+      expect(messages['zh-CN'][key], key + ' 中英没翻').not.toBe(messages.en[key]);
+    }
+    // 多写一套同样是错：说明内容层的套数约定变了
+    const declared = (Object.keys(messages['zh-CN']) as string[]).filter((key) =>
+      key.startsWith('stratagem.set.'),
+    );
+    expect(declared.length).toBe(STRATAGEM_SETS);
+  });
+
+  it('"第 n 计"的中英句式各写各的，数字由 stratagemLabel 填', () => {
+    expect(stratagemLabel(messages['zh-CN']['stratagem.card'], 5)).toBe('第 5 计');
+    expect(stratagemLabel(messages.en['stratagem.card'], 5)).toBe('Stratagem 5');
   });
 
   it('取词器按语言返回，未知语言回落到中文', () => {

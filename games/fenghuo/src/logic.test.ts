@@ -1,9 +1,9 @@
-import { getAllusion } from '@chags/content';
+import { getEntry } from '@chags/content';
 import { describe, expect, it } from 'vitest';
 import { beaconLevel } from './logic';
 
 describe('烽火戏诸侯 · 关卡数据', () => {
-  const level = beaconLevel(getAllusion('fenghuo')!);
+  const level = beaconLevel(getEntry('fenghuo')!);
 
   it('山脊上一串烽火台，从近到远', () => {
     expect(level.towers.length).toBeGreaterThanOrEqual(3);

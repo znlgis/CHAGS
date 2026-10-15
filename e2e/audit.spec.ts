@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { clickDesign, dragDesign, events, holdDesign, tapDesign } from './helpers';
 import { archerAt } from '../games/yangyouji/src/layout';
-import { SUB, SUB_PILES } from '../packages/templates/src/layout';
+import { REWARD, SUB, SUB_PILES } from '../packages/templates/src/layout';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
  */
 const panguJson = JSON.parse(
   readFileSync(
-    fileURLToPath(new URL('../packages/content/src/allusions/pangu.json', import.meta.url)),
+    fileURLToPath(new URL('../packages/content/src/entries/pangu.json', import.meta.url)),
     'utf8',
   ),
 ) as { game: { stages: { levelScript: unknown }[] } };
@@ -65,7 +65,7 @@ interface Point { x: number; y: number }
 /** 把一部典故的关卡脚本读出来（版面巡检要按真实坐标点） */
 function levelOf(id: string, stage = 0): Record<string, unknown> {
   const path = fileURLToPath(
-    new URL('../packages/content/src/allusions/' + id + '.json', import.meta.url),
+    new URL('../packages/content/src/entries/' + id + '.json', import.meta.url),
   );
   const json = JSON.parse(readFileSync(path, 'utf8')) as {
     game: { stages: { levelScript: Record<string, unknown> }[] };
@@ -75,7 +75,7 @@ function levelOf(id: string, stage = 0): Record<string, unknown> {
 
 const nuwaScript = JSON.parse(
   readFileSync(
-    fileURLToPath(new URL('../packages/content/src/allusions/nuwa.json', import.meta.url)),
+    fileURLToPath(new URL('../packages/content/src/entries/nuwa.json', import.meta.url)),
     'utf8',
   ),
 ) as { game: { stages: { levelScript: { slots: { id: string; x: number; y: number }[]; orbs: { slotId: string; x: number; y: number }[] } }[] } };
@@ -83,7 +83,7 @@ const nuwaPlace = nuwaScript.game.stages[0]!.levelScript;
 
 const houyiScript = JSON.parse(
   readFileSync(
-    fileURLToPath(new URL('../packages/content/src/allusions/houyi.json', import.meta.url)),
+    fileURLToPath(new URL('../packages/content/src/entries/houyi.json', import.meta.url)),
     'utf8',
   ),
 ) as { game: { stages: { levelScript: { targets: { x: number; y: number }[] } }[] } };
@@ -490,5 +490,52 @@ for (const locale of LOCALES) {
     }
 
     expect(unfinished, '这些典故没能走到典故卡 —— 它们的 -2/-3/-4 截图就是卡住的样子').toEqual([]);
+  });
+}
+
+/**
+ * 三十六计 · 第一辑（胜战计 1–6）：双语版面 + **卡面**。
+ *
+ * 卡面走 `?autoplay=1&card=hold`：自动通关照跑，但停在典故卡上
+ * （见 DebugOptions.cardHold）—— 自动通关下卡片只停 200ms，不这样拍不到卡面，
+ * 而卡面恰恰是英文长标题最容易溢出的地方（"Make a Noise in the East, Attack in the West"）。
+ */
+const STRATAGEMS: [string, string][] = [
+  ['mantian-guohai', 'ruse'],
+  ['weiwei-jiuzhao', 'siege'],
+  ['jiedao-sharen', 'borrow'],
+  ['yiyi-dailao', 'stillness'],
+  ['chenhuo-dajie', 'window'],
+  ['shengdong-jixi', 'ruse'],
+];
+
+for (const locale of LOCALES) {
+  test('audit ' + locale + ' — 三十六计第一辑（版面 + 卡面）', async ({ page }) => {
+    test.setTimeout(600_000);
+    await page.setViewportSize({ width: 430, height: 932 });
+    const out = '.scratch/i18n-audit/' + locale;
+
+    for (const [id, scene] of STRATAGEMS) {
+      // 一、故事第一幕 → 玩法第一屏（story=instant 只是不等旁白，两幕仍要自己翻）
+      await page.goto('/?lang=' + locale + '&r=' + id + '&story=instant#/play/' + id);
+      await page.waitForSelector('canvas');
+      await page.waitForTimeout(700);
+      await page.screenshot({ path: out + '/' + id + '-1-story.png' });
+      await clickDesign(page, 375, 900);
+      await page.waitForTimeout(520);
+      await clickDesign(page, 375, 900);
+      await expect.poll(() => events(page), { timeout: 20_000 }).toContain('scene:enter:' + scene);
+      await page.waitForTimeout(900);
+      await page.screenshot({ path: out + '/' + id + '-2-play.png' });
+
+      // 二、卡面：自动通关 + 停在卡片上；点「收下」才回游戏馆
+      await page.goto('/?lang=' + locale + '&r=' + id + '-card&autoplay=1&card=hold#/play/' + id);
+      await page.waitForSelector('canvas');
+      await expect.poll(() => events(page), { timeout: 60_000 }).toContain('card:unlocked');
+      await page.waitForTimeout(500);
+      await page.screenshot({ path: out + '/' + id + '-3-card.png' });
+      await clickDesign(page, REWARD.done.x, REWARD.done.y);
+      await expect.poll(() => events(page), { timeout: 20_000 }).toContain('session:exit');
+    }
   });
 }

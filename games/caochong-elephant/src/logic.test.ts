@@ -1,10 +1,10 @@
-import { getAllusion, stageScript } from '@chags/content';
+import { getEntry, stageScript } from '@chags/content';
 import { canReach } from '@chags/templates/schemas';
 import { describe, expect, it } from 'vitest';
 import { substitutionLevel } from './logic';
 
 describe('曹冲称象 · 关卡数据', () => {
-  const raw = getAllusion('caochong-elephant');
+  const raw = getEntry('caochong-elephant');
 
   it('内容里的关卡脚本能通过模板 schema', () => {
     expect(raw).toBeTruthy();

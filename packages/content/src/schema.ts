@@ -28,7 +28,7 @@ export const KeyMomentOptionSchema = z.object({
   hint: z.string().default(''),
 });
 
-/** ★ 关键抉择点：玩法的种子。没有它，典故就只是看动画。 */
+/** ★ 关键抉择点：玩法的种子。没有它，一条内容就只是看动画。 */
 export const KeyMomentSchema = z.object({
   beatId: z.string().min(1),
   question: z.string().min(1),
@@ -42,13 +42,30 @@ export const SourceSchema = z.object({
   quote: z.string().min(1),
 });
 
-/** 一个典故可以由多段玩法拼成（例如盘古 = 撑天 + 化身） */
+/** 一条内容可以由多段玩法拼成（例如盘古 = 撑天 + 化身、围魏救赵 = 双线 + 要害） */
 export const GameStageSchema = z.object({
   template: z.string().min(1),
   levelScript: z.unknown(),
 });
 
-export const AllusionSchema = z
+/** 三十六计一共六套（胜战 / 敌战 / 攻战 / 混战 / 并战 / 败战），套名是界面文案，见 i18n */
+export const STRATAGEM_SETS = 6;
+
+/**
+ * 三十六计专属字段。
+ * 序号既是"第几计"，也是它在大厅里的排列位置（stratagem 组按登记顺序排）。
+ *
+ * **按语不在这里**：它写在 `source` 里（book = 《三十六计·X套》，quote = 按语原文）。
+ * 这里只留结构性的两个字段，免得同一句原文在一条内容里出现两遍。
+ */
+export const StratagemSchema = z.object({
+  /** 计策序号 1–36 */
+  number: z.number().int().min(1).max(36),
+  /** 第几套：1 = 胜战计 … 6 = 败战计 */
+  set: z.number().int().min(1).max(STRATAGEM_SETS),
+});
+
+export const ContentEntrySchema = z
   .object({
     id: z.string().regex(/^[a-z0-9-]+$/, 'id 只能是小写字母、数字与连字符'),
     /**
@@ -62,8 +79,16 @@ export const AllusionSchema = z
       .refine(isGroupId, {
         message: '分组没有登记：' + GROUPS.map((g) => g.id).join(' / ') + '（见 groups.ts）',
       }),
-    /** 信史 / 神话 / 传说 / 寓言：历史长卷要分开呈现（神话落在最左端，寓言是"讲道理的故事"） */
-    kind: z.enum(['history', 'myth', 'legend', 'fable']).default('history'),
+    /**
+     * 信史 / 神话 / 传说 / 寓言 / 兵法：游戏馆按它挂徽章。
+     * 三十六计是 strategy（兵法）—— 它们不是"故事"，是"招数"。
+     */
+    kind: z.enum(['history', 'myth', 'legend', 'fable', 'strategy']).default('history'),
+    /**
+     * 三十六计专属。**只对 stratagem 组存在**：
+     * 忘了写、或者给典故组写了，都在构建期当场报错（见下面的 refine）。
+     */
+    stratagem: StratagemSchema.optional(),
     title: z.string().min(1),
     pinyin: z.string().min(1),
     dynasty: z.string().min(1),
@@ -106,9 +131,18 @@ export const AllusionSchema = z
   .refine((v) => v.quiz.some((q) => q.kind === 'transfer'), {
     message: '至少需要一道 transfer（迁移）题，否则无法验证“真的记住了”',
     path: ['quiz'],
+  })
+  .refine((v) => (v.group === 'stratagem') === (v.stratagem !== undefined), {
+    message: '三十六计必须写 stratagem（序号 / 套 / 按语），典故组不许写',
+    path: ['stratagem'],
+  })
+  .refine((v) => v.stratagem === undefined || v.stratagem.set === Math.ceil(v.stratagem.number / 6), {
+    message: 'stratagem.set 与序号对不上：第 n 套 = 序号 6(n−1)+1 … 6n',
+    path: ['stratagem', 'set'],
   });
 
-export type AllusionContent = z.infer<typeof AllusionSchema>;
+export type ContentEntry = z.infer<typeof ContentEntrySchema>;
+export type Stratagem = z.infer<typeof StratagemSchema>;
 export type GameStage = z.infer<typeof GameStageSchema>;
 export type StoryBeat = z.infer<typeof StoryBeatSchema>;
 export type KeyMoment = z.infer<typeof KeyMomentSchema>;

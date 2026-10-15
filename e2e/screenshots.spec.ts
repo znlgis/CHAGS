@@ -10,7 +10,7 @@ interface StageScript { template: string; levelScript: unknown }
 
 /** Playwright 的 ESM 加载器不接受裸 JSON 导入，这里自己读 */
 function loadContent(id: string): { game: { stages: StageScript[] } } {
-  const path = fileURLToPath(new URL('../packages/content/src/allusions/' + id + '.json', import.meta.url));
+  const path = fileURLToPath(new URL('../packages/content/src/entries/' + id + '.json', import.meta.url));
   return JSON.parse(readFileSync(path, 'utf8')) as { game: { stages: StageScript[] } };
 }
 
@@ -705,3 +705,31 @@ test('capture paoding screenshots', async ({ page }) => {
   await page.waitForTimeout(900);
   await page.screenshot({ path: 'docs/screenshots/88-paoding-skeleton.png' });
 });
+
+/**
+ * 三十六计 · 第一辑（胜战计 1–6）的玩法画面。
+ * 这里不做真实操作演出（每条计策的手感留给 smoke 的 autoplay 用例守），
+ * 只把"故事听完 → 玩法第一屏"拍下来，用于 README 与版面巡检。
+ */
+for (const [id, scene, file] of [
+  ['mantian-guohai', 'ruse', '92-stratagem-01-mantian.png'],
+  ['weiwei-jiuzhao', 'siege', '93-stratagem-02-weiwei.png'],
+  ['jiedao-sharen', 'borrow', '94-stratagem-03-jiedao.png'],
+  ['yiyi-dailao', 'stillness', '95-stratagem-04-yiyi.png'],
+  ['chenhuo-dajie', 'window', '96-stratagem-05-chenhuo.png'],
+  ['shengdong-jixi', 'ruse', '97-stratagem-06-shengdong.png'],
+] as const) {
+  test('capture stratagem screenshots: ' + id, async ({ page }) => {
+    await page.setViewportSize({ width: 430, height: 932 });
+    await page.goto('/?lang=zh-CN&story=instant#/play/' + id);
+    await page.waitForSelector('canvas');
+    // story=instant 只是"不等旁白念完"，故事两幕仍然要自己翻页
+    await page.waitForTimeout(450);
+    await clickDesign(page, 375, 900);
+    await page.waitForTimeout(520);
+    await clickDesign(page, 375, 900);
+    await expect.poll(() => events(page), { timeout: 20_000 }).toContain('scene:enter:' + scene);
+    await page.waitForTimeout(900);
+    await page.screenshot({ path: 'docs/screenshots/' + file });
+  });
+}

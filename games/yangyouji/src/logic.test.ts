@@ -1,10 +1,10 @@
-import { getAllusion } from '@chags/content';
+import { getEntry } from '@chags/content';
 import { describe, expect, it } from 'vitest';
 import { ADVANCE, ARCHER_X0, LEAVES, LEAF_RADII, archerAt } from './layout';
 import { aimLevel, rungTargetId } from './logic';
 
 describe('百步穿杨 · 关卡数据', () => {
-  const raw = getAllusion('yangyouji');
+  const raw = getEntry('yangyouji');
   const level = aimLevel(raw!);
 
   it('五档距离：十步 → 百步', () => {

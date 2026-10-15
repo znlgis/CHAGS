@@ -1,0 +1,84 @@
+{
+  "title": "A Borrowed Sword",
+  "dynasty": "Spring and Autumn",
+  "era": "Spring and Autumn · Duke Ai of Lu",
+  "figures": [
+    "Zigong",
+    "Confucius"
+  ],
+  "source": {
+    "book": "Records of the Grand Historian, Biographies of the Disciples of Confucius",
+    "quote": "So it was that one journey by Zigong preserved Lu, threw Qi into disorder, broke Wu, strengthened Jin, and made Yue master of the states."
+  },
+  "moral": "What you cannot move alone, you can move with someone else's strength.",
+  "keywords": [
+    "Borrowed strength",
+    "A lever",
+    "Asking for help"
+  ],
+  "story": [
+    {
+      "title": "Let Me Make One Journey",
+      "text": "A great state was about to attack Lu. Zigong said: let me make one journey.",
+      "narration": "The armies of Qi were coming to attack Lu. Zigong said to Confucius: let me go and make one journey."
+    },
+    {
+      "title": "Four States Held in Check",
+      "text": "He made one journey; four armies held each other, and Lu was safe.",
+      "narration": "Zigong went first to Qi, then to Wu, to Jin and to Yue. When his journey was done, the four armies were holding each other in check, and no one had time to attack Lu."
+    }
+  ],
+  "keyMoment": {
+    "question": "Lu could not win a fight. What did Zigong do?",
+    "options": [
+      {
+        "text": "Empty the granaries and hold out",
+        "hint": "An empty granary still cannot stop an army."
+      },
+      {
+        "text": "Walk around the other states and borrow their strength",
+        "hint": ""
+      },
+      {
+        "text": "Hide in the mountains",
+        "hint": "If the people hide, home is gone."
+      }
+    ],
+    "reveal": "What you cannot move on your own, ask others to help you move."
+  },
+  "misconceptions": [
+    "If you cannot move it, you just need to push harder",
+    "Borrowing strength means doing no work yourself"
+  ],
+  "quiz": [
+    {
+      "question": "How many states' strength did Zigong borrow on that one journey?",
+      "options": [
+        "One",
+        "Four",
+        "Ten"
+      ],
+      "answer": 1,
+      "explanation": "The armies of Qi, Wu, Jin and Yue held each other in check — after one journey, Lu was safe."
+    },
+    {
+      "question": "A stone is too heavy for one person to move. What is the best plan?",
+      "options": [
+        "Find a strong pole and a stone to rest it on, and pry it up",
+        "Bite your teeth and push once more",
+        "Dig away a little of the soil beside it"
+      ],
+      "answer": 0,
+      "explanation": "A pole resting on a stone is a lever — you are borrowing its strength, and it is far easier than pushing alone."
+    }
+  ],
+  "game": {
+    "stages": [
+      {
+        "levelScript": {
+          "hint": "Use a lever, not muscle"
+        }
+      }
+    ]
+  }
+}

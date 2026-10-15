@@ -1,13 +1,13 @@
-import { AllusionSchema } from '@chags/content';
+import { ContentEntrySchema } from '@chags/content';
 import { describe, expect, it } from 'vitest';
-import raw from '../../../packages/content/src/allusions/dayu.json';
+import raw from '../../../packages/content/src/entries/dayu.json';
 import { tapLevel, traceLevel } from './logic';
 
 /**
  * 内容按 id 注册在外壳的清单里，这里直接读原文：
  * 游戏包自己的单测不该依赖"外壳有没有登记这一行"。
  */
-const content = AllusionSchema.parse(raw);
+const content = ContentEntrySchema.parse(raw);
 const tap = tapLevel(content);
 const trace = traceLevel(content);
 

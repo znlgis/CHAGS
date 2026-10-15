@@ -1,14 +1,14 @@
 import { SAVE_SCHEMA_VERSION } from '@chags/game-kit';
-import type { AllusionProgress, ProgressStore, SaveData } from '@chags/game-kit';
+import type { EntryProgress, ProgressStore, SaveData } from '@chags/game-kit';
 import { createReviewState, nextReview } from './review';
 
 export function emptySave(now: number): SaveData {
   return { schemaVersion: SAVE_SCHEMA_VERSION, allusions: {}, updatedAt: now };
 }
 
-function emptyProgress(allusionId: string): AllusionProgress {
+function emptyProgress(entryId: string): EntryProgress {
   return {
-    allusionId,
+    entryId,
     stars: 0,
     completions: 0,
     lastPlayedAt: null,
@@ -25,9 +25,15 @@ export function migrate(raw: unknown, now: number): SaveData {
   const data = raw as Partial<SaveData>;
   if (data.schemaVersion !== SAVE_SCHEMA_VERSION) return emptySave(now);
   if (!data.allusions || typeof data.allusions !== 'object') return emptySave(now);
+  // 老存档里每个进度对象带着旧字段名 allusionId：补上 entryId（键才是权威），
+  // 否则界面会拿到一个"没有 id 的进度"。键是内容 id，读档照旧。
+  const allusions: SaveData['allusions'] = {};
+  for (const [id, value] of Object.entries(data.allusions)) {
+    allusions[id] = value.entryId === id ? value : { ...value, entryId: id };
+  }
   return {
     schemaVersion: SAVE_SCHEMA_VERSION,
-    allusions: data.allusions,
+    allusions,
     updatedAt: typeof data.updatedAt === 'number' ? data.updatedAt : now,
   };
 }
@@ -52,19 +58,19 @@ export class ProgressManager {
     return this.data;
   }
 
-  get(allusionId: string): AllusionProgress {
-    return this.data.allusions[allusionId] ?? emptyProgress(allusionId);
+  get(entryId: string): EntryProgress {
+    return this.data.allusions[entryId] ?? emptyProgress(entryId);
   }
 
   /** 通关：记录星星（只增不减，对小朋友永远正向）与复习计划 */
   async recordCompletion(
-    allusionId: string,
+    entryId: string,
     stars: 0 | 1 | 2 | 3,
     grade: 0 | 1 | 2 | 3,
-  ): Promise<AllusionProgress> {
+  ): Promise<EntryProgress> {
     const now = this.clock();
-    const prev = this.get(allusionId);
-    const next: AllusionProgress = {
+    const prev = this.get(entryId);
+    const next: EntryProgress = {
       ...prev,
       stars: Math.max(prev.stars, stars) as 0 | 1 | 2 | 3,
       completions: prev.completions + 1,
@@ -73,7 +79,7 @@ export class ProgressManager {
     };
     this.data = {
       ...this.data,
-      allusions: { ...this.data.allusions, [allusionId]: next },
+      allusions: { ...this.data.allusions, [entryId]: next },
       updatedAt: now,
     };
     await this.store.save(this.data);
@@ -81,27 +87,27 @@ export class ProgressManager {
   }
 
   /** 复习关卡的评分（不影响星星） */
-  async recordReview(allusionId: string, grade: 0 | 1 | 2 | 3): Promise<AllusionProgress> {
+  async recordReview(entryId: string, grade: 0 | 1 | 2 | 3): Promise<EntryProgress> {
     const now = this.clock();
-    const prev = this.get(allusionId);
-    const next: AllusionProgress = {
+    const prev = this.get(entryId);
+    const next: EntryProgress = {
       ...prev,
       lastPlayedAt: now,
       review: nextReview(prev.review, grade, now),
     };
     this.data = {
       ...this.data,
-      allusions: { ...this.data.allusions, [allusionId]: next },
+      allusions: { ...this.data.allusions, [entryId]: next },
       updatedAt: now,
     };
     await this.store.save(this.data);
     return next;
   }
 
-  /** 到期待复习的典故（历史长卷 / 复习中心的输入） */
-  due(allusionIds: string[]): string[] {
+  /** 到期待复习的内容条目（历史长卷 / 复习中心的输入） */
+  due(entryIds: string[]): string[] {
     const now = this.clock();
-    return allusionIds.filter((id) => {
+    return entryIds.filter((id) => {
       const p = this.data.allusions[id];
       return p !== undefined && p.review.dueAt !== null && p.review.dueAt <= now;
     });

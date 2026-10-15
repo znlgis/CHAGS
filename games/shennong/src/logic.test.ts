@@ -1,9 +1,9 @@
-import { getAllusion } from '@chags/content';
+import { getEntry } from '@chags/content';
 import { describe, expect, it } from 'vitest';
 import { sortLevel } from './logic';
 
 describe('神农尝百草 · 关卡数据', () => {
-  const level = sortLevel(getAllusion('shennong')!);
+  const level = sortLevel(getEntry('shennong')!);
 
   it('三块木牍 + 八株草，一块不多一块不少', () => {
     expect(level.bins.length).toBe(3);

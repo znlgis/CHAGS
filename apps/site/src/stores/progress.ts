@@ -16,20 +16,20 @@ export const useProgress = defineStore('progress', () => {
     () => Object.values(save.value.allusions).filter((a) => a.completions > 0).length,
   );
 
-  function starsFor(allusionId: string): number {
-    return save.value.allusions[allusionId]?.stars ?? 0;
+  function starsFor(entryId: string): number {
+    return save.value.allusions[entryId]?.stars ?? 0;
   }
 
-  function hasCard(allusionId: string): boolean {
-    return (save.value.allusions[allusionId]?.completions ?? 0) > 0;
+  function hasCard(entryId: string): boolean {
+    return (save.value.allusions[entryId]?.completions ?? 0) > 0;
   }
 
   async function recordCompletion(
-    allusionId: string,
+    entryId: string,
     stars: 0 | 1 | 2 | 3,
     grade: 0 | 1 | 2 | 3,
   ): Promise<void> {
-    await progressManager.recordCompletion(allusionId, stars, grade);
+    await progressManager.recordCompletion(entryId, stars, grade);
     save.value = progressManager.snapshot();
   }
 

@@ -16,6 +16,12 @@ import enZhaosanmusi from './en/zhaosanmusi.json';
 import enJiaotu from './en/jiaotu.json';
 import enYangyouji from './en/yangyouji.json';
 import enPaoding from './en/paoding.json';
+import enMantian from './en/mantian-guohai.json';
+import enWeiwei from './en/weiwei-jiuzhao.json';
+import enJiedao from './en/jiedao-sharen.json';
+import enYiyi from './en/yiyi-dailao.json';
+import enChenhuo from './en/chenhuo-dajie.json';
+import enShengdong from './en/shengdong-jixi.json';
 
 /**
  * 典故内容的翻译补丁。结构镜像原文，只写需要翻译的字段。
@@ -40,6 +46,12 @@ export const patches: Partial<Record<Locale, Record<string, unknown>>> = {
     jiaotu: enJiaotu,
     yangyouji: enYangyouji,
     paoding: enPaoding,
+    'mantian-guohai': enMantian,
+    'weiwei-jiuzhao': enWeiwei,
+    'jiedao-sharen': enJiedao,
+    'yiyi-dailao': enYiyi,
+    'chenhuo-dajie': enChenhuo,
+    'shengdong-jixi': enShengdong,
   },
 };
 

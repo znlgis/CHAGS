@@ -1,9 +1,9 @@
-import { getAllusion } from '@chags/content';
+import { getEntry } from '@chags/content';
 import { describe, expect, it } from 'vitest';
 import { placeLevel } from './logic';
 
 describe('女娲补天 · 关卡数据', () => {
-  const raw = getAllusion('nuwa');
+  const raw = getEntry('nuwa');
 
   it('五色石补五个洞，一个不多一个不少', () => {
     const level = placeLevel(raw!);

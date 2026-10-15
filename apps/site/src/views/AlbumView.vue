@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { gameGroups } from '@chags/content';
-import { groupMessageKey } from '@chags/i18n';
+import { groupMessageKey, stratagemLabel, stratagemSetKey } from '@chags/i18n';
 import { computed } from 'vue';
 import { useLocale } from '../stores/locale';
 import { useProgress } from '../stores/progress';
@@ -46,21 +46,27 @@ const total = computed(() => sections.value.reduce((sum, s) => sum + s.cards.len
 
       <ul class="mt-4 grid gap-4 sm:grid-cols-2">
         <li
-          v-for="allusion in cards"
-          :key="allusion.id"
-          :data-testid="'album-card-' + allusion.id"
+          v-for="entry in cards"
+          :key="entry.id"
+          :data-testid="'album-card-' + entry.id"
           class="rounded-3xl border-2 border-[#c98a1c] bg-[#fffaf0] p-5"
         >
           <div class="flex items-baseline justify-between">
-            <h3 class="text-xl font-bold text-[#b03a31]">{{ allusion.title }}</h3>
-            <span class="text-[#8a5f10]">{{ '★'.repeat(progress.starsFor(allusion.id)) }}</span>
+            <h3 class="text-xl font-bold text-[#b03a31]">{{ entry.title }}</h3>
+            <span class="text-[#8a5f10]">{{ '★'.repeat(progress.starsFor(entry.id)) }}</span>
           </div>
-          <p class="mt-1 text-sm text-[#6b5a49]">{{ allusion.pinyin }} · {{ allusion.era }}</p>
-          <p class="mt-3 text-sm leading-relaxed">{{ allusion.moral }}</p>
-          <p class="mt-3 border-t border-dashed border-[#f0e0bd] pt-3 text-sm text-[#6b5a49]">
-            {{ i18n.t('album.source') }}：{{ allusion.source.book }}
+          <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-[#6b5a49]">
+            <span v-if="entry.stratagem" class="rounded-full bg-[#efe4ff] px-2 py-0.5 text-[#5b3f96]">
+              {{ stratagemLabel(i18n.t('stratagem.card'), entry.stratagem.number) }}
+              · {{ i18n.t(stratagemSetKey(entry.stratagem.set)) }}
+            </span>
+            <span>{{ entry.pinyin }} · {{ entry.era }}</span>
           </p>
-          <p class="mt-1 text-sm leading-relaxed text-[#5c4b3d]">{{ allusion.source.quote }}</p>
+          <p class="mt-3 text-sm leading-relaxed">{{ entry.moral }}</p>
+          <p class="mt-3 border-t border-dashed border-[#f0e0bd] pt-3 text-sm text-[#6b5a49]">
+            {{ i18n.t('album.source') }}：{{ entry.source.book }}
+          </p>
+          <p class="mt-1 text-sm leading-relaxed text-[#5c4b3d]">{{ entry.source.quote }}</p>
         </li>
       </ul>
     </section>

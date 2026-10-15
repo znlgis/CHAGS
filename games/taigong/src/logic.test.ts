@@ -1,15 +1,15 @@
-import { AllusionSchema, getAllusion } from '@chags/content';
+import { ContentEntrySchema, getEntry } from '@chags/content';
 // layout 只有常量，没有 Phaser：单测里可以直接用真正的设计分辨率
 import { DESIGN, WAIT } from '@chags/templates/layout';
 import { describe, expect, it } from 'vitest';
-import rawTaigong from '../../../packages/content/src/allusions/taigong.json';
+import rawTaigong from '../../../packages/content/src/entries/taigong.json';
 import { waitLevel } from './logic';
 
 /**
- * 直接读典故 JSON 再过一遍内容 schema：外壳注册（allusions/index.ts）由 Lead 负责，
+ * 直接读典故 JSON 再过一遍内容 schema：外壳注册（entries/index.ts）由 Lead 负责，
  * 这样不等注册也能先发现内容写错。
  */
-const raw = getAllusion('taigong') ?? AllusionSchema.parse(rawTaigong);
+const raw = getEntry('taigong') ?? ContentEntrySchema.parse(rawTaigong);
 const level = waitLevel(raw);
 
 describe('太公钓鱼 · 关卡数据', () => {

@@ -1,10 +1,10 @@
-import { getAllusion } from '@chags/content';
+import { getEntry } from '@chags/content';
 import { tapsNeeded } from '@chags/templates/tap.logic';
 import { describe, expect, it } from 'vitest';
 import { tapLevel } from './logic';
 
 describe('精卫填海 · 关卡数据', () => {
-  const raw = getAllusion('jingwei');
+  const raw = getEntry('jingwei');
 
   it('连点模式，四十下填满', () => {
     const level = tapLevel(raw!);

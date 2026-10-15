@@ -1,13 +1,13 @@
-import { AllusionSchema, getAllusion } from '@chags/content';
+import { ContentEntrySchema, getEntry } from '@chags/content';
 import { describe, expect, it } from 'vitest';
-import rawQiren from '../../../packages/content/src/allusions/qiren.json';
+import rawQiren from '../../../packages/content/src/entries/qiren.json';
 import { placeLevel } from './logic';
 
 /**
- * 直接读典故 JSON 再过一遍内容 schema：外壳注册（allusions/index.ts）由 Lead 负责，
+ * 直接读典故 JSON 再过一遍内容 schema：外壳注册（entries/index.ts）由 Lead 负责，
  * 这样不等注册也能先发现内容写错。
  */
-const raw = getAllusion('qiren') ?? AllusionSchema.parse(rawQiren);
+const raw = getEntry('qiren') ?? ContentEntrySchema.parse(rawQiren);
 
 describe('杞人忧天 · 关卡数据', () => {
   it('四个担忧泡泡、四个"想明白"的光球，一个不多一个不少', () => {

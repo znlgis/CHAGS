@@ -14,7 +14,12 @@
     "./aim.logic": "./src/aim.logic.ts",
     "./mark.logic": "./src/mark.logic.ts",
     "./split.logic": "./src/split.logic.ts",
-    "./burrow.logic": "./src/burrow.logic.ts"
+    "./burrow.logic": "./src/burrow.logic.ts",
+    "./ruse.logic": "./src/ruse.logic.ts",
+    "./siege.logic": "./src/siege.logic.ts",
+    "./borrow.logic": "./src/borrow.logic.ts",
+    "./stillness.logic": "./src/stillness.logic.ts",
+    "./window.logic": "./src/window.logic.ts"
   },
   "scripts": {
     "test": "vitest run",

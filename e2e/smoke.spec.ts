@@ -4,22 +4,36 @@ import { clickDesign, dragDesign, events, holdDesign, tapDesign } from './helper
 import { REWARD, SUB, SUB_PILES } from '../packages/templates/src/layout';
 import { archerAt } from '../games/yangyouji/src/layout';
 import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 interface StageScript { template: string; levelScript: unknown }
 
 /** 内容目录就是典故清单 —— 别再手抄一份，抄漏一个不会有任何测试发现 */
-function allAllusionIds(): string[] {
-  const dir = fileURLToPath(new URL('../packages/content/src/allusions', import.meta.url));
+function allEntryIds(): string[] {
+  const dir = fileURLToPath(new URL('../packages/content/src/entries', import.meta.url));
   return readdirSync(dir)
     .filter((name) => name.endsWith('.json'))
     .map((name) => name.replace(/\.json$/, ''))
     .sort();
 }
 
+/** 内容目录里某一组的内容 id —— 数量随时长，用例不写死 */
+function entryIdsInGroup(group: string): string[] {
+  const dir = fileURLToPath(new URL('../packages/content/src/entries', import.meta.url));
+  return readdirSync(dir)
+    .filter((name) => name.endsWith('.json'))
+    .filter((name) => {
+      const raw = JSON.parse(readFileSync(join(dir, name), 'utf8')) as { group?: string };
+      return raw.group === group;
+    })
+    .map((name) => name.replace(/\.json$/, ''))
+    .sort();
+}
+
 /** Playwright 的 ESM 加载器不接受裸 JSON 导入，这里自己读 */
 function loadContent(id: string): { game: { stages: StageScript[] } } {
-  const path = fileURLToPath(new URL('../packages/content/src/allusions/' + id + '.json', import.meta.url));
+  const path = fileURLToPath(new URL('../packages/content/src/entries/' + id + '.json', import.meta.url));
   return JSON.parse(readFileSync(path, 'utf8')) as { game: { stages: StageScript[] } };
 }
 
@@ -81,12 +95,17 @@ test('真实操作通关：拖大象上船 → 刻水痕 → 搬石头 → 称�
 test('故事必须听完：旁白没念完之前，怎么点都不翻页', async ({ page }) => {
   await page.goto('/#/play/caochong-elephant');
   await expect(page.locator('canvas')).toBeVisible();
-  await expect.poll(() => events(page)).toContain('beat:enter:s1');
 
-  // 刚进故事页就猛点：这一幕还没听完，不许翻页
+  // 一进来就猛点：这一幕的旁白至少 2.2 秒（story.logic 的 MIN_NARRATION_MS），
+  // 现在点一定还没听完。**这里不要先等 beat:enter / story:ready 之类的条件** ——
+  // 机器一慢，旁白可能已经念完，这条性质就变成假失败（负载高的机器上真的踩到过）。
+  await page.waitForTimeout(420); // 故事页有 350ms 输入锁，等它过去，第一下点击才真的被接到
   await tapDesign(page, 375, 900, 4, 120);
-  expect(await events(page), '听不完就不该放行').not.toContain('story:ready:s1');
-  expect(await events(page), '听不完就不该进玩法').not.toContain('scene:enter:substitution');
+
+  const early = await events(page);
+  expect(early, '听不完就不该放行').not.toContain('story:ready:s1');
+  expect(early, '听不完就不该进玩法').not.toContain('scene:enter:substitution');
+  expect(early, '听不完就不该翻到第二幕').not.toContain('beat:enter:s2');
 
   // 听完第一幕，小手才出现；这时点一下才到第二幕
   await expect.poll(() => events(page), { timeout: 20_000 }).toContain('story:ready:s1');
@@ -105,7 +124,7 @@ test('故事必须听完：旁白没念完之前，怎么点都不翻页', async
  * 分组表在 packages/content/src/groups.ts —— 这里守的是"用户真的看得见分组"：
  * 有内容的组正常列游戏，还没有内容的组显示"敬请期待"而不是消失。
  */
-test('分组：典故与三十六计各占一块，空组显示"敬请期待"', async ({ page }) => {
+test('分组：典故与三十六计各占一块，数量跟内容目录对齐', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('hall')).toBeVisible();
 
@@ -116,24 +135,44 @@ test('分组：典故与三十六计各占一块，空组显示"敬请期待"', 
   await expect(allusionGroup.getByRole('heading', { level: 2 })).toHaveText('典故');
   await expect(stratagemGroup.getByRole('heading', { level: 2 })).toHaveText('三十六计');
 
-  // 典故这一组：每个典故一个入口（数量跟内容目录对齐，别写死）
+  // 两组各自的入口数量都取自内容目录：三十六计从 0 长到 36，这条用例一行都不用改
+  const allusionIds = entryIdsInGroup('allusion');
+  const stratagemIds = entryIdsInGroup('stratagem');
   await expect(allusionGroup.getByRole('button', { name: '开始玩' })).toHaveCount(
-    allAllusionIds().length,
+    allusionIds.length,
   );
   await expect(page.getByTestId('start-pangu')).toBeVisible();
 
-  // 三十六计还没有游戏：显示"敬请期待"和一句说明，而且没有任何入口
-  await expect(stratagemGroup).toContainText('敬请期待');
-  await expect(page.getByTestId('group-empty-stratagem')).toBeVisible();
-  await expect(stratagemGroup.getByRole('button', { name: '开始玩' })).toHaveCount(0);
+  if (stratagemIds.length === 0) {
+    // 还没有计策：显示"敬请期待"和一句说明，而且没有任何入口
+    await expect(stratagemGroup).toContainText('敬请期待');
+    await expect(page.getByTestId('group-empty-stratagem')).toBeVisible();
+    await expect(stratagemGroup.getByRole('button', { name: '开始玩' })).toHaveCount(0);
+  } else {
+    await expect(stratagemGroup.getByRole('button', { name: '开始玩' })).toHaveCount(
+      stratagemIds.length,
+    );
+    // 每条计策都有"第 n 计"徽章；第一条永远是第 1 计（组内按登记顺序 = 计策序号）
+    for (const id of stratagemIds) {
+      await expect(page.getByTestId('stratagem-' + id)).toBeVisible();
+    }
+    await expect(stratagemGroup.getByText('第 1 计')).toBeVisible();
+  }
 
-  // 英文下分组名与"敬请期待"也跟着变
+  // 英文下分组名也跟着变；只有空组才有"Coming soon"
   await page.goto('/?lang=en');
-  await expect(page.getByTestId('group-stratagem')).toContainText('Thirty-Six Stratagems');
-  await expect(page.getByTestId('group-stratagem')).toContainText('Coming soon');
   await expect(page.getByTestId('group-allusion').getByRole('heading', { level: 2 })).toHaveText(
     'Stories',
   );
+  const enStratagem = page.getByTestId('group-stratagem');
+  await expect(enStratagem.getByRole('heading', { level: 2 })).toHaveText('Thirty-Six Stratagems');
+  if (stratagemIds.length === 0) {
+    await expect(enStratagem).toContainText('Coming soon');
+  } else {
+    await expect(enStratagem.getByRole('button', { name: 'Play' })).toHaveCount(
+      stratagemIds.length,
+    );
+  }
 });
 
 test('autoplay 全流程 + 刷新后进度还在', async ({ page }) => {
@@ -600,7 +639,7 @@ test('太公钓鱼 autoplay 全流程（等待被压缩，仍然走完整条线�
 test('中英双语下每个典故都能载入 —— 关卡数据在两种语言下都必须过 schema', async ({ page }) => {
   // 英文的 unit 曾经写成 "baskets"，超出上限导致整个游戏打不开，而且构建期没拦住。
   // 这条用例专门守它：只要 schema 校验失败，页面就不会出现 canvas。
-  const ids = allAllusionIds();
+  const ids = allEntryIds();
   for (const locale of ['zh-CN', 'en'] as const) {
     for (const id of ids) {
       await page.goto('/?lang=' + locale + '#/play/' + id);
@@ -735,6 +774,26 @@ test('狡兔三窟：一个洞被狐狸守住，挖到三窟才躲得过', async
   await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
   await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
 });
+
+/**
+ * 三十六计 · 第一辑（胜战计 1–6）。
+ * 每条计策一条 autoplay：模板层必须实现 runAutoplay()，否则这里就挂。
+ */
+for (const [id, title] of [
+  ['mantian-guohai', '瞒天过海'],
+  ['weiwei-jiuzhao', '围魏救赵'],
+  ['jiedao-sharen', '借刀杀人'],
+  ['yiyi-dailao', '以逸待劳'],
+  ['chenhuo-dajie', '趁火打劫'],
+  ['shengdong-jixi', '声东击西'],
+] as const) {
+  test('三十六计 · ' + title + ' autoplay 全流程', async ({ page }) => {
+    await page.goto('/?autoplay=1#/play/' + id);
+    await expect.poll(() => events(page), { timeout: 120_000 }).toContain('level:complete');
+    await expect.poll(() => events(page), { timeout: 60_000 }).toContain('card:unlocked');
+    await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
+  });
+}
 
 test('狡兔三窟 autoplay 全流程（一窟被堵 → 三窟脱身）', async ({ page }) => {
   await page.goto('/?autoplay=1#/play/jiaotu');

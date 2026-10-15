@@ -1,4 +1,4 @@
-import { getAllusion } from '@chags/content';
+import { getEntry } from '@chags/content';
 import type { Locale } from '@chags/content';
 import type { DebugOptions, GameContext, GameEventMap, GameManifest } from '@chags/game-kit';
 import { recordDebugEvent } from './debug';
@@ -16,10 +16,13 @@ export function readDebugOptions(): DebugOptions | undefined {
   const seed = params.get('seed');
   // ?story=instant：截图巡检专用，跳过"听完才能继续"的等待（玩家界面上没有这个开关）
   const storyInstant = params.get('story') === 'instant';
-  if (!autoplay && !seed && !storyInstant) return undefined;
+  // ?card=hold：截图巡检专用，自动通关后停在典故卡上（同上，只有 URL 能给）
+  const cardHold = params.get('card') === 'hold';
+  if (!autoplay && !seed && !storyInstant && !cardHold) return undefined;
   const options: DebugOptions = {};
   if (autoplay) options.autoplay = true;
   if (storyInstant) options.storyInstant = true;
+  if (cardHold) options.cardHold = true;
   if (seed !== null && seed.length > 0) options.seed = seed;
   return options;
 }
@@ -43,7 +46,7 @@ export function createGameContext(
   hooks: GameHostHooks,
 ): GameContext {
   // 关键：交给游戏的是**已经翻译好**的内容，游戏本身不需要知道语言的存在
-  const content = getAllusion(manifest.id, locale);
+  const content = getEntry(manifest.id, locale);
   if (!content) throw new Error('找不到典故内容：' + manifest.id);
 
   return {

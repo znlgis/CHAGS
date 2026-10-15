@@ -8,7 +8,7 @@
  * 1. 在这里加一行（id / order / orderBy）；
  * 2. 在 packages/i18n/src/messages.ts 里补 group.<id>.title / .note / .empty
  *    （少写一个就编译报错，和英文表完整性同一个套路）；
- * 3. 把新组的关卡内容加进来并在 allusions/index.ts 登记（空组也能先建，
+ * 3. 把新组的关卡内容加进来并在 entries/index.ts 登记（空组也能先建，
  *    大厅会显示成"敬请期待"）。
  */
 export interface GameGroup {

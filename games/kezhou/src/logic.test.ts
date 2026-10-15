@@ -1,11 +1,11 @@
-import { getAllusion } from '@chags/content';
+import { getEntry } from '@chags/content';
 import { surfaceWorldX } from '@chags/templates/mark.logic';
 import { describe, expect, it } from 'vitest';
 import { BOAT_X, ROCK_X, SWORD_X, TREE_X } from './layout';
 import { markLevel } from './logic';
 
 describe('刻舟求剑 · 关卡数据', () => {
-  const raw = getAllusion('kezhou');
+  const raw = getEntry('kezhou');
   const level = markLevel(raw!);
 
   it('三个地方可以刻：船帮会漂，岸上的树和石头不会', () => {
