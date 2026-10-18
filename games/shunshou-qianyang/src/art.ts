@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
-import { DESIGN } from '@chags/templates';
+import { DESIGN } from '@chags/templates/core';
 import type { WindowStageState } from '@chags/templates';
 import type { WindowJob } from '@chags/templates/schemas';
 import { clamp01 } from '@chags/game-kit';

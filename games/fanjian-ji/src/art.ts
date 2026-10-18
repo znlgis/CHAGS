@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
-import { DESIGN } from '@chags/templates';
+import { DESIGN } from '@chags/templates/core';
 import type { TwolinePlantStageState } from '@chags/templates';
 import type { TwolinePlantLevel } from '@chags/templates/schemas';
 import { BELL, DESK, LANTERN, SKY_TOP, TENT, VISITOR_RADIUS, WALK_MS } from './layout';

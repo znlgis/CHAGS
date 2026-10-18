@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
-import { CHAIN_STEP, chainStepBar, chainStepGrantBar } from '@chags/templates';
+import { CHAIN_STEP, chainStepBar, chainStepGrantBar } from '@chags/templates/chain';
 import type { ChainStepMetrics } from '@chags/templates';
 import type { ChainStepLevel } from '@chags/templates/schemas';
 import { DESIGN_H, DESIGN_W, GRANT, POST_RADIUS, POSTS, RIDGES, ROAD_WIDTH, ROUTE, SKY_TOP } from './layout';

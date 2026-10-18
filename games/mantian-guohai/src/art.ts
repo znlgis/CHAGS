@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade, wavyBand } from '@chags/phaser-kit';
-import { DESIGN } from '@chags/templates';
+import { DESIGN } from '@chags/templates/core';
 import type { RuseStageState } from '@chags/templates';
 import type { RuseLevel } from '@chags/templates/schemas';
 import { BEAM_LAND, DECK_BOTTOM, DECK_TOP, LAMP, PIER, SHELF_X, SHIP, SKY_BOTTOM } from './layout';

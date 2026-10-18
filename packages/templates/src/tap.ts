@@ -4,7 +4,7 @@ import type { MessageKey } from '@chags/i18n';
 import {
   BaseScene, CSS, THEME, createHand, roundRect, sparkleAt, textStyle,
 } from '@chags/phaser-kit';
-import { TAP, SCENE_KEYS } from './layout';
+import { TAP, SCENE_KEYS, resolveEnding } from './layout';
 import {
   advanceHold, comboLevel, easedProgress, isTapComplete, pendingMilestones, progressFor,
 } from './tap.logic';
@@ -34,7 +34,7 @@ export interface TapMilestoneApi {
 export interface TapConfig {
   level: TapLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏标题 */
   titleKey: MessageKey;
   /**
@@ -58,6 +58,7 @@ export interface TapConfig {
 }
 
 export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class TapScene extends BaseScene {
     private value = 0;
     private stage: Phaser.GameObjects.Graphics | null = null;
@@ -272,7 +273,7 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
       this.finale?.clear();
       if (this.finale) cfg.drawFinale?.(this.finale, this.metrics(true));
 
-      this.time.delayedCall(cfg.finaleHoldMs ?? 2000, () => this.scene.start(cfg.nextSceneKey));
+      this.time.delayedCall(cfg.finaleHoldMs ?? 2000, () => this.scene.start(ending.nextSceneKey));
     }
 
     // ---------------- 自动通关（无头验证用） ----------------

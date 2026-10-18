@@ -3,7 +3,7 @@ import type { GameContext } from '@chags/game-kit';
 import {
   BaseScene, CSS, THEME, createHand, roundRect, shade, sparkleAt, tapRipple, textStyle,
 } from '@chags/phaser-kit';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   CHAIN_TIMING, askPass, chainStart, chainStep, envoyHit, gateAt, gatesLeft, hasPass, homeHit,
   isGateTaken, isPassDone, nextGate, returnHome, takeGate, takenCount,
@@ -109,7 +109,7 @@ export interface ChainStageState {
 export interface ChainConfig {
   level: ChainLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就用内容自己的标题 */
   title?: string;
   /** 这个世界：山路、谈借路的营帐、沿途关口、自己的营地（画一次） */
@@ -138,12 +138,12 @@ export interface ChainConfig {
  * step 那一半在文件末尾另起一段，由 mode 分派。
  */
 function createPassChainScene(ctx: GameContext, cfg: ChainConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class ChainScene extends BaseScene {
     private level: ChainLevel = cfg.level;
     private state: ChainState = chainStart();
     private startedAt = 0;
     private done = false;
-    private idleMs = 0;
     private misses = 0;
     private lastGateId: string | null = null;
     private lastGateAt = -1;
@@ -160,44 +160,6 @@ function createPassChainScene(ctx: GameContext, cfg: ChainConfig): Phaser.Types.
       super(SCENE_KEYS.chain, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.chain });
-      this.level = cfg.level;
-      this.state = chainStart();
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
-      this.worldGfx = this.add.graphics().setDepth(1);
-      cfg.drawWorld(this.worldGfx, this.level);
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-      // 关口木牌上的字：来自关卡脚本的 label（双语各一份），模板只负责摆位置
-      this.labels = this.level.gates.map((gate) =>
-        this.add
-          .text(
-            gate.x,
-            gate.y + gate.radius + CHAIN.labelDrop,
-            gate.label,
-            textStyle(30, CSS.ink, true),
-          )
-          .setOrigin(0.5, 0)
-          .setDepth(45),
-      );
-      this.markGfx = this.add.graphics().setDepth(60);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.showHint(cfg.level.hint, 3000, CHAIN.hintY);
-        this.time.delayedCall(CHAIN.introHandMs, () => this.pointAtNext());
-      }
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -205,17 +167,6 @@ function createPassChainScene(ctx: GameContext, cfg: ChainConfig): Phaser.Types.
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      this.redraw(this.now());
-      if (this.done) return;
-      // 卡住了：把关卡自己的那句话再亮一遍，并指一指该动的地方
-      this.idleMs += delta;
-      if (this.idleMs >= CHAIN.idleMs) {
-        this.idleMs = 0;
-        this.showHint(this.level.hint, 2600, CHAIN.hintY);
-        this.pointAtNext();
-      }
-    }
 
     private redraw(t: number): void {
       const stage = this.stageState(t);
@@ -408,10 +359,10 @@ function createPassChainScene(ctx: GameContext, cfg: ChainConfig): Phaser.Types.
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? CHAIN.finaleHoldMs,
         sparkle: { x: this.level.home.x, y: this.level.home.y, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: CHAIN.hintY,
         finalize: () => {
           this.ctx.emit('beat:enter', { beatId: 'chain:done' });
@@ -519,6 +470,56 @@ function createPassChainScene(ctx: GameContext, cfg: ChainConfig): Phaser.Types.
       }
       this.pressHome();
     }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      this.redraw(this.now());
+      if (this.done) return;
+      // 卡住了：把关卡自己的那句话再亮一遍，并指一指该动的地方
+      this.idleMs += delta;
+      if (this.idleMs >= CHAIN.idleMs) {
+        this.idleMs = 0;
+        this.showHint(this.level.hint, 2600, CHAIN.hintY);
+        this.pointAtNext();
+      }
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.chain });
+      this.level = cfg.level;
+      this.state = chainStart();
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      // 关口木牌上的字：来自关卡脚本的 label（双语各一份），模板只负责摆位置
+      this.labels = this.level.gates.map((gate) =>
+        this.add
+          .text(
+            gate.x,
+            gate.y + gate.radius + CHAIN.labelDrop,
+            gate.label,
+            textStyle(30, CSS.ink, true),
+          )
+          .setOrigin(0.5, 0)
+          .setDepth(45),
+      );
+      this.markGfx = this.add.graphics().setDepth(60);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.showHint(cfg.level.hint, 3000, CHAIN.hintY);
+        this.time.delayedCall(CHAIN.introHandMs, () => this.pointAtNext());
+      }
+    }
   };
 }
 
@@ -602,7 +603,7 @@ export interface ChainStepApi {
 export interface ChainStepConfig {
   level: ChainStepLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就用内容自己的标题 */
   title?: string;
   /** 这个世界：蜀道、关隘、城池与求允许的营帐（画一次） */
@@ -668,12 +669,12 @@ function createStepChainScene(
   ctx: GameContext,
   cfg: ChainStepConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class ChainStepScene extends BaseScene {
     private level: ChainStepLevel = cfg.level;
     private state: StepState = stepStart();
     private startedAt = 0;
     private done = false;
-    private idleMs = 0;
     private misses = 0;
     private lapses = 0;
     /** 手里这张允许还"活着"：过期的那一刻只记一笔，不重复记 */
@@ -693,48 +694,6 @@ function createStepChainScene(
       super(SCENE_KEYS.chain, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.chain });
-      this.level = cfg.level;
-      this.state = stepStart();
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
-      this.worldGfx = this.add.graphics().setDepth(1);
-      cfg.drawWorld(this.worldGfx, this.level);
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-      // 岗位木牌上的字：来自关卡脚本的 label（双语各一份），模板只负责摆位置
-      this.labels = this.level.posts.map((post) =>
-        this.add
-          .text(
-            post.x,
-            post.y + post.radius + CHAIN_STEP.labelDrop,
-            post.label,
-            textStyle(30, CSS.ink, true),
-          )
-          .setOrigin(0.5, 0)
-          .setDepth(45),
-      );
-      this.markGfx = this.add.graphics().setDepth(60);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
-        this.pressAt(pointer.x, pointer.y),
-      );
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.time.delayedCall(CHAIN_STEP.introHandMs, () => {
-          this.showHint(cfg.level.hint, 3000, CHAIN_STEP.hintY);
-          this.pointAtNext();
-        });
-      }
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -742,28 +701,6 @@ function createStepChainScene(
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      const t = this.now();
-      if (!this.done) {
-        // 允许过期：作废就作废 —— 记进 mistakes，把小手放回求允许的地方
-        if (this.grantAlive && !isGranted(this.level, this.state, t)) {
-          this.grantAlive = false;
-          this.lapses += 1;
-          this.ctx.emit('beat:enter', { beatId: 'chain:lapse:' + this.lapses });
-          this.ctx.services.audio.tone(220, 180);
-          this.showHint(cfg.level.hint, 2200, CHAIN_STEP.hintY);
-          this.pointAtNext();
-        }
-        // 卡住了：把关卡自己的那句话再亮一遍，并指一指该动的地方
-        this.idleMs += delta;
-        if (this.idleMs >= CHAIN_STEP.idleMs) {
-          this.idleMs = 0;
-          this.showHint(this.level.hint, 2600, CHAIN_STEP.hintY);
-          this.pointAtNext();
-        }
-      }
-      this.redraw(t);
-    }
 
     private redraw(t: number): void {
       const stage = this.stageState(t);
@@ -935,10 +872,10 @@ function createStepChainScene(
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? CHAIN_STEP.finaleHoldMs,
         sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: CHAIN_STEP.hintY,
         finalize: () => {
           this.ctx.emit('beat:enter', { beatId: 'chain:done' });
@@ -1045,6 +982,71 @@ function createStepChainScene(
       }
       this.pressAt(move.post.x, move.post.y);
     }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      const t = this.now();
+      if (!this.done) {
+        // 允许过期：作废就作废 —— 记进 mistakes，把小手放回求允许的地方
+        if (this.grantAlive && !isGranted(this.level, this.state, t)) {
+          this.grantAlive = false;
+          this.lapses += 1;
+          this.ctx.emit('beat:enter', { beatId: 'chain:lapse:' + this.lapses });
+          this.ctx.services.audio.tone(220, 180);
+          this.showHint(cfg.level.hint, 2200, CHAIN_STEP.hintY);
+          this.pointAtNext();
+        }
+        // 卡住了：把关卡自己的那句话再亮一遍，并指一指该动的地方
+        this.idleMs += delta;
+        if (this.idleMs >= CHAIN_STEP.idleMs) {
+          this.idleMs = 0;
+          this.showHint(this.level.hint, 2600, CHAIN_STEP.hintY);
+          this.pointAtNext();
+        }
+      }
+      this.redraw(t);
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.chain });
+      this.level = cfg.level;
+      this.state = stepStart();
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      // 岗位木牌上的字：来自关卡脚本的 label（双语各一份），模板只负责摆位置
+      this.labels = this.level.posts.map((post) =>
+        this.add
+          .text(
+            post.x,
+            post.y + post.radius + CHAIN_STEP.labelDrop,
+            post.label,
+            textStyle(30, CSS.ink, true),
+          )
+          .setOrigin(0.5, 0)
+          .setDepth(45),
+      );
+      this.markGfx = this.add.graphics().setDepth(60);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
+        this.pressAt(pointer.x, pointer.y),
+      );
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.time.delayedCall(CHAIN_STEP.introHandMs, () => {
+          this.showHint(cfg.level.hint, 3000, CHAIN_STEP.hintY);
+          this.pointAtNext();
+        });
+      }
+    }
   };
 }
 
@@ -1100,7 +1102,7 @@ export interface ChainDominoApi {
 export interface ChainDominoConfig {
   level: ChainDominoLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就用内容自己的标题 */
   title?: string;
   /** 这个世界：江面、铁索、连环的船团与岸边的火种（画一次） */
@@ -1183,12 +1185,12 @@ function createDominoChainScene(
   ctx: GameContext,
   cfg: ChainDominoConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class ChainDominoScene extends BaseScene {
     private level: ChainDominoLevel = cfg.level;
     private state: DominoState = dominoStart();
     private startedAt = 0;
     private done = false;
-    private idleMs = 0;
     private misses = 0;
     private lastLinkId: string | null = null;
     private lastLinkAt = -1;
@@ -1204,36 +1206,6 @@ function createDominoChainScene(
       super(SCENE_KEYS.chain, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.chain });
-      this.level = cfg.level;
-      this.state = dominoStart();
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
-      this.worldGfx = this.add.graphics().setDepth(1);
-      cfg.drawWorld(this.worldGfx, this.level);
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-      this.markGfx = this.add.graphics().setDepth(60);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
-        this.pressAt(pointer.x, pointer.y),
-      );
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.time.delayedCall(CHAIN_DOMINO.introHandMs, () => {
-          this.showHint(cfg.level.hint, 3000, CHAIN_DOMINO.hintY);
-          this.pointAtNext();
-        });
-      }
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -1241,30 +1213,6 @@ function createDominoChainScene(
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      const t = this.now();
-      if (!this.done) {
-        // 链子断了：落账（回到"还没起头"，记一笔 break 与 mistakes）—— 每一帧都调，只记一次
-        const settled = settleDomino(this.level, this.state, t);
-        if (settled !== this.state) {
-          this.state = settled;
-          // 没在时限里接上这一环：记一次做错（不结束、不锁操作，重新起头就是）
-          recordAttempt(cfg.session, { ok: false });
-          this.ctx.emit('beat:enter', { beatId: 'chain:break:' + this.state.breaks });
-          this.ctx.services.audio.tone(240, 200);
-          this.showHint(cfg.level.breakLine, 2600, CHAIN_DOMINO.hintY);
-          this.pointAtNext();
-        }
-        // 卡住了：把关卡自己的那句话再亮一遍，并指一指该动的地方
-        this.idleMs += delta;
-        if (this.idleMs >= CHAIN_DOMINO.idleMs) {
-          this.idleMs = 0;
-          this.showHint(this.level.hint, 2600, CHAIN_DOMINO.hintY);
-          this.pointAtNext();
-        }
-      }
-      this.redraw(t);
-    }
 
     private redraw(t: number): void {
       const stage = this.stageState(t);
@@ -1449,10 +1397,10 @@ function createDominoChainScene(
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? CHAIN_DOMINO.finaleHoldMs,
         sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: CHAIN_DOMINO.hintY,
         finalize: () => {
           this.ctx.emit('beat:enter', { beatId: 'chain:domino:done' });
@@ -1558,6 +1506,61 @@ function createDominoChainScene(
         return;
       }
       this.pressAt(move.link.x, move.link.y);
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      const t = this.now();
+      if (!this.done) {
+        // 链子断了：落账（回到"还没起头"，记一笔 break 与 mistakes）—— 每一帧都调，只记一次
+        const settled = settleDomino(this.level, this.state, t);
+        if (settled !== this.state) {
+          this.state = settled;
+          // 没在时限里接上这一环：记一次做错（不结束、不锁操作，重新起头就是）
+          recordAttempt(cfg.session, { ok: false });
+          this.ctx.emit('beat:enter', { beatId: 'chain:break:' + this.state.breaks });
+          this.ctx.services.audio.tone(240, 200);
+          this.showHint(cfg.level.breakLine, 2600, CHAIN_DOMINO.hintY);
+          this.pointAtNext();
+        }
+        // 卡住了：把关卡自己的那句话再亮一遍，并指一指该动的地方
+        this.idleMs += delta;
+        if (this.idleMs >= CHAIN_DOMINO.idleMs) {
+          this.idleMs = 0;
+          this.showHint(this.level.hint, 2600, CHAIN_DOMINO.hintY);
+          this.pointAtNext();
+        }
+      }
+      this.redraw(t);
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.chain });
+      this.level = cfg.level;
+      this.state = dominoStart();
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      this.markGfx = this.add.graphics().setDepth(60);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
+        this.pressAt(pointer.x, pointer.y),
+      );
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.time.delayedCall(CHAIN_DOMINO.introHandMs, () => {
+          this.showHint(cfg.level.hint, 3000, CHAIN_DOMINO.hintY);
+          this.pointAtNext();
+        });
+      }
     }
   };
 }

@@ -1,4 +1,5 @@
-import { SCENE_KEYS, createBurrowScene, defineGame } from '@chags/templates';
+import { createBurrowScene } from '@chags/templates/burrow';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
 import { drawBeat, drawFinale, drawWorld } from './art';
 import { burrowLevel } from './logic';
 import { manifest } from './manifest';
@@ -14,11 +15,9 @@ export default defineGame({
         createBurrowScene(ctx, {
           level,
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           titleKey: 'scene.burrow',
           drawWorld: (g, state) => drawWorld(g, state, level.spots),
           drawFinale: (g) => drawFinale(g, level.spots),
-          reveal: ctx.content.keyMoment.reveal,
         }),
       ],
     };

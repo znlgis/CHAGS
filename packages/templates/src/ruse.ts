@@ -5,7 +5,7 @@ import {
   BaseScene, THEME, createDragController, createHand, popIn, sparkleAt, springBack,
 } from '@chags/phaser-kit';
 import type { DragController } from '@chags/phaser-kit';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   RUSE_TIMING, autoplayLevel, gazeSide, isCarriedPast, isDisguised, isExposed, isRuseComplete,
   lampIndex, lampPhase, litMsFor, msLitLeft, msToLight, nextItemToCarry, noiseAt, noiseForKnock,
@@ -80,7 +80,7 @@ export interface RuseStageState {
 export interface RuseConfig {
   level: RuseLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 场景标题：不给就用内容标题（这样模板不用等新的文案键） */
   titleKey?: MessageKey;
   /** 这个世界：海、栈桥、大船（画一次） */
@@ -113,6 +113,7 @@ export interface RuseConfig {
  *   所以孩子看得见自己确实往前走了一步。
  */
 export function createRuseScene(ctx: GameContext, cfg: RuseConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class RuseScene extends BaseScene {
     private level: RuseLevel = cfg.level;
     private startedAt = 0;
@@ -483,10 +484,10 @@ export function createRuseScene(ctx: GameContext, cfg: RuseConfig): Phaser.Types
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: this.ms(cfg.finaleHoldMs ?? RUSE.finaleHoldMs),
         sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: 300,
         finalize: () => {
           const finale = this.add.graphics().setDepth(40);

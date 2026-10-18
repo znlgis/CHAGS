@@ -1,4 +1,5 @@
-import { SCENE_KEYS, createRuseScene, defineGame } from '@chags/templates';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
+import { createRuseScene } from '@chags/templates/ruse';
 import { drawBeat, drawFinale, drawItem, drawStage, drawWorld } from './art';
 import { ruseLevel } from './logic';
 import { manifest } from './manifest';
@@ -14,13 +15,11 @@ export default defineGame({
         createRuseScene(ctx, {
           level,
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           drawWorld,
           drawStage,
           drawItem,
           // 这一关没有外壳：靠的是时机
           drawFinale,
-          reveal: ctx.content.keyMoment.reveal,
         }),
       ],
     };

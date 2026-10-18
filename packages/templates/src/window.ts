@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import { BaseScene, THEME, createHand, sparkleAt, tapRipple } from '@chags/phaser-kit';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   MURK_MAX, WINDOW_WARN_MS, closeWindow, currentJob, cycleIndexAt, effectiveCycle, isJobDone,
   isMuddy, isTravelOver, isWindowDone, jobAt, jobProgress, muddyLeftMs, murkAt, nextJob, phaseAt,
@@ -87,7 +87,7 @@ export interface WindowStageState {
 export interface WindowConfig {
   level: WindowLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就把整屏交给 drawWorld */
   title?: string;
   drawWorld: (g: Phaser.GameObjects.Graphics, state: WindowStageState) => void;
@@ -124,7 +124,7 @@ export interface StirStageState extends WindowStageState {
 export interface WindowStirConfig {
   level: StirWindowLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就把整屏交给 drawWorld */
   title?: string;
   /** 整屏画面：水塘、水色、浑度、鱼都按 state 画 */
@@ -163,6 +163,7 @@ function createTimedWindowScene(
   ctx: GameContext,
   cfg: WindowConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class WindowScene extends BaseScene {
     private level: WindowLevel = cfg.level;
     private state: WindowState = windowStart();
@@ -175,7 +176,6 @@ function createTimedWindowScene(
     /** glimpse：正在换趟（这一趟走完了，画面把队伍摆回起点） */
     private restarting = false;
     private lastTapAt = Number.NEGATIVE_INFINITY;
-    private idleMs = 0;
     private worldGfx: Phaser.GameObjects.Graphics | null = null;
     private hand: Phaser.GameObjects.Graphics | null = null;
 
@@ -183,23 +183,6 @@ function createTimedWindowScene(
       super(SCENE_KEYS.window, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.window });
-      this.level = effectiveCycle(cfg.level, this.autoplay, WINDOW.autoplayFactor);
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.title);
-      this.worldGfx = this.add.graphics().setDepth(2);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) this.runAutoplay();
-      else this.showHint(cfg.level.hint, 3000, WINDOW.hintY);
-    }
 
     private elapsed(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -207,18 +190,6 @@ function createTimedWindowScene(
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      const elapsed = this.elapsed();
-      if (!this.finished && !this.restarting) {
-        // glimpse：这一趟走完了 —— 没抓够就重走一遍（零惩罚，fire 永远不会走到这里）
-        if (isTravelOver(this.level, elapsed)) this.restartTrip();
-        else {
-          this.syncPhase(elapsed);
-          this.watch(elapsed, delta);
-        }
-      }
-      this.redraw(elapsed);
-    }
 
     /**
      * 一趟走完还没抓够：把这一趟的账结掉，站住喘口气，再走一遍（**零惩罚**）。
@@ -428,10 +399,10 @@ function createTimedWindowScene(
       this.finished = true;
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? WINDOW.finaleHoldMs,
         sparkle: { x: this.W / 2, y: 720, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealDelayMs: 1400,
         revealY: WINDOW.hintY,
         finalize: () => {
@@ -476,6 +447,36 @@ function createTimedWindowScene(
         },
       });
     }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      const elapsed = this.elapsed();
+      if (!this.finished && !this.restarting) {
+        // glimpse：这一趟走完了 —— 没抓够就重走一遍（零惩罚，fire 永远不会走到这里）
+        if (isTravelOver(this.level, elapsed)) this.restartTrip();
+        else {
+          this.syncPhase(elapsed);
+          this.watch(elapsed, delta);
+        }
+      }
+      this.redraw(elapsed);
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.window });
+      this.level = effectiveCycle(cfg.level, this.autoplay, WINDOW.autoplayFactor);
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title);
+      this.worldGfx = this.add.graphics().setDepth(2);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
+      else this.showHint(cfg.level.hint, 3000, WINDOW.hintY);
+    }
   };
 }
 
@@ -493,6 +494,7 @@ function createStirWindowScene(
   ctx: GameContext,
   cfg: WindowStirConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class StirWindowScene extends BaseScene {
     private level: StirWindowLevel = cfg.level;
     private state: WindowState = stirStart(cfg.level);
@@ -503,7 +505,6 @@ function createStirWindowScene(
     /** 水清了几回（第几塘水）—— 只是复盘与事件名用，不是惩罚 */
     private clears = 0;
     private lastTapAt = Number.NEGATIVE_INFINITY;
-    private idleMs = 0;
     private worldGfx: Phaser.GameObjects.Graphics | null = null;
     private hand: Phaser.GameObjects.Graphics | null = null;
 
@@ -511,26 +512,6 @@ function createStirWindowScene(
       super(SCENE_KEYS.window, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.window });
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.title);
-      this.worldGfx = this.add.graphics().setDepth(2);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-      this.onShutdownCleanup(() => this.hideHand());
-
-      this.fadeIn();
-      if (this.autoplay) this.runAutoplay();
-      else {
-        this.showHint(cfg.level.hint, 3000, WINDOW.hintY);
-        this.time.delayedCall(WINDOW.handDelayMs, () => this.pointAtNext());
-      }
-    }
 
     private elapsed(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -538,26 +519,6 @@ function createStirWindowScene(
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      const elapsed = this.elapsed();
-      if (!this.finished) {
-        const muddy = isMuddy(this.level, this.state, elapsed);
-        // 水清了：摸到一半的那条鱼摆尾滑走 —— 没摸完的进度清零（零惩罚）
-        if (this.wasMuddy && !muddy) this.waterCleared();
-        this.wasMuddy = muddy;
-
-        this.idleMs += delta;
-        if (this.idleMs >= WINDOW.stirIdleMs) {
-          this.idleMs = 0;
-          this.showHint(cfg.level.hint, 2600, WINDOW.hintY);
-          this.pointAtNext();
-        } else if (this.hand === null && elapsed - this.lastTapAt >= WINDOW.handDelayMs) {
-          // 停手够久了：把小手放回此刻该动的地方
-          this.pointAtNext();
-        }
-      }
-      this.redraw(elapsed);
-    }
 
     /** 水清了：没摸完的清零、摸到的留着（零惩罚），只记一笔"白跑一趟"用来复盘 */
     private waterCleared(): void {
@@ -725,10 +686,10 @@ function createStirWindowScene(
       this.finished = true;
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? WINDOW.finaleHoldMs,
         sparkle: { x: this.W / 2, y: 720, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealDelayMs: 1400,
         revealY: WINDOW.hintY,
         finalize: () => {
@@ -786,6 +747,47 @@ function createStirWindowScene(
           if (job) this.tapFish(job, elapsed);
         },
       });
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      const elapsed = this.elapsed();
+      if (!this.finished) {
+        const muddy = isMuddy(this.level, this.state, elapsed);
+        // 水清了：摸到一半的那条鱼摆尾滑走 —— 没摸完的进度清零（零惩罚）
+        if (this.wasMuddy && !muddy) this.waterCleared();
+        this.wasMuddy = muddy;
+
+        this.idleMs += delta;
+        if (this.idleMs >= WINDOW.stirIdleMs) {
+          this.idleMs = 0;
+          this.showHint(cfg.level.hint, 2600, WINDOW.hintY);
+          this.pointAtNext();
+        } else if (this.hand === null && elapsed - this.lastTapAt >= WINDOW.handDelayMs) {
+          // 停手够久了：把小手放回此刻该动的地方
+          this.pointAtNext();
+        }
+      }
+      this.redraw(elapsed);
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.window });
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title);
+      this.worldGfx = this.add.graphics().setDepth(2);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+      this.onShutdownCleanup(() => this.hideHand());
+
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
+      else {
+        this.showHint(cfg.level.hint, 3000, WINDOW.hintY);
+        this.time.delayedCall(WINDOW.handDelayMs, () => this.pointAtNext());
+      }
     }
   };
 }

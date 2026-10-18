@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade, wavyBand } from '@chags/phaser-kit';
-import { DESIGN } from '@chags/templates';
+import { DESIGN } from '@chags/templates/core';
 import type { LureStageState } from '@chags/templates';
 import type { LureLevel } from '@chags/templates/schemas';
 import {

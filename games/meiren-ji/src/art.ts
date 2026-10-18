@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
-import { DESIGN, FAVOR_TIMING } from '@chags/templates';
+import { DESIGN } from '@chags/templates/core';
+import { FAVOR_TIMING } from '@chags/templates/lure.logic';
 import type { LureFavorStage } from '@chags/templates';
 import type { LureFavorLevel, LureGift } from '@chags/templates/schemas';
 import {

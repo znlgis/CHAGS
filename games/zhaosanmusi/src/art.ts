@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
-import { DESIGN } from '@chags/templates';
+import { DESIGN } from '@chags/templates/core';
 import type { SplitStageState } from '@chags/templates';
 import { GROUND_TOP, KEEPER, LEFT_X, MONKEY_Y, RIGHT_X, ROPE_Y, SKY_TOP } from './layout';
 

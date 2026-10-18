@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import type { MessageKey } from '@chags/i18n';
 import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
-import { SCENE_KEYS, TRACE } from './layout';
+import { SCENE_KEYS, TRACE, resolveEnding } from './layout';
 import {
   advanceTrace, currentTarget, isTraceComplete, traceProgress, traceStart,
 } from './trace.logic';
@@ -28,7 +28,7 @@ export interface TraceStageMetrics {
 export interface TraceConfig {
   level: TraceLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   titleKey: MessageKey;
   /** 顶栏上的名字；不传就用 titleKey 的界面文案（计策游戏传自己的计名，与第五辑一致） */
   title?: string;
@@ -55,6 +55,7 @@ export interface TraceConfig {
  * - **画面全外置**：水怎么流、山怎么裂，都由游戏按 metrics 自己画。
  */
 export function createTraceScene(ctx: GameContext, cfg: TraceConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   const stroke = cfg.stroke ?? { outer: 0x8a6a2f, inner: 0x7cc6e8, width: TRACE.channelWidth };
 
   return class TraceScene extends BaseScene {
@@ -64,7 +65,6 @@ export function createTraceScene(ctx: GameContext, cfg: TraceConfig): Phaser.Typ
     private drawing = false;
     private busy = false;
     private finished = false;
-    private idleMs = 0;
     private stageGfx: Phaser.GameObjects.Graphics | null = null;
     private strokeGfx: Phaser.GameObjects.Graphics | null = null;
     private guideLine: Phaser.GameObjects.Graphics | null = null;
@@ -77,29 +77,6 @@ export function createTraceScene(ctx: GameContext, cfg: TraceConfig): Phaser.Typ
       super(SCENE_KEYS.trace, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.trace });
-      this.drawBackdrop(cfg.title ?? this.tr(cfg.titleKey));
-      cfg.drawWorld?.(this);
-
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.strokeGfx = this.add.graphics().setDepth(3);
-      this.guideLine = this.add.graphics().setDepth(30);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.beginStroke(pointer));
-      this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => this.moveStroke(pointer));
-      this.input.on('pointerup', () => this.endStroke());
-      this.input.on('pointerupoutside', () => this.endStroke());
-
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.redraw();
-      this.fadeIn();
-      if (this.autoplay) this.runAutoplay();
-    }
 
     // ---------------- 输入 ----------------
 
@@ -188,10 +165,10 @@ export function createTraceScene(ctx: GameContext, cfg: TraceConfig): Phaser.Typ
       this.clearGuide();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? 4200,
         sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: cfg.revealY ?? 268,
         finalize: () => {
           if (this.finaleGfx) cfg.drawFinale?.(this.finaleGfx);
@@ -312,20 +289,6 @@ export function createTraceScene(ctx: GameContext, cfg: TraceConfig): Phaser.Typ
 
     // ---------------- 提示与无头验证 ----------------
 
-    private tick(delta: number): void {
-      if (this.finished) return;
-      // 水一直在流，所以舞台每帧都要重画
-      this.redrawStage();
-      if (this.busy || this.drawing) return;
-      this.idleMs += delta;
-      if (this.idleMs < TRACE.idleMs) return;
-      this.idleMs = 0;
-      this.showHint(cfg.level.hint);
-      const target = currentTarget(cfg.level, this.cursor);
-      if (!target || this.hand) return;
-      this.hand = createHand(this, target.x, target.y + 80, 1.2);
-      this.tweens.add({ targets: this.hand, x: target.x, duration: 700, yoyo: true, repeat: -1 });
-    }
 
     private hideHand(): void {
       if (!this.hand) return;
@@ -390,6 +353,44 @@ export function createTraceScene(ctx: GameContext, cfg: TraceConfig): Phaser.Typ
         return;
       }
       this.redraw();
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      if (this.finished) return;
+      // 水一直在流，所以舞台每帧都要重画
+      this.redrawStage();
+      if (this.busy || this.drawing) return;
+      this.idleMs += delta;
+      if (this.idleMs < TRACE.idleMs) return;
+      this.idleMs = 0;
+      this.showHint(cfg.level.hint);
+      const target = currentTarget(cfg.level, this.cursor);
+      if (!target || this.hand) return;
+      this.hand = createHand(this, target.x, target.y + 80, 1.2);
+      this.tweens.add({ targets: this.hand, x: target.x, duration: 700, yoyo: true, repeat: -1 });
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.trace });
+      this.drawBackdrop(cfg.title ?? this.tr(cfg.titleKey));
+      cfg.drawWorld?.(this);
+
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.strokeGfx = this.add.graphics().setDepth(3);
+      this.guideLine = this.add.graphics().setDepth(30);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.beginStroke(pointer));
+      this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => this.moveStroke(pointer));
+      this.input.on('pointerup', () => this.endStroke());
+      this.input.on('pointerupoutside', () => this.endStroke());
+
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.redraw();
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
     }
   };
 }

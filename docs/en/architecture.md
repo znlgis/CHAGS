@@ -431,15 +431,19 @@ against `apps/site/dist` and fails the build when one is exceeded (budgets as na
 
 | Budget | Limit | Why |
 |---|---|---|
-| Initial JS + CSS (gzip) | ≤ 65 KB | What the user must download before seeing the hall (measured **≈53.7 KB** on 2026-10-18) |
-| Initial JS + CSS (raw) | ≤ 180 KB | The desktop and Android shells load **local files**, no gzip — raw bytes are their real cost |
+| Initial JS + CSS (gzip) | ≤ 60 KB | What the user must download before seeing the hall (measured **≈54.1 KB** on 2026-10-18) |
+| Initial JS + CSS (raw) | ≤ 160 KB | The desktop and Android shells load **local files**, no gzip — raw bytes are their real cost (measured 146.1 KB) |
 | Biggest lazy chunk (gzip) | ≤ 260 KB | Chunks fetched only when a game starts; the trimmed Phaser build is the biggest today (220.6 KB) |
 | Biggest lazy chunk (raw) | ≤ 1000 KB | Same local-loading reason (Phaser ≈ 856 KB) |
-| Whole `dist` (raw) | ≤ 2900 KB | The bytes that go into the exe / APK |
+| Whole `dist` (raw) | ≤ 2200 KB | The bytes that go into the exe / APK (measured 1912 KB) |
 | Single non-code asset (image / font / audio) | ≤ 200 KB | The old "≤ 200 KB per image" rule used to live only in a doc; now it is a real gate |
 | Total non-code assets | ≤ 600 KB | Stops one 900 KB PNG from slipping through the remaining headroom |
 
-Everything else is still a target rather than a gate: Phaser ≈ 350 KB gzip (shared chunk), ≤ 2 MB of
+Entering one game costs **≈226 KB gzip** in total: the trimmed Phaser chunk (220.6 KB) plus only that
+game's scene/game chunk (a few KB) plus its own content entry (1–2 KB; English patches load only in English).
+
+Everything else is still a target rather than a gate: Phaser ≈ 225 KB gzip (trimmed shared chunk; the full build
+is 347 KB), ≤ 2 MB of
 per-game assets, ≤ 100 KB per audio clip, playable within 3 s on 4G, 60 fps mid-range /
 ≥ 30 fps low-end, 3–5 minute sessions. Concrete KB figures move every round — **`pnpm size` is the
 source of truth**, and the numbers in the Chinese §7.x are historical measurements from their own round.

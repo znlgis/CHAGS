@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade, wavyBand } from '@chags/phaser-kit';
-import { chainDominoBar, chainDominoWindowBar } from '@chags/templates';
+import { chainDominoBar, chainDominoWindowBar } from '@chags/templates/chain';
 import type { ChainDominoMetrics } from '@chags/templates';
 import type { ChainDominoLevel } from '@chags/templates/schemas';
 import { clamp01 } from '@chags/game-kit';

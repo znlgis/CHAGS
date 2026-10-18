@@ -8,9 +8,16 @@ import { gateWatchdogMs, narrationMs, remainingGateMs } from './story.logic';
 export interface StoryConfig {
   beats: StoryBeat[];
   nextSceneKey: string;
+  /**
+   * 分幕插图：**契约只画两幕**，index 只有 0 / 1。
+   *
+   * 内容 schema 已把 story 锁成 length(2)（packages/content/src/schema.ts），
+   * 第 3 幕会先在 pnpm content:check 构建期报错；真要三幕，先扩这份契约
+   * （以及 game-kit 的 Art 渲染约定），而不是让第 3 幕静默复用第 2 幅图。
+   */
   drawBeat?: (
     g: Phaser.GameObjects.Graphics,
-    index: number,
+    index: 0 | 1,
     rect: { x: number; y: number; w: number; h: number },
   ) => void;
 }
@@ -79,7 +86,10 @@ export function createStoryScene(
         6,
       );
       const art = this.add.graphics();
-      cfg.drawBeat?.(art, index, STORY_ART);
+      // drawBeat 契约只画两幕（内容 schema 已锁 length(2)）：显示层的 index
+      // 只可能走到 0 / 1（beat 不存在时 showBeat 直接转场），这里收敛成契约类型。
+      const beatIndex: 0 | 1 = index === 0 ? 0 : 1;
+      cfg.drawBeat?.(art, beatIndex, STORY_ART);
 
       let textBottom = STORY_TEXT_Y;
       if (beat.text.length > 0) {

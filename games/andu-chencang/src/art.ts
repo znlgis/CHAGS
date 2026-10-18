@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
-import { DESIGN } from '@chags/templates';
-import { TWOLINE } from '@chags/templates';
+import { DESIGN } from '@chags/templates/core';
+import { TWOLINE } from '@chags/templates/twoline';
 import type { TwolineStageState } from '@chags/templates';
 import {
   CITY, CLIFF, FOOT_STEPS, GROUND_Y, MOON, PATH, PLANK, PLANK_CENTER, SKY_TOP, STARS, pathAt,

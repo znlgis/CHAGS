@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import { CSS, THEME, circle, groundShadow, roundRect, shade, textStyle, wavyBand } from '@chags/phaser-kit';
-import { DESIGN, matchupOrderBar } from '@chags/templates';
+import { DESIGN } from '@chags/templates/core';
+import { matchupOrderBar } from '@chags/templates/matchup';
 import type { OrderStageState } from '@chags/templates';
 import type { MatchupOrderLevel } from '@chags/templates/schemas';
 import {

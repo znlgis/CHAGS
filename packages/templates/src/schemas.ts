@@ -1,5 +1,9 @@
 import type { TemplateId } from '@chags/content';
 import { z } from 'zod';
+// 纯函数从 gains.ts 来（生产代码直接用那一个模块，不必拖整个 schema + zod）；
+// 这里再导出一次，保持 '@chags/templates/schemas' 的旧引用（测试 / 构建期校验）可用。
+import { bestMatchupWins, siegeGain } from './gains';
+export { bestMatchupWins, siegeGain };
 
 export const StoneSchema = z.object({
   id: z.string().min(1),
@@ -695,11 +699,6 @@ export const RuseLevelSchema = z
     path: ['items'],
   });
 
-/** 正面推一次的增量：阻力越大，推得越少（siege 与关卡验算共用） */
-export function siegeGain(resistance: number): number {
-  return Math.max(0.2, 1 - resistance / 10);
-}
-
 /**
  * siege 模板：打要害 —— 正面硬推推不动，去动他非救不可的地方。
  * 本辑只有 vital 模式；断退路 / 抽支撑 / 收梯子在后续批次扩。
@@ -1025,24 +1024,6 @@ export const MatchupRivalSchema = z.object({
   /** 木牌上的短标签（双语可译，≤12 字） */
   label: z.string().min(1).max(12),
 });
-
-/** 三匹马 vs 三场：六种配对里最多能赢几场（内容写错不该等孩子打到一半才发现） */
-export function bestMatchupWins(
-  horses: readonly { power: number }[],
-  rivals: readonly { power: number }[],
-): number {
-  let best = 0;
-  const walk = (rest: number[], acc: number[]): void => {
-    if (rest.length === 0) {
-      const wins = acc.filter((h, i) => horses[h]!.power > rivals[i]!.power).length;
-      best = Math.max(best, wins);
-      return;
-    }
-    for (const index of rest) walk(rest.filter((x) => x !== index), [...acc, index]);
-  };
-  if (horses.length === 3 && rivals.length === 3) walk([0, 1, 2], []);
-  return best;
-}
 
 export const MatchupLevelSchema = z
   .object({

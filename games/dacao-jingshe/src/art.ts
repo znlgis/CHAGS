@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
-import { DESIGN, PROBE } from '@chags/templates';
+import { DESIGN } from '@chags/templates/core';
+import { PROBE } from '@chags/templates/probe';
 import type { ProbeStageState } from '@chags/templates';
 import type { ProbeLevel, ProbePatch } from '@chags/templates/schemas';
 import { clamp01 } from '@chags/game-kit';

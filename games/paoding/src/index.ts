@@ -1,4 +1,4 @@
-import { SCENE_KEYS, defineGame } from '@chags/templates';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
 import { drawBeat } from './art';
 import { butcherLevel } from './logic';
 import { manifest } from './manifest';

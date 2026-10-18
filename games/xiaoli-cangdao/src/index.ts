@@ -1,4 +1,5 @@
-import { SCENE_KEYS, createReadScene, defineGame } from '@chags/templates';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
+import { createReadScene } from '@chags/templates/read';
 import { drawBeat, drawFinale, drawStage, drawWorld } from './art';
 import { readLevel } from './logic';
 import { manifest } from './manifest';
@@ -14,12 +15,10 @@ export default defineGame({
         createReadScene(ctx, {
           level,
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           drawWorld,
           drawStage,
           drawFinale,
           // 关键抉择点的揭晓语：看动作，不是听好话
-          reveal: ctx.content.keyMoment.reveal,
         }),
       ],
     };

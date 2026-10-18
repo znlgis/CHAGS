@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import type { MessageKey } from '@chags/i18n';
 import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   frontGain, frontTap, isRelieved, isSiegeDone, nextVital, relieve, resistanceOf,
   siegeProgress, siegeStart, tapsToFinish, vitalAt,
@@ -192,7 +192,7 @@ export interface SiegeApi {
 /** 三个模式共用的那一份：一局状态、下一幕、关键抉择点的揭晓语 */
 interface SiegeBaseConfig {
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /**
    * 顶栏标题。三十六计的 scene.* 文案还没登记，所以可以不传 ——
    * 不传就用内容自己的标题（ctx.content 已经按语言翻译好了）。
@@ -309,11 +309,11 @@ function createSiegeVitalScene(
   ctx: GameContext,
   cfg: SiegeVitalConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class SiegeScene extends BaseScene {
     private state: SiegeState = siegeStart();
     private finished = false;
     private busy = false;
-    private idleMs = 0;
     private lastTapAt = 0;
     private stageGfx: Phaser.GameObjects.Graphics | null = null;
     private finaleGfx: Phaser.GameObjects.Graphics | null = null;
@@ -325,26 +325,6 @@ function createSiegeVitalScene(
       super(SCENE_KEYS.siege, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.siege });
-      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
-
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-      this.redraw();
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-      this.onShutdownCleanup(() => {
-        this.tapTimer?.destroy();
-        this.tapTimer = null;
-      });
-
-      this.fadeIn();
-      if (this.autoplay) this.runAutoplay();
-    }
 
     // ---------------- 输入 ----------------
 
@@ -444,18 +424,6 @@ function createSiegeVitalScene(
       cfg.drawStage(this.stageGfx, this.metrics(this.finished));
     }
 
-    private tick(delta: number): void {
-      if (!this.finished) {
-        cfg.onFrame?.(this.metrics(false), delta);
-        this.idleMs += delta;
-        if (this.idleMs >= SIEGE.idleMs) {
-          this.idleMs = 0;
-          this.showHint(cfg.level.hint);
-          this.pointAtNextVital();
-        }
-      }
-      this.redraw();
-    }
 
     /** 把小手与光圈放到下一处要害上；要害都点完了就指向正面 */
     private pointAtNextVital(): void {
@@ -512,10 +480,10 @@ function createSiegeVitalScene(
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? SIEGE.finaleHoldMs,
         sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: cfg.revealY ?? 300,
         finalize: () => {
           recordAttempt(cfg.session, { ok: true });
@@ -546,6 +514,39 @@ function createSiegeVitalScene(
         });
       });
     }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      if (!this.finished) {
+        cfg.onFrame?.(this.metrics(false), delta);
+        this.idleMs += delta;
+        if (this.idleMs >= SIEGE.idleMs) {
+          this.idleMs = 0;
+          this.showHint(cfg.level.hint);
+          this.pointAtNextVital();
+        }
+      }
+      this.redraw();
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.siege });
+      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
+
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      this.redraw();
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+      this.onShutdownCleanup(() => {
+        this.tapTimer?.destroy();
+        this.tapTimer = null;
+      });
+
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
+    }
   };
 }
 
@@ -564,12 +565,12 @@ function createSiegeSupportScene(
   ctx: GameContext,
   cfg: SiegeSupportConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class SiegeSupportScene extends BaseScene {
     private state: SupportState = supportStart(cfg.level);
     private startedAt = 0;
     private finished = false;
     private busy = false;
-    private idleMs = 0;
     private misses = 0;
     private lastPull: SiegeLog | null = null;
     private lastPullAt = -1;
@@ -583,35 +584,6 @@ function createSiegeSupportScene(
       super(SCENE_KEYS.siege, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.siege });
-      this.startedAt = this.ctx.services.now();
-      this.state = supportStart(cfg.level);
-      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
-
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-      this.redraw();
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
-        this.pressAt(pointer.x, pointer.y),
-      );
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-      this.onShutdownCleanup(() => {
-        this.stepTimer?.destroy();
-        this.stepTimer = null;
-      });
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.time.delayedCall(SIEGE.introHintMs, () => this.showHint(cfg.level.hint, 3000));
-        this.time.delayedCall(SIEGE.introHandMs, () => this.pointAtNext());
-      }
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -720,18 +692,6 @@ function createSiegeSupportScene(
       cfg.drawSupport(this.stageGfx, this.metrics(this.finished));
     }
 
-    private tick(delta: number): void {
-      if (!this.finished) {
-        // 火还在烧：一会儿没动静就把该抽的那根指出来
-        this.idleMs += delta;
-        if (this.idleMs >= SIEGE.idleMs) {
-          this.idleMs = 0;
-          this.showHint(cfg.level.hint, 2600);
-          this.pointAtNext();
-        }
-      }
-      this.redraw();
-    }
 
     /** 把小手与光圈放到还没抽的下一根柴上 */
     private pointAtNext(): void {
@@ -785,10 +745,10 @@ function createSiegeSupportScene(
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? SIEGE.finaleHoldMs,
         sparkle: { x: cfg.level.fire.x, y: cfg.level.fire.y, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: cfg.revealY ?? 300,
         finalize: () => {
           recordAttempt(cfg.session, { ok: true });
@@ -816,49 +776,23 @@ function createSiegeSupportScene(
       if (log === undefined) return;
       this.pressAt(log.x, log.y);
     }
-  };
-}
-
-/* ---------------- close：关门捉贼（第 22 计） ---------------- */
-
-/**
- * 关门捉贼：贼会从某个出口跑掉（`escapeAfterMs` 之后），
- * 在那之前把每个出口都关上。
- *
- * 三条刻意的设计：
- * - **一扇一扇地关**：门排上队，关好一扇下一扇才开始转 —— 所以"全关一遍要多久"
- *   就是 ΣcloseMs（关卡 schema 也照它验算）。孩子点得快没关系，每一下都排进队里。
- * - **贼跑掉只是重来**：到点还没关完，他就从最近的、还没关上的那扇门溜出去；
- *   演完这一段，门又都开着、钟重新走 —— **零惩罚**，不扣星、不结束。
- * - **看得见的倒计时**：贼的钟一直画在画面上（他还会一点点朝要跑的那扇门挪）。
- */
-function createSiegeCloseScene(
-  ctx: GameContext,
-  cfg: SiegeCloseConfig,
-): Phaser.Types.Scenes.SceneType {
-  return class SiegeCloseScene extends BaseScene {
-    private state: CloseState = closeStart(cfg.level, 0);
-    private startedAt = 0;
-    private finished = false;
     private idleMs = 0;
-    private misses = 0;
-    private closedSeen = 0;
-    private escapedAt = -1;
-    private escapedExitId: string | null = null;
-    private stageGfx: Phaser.GameObjects.Graphics | null = null;
-    private finaleGfx: Phaser.GameObjects.Graphics | null = null;
-    private ring: Phaser.GameObjects.Graphics | null = null;
-    private hand: Phaser.GameObjects.Graphics | null = null;
-    private stepTimer: Phaser.Time.TimerEvent | null = null;
-
-    constructor() {
-      super(SCENE_KEYS.siege, ctx);
+    private tick(delta: number): void {
+      if (!this.finished) {
+        // 火还在烧：一会儿没动静就把该抽的那根指出来
+        this.idleMs += delta;
+        if (this.idleMs >= SIEGE.idleMs) {
+          this.idleMs = 0;
+          this.showHint(cfg.level.hint, 2600);
+          this.pointAtNext();
+        }
+      }
+      this.redraw();
     }
-
     create(): void {
       this.ctx.emit('scene:enter', { scene: SCENE_KEYS.siege });
       this.startedAt = this.ctx.services.now();
-      this.state = closeStart(cfg.level, 0);
+      this.state = supportStart(cfg.level);
       this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
 
       this.stageGfx = this.add.graphics().setDepth(2);
@@ -884,6 +818,45 @@ function createSiegeCloseScene(
         this.time.delayedCall(SIEGE.introHandMs, () => this.pointAtNext());
       }
     }
+  };
+}
+
+/* ---------------- close：关门捉贼（第 22 计） ---------------- */
+
+/**
+ * 关门捉贼：贼会从某个出口跑掉（`escapeAfterMs` 之后），
+ * 在那之前把每个出口都关上。
+ *
+ * 三条刻意的设计：
+ * - **一扇一扇地关**：门排上队，关好一扇下一扇才开始转 —— 所以"全关一遍要多久"
+ *   就是 ΣcloseMs（关卡 schema 也照它验算）。孩子点得快没关系，每一下都排进队里。
+ * - **贼跑掉只是重来**：到点还没关完，他就从最近的、还没关上的那扇门溜出去；
+ *   演完这一段，门又都开着、钟重新走 —— **零惩罚**，不扣星、不结束。
+ * - **看得见的倒计时**：贼的钟一直画在画面上（他还会一点点朝要跑的那扇门挪）。
+ */
+function createSiegeCloseScene(
+  ctx: GameContext,
+  cfg: SiegeCloseConfig,
+): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
+  return class SiegeCloseScene extends BaseScene {
+    private state: CloseState = closeStart(cfg.level, 0);
+    private startedAt = 0;
+    private finished = false;
+    private misses = 0;
+    private closedSeen = 0;
+    private escapedAt = -1;
+    private escapedExitId: string | null = null;
+    private stageGfx: Phaser.GameObjects.Graphics | null = null;
+    private finaleGfx: Phaser.GameObjects.Graphics | null = null;
+    private ring: Phaser.GameObjects.Graphics | null = null;
+    private hand: Phaser.GameObjects.Graphics | null = null;
+    private stepTimer: Phaser.Time.TimerEvent | null = null;
+
+    constructor() {
+      super(SCENE_KEYS.siege, ctx);
+    }
+
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -929,30 +902,6 @@ function createSiegeCloseScene(
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      if (!this.finished) {
-        const t = this.now();
-        if (this.escapedAt >= 0) {
-          // 贼跑了：演完这一段就重来（零惩罚）
-          if (t - this.escapedAt >= SIEGE.escapeHoldMs) this.restartRound(t);
-        } else {
-          this.celebrateClosed(t);
-          if (isCloseDone(cfg.level, this.state, t)) {
-            this.finish();
-          } else if (hasEscaped(cfg.level, this.state, t)) {
-            this.escape(t);
-          } else {
-            this.idleMs += delta;
-            if (this.idleMs >= SIEGE.idleMs) {
-              this.idleMs = 0;
-              this.showHint(cfg.level.hint, 2600);
-              this.pointAtNext();
-            }
-          }
-        }
-      }
-      this.redraw();
-    }
 
     /** 又关严了一扇：亮一下、叮一声 —— 一扇一扇地关，每一下都看得见 */
     private celebrateClosed(t: number): void {
@@ -1078,10 +1027,10 @@ function createSiegeCloseScene(
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? SIEGE.finaleHoldMs,
         sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: cfg.revealY ?? 300,
         finalize: () => {
           recordAttempt(cfg.session, { ok: true });
@@ -1108,6 +1057,60 @@ function createSiegeCloseScene(
       const exit = nextExitToClose(cfg.level, this.state);
       if (exit === undefined) return;
       this.pressAt(exit.x, exit.y);
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      if (!this.finished) {
+        const t = this.now();
+        if (this.escapedAt >= 0) {
+          // 贼跑了：演完这一段就重来（零惩罚）
+          if (t - this.escapedAt >= SIEGE.escapeHoldMs) this.restartRound(t);
+        } else {
+          this.celebrateClosed(t);
+          if (isCloseDone(cfg.level, this.state, t)) {
+            this.finish();
+          } else if (hasEscaped(cfg.level, this.state, t)) {
+            this.escape(t);
+          } else {
+            this.idleMs += delta;
+            if (this.idleMs >= SIEGE.idleMs) {
+              this.idleMs = 0;
+              this.showHint(cfg.level.hint, 2600);
+              this.pointAtNext();
+            }
+          }
+        }
+      }
+      this.redraw();
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.siege });
+      this.startedAt = this.ctx.services.now();
+      this.state = closeStart(cfg.level, 0);
+      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
+
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      this.redraw();
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
+        this.pressAt(pointer.x, pointer.y),
+      );
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+      this.onShutdownCleanup(() => {
+        this.stepTimer?.destroy();
+        this.stepTimer = null;
+      });
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.time.delayedCall(SIEGE.introHintMs, () => this.showHint(cfg.level.hint, 3000));
+        this.time.delayedCall(SIEGE.introHandMs, () => this.pointAtNext());
+      }
     }
   };
 }
@@ -1143,11 +1146,11 @@ function createSiegeLadderScene(
   ctx: GameContext,
   cfg: SiegeLadderConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class SiegeLadderScene extends BaseScene {
     private state: LadderState = ladderStart(cfg.level, 0);
     private startedAt = 0;
     private finished = false;
-    private idleMs = 0;
     private misses = 0;
     private droppedAtMs = -1;
     private droppedFromRatio = 0;
@@ -1163,35 +1166,6 @@ function createSiegeLadderScene(
       super(SCENE_KEYS.siege, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.siege });
-      this.startedAt = this.ctx.services.now();
-      this.state = ladderStart(cfg.level, 0);
-      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
-
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-      this.redraw();
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
-        this.pressAt(pointer.x, pointer.y),
-      );
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-      this.onShutdownCleanup(() => {
-        this.stepTimer?.destroy();
-        this.stepTimer = null;
-      });
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.time.delayedCall(SIEGE.introHintMs, () => this.showHint(cfg.level.hint, 3000));
-        this.time.delayedCall(SIEGE.introHandMs, () => this.pointAtNext());
-      }
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -1284,18 +1258,6 @@ function createSiegeLadderScene(
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      if (!this.finished) {
-        this.syncPhase();
-        this.idleMs += delta;
-        if (this.idleMs >= SIEGE.idleMs) {
-          this.idleMs = 0;
-          this.showHint(cfg.level.hint, 2600);
-          this.pointAtNext();
-        }
-      }
-      this.redraw();
-    }
 
     /** 他到位的那一刻：出声、亮一下、把小手放到绳桩上 */
     private syncPhase(): void {
@@ -1411,10 +1373,10 @@ function createSiegeLadderScene(
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? SIEGE.finaleHoldMs,
         sparkle: { x: cfg.level.bait.x, y: cfg.level.bait.y, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: cfg.revealY ?? 300,
         finalize: () => {
           recordAttempt(cfg.session, { ok: true });
@@ -1446,6 +1408,48 @@ function createSiegeLadderScene(
         return;
       }
       if (phase === 'ready') this.pressAt(cfg.level.ladder.x, cfg.level.ladder.y);
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      if (!this.finished) {
+        this.syncPhase();
+        this.idleMs += delta;
+        if (this.idleMs >= SIEGE.idleMs) {
+          this.idleMs = 0;
+          this.showHint(cfg.level.hint, 2600);
+          this.pointAtNext();
+        }
+      }
+      this.redraw();
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.siege });
+      this.startedAt = this.ctx.services.now();
+      this.state = ladderStart(cfg.level, 0);
+      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
+
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      this.redraw();
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
+        this.pressAt(pointer.x, pointer.y),
+      );
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+      this.onShutdownCleanup(() => {
+        this.stepTimer?.destroy();
+        this.stepTimer = null;
+      });
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.time.delayedCall(SIEGE.introHintMs, () => this.showHint(cfg.level.hint, 3000));
+        this.time.delayedCall(SIEGE.introHandMs, () => this.pointAtNext());
+      }
     }
   };
 }

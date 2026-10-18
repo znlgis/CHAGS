@@ -1,4 +1,5 @@
-import { SCENE_KEYS, createSiegeScene, defineGame } from '@chags/templates';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
+import { createSiegeScene } from '@chags/templates/siege';
 import { drawBeat, drawFinale, drawStage, playWithdraw } from './art';
 import { siegeLevel } from './logic';
 import { manifest } from './manifest';
@@ -18,7 +19,6 @@ export default defineGame({
         createSiegeScene(ctx, {
           level,
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           onFrame: (_stage, delta) => {
             elapsed += delta;
           },
@@ -28,7 +28,6 @@ export default defineGame({
           },
           drawStage: (g, stage) => drawStage(g, stage, level),
           drawFinale: (g, stage) => drawFinale(g, stage, level),
-          reveal: ctx.content.keyMoment.reveal,
         }),
       ],
     };

@@ -1,4 +1,5 @@
-import { SCENE_KEYS, createChainScene, defineGame } from '@chags/templates';
+import { createChainScene } from '@chags/templates/chain';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
 import { drawBeat, drawFinale, drawStage, drawWorld } from './art';
 import { jiadaoLevel } from './logic';
 import { manifest } from './manifest';
@@ -14,7 +15,6 @@ export default defineGame({
         createChainScene(ctx, {
           level,
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           // 顶栏用典故自己的名字（内容已按语言取好），不另开一套界面文案
           title: ctx.content.title,
           // 这个世界：晋营、虞帐、三处关口、虢都，还有那条借来的路
@@ -22,7 +22,6 @@ export default defineGame({
           drawStage,
           drawFinale,
           // 关键抉择点的揭晓语：借出去的路，回来时可能对着自己
-          reveal: ctx.content.keyMoment.reveal,
         }),
       ],
     };

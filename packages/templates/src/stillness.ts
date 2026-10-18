@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   applyStrike, beatMarks, beatProgress, canStrikeAt, effectiveLevel, hitAction, isStillnessDone,
   phaseAt, remainingInBeatMs, slotAt, stillnessStart, strikeAt,
@@ -79,7 +79,7 @@ export interface StillnessStageState {
 export interface StillnessConfig {
   level: StillnessLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就把整屏交给 drawWorld */
   title?: string;
   drawWorld: (g: Phaser.GameObjects.Graphics, state: StillnessStageState) => void;
@@ -105,6 +105,7 @@ function createStillnessBideScene(
   ctx: GameContext,
   cfg: StillnessConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class StillnessScene extends BaseScene {
     private level: StillnessLevel = cfg.level;
     private state: StillnessState = stillnessStart();
@@ -309,10 +310,10 @@ function createStillnessBideScene(
       this.state = { ...this.state, done: true };
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? STILLNESS.finaleHoldMs,
         sparkle: { x: this.level.action.x, y: this.level.action.y - 120, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealDelayMs: 1400,
         revealY: STILLNESS.hintY,
         finalize: () => {
@@ -406,7 +407,7 @@ export interface StillnessFeignStageState {
 export interface StillnessFeignConfig {
   level: StillnessFeignLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就把整屏交给 drawWorld */
   title?: string;
   drawWorld: (g: Phaser.GameObjects.Graphics, state: StillnessFeignStageState) => void;
@@ -488,6 +489,7 @@ function createStillnessFeignScene(
   ctx: GameContext,
   cfg: StillnessFeignConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class StillnessFeignScene extends BaseScene {
     private level: StillnessFeignLevel = cfg.level;
     private state: FeignState = feignStart();
@@ -711,10 +713,10 @@ function createStillnessFeignScene(
       this.state = { ...this.state, done: true };
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? STILLNESS.finaleHoldMs,
         sparkle: { x: this.level.action.x, y: this.level.action.y - 120, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealDelayMs: 1400,
         revealY: FEIGN.hintY,
         finalize: () => {
@@ -816,7 +818,7 @@ export interface StillnessCalmStageState {
 export interface StillnessCalmConfig {
   level: StillnessCalmLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就把整屏交给 drawWorld */
   title?: string;
   drawWorld: (g: Phaser.GameObjects.Graphics, state: StillnessCalmStageState) => void;
@@ -848,6 +850,7 @@ function createStillnessCalmScene(
   ctx: GameContext,
   cfg: StillnessCalmConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class StillnessCalmScene extends BaseScene {
     private level: StillnessCalmLevel = cfg.level;
     private state: CalmState = calmStart();
@@ -1090,10 +1093,10 @@ function createStillnessCalmScene(
       this.finished = true;
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? STILLNESS.finaleHoldMs,
         sparkle: { x: this.level.gate.x, y: this.level.gate.y - 180, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealDelayMs: CALM.leaveLineMs,
         revealY: CALM.hintY,
         finalize: () => {

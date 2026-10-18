@@ -1,4 +1,5 @@
 import { getEntry } from '@chags/content/full';
+import { TapLevelSchema } from '@chags/templates/schemas';
 import { tapsNeeded } from '@chags/templates/tap.logic';
 import { slotFor } from '@chags/templates/place.logic';
 import { describe, expect, it } from 'vitest';
@@ -44,16 +45,9 @@ describe('盘古开天辟地 · 关卡数据', () => {
   });
 
   it('模板 schema 会拒绝点不满的撑天脚本', () => {
-    const broken = {
-      ...raw!,
-      game: {
-        template: 'tap' as const,
-        stages: [
-          { template: 'tap' as const, levelScript: { ...(tapLevel(raw!) as object), targetValue: 18500 } },
-          raw!.game.stages[1]!,
-        ],
-      },
-    };
-    expect(() => tapLevel(broken)).toThrow();
+    const broken = { ...(tapLevel(raw!) as object), targetValue: 18500 };
+    // 生产包里关卡脚本不再过 zod（构建期 content:check 已用同一套 schema 全量校验），
+    // 所以这条负例直接对 schema 断言。
+    expect(() => TapLevelSchema.parse(broken)).toThrow();
   });
 });

@@ -1,4 +1,4 @@
-import { siegeGain } from './schemas';
+import { siegeGain } from './gains';
 import type {
   SiegeCloseLevel, SiegeLevel, SiegeLog, SiegeSupportLevel, SiegeVital,
 } from './schemas';

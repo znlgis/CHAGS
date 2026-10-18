@@ -4,7 +4,7 @@ import type { MessageKey } from '@chags/i18n';
 import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
 import { aimDirection, firstHit, pullAmount } from './aim.logic';
 import type { AimPoint } from './aim.logic';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import type { AimLevel } from './schemas';
 import { recordAttempt } from './session';
 import type { SessionState } from './session';
@@ -40,7 +40,7 @@ export interface AimApi {
 export interface AimConfig {
   level: AimLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   titleKey: MessageKey;
   /** 弓箭手站哪儿：给一个点，或者按 stage 算（百步穿杨：一档一档往后退） */
   archer: AimPoint | ((stage: AimStage) => AimPoint);
@@ -76,6 +76,7 @@ interface Arrow {
  * 判定用**线段扫过的范围**而不是点：箭一帧能飞很远，按点判会直接穿过去。
  */
 export function createAimScene(ctx: GameContext, cfg: AimConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class AimScene extends BaseScene {
     private world: Phaser.GameObjects.Graphics | null = null;
     private aliveIds: string[] = [...cfg.level.targets.map((t) => t.id)];
@@ -368,7 +369,7 @@ export function createAimScene(ctx: GameContext, cfg: AimConfig): Phaser.Types.S
         }
         cfg.drawFinale?.(this.world, this.stage());
       }
-      this.time.delayedCall(cfg.finaleHoldMs ?? 2400, () => this.scene.start(cfg.nextSceneKey));
+      this.time.delayedCall(cfg.finaleHoldMs ?? 2400, () => this.scene.start(ending.nextSceneKey));
     }
 
     // ---------------- 绘制 ----------------

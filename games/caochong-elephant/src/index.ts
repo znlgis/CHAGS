@@ -1,4 +1,5 @@
-import { SCENE_KEYS, createSubstitutionScene, defineGame } from '@chags/templates';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
+import { createSubstitutionScene } from '@chags/templates/substitution';
 import { drawBeat, drawElephant } from './art';
 import { substitutionLevel } from './logic';
 import { manifest } from './manifest';
@@ -13,8 +14,6 @@ export default defineGame({
       createSubstitutionScene(ctx, {
         level: substitutionLevel(ctx.content),
         session,
-        nextSceneKey: SCENE_KEYS.reward,
-        reveal: ctx.content.keyMoment.reveal,
         drawHeavy: (g, scale) => drawElephant(g, 0, 0, scale),
       }),
     ],

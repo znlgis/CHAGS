@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import { BaseScene, THEME, createHand } from '@chags/phaser-kit';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   CHASE_TIMING, chaseAutoplayLevel, chaseStart, distanceBand, hitHold, holdWanted, isChaseDone,
   progressRatio, staminaRatio, tick as advanceChase,
@@ -58,7 +58,7 @@ export interface ChaseApi {
 export interface ChaseConfig {
   level: ChaseLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就用内容自己的标题 */
   title?: string;
   /** 这个世界：山道、树、天（画一次） */
@@ -86,13 +86,13 @@ export interface ChaseConfig {
  *   体力见底才算成 —— 那不是"抓住他"，是他自己心服了。
  */
 export function createChaseScene(ctx: GameContext, cfg: ChaseConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class ChaseScene extends BaseScene {
     private level: ChaseLevel = cfg.level;
     private state: ChaseState = chaseStart(cfg.level);
     private startedAt = 0;
     private finished = false;
     private holding = false;
-    private idleMs = 0;
     private lastBand: ChaseBand = 'good';
     private stageGfx: Phaser.GameObjects.Graphics | null = null;
     private finaleGfx: Phaser.GameObjects.Graphics | null = null;
@@ -103,35 +103,6 @@ export function createChaseScene(ctx: GameContext, cfg: ChaseConfig): Phaser.Typ
       super(SCENE_KEYS.chase, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.chase });
-      // 无头验证：只把体力那几条速率放大 —— 距离的手感与孩子玩的一模一样
-      this.level = chaseAutoplayLevel(cfg.level, this.autoplay);
-      this.state = chaseStart(this.level);
-      this.lastBand = this.state.band;
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
-      const world = this.add.graphics().setDepth(1);
-      cfg.drawWorld(world, this.level);
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.press(pointer));
-      this.input.on('pointerup', () => this.release());
-      this.input.on('pointerupoutside', () => this.release());
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.showHint(cfg.level.hint, 2600, CHASE.hintY);
-        this.time.delayedCall(CHASE.introHintMs, () => this.pointAtHold());
-      }
-    }
 
     private elapsed(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -139,21 +110,6 @@ export function createChaseScene(ctx: GameContext, cfg: ChaseConfig): Phaser.Typ
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      const elapsed = this.elapsed();
-      if (!this.finished) {
-        this.state = advanceChase(this.level, this.state, delta, this.holding);
-        this.watchBand();
-        this.idleMs += delta;
-        if (this.idleMs >= CHASE.idleMs) {
-          this.idleMs = 0;
-          this.showHint(cfg.level.hint, 2600, CHASE.hintY);
-          if (!this.holding) this.pointAtHold();
-        }
-        if (isChaseDone(this.level, this.state)) this.finish();
-      }
-      this.redraw(elapsed);
-    }
 
     /** 距离换了一段：出声、表演一下，顺手把"该怎么按"说一遍（只在该说的时候） */
     private watchBand(): void {
@@ -227,10 +183,10 @@ export function createChaseScene(ctx: GameContext, cfg: ChaseConfig): Phaser.Typ
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? CHASE.finaleHoldMs,
         sparkle: { x: this.level.hold.x, y: this.level.hold.y - this.level.hold.radius, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: CHASE.hintY,
         finalize: () => {
           recordAttempt(cfg.session, { ok: true });
@@ -296,6 +252,51 @@ export function createChaseScene(ctx: GameContext, cfg: ChaseConfig): Phaser.Typ
           this.holding = holdWanted(this.level, this.state);
         },
       });
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      const elapsed = this.elapsed();
+      if (!this.finished) {
+        this.state = advanceChase(this.level, this.state, delta, this.holding);
+        this.watchBand();
+        this.idleMs += delta;
+        if (this.idleMs >= CHASE.idleMs) {
+          this.idleMs = 0;
+          this.showHint(cfg.level.hint, 2600, CHASE.hintY);
+          if (!this.holding) this.pointAtHold();
+        }
+        if (isChaseDone(this.level, this.state)) this.finish();
+      }
+      this.redraw(elapsed);
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.chase });
+      // 无头验证：只把体力那几条速率放大 —— 距离的手感与孩子玩的一模一样
+      this.level = chaseAutoplayLevel(cfg.level, this.autoplay);
+      this.state = chaseStart(this.level);
+      this.lastBand = this.state.band;
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      const world = this.add.graphics().setDepth(1);
+      cfg.drawWorld(world, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.press(pointer));
+      this.input.on('pointerup', () => this.release());
+      this.input.on('pointerupoutside', () => this.release());
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.showHint(cfg.level.hint, 2600, CHASE.hintY);
+        this.time.delayedCall(CHASE.introHintMs, () => this.pointAtHold());
+      }
     }
   };
 }

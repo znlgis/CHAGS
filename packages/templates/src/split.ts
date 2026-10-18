@@ -5,7 +5,7 @@ import {
   BaseScene, CSS, THEME, createDragController, createHand, popIn, roundRect, sparkleAt, textStyle,
 } from '@chags/phaser-kit';
 import type { DragController } from '@chags/phaser-kit';
-import { SCENE_KEYS, SPLIT } from './layout';
+import { SCENE_KEYS, SPLIT, resolveEnding } from './layout';
 import {
   countsFor, dividerX, happyLeft, isGreedy, isSplitSolved, leftFromX, mood, moodLine,
   splitState, stepToward,
@@ -28,7 +28,7 @@ export interface SplitStageState extends SplitState {
 export interface SplitConfig {
   level: SplitLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   titleKey: MessageKey;
   /** 顶栏上的名字；不传就用 titleKey 的界面文案（计策游戏传自己的计名，与第五辑一致） */
   title?: string;
@@ -57,6 +57,7 @@ export interface SplitConfig {
  * - **观众只看一头**：规则写在数据里（audience.happyAt），孩子自己发现"换个说法就换了脸色"。
  */
 export function createSplitScene(ctx: GameContext, cfg: SplitConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class SplitScene extends BaseScene {
     private state: SplitState = splitState(cfg.level.initialLeft, cfg.level);
     private drag: DragController | null = null;
@@ -69,7 +70,6 @@ export function createSplitScene(ctx: GameContext, cfg: SplitConfig): Phaser.Typ
     private busy = false;
     private finished = false;
     private dragging = false;
-    private idleMs = 0;
     private greedySeen = false;
 
     constructor() {
@@ -92,31 +92,6 @@ export function createSplitScene(ctx: GameContext, cfg: SplitConfig): Phaser.Typ
       return (this.endX - this.startX) / cfg.level.total;
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.split });
-      this.drawBackdrop(cfg.title ?? this.tr(cfg.titleKey));
-
-      this.worldGfx = this.add.graphics().setDepth(1);
-      this.ropeGfx = this.add.graphics().setDepth(3);
-      this.drawLabels();
-      this.drawDivider();
-      this.drawEquation();
-
-      this.drag = createDragController(this);
-      this.events.once('shutdown', () => {
-        this.drag?.destroy();
-        this.drag = null;
-      });
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTap(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.redraw();
-      this.fadeIn();
-      if (this.autoplay) this.runAutoplay();
-    }
 
     // ---------------- 画面 ----------------
 
@@ -281,10 +256,10 @@ export function createSplitScene(ctx: GameContext, cfg: SplitConfig): Phaser.Typ
       this.hideHand();
       recordAttempt(cfg.session, { ok: true });
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? 4200,
         sparkle: { x: (this.startX + this.endX) / 2, y: this.ropeY, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: 268,
         finalize: () => {
           const finale = this.add.graphics().setDepth(40);
@@ -295,17 +270,6 @@ export function createSplitScene(ctx: GameContext, cfg: SplitConfig): Phaser.Typ
 
     // ---------------- 提示 ----------------
 
-    private tick(delta: number): void {
-      if (this.finished || this.busy || this.dragging) return;
-      this.idleMs += delta;
-      if (this.idleMs < SPLIT.idleMs) return;
-      this.idleMs = 0;
-      this.showHint(cfg.level.hint);
-      const divider = dividerX(this.state.left, cfg.level, this.startX, this.gap);
-      if (!this.hand) this.hand = createHand(this, divider, this.ropeY - 210, 1.15);
-      // 小手顺便把木牌往前推一格 —— 提示不靠文字
-      this.applyLeft(stepToward(this.state, happyLeft(cfg.level), cfg.level).left, false);
-    }
 
     private hideHand(): void {
       if (!this.hand) return;
@@ -327,6 +291,43 @@ export function createSplitScene(ctx: GameContext, cfg: SplitConfig): Phaser.Typ
           this.applyLeft(next.left, false);
         },
       });
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      if (this.finished || this.busy || this.dragging) return;
+      this.idleMs += delta;
+      if (this.idleMs < SPLIT.idleMs) return;
+      this.idleMs = 0;
+      this.showHint(cfg.level.hint);
+      const divider = dividerX(this.state.left, cfg.level, this.startX, this.gap);
+      if (!this.hand) this.hand = createHand(this, divider, this.ropeY - 210, 1.15);
+      // 小手顺便把木牌往前推一格 —— 提示不靠文字
+      this.applyLeft(stepToward(this.state, happyLeft(cfg.level), cfg.level).left, false);
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.split });
+      this.drawBackdrop(cfg.title ?? this.tr(cfg.titleKey));
+
+      this.worldGfx = this.add.graphics().setDepth(1);
+      this.ropeGfx = this.add.graphics().setDepth(3);
+      this.drawLabels();
+      this.drawDivider();
+      this.drawEquation();
+
+      this.drag = createDragController(this);
+      this.events.once('shutdown', () => {
+        this.drag?.destroy();
+        this.drag = null;
+      });
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTap(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.redraw();
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
     }
   };
 }

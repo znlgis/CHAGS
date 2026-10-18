@@ -1,4 +1,5 @@
-import { SCENE_KEYS, createTraceScene, defineGame } from '@chags/templates';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
+import { createTraceScene } from '@chags/templates/trace';
 import { ROAD_STROKE, drawBeat, drawFinale, drawRetreatStage, drawWorld } from './art';
 import { traceLevel } from './logic';
 import { manifest } from './manifest';
@@ -17,7 +18,6 @@ export default defineGame({
         createTraceScene(ctx, {
           level,
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           // 顶栏显示计名（计策游戏的口径与第五辑一致）；titleKey 仍是模板要求的兜底
           titleKey: 'scene.retreat',
           title: ctx.content.title,
@@ -44,7 +44,6 @@ export default defineGame({
           // 手指划出来的是一条踩出来的土路，不是河道
           stroke: ROAD_STROKE,
           // 关键抉择点的揭晓语：退到人和东西都保得住的地方
-          reveal: ctx.content.keyMoment.reveal,
           revealY: 560,
           finaleHoldMs: 5200,
         }),

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import type { MessageKey } from '@chags/i18n';
 import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
-import { SCENE_KEYS, WAIT } from './layout';
+import { SCENE_KEYS, WAIT, resolveEnding } from './layout';
 import {
   applyTemptation, effectiveDuration, lineAt, waitProgress, waitStart,
 } from './wait.logic';
@@ -33,7 +33,7 @@ export interface WaitStageMetrics {
 export interface WaitConfig {
   level: WaitLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /**
    * 顶栏上的名字，二选一：
    * - `title`：直接给文本（三十六计这种"顶栏要显示计名"的用它，内容已按语言取好）；
@@ -66,6 +66,7 @@ export interface WaitConfig {
  * - **最后一件事是动作**：等到了要自己把直钩收起来，不然这一场白等。
  */
 export function createWaitScene(ctx: GameContext, cfg: WaitConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class WaitScene extends BaseScene {
     private durationMs = 0;
     private state: WaitState = waitStart();
@@ -74,7 +75,6 @@ export function createWaitScene(ctx: GameContext, cfg: WaitConfig): Phaser.Types
     private arrived = false;
     private done = false;
     private busy = false;
-    private idleMs = 0;
     private stageGfx: Phaser.GameObjects.Graphics | null = null;
     private finaleGfx: Phaser.GameObjects.Graphics | null = null;
     private hand: Phaser.GameObjects.Graphics | null = null;
@@ -84,23 +84,6 @@ export function createWaitScene(ctx: GameContext, cfg: WaitConfig): Phaser.Types
       super(SCENE_KEYS.wait, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.wait });
-      this.durationMs = effectiveDuration(cfg.level, this.autoplay, WAIT.autoplayFactor);
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.title ?? this.tr(cfg.titleKey ?? 'scene.wait'));
-      cfg.drawWorld?.(this);
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-      this.fadeIn();
-      if (this.autoplay) this.runAutoplay();
-    }
 
     /** 这一局实际要等多久（无头验证时缩短） */
     private get lv(): WaitLevel {
@@ -226,15 +209,22 @@ export function createWaitScene(ctx: GameContext, cfg: WaitConfig): Phaser.Types
       sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
       recordAttempt(cfg.session, { ok: true });
       if (this.finaleGfx) cfg.drawFinale?.(this.finaleGfx);
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1400, () => this.showHint(reveal, 3200, cfg.revealY ?? 268));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? 4400, () => this.scene.start(cfg.nextSceneKey));
+      this.time.delayedCall(1400, () =>
+        this.showHint(ending.reveal, 3200, cfg.revealY ?? 268),
+      );
+      this.time.delayedCall(cfg.finaleHoldMs ?? 4400, () => this.scene.start(ending.nextSceneKey));
     }
 
     // ---------------- 每帧 ----------------
 
+
+    /** 无头验证：全程不碰诱惑，等到他来了就把直钩收起来 */
+    private runAutoplay(): void {
+      this.time.delayedCall(200, () => {
+        if (!this.arrived) this.time.delayedCall(this.durationMs + 300, () => this.collect());
+      });
+    }
+    private idleMs = 0;
     private tick(delta: number): void {
       if (this.done) return;
       if (this.stageGfx) {
@@ -251,12 +241,22 @@ export function createWaitScene(ctx: GameContext, cfg: WaitConfig): Phaser.Types
       this.idleMs = 0;
       this.showHint(cfg.level.hint);
     }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.wait });
+      this.durationMs = effectiveDuration(cfg.level, this.autoplay, WAIT.autoplayFactor);
+      this.startedAt = this.ctx.services.now();
 
-    /** 无头验证：全程不碰诱惑，等到他来了就把直钩收起来 */
-    private runAutoplay(): void {
-      this.time.delayedCall(200, () => {
-        if (!this.arrived) this.time.delayedCall(this.durationMs + 300, () => this.collect());
-      });
+      this.drawBackdrop(cfg.title ?? this.tr(cfg.titleKey ?? 'scene.wait'));
+      cfg.drawWorld?.(this);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
     }
   };
 }

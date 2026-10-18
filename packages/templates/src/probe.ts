@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import { BaseScene, THEME, createHand, sparkleAt, tapRipple } from '@chags/phaser-kit';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   PROBE_TIMING, canCross, cross, crossablePatches, figureAt, hasSnake, isFigureTried, isKnocked,
   knock, nextFigureToShoot, nextKnockStep, probeAt, probeStart, remainingFigures, shoot,
@@ -80,7 +80,7 @@ export interface ProbeStageState {
 export interface ProbeConfig {
   level: ProbeLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就用内容自己的标题 */
   title?: string;
   /** 这个世界：路、草丛、一排身影（画一次） */
@@ -114,12 +114,12 @@ function createKnockSpotProbeScene(
   ctx: GameContext,
   cfg: ProbeConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class ProbeScene extends BaseScene {
     private level: ProbeLevel = cfg.level;
     private state: ProbeState = probeStart();
     private startedAt = 0;
     private finished = false;
-    private idleMs = 0;
     private misses = 0;
     private crossedAt = -1;
     private lastKnock: ProbePatch | null = null;
@@ -141,30 +141,6 @@ function createKnockSpotProbeScene(
       super(SCENE_KEYS.probe, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.probe });
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
-      this.worldGfx = this.add.graphics().setDepth(1);
-      cfg.drawWorld(this.worldGfx, this.level);
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-      this.markGfx = this.add.graphics().setDepth(60);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.showHint(cfg.level.hint, 3000, PROBE.hintY);
-        this.time.delayedCall(PROBE.introHandMs, () => this.pointAtNext());
-      }
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -172,17 +148,6 @@ function createKnockSpotProbeScene(
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      this.redraw(this.now());
-      if (this.finished) return;
-      // 卡住了：把该动的地方再指一遍（不换说法，提示语就是关卡自己那一句）
-      this.idleMs += delta;
-      if (this.idleMs >= PROBE.idleMs) {
-        this.idleMs = 0;
-        this.showHint(this.level.hint, 2600, PROBE.hintY);
-        this.pointAtNext();
-      }
-    }
 
     private redraw(elapsed: number): void {
       const stage = this.stageState(elapsed);
@@ -448,10 +413,10 @@ function createKnockSpotProbeScene(
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? PROBE.finaleHoldMs,
         sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: PROBE.hintY,
         finalize: () => {
           recordAttempt(cfg.session, { ok: true });
@@ -543,6 +508,42 @@ function createKnockSpotProbeScene(
       const figure = nextFigureToShoot(level, this.state);
       if (figure !== undefined) this.pressSpot(figure.x, figure.y);
     }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      this.redraw(this.now());
+      if (this.finished) return;
+      // 卡住了：把该动的地方再指一遍（不换说法，提示语就是关卡自己那一句）
+      this.idleMs += delta;
+      if (this.idleMs >= PROBE.idleMs) {
+        this.idleMs = 0;
+        this.showHint(this.level.hint, 2600, PROBE.hintY);
+        this.pointAtNext();
+      }
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.probe });
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      this.markGfx = this.add.graphics().setDepth(60);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.showHint(cfg.level.hint, 3000, PROBE.hintY);
+        this.time.delayedCall(PROBE.introHandMs, () => this.pointAtNext());
+      }
+    }
   };
 }
 
@@ -590,7 +591,7 @@ export interface ProbeHintStageState {
 export interface ProbeHintConfig {
   level: ProbeHintLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就用内容自己的标题 */
   title?: string;
   /** 这个世界：院子、桑槐钟鼓、等着听的那个人（画一次） */
@@ -627,12 +628,12 @@ function createHintProbeScene(
   ctx: GameContext,
   cfg: ProbeHintConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class ProbeHintScene extends BaseScene {
     private level: ProbeHintLevel = cfg.level;
     private state: ProbeHintState = hintStart();
     private startedAt = 0;
     private finished = false;
-    private idleMs = 0;
     private misses = 0;
     /** 刚敲的那一下是什么时候（画面据此演"他往前走了一步 / 他没反应"） */
     private lastKnockAt = -1;
@@ -648,34 +649,6 @@ function createHintProbeScene(
       super(SCENE_KEYS.probe, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.probe });
-      this.level = cfg.level;
-      this.state = hintStart();
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
-      this.worldGfx = this.add.graphics().setDepth(1);
-      cfg.drawWorld(this.worldGfx, this.level);
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-      this.markGfx = this.add.graphics().setDepth(60);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
-        this.onPress(pointer.x, pointer.y),
-      );
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.showHint(cfg.level.hint, 3000, PROBE_HINT.hintY);
-        this.time.delayedCall(PROBE_HINT.introHandMs, () => this.pointAtNext());
-      }
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -683,17 +656,6 @@ function createHintProbeScene(
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      this.redraw(this.now());
-      if (this.finished) return;
-      // 卡住了：把关卡自己的那句话再亮一遍，并指一指"他听得懂的那一样"
-      this.idleMs += delta;
-      if (this.idleMs >= PROBE_HINT.idleMs) {
-        this.idleMs = 0;
-        this.showHint(this.level.hint, 2600, PROBE_HINT.hintY);
-        this.pointAtNext();
-      }
-    }
 
     private redraw(t: number): void {
       const stage = this.stageState(t);
@@ -822,10 +784,10 @@ function createHintProbeScene(
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? PROBE_HINT.finaleHoldMs,
         sparkle: { x: this.level.listener.x, y: this.level.listener.y, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: PROBE_HINT.hintY,
         finalize: () => {
           this.ctx.emit('beat:enter', { beatId: 'probe:done' });
@@ -902,6 +864,46 @@ function createHintProbeScene(
       const prop = nextHintProp(this.level, this.state);
       if (prop === undefined) return;
       this.onPress(prop.x, prop.y);
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      this.redraw(this.now());
+      if (this.finished) return;
+      // 卡住了：把关卡自己的那句话再亮一遍，并指一指"他听得懂的那一样"
+      this.idleMs += delta;
+      if (this.idleMs >= PROBE_HINT.idleMs) {
+        this.idleMs = 0;
+        this.showHint(this.level.hint, 2600, PROBE_HINT.hintY);
+        this.pointAtNext();
+      }
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.probe });
+      this.level = cfg.level;
+      this.state = hintStart();
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      this.markGfx = this.add.graphics().setDepth(60);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
+        this.onPress(pointer.x, pointer.y),
+      );
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.showHint(cfg.level.hint, 3000, PROBE_HINT.hintY);
+        this.time.delayedCall(PROBE_HINT.introHandMs, () => this.pointAtNext());
+      }
     }
   };
 }

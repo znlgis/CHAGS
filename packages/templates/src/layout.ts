@@ -1,3 +1,5 @@
+import type { GameContext } from '@chags/game-kit';
+
 /** 设计分辨率与所有可交互元素的坐标。e2e 直接复用这些常量。 */
 export const DESIGN = { width: 750, height: 1334 } as const;
 
@@ -32,6 +34,24 @@ export const SCENE_KEYS = {
   chain: 'chain',
   reward: 'reward',
 } as const;
+
+/**
+ * 场景收尾的默认值 —— 每个游戏都要传、而且传的都是同一份的两个参数：
+ * - `reveal` 默认讲这一条内容的"关键抉择"揭晓语（ctx.content.keyMoment.reveal）；
+ * - `nextSceneKey` 默认回典故卡（SCENE_KEYS.reward）；中间幕显式传下一幕的键。
+ *
+ * 以前 53 个 games/index.ts 每个都手抄这两行；默认值收到模板里之后，
+ * 它们只在"不是默认"时才需要写（例如 dayu 的 tap → trace）。
+ */
+export function resolveEnding<T extends { reveal?: string; nextSceneKey?: string }>(
+  ctx: GameContext,
+  cfg: T,
+): { reveal: string; nextSceneKey: string } {
+  return {
+    reveal: cfg.reveal ?? ctx.content.keyMoment.reveal,
+    nextSceneKey: cfg.nextSceneKey ?? SCENE_KEYS.reward,
+  };
+}
 
 // ---------- 分幕绘本 ----------
 export const STORY_ART = { x: 55, y: 300, w: 640, h: 620 } as const;

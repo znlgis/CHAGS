@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade, wavyBand } from '@chags/phaser-kit';
-import { DESIGN } from '@chags/templates';
-import { SWAP, swapProgressBar } from '@chags/templates';
+import { DESIGN } from '@chags/templates/core';
+import { SWAP, swapProgressBar } from '@chags/templates/swap';
 import type { SwapStageState } from '@chags/templates';
 import type { SwapLevel } from '@chags/templates/schemas';
 import {

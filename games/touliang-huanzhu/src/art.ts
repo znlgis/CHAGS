@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
-import { DESIGN, SWAP_BEAM, beamProgressBar } from '@chags/templates';
+import { DESIGN } from '@chags/templates/core';
+import { beamProgressBar, SWAP_BEAM } from '@chags/templates/swap';
 import type { SwapBeamStageState } from '@chags/templates';
 import type { SwapBeamLevel } from '@chags/templates/schemas';
 import { clamp01 } from '@chags/game-kit';

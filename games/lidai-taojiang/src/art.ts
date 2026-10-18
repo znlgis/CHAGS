@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { CSS, THEME, circle, groundShadow, roundRect, shade, textStyle } from '@chags/phaser-kit';
-import { MATCHUP, matchupScoreBar } from '@chags/templates';
+import { MATCHUP, matchupScoreBar } from '@chags/templates/matchup';
 import type { MatchupStageState } from '@chags/templates';
 import type { MatchupHorse, MatchupLevel, MatchupRival } from '@chags/templates/schemas';
 

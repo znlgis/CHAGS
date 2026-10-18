@@ -23,16 +23,16 @@ import { gzipSync } from 'node:zlib';
 const DIST = 'apps/site/dist';
 
 const BUDGETS = {
-  /** 首屏 JS + CSS（gzip）—— 决定用户多久能看到典故馆（2026-10-18 实测 53.7 KB） */
-  initialKb: 65,
+  /** 首屏 JS + CSS（gzip）—— 决定用户多久能看到典故馆（2026-10-18 实测 54.1 KB） */
+  initialKb: 60,
   /** 首屏 JS + CSS（原始字节）—— 桌面 / 安卓壳是本地加载，省不掉 */
-  initialRawKb: 180,
+  initialRawKb: 160,
   /** 单个懒加载 js/css（gzip）—— 目前最大的是 Phaser 裁剪版（约 222 KB） */
   chunkKb: 260,
   /** 单个懒加载 js/css（原始字节）—— Phaser 裁剪版约 0.86 MB */
   chunkRawKb: 1000,
-  /** 整个 dist 的原始大小 */
-  distKb: 2900,
+  /** 整个 dist 的原始大小（场景按需加载 + zod 出包后实测 1914 KB） */
+  distKb: 2200,
   /** 单个图片 / 字体 / 音频文件 */
   assetKb: 200,
   /** 非代码资源总量 */

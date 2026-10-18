@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
-import { DESIGN } from '@chags/templates';
+import { DESIGN } from '@chags/templates/core';
 import type { StillnessFeignStageState } from '@chags/templates';
 import { ACTION, AWAY, GROUND_TOP, MAX_MARKS, SKY_TOP, STEPS, SUNBIN, WALL_TOP, WATCH } from './layout';
 import { clamp01 } from '@chags/game-kit';

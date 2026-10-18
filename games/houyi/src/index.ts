@@ -1,6 +1,7 @@
 import { createTranslator } from '@chags/i18n';
 import { CSS, textStyle } from '@chags/phaser-kit';
-import { SCENE_KEYS, createAimScene, defineGame } from '@chags/templates';
+import { createAimScene } from '@chags/templates/aim';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
 import type { AimApi } from '@chags/templates';
 import type Phaser from 'phaser';
 import { drawArcher, drawBeat, drawScenery, drawSun } from './art';
@@ -80,7 +81,6 @@ export default defineGame({
         createAimScene(ctx, {
           level: aimLevel(ctx.content),
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           titleKey: 'scene.shoot',
           archer: { x: 340, y: 1030 },
           drawScenery: (g, stage) => drawScenery(g, stage, dry),

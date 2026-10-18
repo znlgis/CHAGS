@@ -1,4 +1,6 @@
-import { SCENE_KEYS, createTapScene, createTraceScene, defineGame } from '@chags/templates';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
+import { createTapScene } from '@chags/templates/tap';
+import { createTraceScene } from '@chags/templates/trace';
 import {
   CHANNEL_STROKE,
   drawBeat,
@@ -40,7 +42,6 @@ export default defineGame({
         createTraceScene(ctx, {
           level,
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           titleKey: 'scene.guide',
           drawWorld: drawTraceWorld,
           drawStage: (g, stage) =>
@@ -73,7 +74,6 @@ export default defineGame({
           },
           drawFinale: (g) => drawTraceFinale(g, level),
           stroke: CHANNEL_STROKE,
-          reveal: ctx.content.keyMoment.reveal,
           revealY: 620,
           finaleHoldMs: 5600,
         }),

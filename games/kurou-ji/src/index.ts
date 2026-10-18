@@ -1,4 +1,5 @@
-import { SCENE_KEYS, createSplitScene, defineGame } from '@chags/templates';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
+import { createSplitScene } from '@chags/templates/split';
 import { drawBeat, drawFinale, drawThing, drawWorld } from './art';
 import { splitLevel } from './logic';
 import { manifest } from './manifest';
@@ -14,7 +15,6 @@ export default defineGame({
         createSplitScene(ctx, {
           level,
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           // 顶栏显示计名（计策游戏的口径与第五辑一致）；titleKey 仍是模板要求的兜底
           titleKey: 'scene.split',
           title: ctx.content.title,
@@ -24,7 +24,6 @@ export default defineGame({
           drawThing,
           drawFinale,
           // 关键抉择点的揭晓语：看见了，才肯信
-          reveal: ctx.content.keyMoment.reveal,
         }),
       ],
     };

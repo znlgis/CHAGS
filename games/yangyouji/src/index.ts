@@ -1,7 +1,8 @@
 import type Phaser from 'phaser';
 import { createTranslator } from '@chags/i18n';
 import { FONT_STACK } from '@chags/phaser-kit';
-import { SCENE_KEYS, createAimScene, defineGame } from '@chags/templates';
+import { createAimScene } from '@chags/templates/aim';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
 import { ADVANCE, LEAF_RADII, archerAt } from './layout';
 import { drawArcher, drawBeat, drawFinale, drawLeaf, drawScenery } from './art';
 import { aimLevel } from './logic';
@@ -26,7 +27,6 @@ export default defineGame({
         createAimScene(ctx, {
           level,
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           titleKey: 'scene.practice',
           // 一档一档往后退 —— 退到哪儿，箭就从哪儿出去
           archer: (stage) => archerAt(stage.rungIndex),

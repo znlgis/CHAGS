@@ -16,10 +16,18 @@ export interface GameplayStage {
 
 export interface GameDefinition {
   manifest: GameManifest;
-  /** 分幕插图：每个典故自己画 */
+  /**
+   * 分幕插图：每个典故自己画。
+   *
+   * **契约只画两幕**：index 只有 0 / 1 —— 内容 schema 已把 story 锁成 length(2)
+   * （第 3 幕在 pnpm content:check 构建期就报错），与 game-kit 的 Art 渲染约定一致。
+   * 真要写三幕，先扩这份契约与 story.ts 的 StoryConfig；别在 art.ts 里加
+   * `index === 2` 分支 —— 契约收窄后内联实现的 index 上下文类型是 0 | 1，
+   * 写第三幕会直接 typecheck 报错。
+   */
   drawBeat?: (
     g: Phaser.GameObjects.Graphics,
-    index: number,
+    index: 0 | 1,
     rect: { x: number; y: number; w: number; h: number },
   ) => void;
   /** 玩法场景。拿到内容与一局状态，返回这一局的场景编排。 */
@@ -42,6 +50,10 @@ export function defineGame(definition: GameDefinition): GameModule {
     manifest: definition.manifest,
 
     async mount(ctx: GameContext): Promise<void> {
+      // 关卡脚本的校验在构建期：pnpm content:check 用模板 schema 全量校验 53 条内容
+      // （pnpm verify / CI / 发版都跑），单测里的负例也直接对 schema 断言。
+      // 这里刻意不做运行时校验 —— 那会把 zod + 全部模板 schema 拖进每个游戏 chunk
+      // （实测 116 KB 原始 / 32.8 KB gzip，且只在 dev 用得上）。
       const session = createSessionState(ctx.services.now());
       const stage = definition.gameplay(ctx, session);
 

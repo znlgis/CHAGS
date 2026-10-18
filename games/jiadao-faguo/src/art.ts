@@ -1,6 +1,8 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
-import { CHAIN_TIMING, DESIGN, chainProgressBar } from '@chags/templates';
+import { chainProgressBar } from '@chags/templates/chain';
+import { CHAIN_TIMING } from '@chags/templates/chain.logic';
+import { DESIGN } from '@chags/templates/core';
 import type { ChainLevel, ChainStageState } from '@chags/templates';
 import { clamp01 } from '@chags/game-kit';
 import {

@@ -1,5 +1,5 @@
 import { getEntry, stageScript } from '@chags/content/full';
-import { canReach } from '@chags/templates/schemas';
+import { SubstitutionLevelSchema, canReach } from '@chags/templates/schemas';
 import { describe, expect, it } from 'vitest';
 import { substitutionLevel } from './logic';
 
@@ -27,13 +27,12 @@ describe('曹冲称象 · 关卡数据', () => {
 
   it('模板 schema 会拒绝凑不出的关卡', () => {
     const broken = {
-      ...raw!,
-      game: {
-        template: 'substitution' as const,
-        stages: [{ template: 'substitution' as const, levelScript: { ...(stageScript(raw!, 'substitution') as object), stones: [{ id: 'odd', value: 700, radius: 40 }] } }],
-      },
+      ...(stageScript(raw!, 'substitution') as object),
+      stones: [{ id: 'odd', value: 700, radius: 40 }],
     };
-    expect(() => substitutionLevel(broken)).toThrow();
+    // 注意：生产包里关卡脚本不再过 zod（构建期 content:check 已用同一套 schema 全量校验），
+    // 所以这条负例直接对 schema 断言 —— 与 content:check 校验的是同一个 schema。
+    expect(() => SubstitutionLevelSchema.parse(broken)).toThrow();
   });
 
   it('故事很短：屏幕上不超过两句话', () => {

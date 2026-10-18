@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import { BaseScene, THEME, createHand, roundRect, shade, sparkleAt, tapRipple } from '@chags/phaser-kit';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   LURE_TIMING, awayLeftMs, awayTotalMs, baitAt, bestBait, bestOffer, decoyStart, give, grabAt,
   grabProgress, guardBack, isAway, isDecoyDone, isTradeDone, lureAutoplayLevel, nextOfferToGive,
@@ -110,7 +110,7 @@ export interface LureApi {
 export interface LureConfig {
   level: LureLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就用内容自己的标题 */
   title?: string;
   /** 这个世界：山口、守将、山那边的炊烟（decoy）/ 书斋的墙（trade）—— 画一次 */
@@ -137,6 +137,7 @@ export interface LureConfig {
  * - **零惩罚**：选错诱饵点只是白等一场（不算）；挑错砖只是再挑一次 —— 记进 mistakes、不结束、不锁操作。
  */
 function createLureDecoyTradeScene(ctx: GameContext, cfg: LureConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class LureScene extends BaseScene {
     private level: LureLevel = cfg.level;
     private decoyState: LureDecoyState = decoyStart();
@@ -148,7 +149,6 @@ function createLureDecoyTradeScene(ctx: GameContext, cfg: LureConfig): Phaser.Ty
     private lastOffer: LureOffer | null = null;
     private lastReturn: LureReturn | null = null;
     private lastTradeAt = Number.NEGATIVE_INFINITY;
-    private idleMs = 0;
     private worldGfx: Phaser.GameObjects.Graphics | null = null;
     private stageGfx: Phaser.GameObjects.Graphics | null = null;
     private markGfx: Phaser.GameObjects.Graphics | null = null;
@@ -160,46 +160,6 @@ function createLureDecoyTradeScene(ctx: GameContext, cfg: LureConfig): Phaser.Ty
       super(SCENE_KEYS.lure, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.lure });
-      this.level = lureAutoplayLevel(cfg.level, this.autoplay);
-      this.decoyState = decoyStart();
-      this.tradeState = tradeStart();
-      this.startedAt = this.ctx.services.now();
-      this.finished = false;
-      this.holding = false;
-      this.holdPointerId = null;
-      this.lastOffer = null;
-      this.lastReturn = null;
-      this.lastTradeAt = Number.NEGATIVE_INFINITY;
-      this.idleMs = 0;
-      this.ring = null;
-      this.hand = null;
-
-      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
-      this.worldGfx = this.add.graphics().setDepth(1);
-      cfg.drawWorld(this.worldGfx, this.level);
-      this.stageGfx = this.add.graphics().setDepth(30);
-      this.markGfx = this.add.graphics().setDepth(60);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onDown(pointer));
-      this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => this.onUp(pointer));
-      this.input.on('pointerupoutside', (pointer: Phaser.Input.Pointer) => this.onUp(pointer));
-      // 手指还按着、但已经挪出箱子：这次"连续的空档"就断了（drag 出去不算按住）
-      this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => this.onMove(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.showHint(this.level.hint, 2600, LURE.hintY);
-        this.time.delayedCall(LURE.introHintMs, () => this.pointAtNext());
-      }
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -207,28 +167,6 @@ function createLureDecoyTradeScene(ctx: GameContext, cfg: LureConfig): Phaser.Ty
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      const t = this.now();
-      if (!this.finished) {
-        if (this.level.mode === 'decoy') {
-          // 无头验证先决定"这一帧按不按住"，再与真实操作走同一条 grabAt 的路
-          if (this.autoplay) this.autoplayDecoy(t);
-          // 看守到点就回岗：没拿完的清零（零惩罚）
-          this.decoyState = guardBack(this.level, this.decoyState, t);
-          this.decoyState = this.holding
-            ? grabAt(this.level, this.decoyState, t)
-            : releaseGrab(this.decoyState, t);
-        }
-        this.idleMs += delta;
-        if (this.idleMs >= LURE.idleMs) {
-          this.idleMs = 0;
-          this.showHint(this.level.hint, 2600, LURE.hintY);
-          this.pointAtNext();
-        }
-        if (this.isDone()) this.finish();
-      }
-      this.redraw(t);
-    }
 
     private isDone(): boolean {
       if (this.level.mode === 'decoy') return isDecoyDone(this.level, this.decoyState);
@@ -481,9 +419,9 @@ function createLureDecoyTradeScene(ctx: GameContext, cfg: LureConfig): Phaser.Ty
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? LURE.finaleHoldMs,
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: LURE.hintY,
         finalize: () => {
           if (this.level.mode === 'decoy') {
@@ -599,6 +537,69 @@ function createLureDecoyTradeScene(ctx: GameContext, cfg: LureConfig): Phaser.Ty
         },
       });
     }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      const t = this.now();
+      if (!this.finished) {
+        if (this.level.mode === 'decoy') {
+          // 无头验证先决定"这一帧按不按住"，再与真实操作走同一条 grabAt 的路
+          if (this.autoplay) this.autoplayDecoy(t);
+          // 看守到点就回岗：没拿完的清零（零惩罚）
+          this.decoyState = guardBack(this.level, this.decoyState, t);
+          this.decoyState = this.holding
+            ? grabAt(this.level, this.decoyState, t)
+            : releaseGrab(this.decoyState, t);
+        }
+        this.idleMs += delta;
+        if (this.idleMs >= LURE.idleMs) {
+          this.idleMs = 0;
+          this.showHint(this.level.hint, 2600, LURE.hintY);
+          this.pointAtNext();
+        }
+        if (this.isDone()) this.finish();
+      }
+      this.redraw(t);
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.lure });
+      this.level = lureAutoplayLevel(cfg.level, this.autoplay);
+      this.decoyState = decoyStart();
+      this.tradeState = tradeStart();
+      this.startedAt = this.ctx.services.now();
+      this.finished = false;
+      this.holding = false;
+      this.holdPointerId = null;
+      this.lastOffer = null;
+      this.lastReturn = null;
+      this.lastTradeAt = Number.NEGATIVE_INFINITY;
+      this.idleMs = 0;
+      this.ring = null;
+      this.hand = null;
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(30);
+      this.markGfx = this.add.graphics().setDepth(60);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onDown(pointer));
+      this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => this.onUp(pointer));
+      this.input.on('pointerupoutside', (pointer: Phaser.Input.Pointer) => this.onUp(pointer));
+      // 手指还按着、但已经挪出箱子：这次"连续的空档"就断了（drag 出去不算按住）
+      this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => this.onMove(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.showHint(this.level.hint, 2600, LURE.hintY);
+        this.time.delayedCall(LURE.introHintMs, () => this.pointAtNext());
+      }
+    }
   };
 }
 
@@ -672,7 +673,7 @@ export interface LureFavorApi {
 export interface LureFavorConfig {
   level: LureFavorLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就用内容自己的标题 */
   title?: string;
   /** 这个世界：他坐在哪儿、屋里是什么样子 —— 画一次 */
@@ -706,6 +707,7 @@ export function createLureFavorScene(
   ctx: GameContext,
   cfg: LureFavorConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class LureFavorScene extends BaseScene {
     private level: LureFavorLevel = cfg.level;
     private state: LureFavorState = favorStart();
@@ -714,7 +716,6 @@ export function createLureFavorScene(
     private lastGift: LureGift | null = null;
     private lastLoved: boolean | null = null;
     private lastOfferAt = Number.NEGATIVE_INFINITY;
-    private idleMs = 0;
     private worldGfx: Phaser.GameObjects.Graphics | null = null;
     private stageGfx: Phaser.GameObjects.Graphics | null = null;
     private markGfx: Phaser.GameObjects.Graphics | null = null;
@@ -726,39 +727,6 @@ export function createLureFavorScene(
       super(SCENE_KEYS.lure, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.lure });
-      this.level = cfg.level;
-      this.state = favorStart();
-      this.startedAt = this.ctx.services.now();
-      this.finished = false;
-      this.lastGift = null;
-      this.lastLoved = null;
-      this.lastOfferAt = Number.NEGATIVE_INFINITY;
-      this.idleMs = 0;
-      this.ring = null;
-      this.hand = null;
-
-      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
-      this.worldGfx = this.add.graphics().setDepth(1);
-      cfg.drawWorld(this.worldGfx, this.level);
-      this.stageGfx = this.add.graphics().setDepth(30);
-      this.markGfx = this.add.graphics().setDepth(60);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onDown(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.showHint(this.level.hint, 2600, LURE_FAVOR.hintY);
-        this.time.delayedCall(LURE_FAVOR.introHintMs, () => this.pointAtNext());
-      }
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -767,19 +735,6 @@ export function createLureFavorScene(
     // ---------------- 每一帧 ----------------
 
     /** 这一关没有"该动的时候"：每一帧只是把目光画出来，等他被送对那一次打动 */
-    private tick(delta: number): void {
-      const t = this.now();
-      if (!this.finished) {
-        this.idleMs += delta;
-        if (this.idleMs >= LURE_FAVOR.idleMs) {
-          this.idleMs = 0;
-          this.showHint(this.level.hint, 2600, LURE_FAVOR.hintY);
-          this.pointAtNext();
-        }
-        if (isFavorDone(this.level, this.state)) this.finish();
-      }
-      this.redraw(t);
-    }
 
     private redraw(t: number): void {
       const stage = this.stageState(t);
@@ -932,10 +887,10 @@ export function createLureFavorScene(
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? LURE_FAVOR.finaleHoldMs,
         sparkle: { x: this.level.target.x, y: this.level.target.y, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: LURE_FAVOR.hintY,
         finalize: () => {
           recordAttempt(cfg.session, { ok: true });
@@ -1017,6 +972,53 @@ export function createLureFavorScene(
           if (gift !== undefined) this.giveGift(gift, this.now());
         },
       });
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      const t = this.now();
+      if (!this.finished) {
+        this.idleMs += delta;
+        if (this.idleMs >= LURE_FAVOR.idleMs) {
+          this.idleMs = 0;
+          this.showHint(this.level.hint, 2600, LURE_FAVOR.hintY);
+          this.pointAtNext();
+        }
+        if (isFavorDone(this.level, this.state)) this.finish();
+      }
+      this.redraw(t);
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.lure });
+      this.level = cfg.level;
+      this.state = favorStart();
+      this.startedAt = this.ctx.services.now();
+      this.finished = false;
+      this.lastGift = null;
+      this.lastLoved = null;
+      this.lastOfferAt = Number.NEGATIVE_INFINITY;
+      this.idleMs = 0;
+      this.ring = null;
+      this.hand = null;
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(30);
+      this.markGfx = this.add.graphics().setDepth(60);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onDown(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.showHint(this.level.hint, 2600, LURE_FAVOR.hintY);
+        this.time.delayedCall(LURE_FAVOR.introHintMs, () => this.pointAtNext());
+      }
     }
   };
 }

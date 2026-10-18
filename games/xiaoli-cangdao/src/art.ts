@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade, wavyBand } from '@chags/phaser-kit';
-import { readProgressBar, readTicks } from '@chags/templates';
+import { readProgressBar, readTicks } from '@chags/templates/read';
 import type { ReadTell, ReadLevel } from '@chags/templates/schemas';
 import type { ReadStageState } from '@chags/templates';
 

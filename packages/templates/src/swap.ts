@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import { BaseScene, THEME, createHand, sparkleAt, tapRipple } from '@chags/phaser-kit';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   SWAP_TIMING, caughtPosts, gateHit, isAllSwapped, isPostSwapped, isShellDone, leave, nextPeekInMs,
   nextPostToSwap, nextSwapStep, peek, placeSpare, postAt, seenCount, spareAt, spareById,
@@ -84,7 +84,7 @@ export interface SwapStageState {
 export interface SwapConfig {
   level: SwapLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就用内容自己的标题 */
   title?: string;
   /** 这个世界：营地、一排位置、地上的草堆、院门、岗楼（画一次） */
@@ -116,12 +116,12 @@ export interface SwapConfig {
  * beam（偷梁换柱）那一半在文件末尾另起一段，由 mode 分派（见 createSwapScene）。
  */
 function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class SwapScene extends BaseScene {
     private level: SwapLevel = cfg.level;
     private state: SwapState = swapStart(cfg.level);
     private startedAt = 0;
     private done = false;
-    private idleMs = 0;
     private misses = 0;
     private carrying: string | null = null;
     /** 无头验证：已经排过一次"走掉"了没有 */
@@ -143,37 +143,6 @@ function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.S
       super(SCENE_KEYS.swap, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.swap });
-      this.level = cfg.level;
-      this.state = swapStart(this.level);
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
-      this.worldGfx = this.add.graphics().setDepth(1);
-      cfg.drawWorld(this.worldGfx, this.level);
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-      this.markGfx = this.add.graphics().setDepth(60);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
-      this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-        this.pointerAt = { x: pointer.x, y: pointer.y };
-        if (this.carrying !== null) this.carryingAt = this.pointerAt;
-      });
-      this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => this.onRelease(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.showHint(cfg.level.hint, 3000, SWAP.hintY);
-        this.time.delayedCall(SWAP.introHandMs, () => this.pointAtNext());
-      }
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -181,19 +150,6 @@ function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.S
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      const t = this.now();
-      this.watchPeek(t);
-      this.redraw(t);
-      if (this.done) return;
-      // 卡住了：把关卡自己的那句话再亮一遍，并指一指该动的地方
-      this.idleMs += delta;
-      if (this.idleMs >= SWAP.idleMs) {
-        this.idleMs = 0;
-        this.showHint(this.level.hint, 2600, SWAP.hintY);
-        this.pointAtNext();
-      }
-    }
 
     /** 检查者抬头：到点就看一次（没换好的位置会被看见）—— 灯扫过去的那一下出声、发事件 */
     private watchPeek(t: number): void {
@@ -456,10 +412,10 @@ function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.S
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? SWAP.finaleHoldMs,
         sparkle: { x: this.level.exit.x, y: this.level.exit.y, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: SWAP.hintY,
         finalize: () => {
           this.ctx.emit('beat:enter', { beatId: 'swap:done' });
@@ -595,6 +551,51 @@ function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.S
         this.tryLeave();
       });
     }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      const t = this.now();
+      this.watchPeek(t);
+      this.redraw(t);
+      if (this.done) return;
+      // 卡住了：把关卡自己的那句话再亮一遍，并指一指该动的地方
+      this.idleMs += delta;
+      if (this.idleMs >= SWAP.idleMs) {
+        this.idleMs = 0;
+        this.showHint(this.level.hint, 2600, SWAP.hintY);
+        this.pointAtNext();
+      }
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.swap });
+      this.level = cfg.level;
+      this.state = swapStart(this.level);
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      this.markGfx = this.add.graphics().setDepth(60);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
+      this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+        this.pointerAt = { x: pointer.x, y: pointer.y };
+        if (this.carrying !== null) this.carryingAt = this.pointerAt;
+      });
+      this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => this.onRelease(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.showHint(cfg.level.hint, 3000, SWAP.hintY);
+        this.time.delayedCall(SWAP.introHandMs, () => this.pointAtNext());
+      }
+    }
   };
 }
 
@@ -687,7 +688,7 @@ export interface SwapBeamStageState {
 export interface SwapBeamConfig {
   level: SwapBeamLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就用内容自己的标题 */
   title?: string;
   /** 这个世界：大殿、一排承重柱、地上的料堆（画一次） */
@@ -724,6 +725,7 @@ function createBeamSwapScene(
   ctx: GameContext,
   cfg: SwapBeamConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class SwapBeamScene extends BaseScene {
     private level: SwapBeamLevel = cfg.level;
     private state: SwapBeamState = beamStart(cfg.level);
@@ -731,7 +733,6 @@ function createBeamSwapScene(
     /** 手指按着没有：按住才往前走（真实操作与无头验证都是这个开关） */
     private holding = false;
     private done = false;
-    private idleMs = 0;
     private misses = 0;
     private lastCheckAt = -1;
     private worldGfx: Phaser.GameObjects.Graphics | null = null;
@@ -745,37 +746,6 @@ function createBeamSwapScene(
       super(SCENE_KEYS.swap, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.swap });
-      this.level = cfg.level;
-      this.state = beamStart(this.level);
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
-      this.worldGfx = this.add.graphics().setDepth(1);
-      cfg.drawWorld(this.worldGfx, this.level);
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-      this.markGfx = this.add.graphics().setDepth(60);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
-        this.onPress(pointer.x, pointer.y),
-      );
-      this.input.on('pointerup', () => this.onRelease());
-      // 手指滑出画面也算松手：进度不会因为一次意外一直攒着
-      this.input.on('pointerupoutside', () => this.onRelease());
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.showHint(cfg.level.hint, 3000, SWAP_BEAM.hintY);
-        this.time.delayedCall(SWAP_BEAM.introHandMs, () => this.pointAtNext());
-      }
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -783,19 +753,6 @@ function createBeamSwapScene(
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      const t = this.now();
-      this.step(t, delta);
-      this.redraw(t);
-      if (this.done) return;
-      // 卡住了：把关卡自己的那句话再亮一遍，并指一指该按住的那一根
-      this.idleMs += delta;
-      if (this.idleMs >= SWAP_BEAM.idleMs) {
-        this.idleMs = 0;
-        this.showHint(this.level.hint, 2600, SWAP_BEAM.hintY);
-        this.pointAtNext();
-      }
-    }
 
     /**
      * 一帧的账：**先推、再清点**。
@@ -1002,9 +959,9 @@ function createBeamSwapScene(
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? SWAP_BEAM.finaleHoldMs,
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: SWAP_BEAM.hintY,
         finalize: () => {
           const first = this.level.posts[0];
@@ -1091,6 +1048,51 @@ function createBeamSwapScene(
       // 正按着这一根：让帧去推，别重复按（真实的孩子也是按着不放）
       if (workingPostId(this.state) === post.id && this.holding) return;
       this.onPress(post.x, post.y);
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      const t = this.now();
+      this.step(t, delta);
+      this.redraw(t);
+      if (this.done) return;
+      // 卡住了：把关卡自己的那句话再亮一遍，并指一指该按住的那一根
+      this.idleMs += delta;
+      if (this.idleMs >= SWAP_BEAM.idleMs) {
+        this.idleMs = 0;
+        this.showHint(this.level.hint, 2600, SWAP_BEAM.hintY);
+        this.pointAtNext();
+      }
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.swap });
+      this.level = cfg.level;
+      this.state = beamStart(this.level);
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      this.markGfx = this.add.graphics().setDepth(60);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
+        this.onPress(pointer.x, pointer.y),
+      );
+      this.input.on('pointerup', () => this.onRelease());
+      // 手指滑出画面也算松手：进度不会因为一次意外一直攒着
+      this.input.on('pointerupoutside', () => this.onRelease());
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.showHint(cfg.level.hint, 3000, SWAP_BEAM.hintY);
+        this.time.delayedCall(SWAP_BEAM.introHandMs, () => this.pointAtNext());
+      }
     }
   };
 }

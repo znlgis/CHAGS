@@ -1,4 +1,4 @@
-import { bestMatchupWins } from './schemas';
+import { bestMatchupWins } from './gains';
 import type {
   MatchupHorse, MatchupLevel, MatchupNeighbor, MatchupOrderLevel, MatchupRival,
 } from './schemas';

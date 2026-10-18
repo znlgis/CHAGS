@@ -5,7 +5,7 @@ import {
   BaseScene, CSS, THEME, createDragController, createHand, popIn, sparkleAt, textStyle,
 } from '@chags/phaser-kit';
 import type { DragController } from '@chags/phaser-kit';
-import { SCENE_KEYS, SORT } from './layout';
+import { SCENE_KEYS, SORT, resolveEnding } from './layout';
 import {
   binAt, binFor, isSortComplete, isSortCorrect, needsTaste, placedIn, probeHit,
 } from './sort.logic';
@@ -22,7 +22,7 @@ export interface SortItemState {
 export interface SortConfig {
   level: SortLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏标题 */
   titleKey: MessageKey;
   /** 木牍：highlighted = 拿起东西时它该去的那块在发光；filled = 已经放进去几件 */
@@ -56,6 +56,7 @@ export interface SortConfig {
  *   想分类，先自己试一口。这条不是限制，是这个典故的教学核心。
  */
 export function createSortScene(ctx: GameContext, cfg: SortConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class SortScene extends BaseScene {
     private drag: DragController | null = null;
     private placed: string[] = [];
@@ -67,44 +68,12 @@ export function createSortScene(ctx: GameContext, cfg: SortConfig): Phaser.Types
     private hand: Phaser.GameObjects.Graphics | null = null;
     private busy = false;
     private finished = false;
-    private idleMs = 0;
 
     constructor() {
       super(SCENE_KEYS.sort, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.sort });
-      this.drag = createDragController(this);
-      this.events.once('shutdown', () => {
-        this.drag?.destroy();
-        this.drag = null;
-      });
 
-      this.drawBackdrop(this.tr(cfg.titleKey));
-      cfg.drawWorld?.(this);
-      this.drawBins();
-      this.drawItems();
-      this.fadeIn();
-
-      // 长时间没有进展就给提示：**别用文字教玩法**，把小手放上去
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      if (this.autoplay) this.runAutoplay();
-    }
-
-    private tick(delta: number): void {
-      if (this.finished || this.busy) return;
-      this.idleMs += delta;
-      if (this.idleMs < 8500) return;
-      this.idleMs = 0;
-      this.showHint(cfg.level.hint);
-      const next = this.cfgNextItem();
-      if (!next) return;
-      this.pointHandAt(next);
-    }
 
     // ---------------- 木牍 ----------------
 
@@ -344,10 +313,10 @@ export function createSortScene(ctx: GameContext, cfg: SortConfig): Phaser.Types
       this.clearHints();
       for (const bin of cfg.level.bins) this.redrawBin(bin, true);
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? 4200,
         sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: cfg.revealY ?? 268,
         finalize: () => {
           const finale = this.add.graphics().setDepth(40);
@@ -405,6 +374,38 @@ export function createSortScene(ctx: GameContext, cfg: SortConfig): Phaser.Types
           this.settle(item, node, bin);
         },
       });
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      if (this.finished || this.busy) return;
+      this.idleMs += delta;
+      if (this.idleMs < 8500) return;
+      this.idleMs = 0;
+      this.showHint(cfg.level.hint);
+      const next = this.cfgNextItem();
+      if (!next) return;
+      this.pointHandAt(next);
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.sort });
+      this.drag = createDragController(this);
+      this.events.once('shutdown', () => {
+        this.drag?.destroy();
+        this.drag = null;
+      });
+
+      this.drawBackdrop(this.tr(cfg.titleKey));
+      cfg.drawWorld?.(this);
+      this.drawBins();
+      this.drawItems();
+      this.fadeIn();
+
+      // 长时间没有进展就给提示：**别用文字教玩法**，把小手放上去
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      if (this.autoplay) this.runAutoplay();
     }
   };
 }

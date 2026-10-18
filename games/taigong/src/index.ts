@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
-import { SCENE_KEYS, createWaitScene, defineGame } from '@chags/templates';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
+import { createWaitScene } from '@chags/templates/wait';
 import {
   WATER_TOP, drawBeat, drawFinale, drawStage, drawTemptationItem, drawWorld,
 } from './art';
@@ -30,7 +31,6 @@ export default defineGame({
         createWaitScene(ctx, {
           level,
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           titleKey: 'scene.wait',
           // 渭水、石头、白发老人、悬在水面之上的直钩
           drawWorld: (scene) => {
@@ -104,7 +104,6 @@ export default defineGame({
             repaint();
           },
           drawFinale: (g) => drawFinale(g),
-          reveal: ctx.content.keyMoment.reveal,
           revealY: 300,
         }),
       ],

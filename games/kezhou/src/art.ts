@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade, wavyBand } from '@chags/phaser-kit';
-import { DESIGN } from '@chags/templates';
+import { DESIGN } from '@chags/templates/core';
 import type { MarkStageState } from '@chags/templates';
 import {
   BANK_TOP, BOAT_X, BOAT_Y, ROCK_X, ROCK_Y, SKY_TOP, SWORD_X, SWORD_Y, TREE_X, WATER_TOP,

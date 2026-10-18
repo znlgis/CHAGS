@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import type { MessageKey } from '@chags/i18n';
 import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
-import { SCENE_KEYS } from '@chags/templates';
+import { SCENE_KEYS } from '@chags/templates/core';
 import type { ButcherLevel, ButcherPiece } from '@chags/templates/schemas';
 import type { SessionState } from '@chags/templates';
 import { drawFinale, drawGrooveArrow, drawKnife, drawOx } from '../art';

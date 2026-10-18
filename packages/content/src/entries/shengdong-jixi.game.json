@@ -88,19 +88,22 @@
               "id": "cart",
               "kind": "cart",
               "x": 620,
-              "y": 1000
+              "y": 1000,
+              "shells": []
             },
             {
               "id": "torch",
               "kind": "torch",
               "x": 520,
-              "y": 1130
+              "y": 1130,
+              "shells": []
             },
             {
               "id": "waterskin",
               "kind": "waterskin",
               "x": 660,
-              "y": 1130
+              "y": 1130,
+              "shells": []
             }
           ],
           "lamp": {

@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
-import { DESIGN, WAIT } from '@chags/templates';
+import { DESIGN, WAIT } from '@chags/templates/core';
 import type { WaitLevel, WaitStageMetrics } from '@chags/templates';
 import { clamp01 } from '@chags/game-kit';
 

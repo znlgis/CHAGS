@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import type { MessageKey } from '@chags/i18n';
 import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
-import { MARK, SCENE_KEYS } from './layout';
+import { MARK, SCENE_KEYS, resolveEnding } from './layout';
 import { hintSurface, markResult, surfaceAt, surfaceWorldX } from './mark.logic';
 import type { MarkLevel, MarkSurface } from './schemas';
 import { recordAttempt } from './session';
@@ -28,7 +28,7 @@ export interface MarkStageState {
 export interface MarkConfig {
   level: MarkLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   titleKey: MessageKey;
   /** 水面高度：下水时的涟漪画在这儿 */
   waterY: number;
@@ -50,6 +50,7 @@ export interface MarkConfig {
  * - **零失败**：捞空了不算输，船回到上游重来；再刻的时候，对的那个面会发光。
  */
 export function createMarkScene(ctx: GameContext, cfg: MarkConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class MarkScene extends BaseScene {
     private state: MarkStageState = {
       phase: 'carve',
@@ -66,28 +67,11 @@ export function createMarkScene(ctx: GameContext, cfg: MarkConfig): Phaser.Types
     private hand: Phaser.GameObjects.Graphics | null = null;
     private busy = false;
     private finished = false;
-    private idleMs = 0;
 
     constructor() {
       super(SCENE_KEYS.mark, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.mark });
-      this.drawBackdrop(this.tr(cfg.titleKey));
-
-      this.worldGfx = this.add.graphics().setDepth(2);
-      this.fxGfx = this.add.graphics().setDepth(60);
-      this.redraw();
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTap(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) this.runAutoplay();
-    }
 
     // ---------------- 画面 ----------------
 
@@ -240,10 +224,10 @@ export function createMarkScene(ctx: GameContext, cfg: MarkConfig): Phaser.Types
       this.hideHand();
       this.clearRing();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? 4200,
         sfx: false,
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: 300,
         finalize: () => {
           const finale = this.add.graphics().setDepth(40);
@@ -254,20 +238,6 @@ export function createMarkScene(ctx: GameContext, cfg: MarkConfig): Phaser.Types
 
     // ---------------- 提示 ----------------
 
-    private tick(delta: number): void {
-      if (this.finished || this.busy || this.state.phase !== 'carve') return;
-      this.idleMs += delta;
-      if (this.idleMs < MARK.idleMs) return;
-      this.idleMs = 0;
-      this.showHint(cfg.level.hint);
-      const target =
-        this.state.attempts > 0
-          ? hintSurface(cfg.level, cfg.level.driftDistance)
-          : cfg.level.surfaces.find((s) => s.drifts);
-      if (!target) return;
-      this.showRingAt(target);
-      if (!this.hand) this.hand = createHand(this, target.x, target.y - 120, 1.15);
-    }
 
     private showRingAt(surface: MarkSurface | undefined): void {
       if (!surface) return;
@@ -341,6 +311,37 @@ export function createMarkScene(ctx: GameContext, cfg: MarkConfig): Phaser.Types
           if (target && !this.state.marks.includes(target.id)) this.carve(target);
         },
       });
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      if (this.finished || this.busy || this.state.phase !== 'carve') return;
+      this.idleMs += delta;
+      if (this.idleMs < MARK.idleMs) return;
+      this.idleMs = 0;
+      this.showHint(cfg.level.hint);
+      const target =
+        this.state.attempts > 0
+          ? hintSurface(cfg.level, cfg.level.driftDistance)
+          : cfg.level.surfaces.find((s) => s.drifts);
+      if (!target) return;
+      this.showRingAt(target);
+      if (!this.hand) this.hand = createHand(this, target.x, target.y - 120, 1.15);
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.mark });
+      this.drawBackdrop(this.tr(cfg.titleKey));
+
+      this.worldGfx = this.add.graphics().setDepth(2);
+      this.fxGfx = this.add.graphics().setDepth(60);
+      this.redraw();
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTap(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
     }
   };
 }

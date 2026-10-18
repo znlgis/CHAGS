@@ -4,7 +4,7 @@ import {
   BaseScene, THEME, createDragController, popIn, roundRect, shade, sparkleAt,
 } from '@chags/phaser-kit';
 import type { DragController } from '@chags/phaser-kit';
-import { PLACE, SCENE_KEYS } from './layout';
+import { PLACE, SCENE_KEYS, resolveEnding } from './layout';
 import { findSlotAt, isCorrect, isPlaceComplete, slotFor } from './place.logic';
 import type { PlaceLevel, PlaceOrb, PlaceSlot } from './schemas';
 import { recordAttempt } from './session';
@@ -13,7 +13,7 @@ import type { SessionState } from './session';
 export interface PlaceConfig {
   level: PlaceLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 空槽与归位后的样子（太阳 / 月亮 / 河流 / 草木…），由游戏包决定 */
   drawPiece: (
     g: Phaser.GameObjects.Graphics,
@@ -25,7 +25,7 @@ export interface PlaceConfig {
   /** 光球的画法，画在容器原点 */
   drawOrb: (g: Phaser.GameObjects.Graphics, kind: string) => void;
   /** 全部归位时说的那句话 */
-  reveal: string;
+  reveal?: string;
   /** 收尾表现（可选）：例如女娲补完天之后洒下五色霞光 */
   drawFinale?: (g: Phaser.GameObjects.Graphics, placedIds: string[]) => void;
 }
@@ -38,6 +38,7 @@ export interface PlaceConfig {
  * - **用听不用看**：每归位一件，用语音说出原文（"左眼变成了太阳"）。
  */
 export function createPlaceScene(ctx: GameContext, cfg: PlaceConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class PlaceScene extends BaseScene {
     private drag: DragController | null = null;
     private placed: string[] = [];
@@ -225,9 +226,9 @@ export function createPlaceScene(ctx: GameContext, cfg: PlaceConfig): Phaser.Typ
       if (this.finished) return;
       this.finished = true;
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         sparkle: { x: this.W / 2, y: (PLACE.skyTop + PLACE.earthBottom) / 2, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealDelayMs: 1400,
         revealY: 1030,
         finalize: () => {

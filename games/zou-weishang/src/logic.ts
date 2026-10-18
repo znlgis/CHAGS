@@ -1,11 +1,11 @@
 import type { ContentEntry } from '@chags/content';
 import { stageScript } from '@chags/content';
-import { TraceLevelSchema } from '@chags/templates/schemas';
 import type { TraceLevel, TraceSegment } from '@chags/templates/schemas';
+import { asLevel } from '@chags/game-kit';
 
 /** 纯逻辑：不碰 Phaser，可以直接单测 */
 export function traceLevel(content: ContentEntry): TraceLevel {
-  return TraceLevelSchema.parse(stageScript(content, 'trace'));
+  return asLevel<TraceLevel>(stageScript(content, 'trace'));
 }
 
 /** 退路上的一个落脚点：一段路的起点、一个锚点，或者这一段的终点 */

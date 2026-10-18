@@ -1,4 +1,5 @@
-import { SCENE_KEYS, createTapScene, defineGame } from '@chags/templates';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
+import { createTapScene } from '@chags/templates/tap';
 import { drawBeat, drawFinale, drawStage } from './art';
 import { tapLevel } from './logic';
 import { manifest } from './manifest';
@@ -17,7 +18,6 @@ export default defineGame({
         createTapScene(ctx, {
           level: tapLevel(ctx.content),
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           titleKey: 'scene.fill',
           onFrame: (_stage, delta) => {
             elapsed += delta;

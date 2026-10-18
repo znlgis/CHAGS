@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import { BaseScene, CSS, THEME, createHand, sparkleAt, textStyle } from '@chags/phaser-kit';
-import { SCENE_KEYS } from '@chags/templates';
+import { SCENE_KEYS } from '@chags/templates/core';
 import { drawEggBase, drawEggCracks } from '../art';
 
 export interface ChaosConfig {

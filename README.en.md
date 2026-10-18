@@ -95,9 +95,10 @@ The same file-level checklist lives in [docs/三十六计方案.md](docs/三十�
 prints). Every game has a headless playthrough in the end-to-end suite (`?autoplay=1`), and the stories and
 stratagems together have **24 real-pointer cases** tagged `@real` — the release gate runs exactly that subset.
 
-The shell stays small: no Phaser, and no story or level-script content either. Each game's own
-business code is only a few KB; Phaser is a shared chunk and the full content (stories, quizzes,
-level scripts) is a separate lazy chunk — both load only when a game starts. See `pnpm size`.
+The shell stays small: no Phaser, and no story or level-script content either — **54.1 KB gzip**
+(measured 2026-10-18). Entering one game costs **≈226 KB gzip** in total: the trimmed Phaser chunk
+(220.6 KB) plus only that game's scene/game chunk plus its own content entry (1–2 KB; English patches
+load only in English). Scenes and content are split per item, so nothing else is downloaded. See `pnpm size`.
 
 ### Due review (new this round)
 

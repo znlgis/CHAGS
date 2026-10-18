@@ -4,7 +4,7 @@ import type { MessageKey } from '@chags/i18n';
 import {
   BaseScene, THEME, circle, createHand, roundRect, shade, sparkleAt, tapRipple,
 } from '@chags/phaser-kit';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   READ_TIMING, applyMiss, applyRead, autoplayLevel, isReadDone, isTellRead, nextTellToRead,
   readMisses, readStart, tellAt, tellAtSlot, tellLeftMs, tellNear, tellsSoFar,
@@ -68,7 +68,7 @@ export interface ReadStageState {
 export interface ReadConfig {
   level: ReadLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 场景标题：不给就用内容标题 */
   titleKey?: MessageKey;
   /** 这个世界：宴席、说话的那一位（画一次） */
@@ -93,6 +93,7 @@ export interface ReadConfig {
  *   场景据此跳过重复的表演）。
  */
 export function createReadScene(ctx: GameContext, cfg: ReadConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class ReadScene extends BaseScene {
     private level: ReadLevel = cfg.level;
     private state: ReadState = readStart();
@@ -103,7 +104,6 @@ export function createReadScene(ctx: GameContext, cfg: ReadConfig): Phaser.Types
     private lastMissAt = Number.NEGATIVE_INFINITY;
     private lastVisibleId: string | null = null;
     private openAtMs = 0;
-    private idleMs = 0;
     private worldGfx: Phaser.GameObjects.Graphics | null = null;
     private stageGfx: Phaser.GameObjects.Graphics | null = null;
     private markGfx: Phaser.GameObjects.Graphics | null = null;
@@ -114,27 +114,6 @@ export function createReadScene(ctx: GameContext, cfg: ReadConfig): Phaser.Types
       super(SCENE_KEYS.read, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.read });
-      this.level = autoplayLevel(cfg.level, this.autoplay);
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
-      this.worldGfx = this.add.graphics().setDepth(1);
-      cfg.drawWorld(this.worldGfx, this.level);
-      this.stageGfx = this.add.graphics().setDepth(30);
-      this.markGfx = this.add.graphics().setDepth(70);
-      this.doneGfx = this.add.graphics().setDepth(40);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTap(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) this.runAutoplay();
-      else this.showHint(cfg.level.hint, 3000, READ.hintY);
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -142,22 +121,6 @@ export function createReadScene(ctx: GameContext, cfg: ReadConfig): Phaser.Types
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      if (this.done) {
-        this.redraw(this.now());
-        return;
-      }
-      const t = this.now();
-      this.watchVisible(t);
-      this.redraw(t);
-
-      // 卡住了：点一下提示（不指"下一处破绽在哪儿"，那是他自己要看的）
-      this.idleMs += delta;
-      if (this.idleMs >= READ_TIMING.idleMs) {
-        this.idleMs = 0;
-        this.showHint(this.level.hint, 2600, READ.hintY);
-      }
-    }
 
     /** 破绽刚露出来 / 刚收回去的那一瞬：出声、发事件、把小手放到它上面 */
     private watchVisible(t: number): void {
@@ -298,10 +261,10 @@ export function createReadScene(ctx: GameContext, cfg: ReadConfig): Phaser.Types
       this.done = true;
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? READ.finaleHoldMs,
         sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: READ.hintY
       });
     }
@@ -339,6 +302,44 @@ export function createReadScene(ctx: GameContext, cfg: ReadConfig): Phaser.Types
           this.read(tell, t);
         },
       });
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      if (this.done) {
+        this.redraw(this.now());
+        return;
+      }
+      const t = this.now();
+      this.watchVisible(t);
+      this.redraw(t);
+
+      // 卡住了：点一下提示（不指"下一处破绽在哪儿"，那是他自己要看的）
+      this.idleMs += delta;
+      if (this.idleMs >= READ_TIMING.idleMs) {
+        this.idleMs = 0;
+        this.showHint(this.level.hint, 2600, READ.hintY);
+      }
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.read });
+      this.level = autoplayLevel(cfg.level, this.autoplay);
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(30);
+      this.markGfx = this.add.graphics().setDepth(70);
+      this.doneGfx = this.add.graphics().setDepth(40);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTap(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
+      else this.showHint(cfg.level.hint, 3000, READ.hintY);
     }
   };
 }

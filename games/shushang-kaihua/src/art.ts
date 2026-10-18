@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade, wavyBand } from '@chags/phaser-kit';
-import { showBorrowBar } from '@chags/templates';
+import { showBorrowBar } from '@chags/templates/show';
 import type { ShowBorrowMetrics } from '@chags/templates';
 import type { ShowBorrowLevel } from '@chags/templates/schemas';
 import { clamp01 } from '@chags/game-kit';

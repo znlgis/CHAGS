@@ -1,4 +1,5 @@
-import { SCENE_KEYS, createTwolinePlantScene, defineGame } from '@chags/templates';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
+import { createTwolinePlantScene } from '@chags/templates/twoline';
 import { drawBeat, drawFinale, drawStage, drawWorld } from './art';
 import { fanjianLevel } from './logic';
 import { manifest } from './manifest';
@@ -15,13 +16,11 @@ export default defineGame({
         createTwolinePlantScene(ctx, {
           level,
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           // 他踱到哪儿、头转过去没有、案上摆到几成了，都是画面按 state 演的
           drawWorld,
           drawStage,
           drawFinale,
           // 关键抉择点的揭晓语：他自己看到的，比说给他听的更算数
-          reveal: ctx.content.keyMoment.reveal,
         }),
       ],
     };

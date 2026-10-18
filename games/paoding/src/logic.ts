@@ -1,11 +1,11 @@
 import { stageScript } from '@chags/content';
 import type { ContentEntry } from '@chags/content';
-import { ButcherLevelSchema } from '@chags/templates/schemas';
 import type { ButcherLevel, ButcherPiece } from '@chags/templates/schemas';
+import { asLevel } from '@chags/game-kit';
 
 /** 纯逻辑：不碰 Phaser，可以直接单测 */
 export function butcherLevel(content: ContentEntry): ButcherLevel {
-  return ButcherLevelSchema.parse(stageScript(content, 'butcher'));
+  return asLevel<ButcherLevel>(stageScript(content, 'butcher'));
 }
 
 export type PushOutcome = 'along' | 'wrong-way' | 'too-short';

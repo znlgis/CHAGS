@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import type { MessageKey } from '@chags/i18n';
 import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   availableFlags, bannerStart, borrowStart, canLift, connectProp, disconnectProp, flagAt,
   hasFulcrum, isBannerDone, isFlagRaised, isBorrowDone, nextFlagToRaise, nextPropToConnect,
@@ -79,7 +79,7 @@ export interface BorrowApi {
 export interface BorrowConfig {
   level: BorrowLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏标题；不传就用内容自己的标题（ctx.content 已按语言翻译） */
   titleKey?: MessageKey;
   /** 整屏画面：工地、大石、木棍、水车、老牛、绳子都按 metrics 画 */
@@ -144,7 +144,7 @@ export interface BannerStageMetrics {
 export interface BorrowBannerConfig {
   level: BorrowBannerLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏标题；不传就用内容自己的标题（ctx.content 已按语言翻译） */
   titleKey?: MessageKey;
   /** 整屏画面：黄昏的空地、倒下的旧旗、三面可用的旗、旗杆与散落的人 */
@@ -175,6 +175,7 @@ function createBannerScene(
   ctx: GameContext,
   cfg: BorrowBannerConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class BorrowBannerScene extends BaseScene {
     private level: BorrowBannerLevel = cfg.level;
     private state: BannerState = bannerStart(cfg.level);
@@ -186,7 +187,6 @@ function createBannerScene(
     private lastRaised: string | null = null;
     private lastRallied = 0;
     private raisedAtMs = 0;
-    private idleMs = 0;
     private bannerGfx: Phaser.GameObjects.Graphics | null = null;
     private finaleGfx: Phaser.GameObjects.Graphics | null = null;
     private ring: Phaser.GameObjects.Graphics | null = null;
@@ -196,31 +196,6 @@ function createBannerScene(
       super(SCENE_KEYS.borrow, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.borrow });
-      this.startedAt = this.ctx.services.now();
-      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
-
-      this.bannerGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-      this.redraw();
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onDown(pointer));
-      this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => this.onMove(pointer));
-      this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => this.onUp(pointer));
-      this.input.on('pointerupoutside', (pointer: Phaser.Input.Pointer) => this.onUp(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.showHint(cfg.level.hint, 2600, BORROW.bannerHintY);
-        this.time.delayedCall(1400, () => this.pointAtNextFlag());
-      }
-    }
 
     private elapsed(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -305,17 +280,6 @@ function createBannerScene(
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      if (!this.finished) {
-        this.idleMs += delta;
-        if (this.idleMs >= BORROW.idleMs) {
-          this.idleMs = 0;
-          this.showHint(cfg.level.hint, 2600, BORROW.bannerHintY);
-          this.pointAtNextFlag();
-        }
-      }
-      this.redraw();
-    }
 
     private metrics(): BannerStageMetrics {
       const { raised, rallied } = this.state;
@@ -359,10 +323,10 @@ function createBannerScene(
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? BORROW.bannerHoldMs,
         sparkle: { x: this.level.pole.x, y: this.level.pole.y, color: THEME.gold, count: 14 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: cfg.revealY ?? BORROW.bannerHintY,
         finalize: () => {
           recordAttempt(cfg.session, { ok: true });
@@ -433,6 +397,43 @@ function createBannerScene(
       };
       this.time.delayedCall(BORROW.autoplayLeadMs, step);
     }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      if (!this.finished) {
+        this.idleMs += delta;
+        if (this.idleMs >= BORROW.idleMs) {
+          this.idleMs = 0;
+          this.showHint(cfg.level.hint, 2600, BORROW.bannerHintY);
+          this.pointAtNextFlag();
+        }
+      }
+      this.redraw();
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.borrow });
+      this.startedAt = this.ctx.services.now();
+      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
+
+      this.bannerGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      this.redraw();
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onDown(pointer));
+      this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => this.onMove(pointer));
+      this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => this.onUp(pointer));
+      this.input.on('pointerupoutside', (pointer: Phaser.Input.Pointer) => this.onUp(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.showHint(cfg.level.hint, 2600, BORROW.bannerHintY);
+        this.time.delayedCall(1400, () => this.pointAtNextFlag());
+      }
+    }
   };
 }
 
@@ -441,11 +442,11 @@ function createBannerScene(
  * 挪成了一个具名函数，由 mode 判断把它包起来。
  */
 function createForceBorrowScene(ctx: GameContext, cfg: BorrowConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class BorrowScene extends BaseScene {
     private state: BorrowState = borrowStart();
     private finished = false;
     private busy = false;
-    private idleMs = 0;
     private stageGfx: Phaser.GameObjects.Graphics | null = null;
     private finaleGfx: Phaser.GameObjects.Graphics | null = null;
     private ring: Phaser.GameObjects.Graphics | null = null;
@@ -455,22 +456,6 @@ function createForceBorrowScene(ctx: GameContext, cfg: BorrowConfig): Phaser.Typ
       super(SCENE_KEYS.borrow, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.borrow });
-      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
-
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-      this.redraw();
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) this.runAutoplay();
-    }
 
     // ---------------- 输入 ----------------
 
@@ -563,10 +548,10 @@ function createForceBorrowScene(ctx: GameContext, cfg: BorrowConfig): Phaser.Typ
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? BORROW.finaleHoldMs,
         sparkle: { x: cfg.level.load.x, y: cfg.level.load.y, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: cfg.revealY ?? 300,
         finalize: () => {
           recordAttempt(cfg.session, { ok: true });
@@ -602,19 +587,6 @@ function createForceBorrowScene(ctx: GameContext, cfg: BorrowConfig): Phaser.Typ
       cfg.drawStage(this.stageGfx, this.metrics());
     }
 
-    private tick(delta: number): void {
-      if (!this.finished) {
-        cfg.onFrame?.(this.metrics(), delta);
-        this.idleMs += delta;
-        if (this.idleMs >= BORROW.idleMs) {
-          this.idleMs = 0;
-          this.showHint(cfg.level.hint);
-          if (canLift(cfg.level, this.state.connected)) this.pointAtLoad();
-          else this.pointAtNextProp();
-        }
-      }
-      this.redraw();
-    }
 
     private pointAtNextProp(): void {
       const prop = nextPropToConnect(cfg.level, this.state.connected);
@@ -679,6 +651,36 @@ function createForceBorrowScene(ctx: GameContext, cfg: BorrowConfig): Phaser.Typ
         BORROW.autoplayLeadMs + plan.length * BORROW.autoplayStepMs + 200,
         () => this.pullLoad(),
       );
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      if (!this.finished) {
+        cfg.onFrame?.(this.metrics(), delta);
+        this.idleMs += delta;
+        if (this.idleMs >= BORROW.idleMs) {
+          this.idleMs = 0;
+          this.showHint(cfg.level.hint);
+          if (canLift(cfg.level, this.state.connected)) this.pointAtLoad();
+          else this.pointAtNextProp();
+        }
+      }
+      this.redraw();
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.borrow });
+      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
+
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      this.redraw();
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
     }
   };
 }

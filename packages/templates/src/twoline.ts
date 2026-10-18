@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import { BaseScene, THEME, createHand } from '@chags/phaser-kit';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   TWOLINE_TIMING, decoyRatio, hitDecoy, hitReal, isTwolineDone, needsTopUp, nextLineToTap,
   realRatio, safeMsLeft, settleDecoy, tapDecoy, tapReal, tapsLeft, twolineStart,
@@ -67,7 +67,7 @@ export interface TwolineApi {
 export interface TwolineConfig {
   level: TwolineLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就用内容自己的标题 */
   title?: string;
   /** 这个世界：秦岭、栈道要修的那面崖、夜里那条小路（画一次） */
@@ -97,12 +97,12 @@ export interface TwolineConfig {
  *   才是"明修栈道、暗度陈仓"落到手上的样子。
  */
 export function createTwolineScene(ctx: GameContext, cfg: TwolineConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class TwolineScene extends BaseScene {
     private level: TwolineLevel = cfg.level;
     private state: TwolineState = twolineStart(cfg.level);
     private startedAt = 0;
     private finished = false;
-    private idleMs = 0;
     private stageGfx: Phaser.GameObjects.Graphics | null = null;
     private finaleGfx: Phaser.GameObjects.Graphics | null = null;
     private ring: Phaser.GameObjects.Graphics | null = null;
@@ -112,29 +112,6 @@ export function createTwolineScene(ctx: GameContext, cfg: TwolineConfig): Phaser
       super(SCENE_KEYS.twoline, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.twoline });
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
-      const world = this.add.graphics().setDepth(1);
-      cfg.drawWorld(world, this.level);
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.showHint(cfg.level.hint, 2600, TWOLINE.hintY);
-        this.time.delayedCall(TWOLINE.introHintMs, () => this.pointAtNext());
-      }
-    }
 
     private elapsed(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -142,20 +119,6 @@ export function createTwolineScene(ctx: GameContext, cfg: TwolineConfig): Phaser
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      const elapsed = this.elapsed();
-      if (!this.finished) {
-        this.settle();
-        this.idleMs += delta;
-        if (this.idleMs >= TWOLINE.idleMs) {
-          this.idleMs = 0;
-          this.showHint(cfg.level.hint, 2600, TWOLINE.hintY);
-          this.pointAtNext();
-        }
-        if (isTwolineDone(this.level, this.state)) this.finish();
-      }
-      this.redraw(elapsed);
-    }
 
     /** 明线结账：掉多少算多少；跌破 minKeep 就是被看穿（补回 minKeep、记一次，不结束） */
     private settle(): void {
@@ -261,10 +224,10 @@ export function createTwolineScene(ctx: GameContext, cfg: TwolineConfig): Phaser
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? TWOLINE.finaleHoldMs,
         sparkle: { x: this.level.real.x, y: this.level.real.y, color: THEME.gold, count: 10 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: TWOLINE.hintY,
         finalize: () => {
           recordAttempt(cfg.session, { ok: true });
@@ -336,6 +299,44 @@ export function createTwolineScene(ctx: GameContext, cfg: TwolineConfig): Phaser
         },
       });
     }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      const elapsed = this.elapsed();
+      if (!this.finished) {
+        this.settle();
+        this.idleMs += delta;
+        if (this.idleMs >= TWOLINE.idleMs) {
+          this.idleMs = 0;
+          this.showHint(cfg.level.hint, 2600, TWOLINE.hintY);
+          this.pointAtNext();
+        }
+        if (isTwolineDone(this.level, this.state)) this.finish();
+      }
+      this.redraw(elapsed);
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.twoline });
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      const world = this.add.graphics().setDepth(1);
+      cfg.drawWorld(world, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.showHint(cfg.level.hint, 2600, TWOLINE.hintY);
+        this.time.delayedCall(TWOLINE.introHintMs, () => this.pointAtNext());
+      }
+    }
   };
 }
 
@@ -405,7 +406,7 @@ export interface TwolinePlantStageState {
 export interface TwolinePlantConfig {
   level: TwolinePlantLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就用内容自己的标题 */
   title?: string;
   /** 这个世界：帐里那张案、帐角的动静、地席、烛台（画一次） */
@@ -442,6 +443,7 @@ export function createTwolinePlantScene(
   ctx: GameContext,
   cfg: TwolinePlantConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class TwolinePlantScene extends BaseScene {
     private level: TwolinePlantLevel = cfg.level;
     private state: TwolinePlantState = plantStart();
@@ -449,7 +451,6 @@ export function createTwolinePlantScene(
     /** 手指按在案上没有：按住才往前走（真实操作与无头验证都是这个开关） */
     private holding = false;
     private done = false;
-    private idleMs = 0;
     private misses = 0;
     private lastMissAt: { x: number; y: number } | null = null;
     private lastMissAtMs = -1;
@@ -464,37 +465,6 @@ export function createTwolinePlantScene(
       super(SCENE_KEYS.twoline, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.twoline });
-      this.level = cfg.level;
-      this.state = plantStart();
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
-      this.worldGfx = this.add.graphics().setDepth(1);
-      cfg.drawWorld(this.worldGfx, this.level);
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-      this.markGfx = this.add.graphics().setDepth(60);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
-        this.onPress(pointer.x, pointer.y),
-      );
-      this.input.on('pointerup', () => this.onRelease());
-      // 手指滑出画面也算松手：进度不会因为一次意外一直攒着
-      this.input.on('pointerupoutside', () => this.onRelease());
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.showHint(cfg.level.hint, 3000, TWOLINE_PLANT.hintY);
-        this.time.delayedCall(TWOLINE_PLANT.introHandMs, () => this.pointAtNext());
-      }
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -502,19 +472,6 @@ export function createTwolinePlantScene(
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      const t = this.now();
-      this.step(t, delta);
-      this.redraw(t);
-      if (this.done) return;
-      // 卡住了：把关卡自己的那句话再亮一遍，并指一指此刻该动的那一处
-      this.idleMs += delta;
-      if (this.idleMs >= TWOLINE_PLANT.idleMs) {
-        this.idleMs = 0;
-        this.showHint(this.level.hint, 2600, TWOLINE_PLANT.hintY);
-        this.pointAtNext();
-      }
-    }
 
     /**
      * 一帧的账：把墙钟喂给 plantStep（判定全在那边）。
@@ -714,10 +671,10 @@ export function createTwolinePlantScene(
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? TWOLINE_PLANT.finaleHoldMs,
         sparkle: { x: this.level.spot.x, y: this.level.spot.y, color: THEME.gold, count: 10 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealDelayMs: 1400,
         revealY: TWOLINE_PLANT.hintY,
         finalize: () => {
@@ -803,6 +760,51 @@ export function createTwolinePlantScene(
       // 他正看着：先弄出点动静（抬手，再点帐角）—— 空档从此刻重新开
       this.onRelease();
       this.onPress(this.level.redirect.x, this.level.redirect.y);
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      const t = this.now();
+      this.step(t, delta);
+      this.redraw(t);
+      if (this.done) return;
+      // 卡住了：把关卡自己的那句话再亮一遍，并指一指此刻该动的那一处
+      this.idleMs += delta;
+      if (this.idleMs >= TWOLINE_PLANT.idleMs) {
+        this.idleMs = 0;
+        this.showHint(this.level.hint, 2600, TWOLINE_PLANT.hintY);
+        this.pointAtNext();
+      }
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.twoline });
+      this.level = cfg.level;
+      this.state = plantStart();
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+      this.markGfx = this.add.graphics().setDepth(60);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
+        this.onPress(pointer.x, pointer.y),
+      );
+      this.input.on('pointerup', () => this.onRelease());
+      // 手指滑出画面也算松手：进度不会因为一次意外一直攒着
+      this.input.on('pointerupoutside', () => this.onRelease());
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.showHint(cfg.level.hint, 3000, TWOLINE_PLANT.hintY);
+        this.time.delayedCall(TWOLINE_PLANT.introHandMs, () => this.pointAtNext());
+      }
     }
   };
 }

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import type { MessageKey } from '@chags/i18n';
 import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
-import { BURROW, SCENE_KEYS } from './layout';
+import { BURROW, SCENE_KEYS, resolveEnding } from './layout';
 import {
   blockedBy, digCount, escapeRoute, isBurrowOpen, nextSpotToDig, openBurrows, openCount,
   spotAt, waveResult,
@@ -31,7 +31,7 @@ export interface BurrowStageState {
 export interface BurrowConfig {
   level: BurrowLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   titleKey: MessageKey;
   /** 这个世界：草地、土层剖面、兔子、狐狸（按 state 摆） */
   drawWorld: (g: Phaser.GameObjects.Graphics, state: BurrowStageState) => void;
@@ -52,6 +52,7 @@ export interface BurrowConfig {
  * - **挖通才算数**：同一个洞反复挖不增加退路 —— 这本账是算得清的。
  */
 export function createBurrowScene(ctx: GameContext, cfg: BurrowConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class BurrowScene extends BaseScene {
     private digs: DigCounts = {};
     private phase: BurrowPhase = 'dig';
@@ -63,7 +64,6 @@ export function createBurrowScene(ctx: GameContext, cfg: BurrowConfig): Phaser.T
     private wavePending = false;
     private waitingForDig = false;
     private currentWaveId = '';
-    private idleMs = 0;
     private worldGfx: Phaser.GameObjects.Graphics | null = null;
     private hintRing: Phaser.GameObjects.Graphics | null = null;
     private hand: Phaser.GameObjects.Graphics | null = null;
@@ -84,20 +84,6 @@ export function createBurrowScene(ctx: GameContext, cfg: BurrowConfig): Phaser.T
       };
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.burrow });
-      this.drawBackdrop(this.tr(cfg.titleKey));
-      this.worldGfx = this.add.graphics().setDepth(2);
-      this.redraw();
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTap(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) this.runAutoplay();
-    }
 
     private redraw(): void {
       const g = this.worldGfx;
@@ -240,9 +226,9 @@ export function createBurrowScene(ctx: GameContext, cfg: BurrowConfig): Phaser.T
       this.hideHand();
       this.clearRing();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? 4200,
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: 300,
         finalize: () => {
           this.redraw();
@@ -254,17 +240,6 @@ export function createBurrowScene(ctx: GameContext, cfg: BurrowConfig): Phaser.T
 
     // ---------------- 提示 ----------------
 
-    private tick(delta: number): void {
-      if (this.finished || this.busy || this.phase !== 'dig') return;
-      this.idleMs += delta;
-      if (this.idleMs < BURROW.idleMs) return;
-      this.idleMs = 0;
-      const spot = nextSpotToDig(this.digs, cfg.level);
-      if (!spot) return;
-      this.showHint(cfg.level.hint);
-      this.showRingAt(spot);
-      if (!this.hand) this.hand = createHand(this, spot.x, spot.y - 130, 1.15);
-    }
 
     private showRingAt(spot: BurrowSpot): void {
       this.clearRing();
@@ -310,6 +285,32 @@ export function createBurrowScene(ctx: GameContext, cfg: BurrowConfig): Phaser.T
           if (spot) this.dig(spot);
         },
       });
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      if (this.finished || this.busy || this.phase !== 'dig') return;
+      this.idleMs += delta;
+      if (this.idleMs < BURROW.idleMs) return;
+      this.idleMs = 0;
+      const spot = nextSpotToDig(this.digs, cfg.level);
+      if (!spot) return;
+      this.showHint(cfg.level.hint);
+      this.showRingAt(spot);
+      if (!this.hand) this.hand = createHand(this, spot.x, spot.y - 130, 1.15);
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.burrow });
+      this.drawBackdrop(this.tr(cfg.titleKey));
+      this.worldGfx = this.add.graphics().setDepth(2);
+      this.redraw();
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTap(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
     }
   };
 }

@@ -5,7 +5,7 @@ import {
   shade, sparkleAt, springBack, squash, textStyle, wavyBand,
 } from '@chags/phaser-kit';
 import type { DragController } from '@chags/phaser-kit';
-import { SCENE_KEYS, SUB, SUB_BOAT_DROP, SUB_PILES, SUB_SCALE_DROP } from './layout';
+import { SCENE_KEYS, SUB, SUB_BOAT_DROP, SUB_PILES, SUB_SCALE_DROP, resolveEnding } from './layout';
 import { depthRatio, judge, markRatio, nextStoneFor } from './substitution.logic';
 import type { SubstitutionLevel, StoneDef } from './schemas';
 import { recordAttempt } from './session';
@@ -16,9 +16,9 @@ type Stage = 'load' | 'mark' | 'substitute' | 'weigh' | 'done';
 export interface SubstitutionConfig {
   level: SubstitutionLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 水痕对上时说的那一句 —— 就是典故的关键点 */
-  reveal: string;
+  reveal?: string;
   /** 画“重物”（大象）。模板不认识大象，由游戏包提供画法。 */
   drawHeavy: (g: Phaser.GameObjects.Graphics, scale: number) => void;
 }
@@ -46,6 +46,7 @@ export function createSubstitutionScene(
   ctx: GameContext,
   cfg: SubstitutionConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class SubstitutionScene extends BaseScene {
     private stage: Stage = 'load';
     private drag: DragController | null = null;
@@ -539,7 +540,7 @@ export function createSubstitutionScene(
       this.sfx('correct');
       this.cameras.main.flash(240, 255, 246, 214);
       sparkleAt(this, SUB.boatX, SUB.waterTop - 30, THEME.gold, 8);
-      this.showHint(cfg.reveal, 3000);
+      this.showHint(ending.reveal, 3000);
       this.time.delayedCall(1700, () => this.enterWeighStage());
     }
 
@@ -623,7 +624,7 @@ export function createSubstitutionScene(
       sparkleAt(this, 560, y, THEME.gold, 6);
 
       this.ctx.emit('beat:enter', { beatId: 'weighed' });
-      this.time.delayedCall(2400, () => this.scene.start(cfg.nextSceneKey));
+      this.time.delayedCall(2400, () => this.scene.start(ending.nextSceneKey));
     }
 
     // ---------------- 卡住时的兜底提示 ----------------

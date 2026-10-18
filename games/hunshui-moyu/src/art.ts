@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
-import { DESIGN } from '@chags/templates';
+import { DESIGN } from '@chags/templates/core';
 import type { StirStageState, StirWindowLevel } from '@chags/templates';
 import {
   BANK_TOP, CREEL, MURK_GAUGE, POLE, ROCK, STIR_SPOT, WATER_TOP, WILLOW,

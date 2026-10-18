@@ -4,7 +4,7 @@ import type { MessageKey } from '@chags/i18n';
 import {
   BaseScene, CSS, THEME, createHand, popIn, roundRect, shade, sparkleAt, tapRipple, textStyle,
 } from '@chags/phaser-kit';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   MATCHUP_ORDER_TIMING, MATCHUP_TIMING, RIVAL_HIT, assign, bestRoster, expectedNext, horseAtSlot,
   horseNear, isMatchupDone, isOrderDone, isRosterFull, matchupProgress, neighborAt, noteWrongPick,
@@ -93,7 +93,7 @@ export interface MatchupStageState {
 export interface MatchupConfig {
   level: MatchupLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 场景标题：不给就用内容标题 */
   titleKey?: MessageKey;
   /** 底部按钮上的字（界面文案表里没有这一条，所以由游戏包给，双语各自写） */
@@ -141,6 +141,7 @@ function createPairMatchupScene(
   ctx: GameContext,
   cfg: MatchupConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class MatchupScene extends BaseScene {
     private level: MatchupLevel = cfg.level;
     private roster: Roster = resetRoster(cfg.level);
@@ -152,7 +153,6 @@ function createPairMatchupScene(
     private raceT = 0;
     private won = false;
     private finished = false;
-    private idleMs = 0;
     private startedAt = 0;
     private worldGfx: Phaser.GameObjects.Graphics | null = null;
     private stageGfx: Phaser.GameObjects.Graphics | null = null;
@@ -170,31 +170,6 @@ function createPairMatchupScene(
 
     // ---------------- 开场 ----------------
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.matchup });
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
-      this.worldGfx = this.add.graphics().setDepth(1);
-      cfg.drawWorld(this.worldGfx, this.level);
-      this.stageGfx = this.add.graphics().setDepth(20);
-      this.doneGfx = this.add.graphics().setDepth(40);
-      this.markGfx = this.add.graphics().setDepth(70);
-
-      this.drawHorses();
-      this.drawButtons();
-      cfg.decorate?.(this, this.level);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTap(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-      this.events.once('shutdown', () => this.hideHand());
-
-      this.fadeIn();
-      if (this.autoplay) this.runAutoplay();
-      else this.showHint(cfg.level.hint, 3000, MATCHUP.hintY);
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -252,20 +227,6 @@ function createPairMatchupScene(
 
     // ---------------- 每帧 ----------------
 
-    private tick(delta: number): void {
-      const t = this.now();
-      if (this.phase === 'racing' && this.runningSlot >= 0) {
-        this.raceT = Math.min(1, this.raceT + delta / this.raceMs());
-        this.moveRunning(this.runningSlot, this.raceT);
-      }
-      this.redraw(t);
-
-      if (this.finished || this.phase === 'racing') return;
-      this.idleMs += delta;
-      if (this.idleMs < MATCHUP.idleMs) return;
-      this.idleMs = 0;
-      this.nudge();
-    }
 
     private redraw(t: number): void {
       const stage = this.stageState();
@@ -536,10 +497,10 @@ function createPairMatchupScene(
       this.phase = 'settled';
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? MATCHUP.finaleHoldMs,
         sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: MATCHUP.hintY,
         finalize: () => {
           recordAttempt(cfg.session, { ok: true });
@@ -626,6 +587,46 @@ function createPairMatchupScene(
         },
       });
     }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      const t = this.now();
+      if (this.phase === 'racing' && this.runningSlot >= 0) {
+        this.raceT = Math.min(1, this.raceT + delta / this.raceMs());
+        this.moveRunning(this.runningSlot, this.raceT);
+      }
+      this.redraw(t);
+
+      if (this.finished || this.phase === 'racing') return;
+      this.idleMs += delta;
+      if (this.idleMs < MATCHUP.idleMs) return;
+      this.idleMs = 0;
+      this.nudge();
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.matchup });
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(20);
+      this.doneGfx = this.add.graphics().setDepth(40);
+      this.markGfx = this.add.graphics().setDepth(70);
+
+      this.drawHorses();
+      this.drawButtons();
+      cfg.decorate?.(this, this.level);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTap(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+      this.events.once('shutdown', () => this.hideHand());
+
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
+      else this.showHint(cfg.level.hint, 3000, MATCHUP.hintY);
+    }
   };
 }
 
@@ -690,7 +691,7 @@ export interface OrderStageState {
 export interface MatchupOrderConfig {
   level: MatchupOrderLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 场景标题：不给就用内容标题 */
   titleKey?: MessageKey;
   /** 这个世界：地图、秦都、一圈势力的城（画一次） */
@@ -724,6 +725,7 @@ function createOrderMatchupScene(
   ctx: GameContext,
   cfg: MatchupOrderConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class MatchupOrderScene extends BaseScene {
     private level: MatchupOrderLevel = cfg.level;
     private state: OrderState = orderStart(cfg.level);
@@ -734,7 +736,6 @@ function createOrderMatchupScene(
     private lastWrong: MatchupNeighbor | null = null;
     private lastWrongAt = Number.NEGATIVE_INFINITY;
     private misses = 0;
-    private idleMs = 0;
     private worldGfx: Phaser.GameObjects.Graphics | null = null;
     private stageGfx: Phaser.GameObjects.Graphics | null = null;
     private doneGfx: Phaser.GameObjects.Graphics | null = null;
@@ -745,31 +746,6 @@ function createOrderMatchupScene(
       super(SCENE_KEYS.matchup, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.matchup });
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
-      this.worldGfx = this.add.graphics().setDepth(1);
-      cfg.drawWorld(this.worldGfx, this.level);
-      this.stageGfx = this.add.graphics().setDepth(20);
-      this.doneGfx = this.add.graphics().setDepth(40);
-      this.markGfx = this.add.graphics().setDepth(70);
-      cfg.decorate?.(this, this.level);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTap(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-      this.onShutdownCleanup(() => this.hideHand());
-
-      this.fadeIn();
-      if (this.autoplay) this.runAutoplay();
-      else {
-        this.showHint(this.level.hint, 3000, MATCHUP_ORDER.hintY);
-        this.time.delayedCall(1400, () => this.pointAtNext());
-      }
-    }
 
     private now(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -777,16 +753,6 @@ function createOrderMatchupScene(
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      const t = this.now();
-      this.redraw(t);
-      if (this.finished) return;
-      this.idleMs += delta;
-      if (this.idleMs < MATCHUP_ORDER.idleMs) return;
-      this.idleMs = 0;
-      this.showHint(this.level.hint, 2600, MATCHUP_ORDER.hintY);
-      this.pointAtNext();
-    }
 
     private redraw(t: number): void {
       const stage = this.stageState(t);
@@ -934,10 +900,10 @@ function createOrderMatchupScene(
       this.finished = true;
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? MATCHUP_ORDER.finaleHoldMs,
         sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: MATCHUP_ORDER.hintY,
         finalize: () => {
           recordAttempt(cfg.session, { ok: true });
@@ -980,6 +946,42 @@ function createOrderMatchupScene(
           if (next) this.pressAt(next.x, next.y);
         },
       });
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      const t = this.now();
+      this.redraw(t);
+      if (this.finished) return;
+      this.idleMs += delta;
+      if (this.idleMs < MATCHUP_ORDER.idleMs) return;
+      this.idleMs = 0;
+      this.showHint(this.level.hint, 2600, MATCHUP_ORDER.hintY);
+      this.pointAtNext();
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.matchup });
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.titleKey ? this.tr(cfg.titleKey) : this.ctx.content.title);
+      this.worldGfx = this.add.graphics().setDepth(1);
+      cfg.drawWorld(this.worldGfx, this.level);
+      this.stageGfx = this.add.graphics().setDepth(20);
+      this.doneGfx = this.add.graphics().setDepth(40);
+      this.markGfx = this.add.graphics().setDepth(70);
+      cfg.decorate?.(this, this.level);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTap(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+      this.onShutdownCleanup(() => this.hideHand());
+
+      this.fadeIn();
+      if (this.autoplay) this.runAutoplay();
+      else {
+        this.showHint(this.level.hint, 3000, MATCHUP_ORDER.hintY);
+        this.time.delayedCall(1400, () => this.pointAtNext());
+      }
     }
   };
 }

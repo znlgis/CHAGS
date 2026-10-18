@@ -1,4 +1,5 @@
-import { SCENE_KEYS, createPlaceScene, defineGame } from '@chags/templates';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
+import { createPlaceScene } from '@chags/templates/place';
 import { drawBeat, drawFinale, drawOrb, drawPiece } from './art';
 import { placeLevel } from './logic';
 import { manifest } from './manifest';
@@ -13,10 +14,8 @@ export default defineGame({
       createPlaceScene(ctx, {
         level: placeLevel(ctx.content),
         session,
-        nextSceneKey: SCENE_KEYS.reward,
         drawPiece,
         drawOrb,
-        reveal: ctx.content.keyMoment.reveal,
         // 补完天，五色霞光洒向大地
         drawFinale: (g, placedIds) => drawFinale(g, placedIds),
       }),

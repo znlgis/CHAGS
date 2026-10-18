@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import { THEME, sparkleAt } from '@chags/phaser-kit';
-import { SCENE_KEYS, createSortScene, defineGame } from '@chags/templates';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
+import { createSortScene } from '@chags/templates/sort';
 import { drawBeat, drawBoard, drawFinale, drawPlant, drawWorld } from './art';
 import type { Mood } from './art';
 import { sortLevel } from './logic';
@@ -27,7 +28,6 @@ export default defineGame({
         createSortScene(ctx, {
           level: sortLevel(ctx.content),
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           titleKey: 'scene.taste',
           drawWorld: (scene) => {
             world = scene.add.graphics().setDepth(1);
@@ -46,7 +46,6 @@ export default defineGame({
             });
           },
           drawFinale: (g) => drawFinale(g),
-          reveal: ctx.content.keyMoment.reveal,
           revealY: 980,
         }),
       ],

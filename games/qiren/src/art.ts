@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { THEME, circle, drawHand, groundShadow, roundRect, shade } from '@chags/phaser-kit';
-import { DESIGN, PLACE } from '@chags/templates';
+import { DESIGN, PLACE } from '@chags/templates/core';
 
 /**
  * 杞人忧天：一间夜里的屋子，头顶一片会散的黑云。

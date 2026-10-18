@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
-import { SCENE_KEYS, createWaitScene, defineGame } from '@chags/templates';
+import { defineGame, SCENE_KEYS } from '@chags/templates/core';
+import { createWaitScene } from '@chags/templates/wait';
 import { drawBeat, drawFinale, drawStage, drawWorld } from './art';
 import type { WorldState } from './art';
 import { waitLevel } from './logic';
@@ -25,7 +26,6 @@ export default defineGame({
         createWaitScene(ctx, {
           level,
           session,
-          nextSceneKey: SCENE_KEYS.reward,
           // 三十六计：顶栏显示计名（与其它模板一致），不显示"等一等"这个场景动词
           title: ctx.content.title,
           // 一条河、两岸：对岸两拨火堆，自己这一岸一个人坐着
@@ -90,7 +90,6 @@ export default defineGame({
           },
           drawFinale: (g) => drawFinale(g),
           // 关键抉择点的揭晓语进典故卡之前再说一遍
-          reveal: ctx.content.keyMoment.reveal,
           revealY: 300,
         }),
       ],

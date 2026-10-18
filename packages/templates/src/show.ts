@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import { BaseScene, THEME, createHand, roundRect, shade } from '@chags/phaser-kit';
-import { SCENE_KEYS } from './layout';
+import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   SHOW_RATES, aliveShadowIds, aliveShadows, beliefAt, isShowDone, missingShadows, nextSlotToPaint,
   paint, shadowStrength, showStart, slotAt, tick as advanceShow,
@@ -78,7 +78,7 @@ export interface ShowApi {
 export interface ShowConfig {
   level: ShowLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就用内容自己的标题 */
   title?: string;
   /** 这个世界：江、雾、船、船帮上的六个空位（画一次） */
@@ -107,12 +107,12 @@ export interface ShowConfig {
  * borrow 那一半在文件末尾另起一段，由 mode 分派。
  */
 function createDrawShowScene(ctx: GameContext, cfg: ShowConfig): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class ShowScene extends BaseScene {
     private level: ShowLevel = cfg.level;
     private state: ShowState = showStart();
     private startedAt = 0;
     private finished = false;
-    private idleMs = 0;
     private stageGfx: Phaser.GameObjects.Graphics | null = null;
     private finaleGfx: Phaser.GameObjects.Graphics | null = null;
     private ring: Phaser.GameObjects.Graphics | null = null;
@@ -122,29 +122,6 @@ function createDrawShowScene(ctx: GameContext, cfg: ShowConfig): Phaser.Types.Sc
       super(SCENE_KEYS.show, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.show });
-      this.startedAt = this.ctx.services.now();
-
-      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
-      const world = this.add.graphics().setDepth(1);
-      cfg.drawWorld(world, this.level);
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.showHint(cfg.level.hint, 2600, SHOW.hintY);
-        this.time.delayedCall(SHOW.introHintMs, () => this.pointAtNext());
-      }
-    }
 
     private elapsed(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -152,23 +129,6 @@ function createDrawShowScene(ctx: GameContext, cfg: ShowConfig): Phaser.Types.Sc
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      const elapsed = this.elapsed();
-      if (!this.finished) {
-        // 无头验证把每一帧的记账时间放大几倍：影子的寿命照旧，只是疑心涨得快得多
-        const step = this.autoplay ? delta * SHOW.autoplayFactor : delta;
-        this.state = advanceShow(this.level, this.state, elapsed, step);
-
-        this.idleMs += delta;
-        if (this.idleMs >= SHOW.idleMs) {
-          this.idleMs = 0;
-          this.showHint(cfg.level.hint, 2600, SHOW.hintY);
-          this.pointAtNext();
-        }
-        if (isShowDone(this.level, this.state)) this.finish();
-      }
-      this.redraw(elapsed);
-    }
 
     private redraw(elapsed: number): void {
       const g = this.stageGfx;
@@ -233,10 +193,10 @@ function createDrawShowScene(ctx: GameContext, cfg: ShowConfig): Phaser.Types.Sc
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? SHOW.finaleHoldMs,
         sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: SHOW.hintY,
         finalize: () => {
           recordAttempt(cfg.session, { ok: true });
@@ -306,6 +266,47 @@ function createDrawShowScene(ctx: GameContext, cfg: ShowConfig): Phaser.Types.Sc
         },
       });
     }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      const elapsed = this.elapsed();
+      if (!this.finished) {
+        // 无头验证把每一帧的记账时间放大几倍：影子的寿命照旧，只是疑心涨得快得多
+        const step = this.autoplay ? delta * SHOW.autoplayFactor : delta;
+        this.state = advanceShow(this.level, this.state, elapsed, step);
+
+        this.idleMs += delta;
+        if (this.idleMs >= SHOW.idleMs) {
+          this.idleMs = 0;
+          this.showHint(cfg.level.hint, 2600, SHOW.hintY);
+          this.pointAtNext();
+        }
+        if (isShowDone(this.level, this.state)) this.finish();
+      }
+      this.redraw(elapsed);
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.show });
+      this.startedAt = this.ctx.services.now();
+
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+      const world = this.add.graphics().setDepth(1);
+      cfg.drawWorld(world, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.showHint(cfg.level.hint, 2600, SHOW.hintY);
+        this.time.delayedCall(SHOW.introHintMs, () => this.pointAtNext());
+      }
+    }
   };
 }
 /* ---------------- borrow：树上开花（第 29 计） ---------------- */
@@ -352,7 +353,7 @@ export interface ShowBorrowApi {
 export interface ShowBorrowConfig {
   level: ShowBorrowLevel;
   session: SessionState;
-  nextSceneKey: string;
+  nextSceneKey?: string;
   /** 顶栏上的名字；不传就用内容自己的标题 */
   title?: string;
   /** 这个世界：河、桥、对岸的林子与土坡（画一次） */
@@ -404,12 +405,12 @@ function createBorrowShowScene(
   ctx: GameContext,
   cfg: ShowBorrowConfig,
 ): Phaser.Types.Scenes.SceneType {
+  const ending = resolveEnding(ctx, cfg);
   return class ShowBorrowScene extends BaseScene {
     private level: ShowBorrowLevel = cfg.level;
     private state: BorrowState = borrowStart();
     private startedAt = 0;
     private finished = false;
-    private idleMs = 0;
     private misses = 0;
     private lastPropId: string | null = null;
     private lastAt = -1;
@@ -422,35 +423,6 @@ function createBorrowShowScene(
       super(SCENE_KEYS.show, ctx);
     }
 
-    create(): void {
-      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.show });
-      this.startedAt = this.ctx.services.now();
-      this.level = cfg.level;
-      this.state = borrowStart();
-      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
-
-      const world = this.add.graphics().setDepth(1);
-      cfg.drawWorld(world, this.level);
-      this.stageGfx = this.add.graphics().setDepth(2);
-      this.finaleGfx = this.add.graphics().setDepth(40);
-
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
-        this.pressAt(pointer.x, pointer.y),
-      );
-      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
-        this.tick(delta),
-      );
-
-      this.fadeIn();
-      if (this.autoplay) {
-        this.runAutoplay();
-      } else {
-        this.time.delayedCall(SHOW.introHintMs, () => {
-          this.showHint(cfg.level.hint, 3000, SHOW.hintY);
-          this.pointAtNext();
-        });
-      }
-    }
 
     private elapsed(): number {
       return Math.max(0, this.ctx.services.now() - this.startedAt);
@@ -458,18 +430,6 @@ function createBorrowShowScene(
 
     // ---------------- 每一帧 ----------------
 
-    private tick(delta: number): void {
-      if (!this.finished) {
-        this.idleMs += delta;
-        if (this.idleMs >= SHOW.idleMs) {
-          this.idleMs = 0;
-          this.showHint(cfg.level.hint, 2600, SHOW.hintY);
-          this.pointAtNext();
-        }
-        if (isBorrowDone(this.level, this.state)) this.finish();
-      }
-      this.redraw();
-    }
 
     private redraw(): void {
       const g = this.stageGfx;
@@ -588,10 +548,10 @@ function createBorrowShowScene(
       this.clearRing();
       this.hideHand();
       this.completeLevel({
-        nextSceneKey: cfg.nextSceneKey,
+        nextSceneKey: ending.nextSceneKey,
         holdMs: cfg.finaleHoldMs ?? SHOW.finaleHoldMs,
         sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
-        reveal: cfg.reveal,
+        reveal: ending.reveal,
         revealY: SHOW.hintY,
         finalize: () => {
           recordAttempt(cfg.session, { ok: true });
@@ -659,6 +619,48 @@ function createBorrowShowScene(
           this.pressAt(prop.x, prop.y);
         },
       });
+    }
+    private idleMs = 0;
+    private tick(delta: number): void {
+      if (!this.finished) {
+        this.idleMs += delta;
+        if (this.idleMs >= SHOW.idleMs) {
+          this.idleMs = 0;
+          this.showHint(cfg.level.hint, 2600, SHOW.hintY);
+          this.pointAtNext();
+        }
+        if (isBorrowDone(this.level, this.state)) this.finish();
+      }
+      this.redraw();
+    }
+    create(): void {
+      this.ctx.emit('scene:enter', { scene: SCENE_KEYS.show });
+      this.startedAt = this.ctx.services.now();
+      this.level = cfg.level;
+      this.state = borrowStart();
+      this.drawBackdrop(cfg.title ?? this.ctx.content.title);
+
+      const world = this.add.graphics().setDepth(1);
+      cfg.drawWorld(world, this.level);
+      this.stageGfx = this.add.graphics().setDepth(2);
+      this.finaleGfx = this.add.graphics().setDepth(40);
+
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
+        this.pressAt(pointer.x, pointer.y),
+      );
+      this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
+        this.tick(delta),
+      );
+
+      this.fadeIn();
+      if (this.autoplay) {
+        this.runAutoplay();
+      } else {
+        this.time.delayedCall(SHOW.introHintMs, () => {
+          this.showHint(cfg.level.hint, 3000, SHOW.hintY);
+          this.pointAtNext();
+        });
+      }
     }
   };
 }
