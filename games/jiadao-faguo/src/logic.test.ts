@@ -1,27 +1,15 @@
-import {
-  ContentEntrySchema, EntryDetailSchema, EntrySummarySchema, getEntry, mergeLocalized, validatePatch,
-} from '@chags/content/full';
-import { templateSchemas } from '@chags/templates/schemas';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
-// 模板的纯判定：共享 index.ts 的登记由 Lead 统一做 —— 这里直接从源文件拿，
-// 与既有游戏包相对导入内容 JSON 是同一个做法（登记前后都不会红）。
 import {
   CHAIN_TIMING, askPass, chainStart, chainStep, envoyHit, gateAt, gatesLeft, hasPass, homeHit,
   isPassDone, nextGate, returnHome, takeGate, takenCount,
-} from '../../../packages/templates/src/chain.logic';
-import rawSummary from '../../../packages/content/src/entries/jiadao-faguo.json';
-import rawDetail from '../../../packages/content/src/entries/jiadao-faguo.game.json';
-import enPatchSummary from '../../../packages/content/src/i18n/en/jiadao-faguo.json';
-import enPatchDetail from '../../../packages/content/src/i18n/en/jiadao-faguo.game.json';
-import { CAPITAL, DESIGN_H, DESIGN_W, ENVOY, GATE_RADIUS, GATES, HOME, ROUTE, SKY_TOP } from './layout';
+} from '@chags/templates/chain.logic';
+import {
+  CAPITAL, DESIGN_H, DESIGN_W, ENVOY, GATE_RADIUS, GATES, HOME, ROUTE, SKY_TOP,
+} from './layout';
 import { jiadaoLevel } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-const enPatch = { ...enPatchSummary, ...enPatchDetail };
-
-/** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
-const entry = getEntry('jiadao-faguo') ?? ContentEntrySchema.parse(raw);
+const entry = getEntry('jiadao-faguo')!;
 const level = jiadaoLevel(entry);
 
 /**
@@ -97,7 +85,6 @@ describe('假道伐虢 · 美术与关卡数据互锁', () => {
     }
     // 虢都上阳在最后一处关口的上面：路到此为止
     expect(CAPITAL.y).toBeLessThan(level.gates[2]!.y);
-    expect(level.hint.length).toBeLessThanOrEqual(24);
   });
 
   it('五个可以点的地方都在画面里，彼此点得开（手指粗也点不到隔壁）', () => {
@@ -212,7 +199,6 @@ describe('假道伐虢 · 判定：顺序不能跳（点错是零惩罚）', () 
 describe('假道伐虢 · 故事与复习', () => {
   it('两幕：路是借来的 → 回来时路对着自己；关键抉择在第二幕', () => {
     expect(entry.story.map((beat) => beat.id)).toEqual(['s1', 's2']);
-    expect(entry.story.every((beat) => beat.text.length <= 90)).toBe(true);
     expect(entry.story[0]!.text).toContain('借');
     expect(entry.story[1]!.text).toContain('回来');
     expect(entry.keyMoment.beatId).toBe('s2');
@@ -248,16 +234,11 @@ describe('假道伐虢 · 故事与复习', () => {
     expect(entry.source.chapter).toBe('假道伐虢');
     expect(entry.source.quote).toBe('两大之间，敌胁以从，我假以势。');
     expect(entry.moral).toContain('借出去');
-    expect(entry.misconceptions.length).toBeGreaterThanOrEqual(1);
     expect(entry.game.template).toBe('chain');
     expect(entry.game.stages[0]!.template).toBe('chain');
-    expect(templateSchemas.chain!.safeParse(entry.game.stages[0]!.levelScript).success).toBe(true);
   });
 
   it('复习题：记忆题问借路与唇亡齿寒，迁移题落在"借东西之前先想清楚"', () => {
-    expect(entry.quiz.length).toBeGreaterThanOrEqual(2);
-    expect(entry.quiz.filter((question) => question.kind === 'transfer').length).toBeGreaterThanOrEqual(1);
-    for (const question of entry.quiz) expect(question.answer).toBeLessThan(question.options.length);
     const transfer = entry.quiz.find((question) => question.kind === 'transfer');
     expect(transfer?.question).toContain('滑板');
     expect(transfer?.explanation).toContain('先想清楚');
@@ -282,51 +263,13 @@ describe('假道伐虢 · 故事与复习', () => {
 });
 
 describe('假道伐虢 · 英译补丁', () => {
-  it('摘要 / 详情两半各自合法，英译补丁也分别对得上（与 content:check 同一套口径）', () => {
-    const summary = EntrySummarySchema.parse(rawSummary);
-    const detail = EntryDetailSchema.parse(rawDetail);
-    expect(validatePatch(summary, enPatchSummary)).toEqual([]);
-    expect(validatePatch(detail, enPatchDetail)).toEqual([]);
-    const mergedSummary = EntrySummarySchema.parse(mergeLocalized(summary, enPatchSummary));
-    const mergedDetail = EntryDetailSchema.parse(mergeLocalized(detail, enPatchDetail));
-    const stage = mergedDetail.game.stages[0]!;
-    expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    expect(findCjk({ ...mergedSummary, ...mergedDetail })).toEqual([]);
-  });
-
-  it('与中文一一对应、合起来不剩一个中文字，关卡脚本照样合法（连木牌上的字也翻了）', () => {
-    expect(validatePatch(entry, enPatch)).toEqual([]);
-    const merged = ContentEntrySchema.parse(mergeLocalized(entry, enPatch));
+  it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
+    const merged = getEntry('jiadao-faguo', 'en')!;
     expect(merged.title).toBe('Borrow a Road to Attack Guo');
-    expect(merged.story.map((beat) => beat.text)).toHaveLength(entry.story.length);
-    expect(merged.quiz.map((question) => question.options.length)).toEqual(
-      entry.quiz.map((question) => question.options.length),
-    );
-    expect(merged.keyMoment.options.filter((option) => option.isCanonical)).toHaveLength(1);
-    for (const stage of merged.game.stages) {
-      expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    }
     expect(merged.game.stages[0]!.levelScript).toMatchObject({
       hint: 'Borrow first, then pass',
       gates: [{ label: 'Yu Pass' }, { label: 'Guo Pass' }, { label: 'Shangyang' }],
     });
     expect(merged.moral).toBe('Before you lend anything out, think what he will do with it.');
-    expect(findCjk(merged)).toEqual([]);
   });
 });
-
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了（与 content:check 同一套判据） */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}

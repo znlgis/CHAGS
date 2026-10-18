@@ -1,28 +1,16 @@
-import { ContentEntrySchema, getEntry, mergeLocalized, validatePatch } from '@chags/content/full';
-import { templateSchemas } from '@chags/templates/schemas';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
-import rawSummary from '../../../packages/content/src/entries/fanjian-ji.json';
-import rawDetail from '../../../packages/content/src/entries/fanjian-ji.game.json';
-import enPatchSummary from '../../../packages/content/src/i18n/en/fanjian-ji.json';
-import enPatchDetail from '../../../packages/content/src/i18n/en/fanjian-ji.game.json';
-// 模板的纯判定：共享 index.ts 的登记由 Lead 统一做 —— 这里直接从源文件拿，
-// 与既有游戏包相对导入内容 JSON 是同一个做法（登记前后都不会红）。
 import {
-  PLANT_TIMING, hitRedirect, hitSpot, isLookingAway, isPlantDone, lookAwayLeftMs, plantProgress,
-  plantRatio, plantStart, plantStep, redirectLook, visitorAt,
-} from '../../../packages/templates/src/twoline.logic';
+  PLANT_TIMING, hitRedirect, hitSpot, isLookingAway, isPlantDone, lookAwayLeftMs,
+  plantProgress, plantRatio, plantStart, plantStep, redirectLook, visitorAt,
+} from '@chags/templates/twoline.logic';
 import {
-  BELL, DESK, DESIGN_H, DESIGN_W, FLOOR_Y, SPOT, TENT, VISITOR_FROM, VISITOR_RADIUS, VISITOR_TO,
-  WALK_MS,
+  BELL, DESK, DESIGN_H, DESIGN_W, FLOOR_Y, SPOT, TENT, VISITOR_FROM, VISITOR_RADIUS,
+  VISITOR_TO, WALK_MS,
 } from './layout';
 import { fanjianLevel } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-const enPatch = { ...enPatchSummary, ...enPatchDetail };
-
-/** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
-const entry = getEntry('fanjian-ji') ?? ContentEntrySchema.parse(raw);
+const entry = getEntry('fanjian-ji')!;
 const level = fanjianLevel(entry);
 
 /**
@@ -49,7 +37,6 @@ describe('反间计 · 美术与关卡数据互锁', () => {
     expect(level.visitor.to).toEqual(VISITOR_TO);
     expect(level.visitor.radius).toBe(VISITOR_RADIUS);
     expect(level.visitor.walkMs).toBe(WALK_MS);
-    expect(level.hint.length).toBeLessThanOrEqual(24);
   });
 
   it('两处都在画面里：案上的地方整块落在案面上，铜铃挂在帐角', () => {
@@ -204,7 +191,6 @@ describe('反间计 · 判定（趁空档按住才推进，他回头就清零）
 describe('反间计 · 故事与复习', () => {
   it('两幕：最好的酒菜又撤下去 → 他自己看到的那一眼；关键抉择在第二幕', () => {
     expect(entry.story.map((beat) => beat.id)).toEqual(['s1', 's2']);
-    expect(entry.story.every((beat) => beat.text.length <= 90)).toBe(true);
     expect(entry.story[0]!.text).toContain('撤');
     expect(entry.story[1]!.narration).toContain('陈平');
     expect(entry.keyMoment.beatId).toBe('s2');
@@ -226,18 +212,13 @@ describe('反间计 · 故事与复习', () => {
     expect(entry.source.chapter).toBe('反间计');
     expect(entry.source.quote).toContain('疑中之疑');
     expect(entry.moral).toContain('自己看到');
-    expect(entry.misconceptions.length).toBeGreaterThanOrEqual(1);
     expect(entry.game.template).toBe('twoline');
     expect(entry.game.stages[0]!.template).toBe('twoline');
-    expect(templateSchemas.twoline!.safeParse(entry.game.stages[0]!.levelScript).success).toBe(true);
     // 这一计的名字与英文标题是全站共享词汇，别自创
     expect(entry.title).toBe('反间计');
   });
 
-  it('复习题：有记忆题也有迁移题，答案都在选项里', () => {
-    expect(entry.quiz.length).toBeGreaterThanOrEqual(2);
-    expect(entry.quiz.filter((question) => question.kind === 'transfer').length).toBeGreaterThanOrEqual(1);
-    for (const question of entry.quiz) expect(question.answer).toBeLessThan(question.options.length);
+  it('复习题：有记忆题也有迁移题', () => {
     expect(entry.quiz[1]!.question).toContain('器材');
   });
 
@@ -256,48 +237,13 @@ describe('反间计 · 故事与复习', () => {
 });
 
 describe('反间计 · 英译补丁', () => {
-  it('摘要 / 详情两半各自合法，英译补丁也分别对得上（与 content:check 同一套口径）', () => {
-    expect(validatePatch(entry, enPatch)).toEqual([]);
-    const merged = ContentEntrySchema.parse(mergeLocalized(entry, enPatch));
+  it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
+    const merged = getEntry('fanjian-ji', 'en')!;
     expect(merged.title).toBe('Turn Their Spy Around');
     expect(merged.source.book).toBe('The Thirty-Six Stratagems, Desperate Stratagems');
-    expect(merged.story.map((beat) => beat.text)).toHaveLength(entry.story.length);
-    expect(merged.quiz.map((question) => question.options.length)).toEqual(
-      entry.quiz.map((question) => question.options.length),
-    );
-    expect(merged.keyMoment.options.filter((option) => option.isCanonical)).toHaveLength(1);
-    for (const stage of merged.game.stages) {
-      expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    }
-    // 关卡里的两句提示也翻了（英文 hint ≤ 24、两句台词 ≤ 48）
     expect(merged.game.stages[0]!.levelScript).toMatchObject({
       hint: 'Draw him off, then hold',
       plantedLine: 'He saw it on the desk — and said it himself.',
     });
-    const script = merged.game.stages[0]!.levelScript as {
-      hint: string;
-      caughtLine: string;
-      plantedLine: string;
-    };
-    expect(script.hint.length).toBeLessThanOrEqual(24);
-    expect(script.caughtLine.length).toBeLessThanOrEqual(48);
-    expect(script.plantedLine.length).toBeLessThanOrEqual(48);
-    expect(findCjk(merged)).toEqual([]);
   });
 });
-
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了（与 content:check 同一套判据） */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}

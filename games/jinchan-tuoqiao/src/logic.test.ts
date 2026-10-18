@@ -1,28 +1,16 @@
-import { ContentEntrySchema, getEntry, mergeLocalized, validatePatch } from '@chags/content/full';
-import { templateSchemas } from '@chags/templates/schemas';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
-// 模板的纯判定：共享 index.ts 的登记由 Lead 统一做 —— 这里直接从源文件拿，
-// 与既有游戏包相对导入内容 JSON 是同一个做法（登记前后都不会红）。
 import {
   SWAP_TIMING, isAllSwapped, isShellDone, leave, nextSwapStep, peek, placeSpare, seenCount,
   swapCount, swapStart,
-} from '../../../packages/templates/src/swap.logic';
-import rawSummary from '../../../packages/content/src/entries/jinchan-tuoqiao.json';
-import rawDetail from '../../../packages/content/src/entries/jinchan-tuoqiao.game.json';
-import enPatchSummary from '../../../packages/content/src/i18n/en/jinchan-tuoqiao.json';
-import enPatchDetail from '../../../packages/content/src/i18n/en/jinchan-tuoqiao.game.json';
+} from '@chags/templates/swap.logic';
 import {
   GATE, PILE_BOTTOM, PILE_TOP, POST_KINDS, POST_RADIUS, POST_XS, POST_Y, SPARE_KINDS,
   SPARE_RADIUS, SPARE_XS, SPARE_Y, TOWER, WALL_BOTTOM, WALL_TOP,
 } from './layout';
 import { jinchanLevel } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-const enPatch = { ...enPatchSummary, ...enPatchDetail };
-
-/** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
-const entry = getEntry('jinchan-tuoqiao') ?? ContentEntrySchema.parse(raw);
+const entry = getEntry('jinchan-tuoqiao')!;
 const level = jinchanLevel(entry);
 
 /** 一局里该走的那几步（照模板 runAutoplay 的同一条路：拿起来 → 放下去 → 走掉） */
@@ -157,7 +145,6 @@ describe('金蝉脱壳 · 一局真的走得完（照模板 runAutoplay 的同�
 describe('金蝉脱壳 · 内容', () => {
   it('两幕：鼓声响了一夜 → 天亮看清全是稻草人；关键抉择在第一幕', () => {
     expect(entry.story.map((beat) => beat.id)).toEqual(['s1', 's2']);
-    expect(entry.story.every((beat) => beat.text.length <= 90)).toBe(true);
     expect(entry.story[0]!.text).toContain('鼓');
     expect(entry.story[1]!.text).toContain('稻草人');
     expect(entry.keyMoment.beatId).toBe('s1');
@@ -177,15 +164,11 @@ describe('金蝉脱壳 · 内容', () => {
     expect(entry.source.book).toBe('《三十六计·混战计》');
     expect(entry.source.chapter).toBe('金蝉脱壳');
     expect(entry.source.quote).toContain('存其形');
-    expect(entry.misconceptions.length).toBeGreaterThanOrEqual(1);
     expect(entry.game.template).toBe('swap');
     expect(entry.game.stages[0]!.template).toBe('swap');
   });
 
-  it('复习题：有记忆题也有迁移题，答案都在选项里', () => {
-    expect(entry.quiz.filter((q) => q.kind === 'transfer').length).toBeGreaterThanOrEqual(1);
-    expect(entry.quiz.length).toBeGreaterThanOrEqual(2);
-    for (const q of entry.quiz) expect(q.answer).toBeLessThan(q.options.length);
+  it('复习题：有记忆题也有迁移题', () => {
     expect(entry.quiz.some((q) => q.question.includes('模型'))).toBe(true);
   });
 
@@ -204,35 +187,8 @@ describe('金蝉脱壳 · 内容', () => {
 });
 
 describe('金蝉脱壳 · 英译补丁', () => {
-  it('与中文一一对应、合起来不剩一个中文字，关卡脚本照样合法', () => {
-    expect(validatePatch(entry, enPatch)).toEqual([]);
-    const merged = ContentEntrySchema.parse(mergeLocalized(entry, enPatch));
+  it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
+    const merged = getEntry('jinchan-tuoqiao', 'en')!;
     expect(merged.title).toBe('The Golden Cicada Sheds Its Shell');
-    expect(merged.story.map((beat) => beat.text)).toHaveLength(entry.story.length);
-    expect(merged.quiz.map((question) => question.options.length)).toEqual(
-      entry.quiz.map((question) => question.options.length),
-    );
-    expect(merged.keyMoment.options.filter((option) => option.isCanonical)).toHaveLength(1);
-    for (const stage of merged.game.stages) {
-      const result = templateSchemas[stage.template]!.safeParse(stage.levelScript);
-      expect(result.success).toBe(true);
-    }
-    expect(findCjk(merged)).toEqual([]);
   });
 });
-
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了（与 content:check 同一套判据） */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}

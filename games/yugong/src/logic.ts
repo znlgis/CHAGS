@@ -1,4 +1,4 @@
-import { stageScript } from '@chags/content/full';
+import { stageScript } from '@chags/content';
 import type { ContentEntry } from '@chags/content';
 import { TapLevelSchema } from '@chags/templates/schemas';
 import type { TapLevel } from '@chags/templates/schemas';

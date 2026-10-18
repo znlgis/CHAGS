@@ -1,19 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { entries, getEntry } from './entries/detail';
-
-/** 中日韩字符：英文版里出现它，就说明有字段漏翻了 */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) return value.flatMap((item, i) => findCjk(item, path + '[' + i + ']'));
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}
+import { findCjk } from './localize';
 
 /**
  * 走**运行时那条路**（getEntry → localizedEntry）检查译文，而不是自己把补丁拼起来。

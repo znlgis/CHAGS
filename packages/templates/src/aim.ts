@@ -6,6 +6,7 @@ import { aimDirection, firstHit, pullAmount } from './aim.logic';
 import type { AimPoint } from './aim.logic';
 import { SCENE_KEYS } from './layout';
 import type { AimLevel } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 export interface AimStage {
@@ -186,6 +187,9 @@ export function createAimScene(ctx: GameContext, cfg: AimConfig): Phaser.Types.S
         arrow.x = to.x;
         arrow.y = to.y;
         if (arrow.x < -120 || arrow.x > this.W + 120 || arrow.y < -120 || arrow.y > this.H + 120) {
+          // 这一箭射空了：不结束、不锁操作，但记一次 mistakes（瞄准也是要练的）；
+          // 收尾动画里还在飞的箭不算 —— 那已经不是孩子能操作的时候了
+          if (!this.finished) recordAttempt(cfg.session, { ok: false });
           this.arrows.splice(i, 1);
         }
       }
@@ -197,6 +201,8 @@ export function createAimScene(ctx: GameContext, cfg: AimConfig): Phaser.Types.S
       this.aliveIds.splice(index, 1);
       if (!this.hitIds.includes(id)) this.hitIds.push(id);
       this.shots += 1;
+      // 射中一个：这一次做对了（收尾动画里才命中的箭不算）
+      if (!this.finished) recordAttempt(cfg.session, { ok: true });
 
       const target = cfg.level.targets.find((t) => t.id === id);
       // 命中事件：调试与自动化都靠它看清"到底射中了几个"

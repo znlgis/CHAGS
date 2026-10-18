@@ -1,4 +1,4 @@
-import { GROUPS, isGroupId } from './groups';
+import { GROUPS, STRATAGEM_SETS, isGroupId } from './groups';
 import { z } from 'zod';
 
 /** 记忆巩固题 / 迁移题 —— kind: 'transfer' 才是真正“记住了”的证据 */
@@ -18,7 +18,6 @@ export const StoryBeatSchema = z.object({
   /** 屏幕上的一句话。中日文卡得紧，英文天然更长，所以上限按英文给 */
   text: z.string().max(90),
   narration: z.string().min(1),
-  illustration: z.string().min(1).default('none'),
 });
 
 export const KeyMomentOptionSchema = z.object({
@@ -42,14 +41,36 @@ export const SourceSchema = z.object({
   quote: z.string().min(1),
 });
 
+/**
+ * 玩法模板 id 的**唯一事实来源**。
+ *
+ * 以前这份列表只写在 game-kit 的 TemplateId 联合类型里，而 templates 包的 schema 注册表是
+ * `Record<string, ZodType>` —— 三者之间没有任何编译期约束：契约里多加一个 id 不报错，
+ * 内容里写错模板要等运行 `content:check` 才拦得住（本地 `dist:win` / `dist:apk` 只跑 build）。
+ *
+ * 现在：内容 schema 用 z.enum 校验（写错模板构建期就报），
+ * templates 的注册表用 `Record<TemplateId, ZodType>`（少登记一个在 typecheck 就报）。
+ * 预留但没实现的 id（match / order / drag / board / timing / react / branch / build / grow）
+ * 已从契约里删掉 —— 真要做时再加回来，并同时补 schema 与场景。
+ */
+export const TEMPLATE_IDS = [
+  // 典故
+  'substitution', 'tap', 'place', 'aim', 'sort', 'trace', 'wait', 'beacon',
+  'mark', 'split', 'burrow', 'butcher',
+  // 三十六计 第一~四辑
+  'ruse', 'siege', 'borrow', 'stillness', 'window',
+  'show', 'twoline', 'read', 'matchup',
+  'probe', 'lure', 'chase',
+  'swap', 'chain',
+] as const;
+
+export type TemplateId = (typeof TEMPLATE_IDS)[number];
+
 /** 一条内容可以由多段玩法拼成（例如盘古 = 撑天 + 化身、围魏救赵 = 双线 + 要害） */
 export const GameStageSchema = z.object({
-  template: z.string().min(1),
+  template: z.enum(TEMPLATE_IDS),
   levelScript: z.unknown(),
 });
-
-/** 三十六计一共六套（胜战 / 敌战 / 攻战 / 混战 / 并战 / 败战），套名是界面文案，见 i18n */
-export const STRATAGEM_SETS = 6;
 
 /**
  * 三十六计专属字段。
@@ -113,13 +134,16 @@ const summaryFields = {
 
 const detailFields = {
     figures: z.array(z.string().min(1)).min(1),
-    story: z.array(StoryBeatSchema).min(2).max(6),
+    // ★ 恰好两幕：drawBeat 契约目前只会画两幅图（53 个 art.ts 全是"第 0 幕 / 其它幕"分叉）。
+    // 以前这里允许 2–6 幕，第 3 幕起会静默复用第 2 幕的插图 —— 与其悄悄画错，不如构建期就报错。
+    // 真要写三幕故事：先给 drawBeat 契约补"每一幕各自怎么画"，再把这里放开。
+    story: z.array(StoryBeatSchema).length(2),
     keyMoment: KeyMomentSchema,
     misconceptions: z.array(z.string().min(1)).min(1),
     quiz: z.array(QuizQuestionSchema).min(2),
     game: z.object({
       /** 主玩法模板，用于缩略图与筛选 */
-      template: z.string().min(1),
+      template: z.enum(TEMPLATE_IDS),
       /** 实际参与编排的各段脚本，按顺序执行 */
       stages: z.array(GameStageSchema).min(1).max(3),
     }),
@@ -192,33 +216,6 @@ export const ContentEntrySchema = z
     message: 'stratagem.set 与序号对不上：第 n 套 = 序号 6(n−1)+1 … 6n',
     path: ['stratagem', 'set'],
   });
-
-/**
- * 把一条完整内容拆成摘要与详情 —— **字段划分只写在这一处**：
- * 拆文件的脚本、内容体检、译文补丁校验都从这里拿规则，免得三处各写一份然后走样。
- */
-export function splitEntry(entry: ContentEntry): { summary: EntrySummary; detail: EntryDetail } {
-  const source = entry as unknown as Record<string, unknown>;
-  const pick = <T,>(keys: readonly string[]): T => {
-    const out: Record<string, unknown> = {};
-    for (const key of keys) if (key in source) out[key] = source[key];
-    return out as T;
-  };
-  return {
-    summary: pick<EntrySummary>(SUMMARY_KEYS),
-    detail: pick<EntryDetail>(DETAIL_KEYS),
-  };
-}
-
-/** 摘要字段 / 详情字段的键（顺序与 schema 里一致） */
-export const SUMMARY_KEYS = [
-  'id', 'group', 'kind', 'title', 'pinyin', 'dynasty', 'era', 'yearApprox', 'source', 'moral',
-  'keywords', 'ageRange', 'stratagem',
-] as const;
-
-export const DETAIL_KEYS = [
-  'figures', 'story', 'keyMoment', 'misconceptions', 'quiz', 'game',
-] as const;
 
 export type EntrySummary = z.infer<typeof EntrySummarySchema>;
 export type EntryDetail = z.infer<typeof EntryDetailSchema>;

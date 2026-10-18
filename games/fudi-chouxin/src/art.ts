@@ -2,6 +2,7 @@ import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
 import { DESIGN, SIEGE } from '@chags/templates';
 import type { SiegeSupportMetrics } from '@chags/templates';
+import { clamp01 } from '@chags/game-kit';
 import {
   BAR, FIRE, GRANARIES, HILLS, LOGS, LOG_RADIUS, MOON, NIGHT_TOP, RAIDERS, WOODPILE,
 } from './layout';
@@ -11,7 +12,6 @@ const H = DESIGN.height;
 const NIGHT = 0x2b3550;
 const NIGHT_DEEP = 0x1e2740;
 const SKIN = 0xf8dcbb;
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 // ---------------- 景（每帧重画：火在变，景也得跟着呼吸） ----------------
 

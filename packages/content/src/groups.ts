@@ -23,6 +23,9 @@ export interface GameGroup {
   orderBy: 'year' | 'index';
 }
 
+/** 三十六计一共六套（胜战 / 敌战 / 攻战 / 混战 / 并战 / 败战），套名是界面文案，见 i18n */
+export const STRATAGEM_SETS = 6;
+
 export const GROUPS = [
   { id: 'allusion', order: 10, orderBy: 'year' },
   { id: 'stratagem', order: 20, orderBy: 'index' },

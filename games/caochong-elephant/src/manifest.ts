@@ -6,11 +6,6 @@ export const manifest: GameManifest = {
   title: '曹冲称象',
   version: '0.1.0',
   template: 'substitution',
-  orientation: 'portrait',
   designSize: { width: DESIGN.width, height: DESIGN.height },
   ageRange: [7, 10],
-  sessionSeconds: [150, 300],
-  skills: ['观察', '等量代换', '浮力'],
-  curriculum: { dynasty: '三国', yearApprox: 210, figures: ['曹冲', '曹操'] },
-  assets: { cover: 'none' },
 };

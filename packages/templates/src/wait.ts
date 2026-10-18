@@ -8,6 +8,7 @@ import {
 } from './wait.logic';
 import type { WaitState } from './wait.logic';
 import type { WaitLevel, WaitTemptation } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 export interface WaitStageMetrics {
@@ -223,8 +224,7 @@ export function createWaitScene(ctx: GameContext, cfg: WaitConfig): Phaser.Types
       this.sfx('complete');
       this.cameras.main.flash(320, 255, 250, 220);
       sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
+      recordAttempt(cfg.session, { ok: true });
       if (this.finaleGfx) cfg.drawFinale?.(this.finaleGfx);
       const reveal = cfg.reveal;
       if (reveal !== undefined) {

@@ -469,7 +469,7 @@ export function escapeExit(
  * - **先给方便**：一级一级按顺序搭（点一下搭一级），搭好了他才顺着往上走 ——
  *   "给他一条路"这一步是孩子自己做的，不是过场动画。
  * - **抽早了只是掉回来**：他还在爬的时候抽梯，他会掉回地面、**进度清零、要重新搭**
- *   ——零惩罚，不扣星、不结束、不锁操作（就是要让"早了"这件事看得见）。
+ *   ——记进 mistakes、不结束、不锁操作（就是要让"早了"这件事看得见）。
  * - **到点了才抽得动**：他到位（ready）之后抽梯才算成；没搭完（building）点抽梯什么也不发生
  *   （梯子还没架上，抽的是空气）。
  *
@@ -486,7 +486,7 @@ export interface LadderState {
   climbingSinceMs: number | null;
   /** 抽梯成功的时刻；null = 还没抽 */
   pulledAtMs: number | null;
-  /** 抽早了：他掉回来过几回（零惩罚，只用来复盘） */
+  /** 抽早了：他掉回来过几回（只用来复盘，场景据此记 mistakes） */
   drops: number;
   /** 这一局从哪一刻算起（墙钟，毫秒） */
   startedAtMs: number;
@@ -595,7 +595,7 @@ export function ladderPhase(
 /**
  * 抽梯：
  * - 'ready' 之后 → 成了（pulledAtMs 记下来）；
- * - 他还在爬（'climbing'）→ 他掉回地面：**进度清零、要重新搭**，只记一笔 drops（零惩罚）；
+ * - 他还在爬（'climbing'）→ 他掉回地面：**进度清零、要重新搭**，记一笔 drops（场景据此记 mistakes）；
  * - 还没搭完（'building'）→ 什么也不发生（梯子还没架上）；
  * - 已经抽过了 → 原样返回。
  */

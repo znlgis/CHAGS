@@ -23,7 +23,6 @@ describe('烽火戏诸侯 · 关卡数据', () => {
       expect(line.length).toBeGreaterThan(0);
       expect(line.length).toBeLessThanOrEqual(48);
     }
-    expect(level.hint.length).toBeGreaterThan(0);
   });
 
   it('烽火台都开在画面里', () => {

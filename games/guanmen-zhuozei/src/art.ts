@@ -2,6 +2,7 @@ import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
 import { DESIGN, SIEGE } from '@chags/templates';
 import type { SiegeCloseMetrics } from '@chags/templates';
+import { clamp01 } from '@chags/game-kit';
 import {
   AMBUSH, BAR, ESCAPE_AFTER_MS, EXITS, EXIT_RADIUS, NIGHT_TOP, THIEF, VALLEY_TOP,
   WALL_LEFT, WALL_RIGHT,
@@ -18,7 +19,6 @@ const ROAD_LIGHT = 0x847b62;
 const SKIN = 0xf8dcbb;
 const GATE_W = 152;
 const GATE_H = 168;
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 /** 一块多边形：山壁与路都用它铺 */
 function fillPoly(

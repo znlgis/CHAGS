@@ -1,3 +1,4 @@
+import { ensurePatches } from '@chags/content';
 import { DEFAULT_LOCALE, LOCALES, createTranslator, localeFromSearch } from '@chags/i18n';
 import type { Locale } from '@chags/i18n';
 import { defineStore } from 'pinia';
@@ -6,7 +7,7 @@ import { computed, ref } from 'vue';
 const STORAGE_KEY = 'chags.locale';
 
 /** 优先级：URL 的 ?lang= > 上次选择 > 默认中文 */
-function initialLocale(): Locale {
+export function initialLocale(): Locale {
   const fromUrl = localeFromSearch(window.location.search);
   if (fromUrl) return fromUrl;
   const saved = window.localStorage.getItem(STORAGE_KEY);
@@ -28,11 +29,20 @@ export const useLocale = defineStore('locale', () => {
     }
   }
 
+  /**
+   * 切语言：先把该语言的摘要译文加载好再切换（英文补丁是懒加载的，约 9 KB gzip；
+   * 默认语言中文不需要补丁，立即生效）。加载失败就回落中文文案，不阻塞切换。
+   */
+  async function setLocale(next: Locale): Promise<void> {
+    await ensurePatches(next);
+    apply(next);
+  }
+
   apply(locale.value);
 
   function toggle(): void {
-    apply(locale.value === 'en' ? 'zh-CN' : 'en');
+    void setLocale(locale.value === 'en' ? 'zh-CN' : 'en');
   }
 
-  return { locale, t, setLocale: apply, toggle };
+  return { locale, t, setLocale, toggle };
 });

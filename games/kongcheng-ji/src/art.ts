@@ -2,6 +2,7 @@ import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
 import { DESIGN } from '@chags/templates';
 import type { StillnessCalmStageState } from '@chags/templates';
+import { clamp01 } from '@chags/game-kit';
 import {
   AWAY, DRUM, FLAGS, GATE, HILL_TOP, MAX_MARKS, RIVER_BOTTOM, RIVER_TOP, ROAD_TOP, SKY_TOP, WALL_BOTTOM,
   WALL_TOP, WATCH, ZHAOYUN,
@@ -30,7 +31,6 @@ const SCOUT_DEEP = 0x333d4d;
 /** 火把的光：他盯着看的时候，这道光往墙上扫过来 */
 const TORCH = 0xf2b134;
 
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 /** 平滑一步（走位用它，别一顿一顿的） */
 const ease = (t: number): number => t * t * (3 - 2 * t);
 

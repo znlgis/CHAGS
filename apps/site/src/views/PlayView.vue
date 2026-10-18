@@ -5,6 +5,7 @@ import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import { navigate } from '../router';
 import { registry } from '../registry';
 import { createGameContext } from '../shell/createGameContext';
+import { platform } from '../shell/platform';
 import { useLocale } from '../stores/locale';
 import { useProgress } from '../stores/progress';
 
@@ -13,14 +14,17 @@ const host = ref<HTMLDivElement | null>(null);
 /** ★ 必须用 shallowRef：ref 会深度代理整个 Phaser 对象图 */
 const mod = shallowRef<GameModule | null>(null);
 /**
- * 给玩家看的：一句人话 + 一个出口。
+ * 给玩家看的：一句人话 + 两个出口（重试 / 回游戏馆）。
  * 技术细节留给控制台与 window.__chags.lastError —— 之前直接把 zod 的报错
  * 原样贴在屏幕上，小朋友看到的是 [{ "origin": "string", "code": "too_big" ... }]。
  */
 const error = ref<string | null>(null);
+const loading = ref(false);
 const progress = useProgress();
 const i18n = useLocale();
 let disposed = false;
+let offPause: (() => void) | null = null;
+let offResume: (() => void) | null = null;
 
 /**
  * 一局的表现同时喂两件事：
@@ -41,13 +45,20 @@ function handleEvent<K extends keyof GameEventMap>(type: K, payload: GameEventMa
   }
 }
 
-onMounted(async () => {
-  const load = registry[props.entryId];
-  if (!load) {
-    error.value = i18n.t('play.notFound') + props.entryId;
-    return;
-  }
+/** 载入并挂载一局。失败时只把一句人话放到 error 上，技术细节留给控制台 */
+async function start(): Promise<void> {
+  if (disposed || loading.value) return;
+  loading.value = true;
+  error.value = null;
   try {
+    // 先等读档完成：深链直接进游戏（或 autoplay 秒通关）时，
+    // 一次写入早于读档完成就会被旧快照盖掉 —— 星星"白拿了"
+    await progress.init();
+    const load = registry[props.entryId];
+    if (!load) {
+      error.value = i18n.t('play.notFound') + props.entryId;
+      return;
+    }
     const loaded = (await load()).default;
     if (disposed || !host.value) return;
     mod.value = loaded;
@@ -57,6 +68,15 @@ onMounted(async () => {
         onEvent: handleEvent,
       }),
     );
+    // 切后台要**真的**暂停：游戏循环睡着才不烧电，顺带把没念完的旁白停掉。
+    // 这两个回调以前没有任何订阅方（契约是死的：pause/resume 全仓 0 调用）。
+    offPause = platform.lifecycle.onPause(() => {
+      mod.value?.pause();
+      platform.audio.stopSpeech();
+    });
+    offResume = platform.lifecycle.onResume(() => {
+      mod.value?.resume();
+    });
   } catch (cause) {
     const detail = cause instanceof Error ? cause.message : String(cause);
     error.value = i18n.t('play.loadFailed');
@@ -66,11 +86,23 @@ onMounted(async () => {
       window.__chags = window.__chags ?? { events: [], last: null };
       window.__chags.lastError = detail;
     }
+  } finally {
+    loading.value = false;
   }
+}
+
+onMounted(() => {
+  void start();
 });
 
 onBeforeUnmount(async () => {
   disposed = true;
+  offPause?.();
+  offResume?.();
+  offPause = null;
+  offResume = null;
+  // 中途退出还在念旁白 = 回到大厅继续有人说话（故事场景自己会停，玩法场景不会）
+  platform.audio.stopSpeech();
   await mod.value?.unmount();
   mod.value = null;
 });
@@ -84,13 +116,25 @@ onBeforeUnmount(async () => {
       class="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-[#3a2f26]/95 px-8 text-center"
     >
       <p class="text-lg text-[#fdf3dc]">{{ error }}</p>
-      <button
-        type="button"
-        class="rounded-full bg-[#b03a31] px-10 py-3 text-lg text-[#fdf3dc] active:scale-95"
-        @click="navigate('/')"
-      >
-        {{ i18n.t('play.backToHall') }}
-      </button>
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <button
+          type="button"
+          class="rounded-full bg-[#2c6b64] px-8 py-3 text-lg text-[#fdf3dc] active:scale-95 disabled:opacity-60"
+          :disabled="loading"
+          data-testid="play-retry"
+          @click="start"
+        >
+          {{ i18n.t('play.retry') }}
+        </button>
+        <button
+          type="button"
+          class="rounded-full bg-[#b03a31] px-8 py-3 text-lg text-[#fdf3dc] active:scale-95"
+          data-testid="play-back"
+          @click="navigate('/')"
+        >
+          {{ i18n.t('play.backToHall') }}
+        </button>
+      </div>
     </div>
   </div>
 </template>

@@ -15,8 +15,4 @@ describe('精卫填海 · 关卡数据', () => {
   it('计数单位是"块" —— 一次一块，正是这个典故的分量所在', () => {
     expect(tapLevel(raw!).unit).toBe('块');
   });
-
-  it('故事很短', () => {
-    expect(raw?.story.length).toBeLessThanOrEqual(2);
-  });
 });

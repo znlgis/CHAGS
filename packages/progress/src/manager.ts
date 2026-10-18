@@ -16,25 +16,90 @@ function emptyProgress(entryId: string): EntryProgress {
   };
 }
 
+type RawSave = Record<string, unknown>;
+
+/**
+ * 存档迁移链：{ 旧版本号: 升到下一版的函数 }。
+ *
+ * 现在只有 v1，所以这张表是空的 —— 但流程先立起来：
+ * 以后给 SaveData 加字段时，把 SAVE_SCHEMA_VERSION 改成 2，并在这里补一条
+ * `1: (data) => ({ ...data, 新字段: 默认值 })`。老玩家的星星与复习计划会被
+ * **升级**而不是清空（旧实现是"版本不等就 emptySave"，升级一次等于清零一次）。
+ *
+ * 没有对应迁移函数的老版本一律降级为空档：宁可少数据，也不能拿读不懂的结构去炸界面。
+ */
+const MIGRATIONS: Record<number, (data: RawSave, now: number) => RawSave> = {};
+
+function isRecord(value: unknown): value is RawSave {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function finiteNumber(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+/** 0..3 的星星 / 评级；坏值按 0 处理，别让 NaN 流进界面 */
+function asStars(value: unknown): 0 | 1 | 2 | 3 {
+  const n = finiteNumber(value, 0);
+  if (n <= 0) return 0;
+  if (n === 1) return 1;
+  if (n === 2) return 2;
+  return 3;
+}
+
+/**
+ * 单条进度的体检：**结构坏掉只丢这一条**，不连累整份存档。
+ * 以前这里是直接 `value.entryId`：一条 null 就能让读档在 IndexedDB 回调里抛异常，
+ * init 的 promise 永远不 resolve，大厅一直显示 0 星。
+ */
+function sanitizeEntry(entryId: string, value: unknown): EntryProgress | null {
+  if (!isRecord(value)) return null;
+  const review = isRecord(value.review)
+    ? {
+        level: finiteNumber(value.review.level, 0),
+        dueAt: typeof value.review.dueAt === 'number' ? value.review.dueAt : null,
+        lastGrade:
+          typeof value.review.lastGrade === 'number' ? asStars(value.review.lastGrade) : null,
+        reviews: finiteNumber(value.review.reviews, 0),
+      }
+    : createReviewState();
+  return {
+    entryId,
+    stars: asStars(value.stars),
+    completions: Math.max(0, finiteNumber(value.completions, 0)),
+    lastPlayedAt: typeof value.lastPlayedAt === 'number' ? value.lastPlayedAt : null,
+    review,
+  };
+}
+
 /**
  * 存档迁移：现在写几乎零成本，等有用户数据了再补就是灾难。
- * 老存档（无 schemaVersion）一律降级为空档，避免脏数据炸掉游戏。
+ * 规则：从版本 0 开始逐级跑 MIGRATIONS，跑到当前版本；缺迁移函数或来自未来版本 → 空档。
  */
 export function migrate(raw: unknown, now: number): SaveData {
-  if (!raw || typeof raw !== 'object') return emptySave(now);
-  const data = raw as Partial<SaveData>;
-  if (data.schemaVersion !== SAVE_SCHEMA_VERSION) return emptySave(now);
-  if (!data.allusions || typeof data.allusions !== 'object') return emptySave(now);
-  // 老存档里每个进度对象带着旧字段名 allusionId：补上 entryId（键才是权威），
-  // 否则界面会拿到一个"没有 id 的进度"。键是内容 id，读档照旧。
+  if (!isRecord(raw)) return emptySave(now);
+  const version = typeof raw.schemaVersion === 'number' ? raw.schemaVersion : 0;
+  // 用新版玩过、又装回旧版：结构解释不了，不猜
+  if (version > SAVE_SCHEMA_VERSION) return emptySave(now);
+
+  let data: RawSave = raw;
+  for (let from = version; from < SAVE_SCHEMA_VERSION; from += 1) {
+    const step = MIGRATIONS[from];
+    if (!step) return emptySave(now);
+    data = step(data, now);
+  }
+
+  if (!isRecord(data.allusions)) return emptySave(now);
+  // 键才是内容 id 的权威；老存档里的 entryId 字段可能缺、也可能过期
   const allusions: SaveData['allusions'] = {};
   for (const [id, value] of Object.entries(data.allusions)) {
-    allusions[id] = value.entryId === id ? value : { ...value, entryId: id };
+    const entry = sanitizeEntry(id, value);
+    if (entry !== null) allusions[id] = entry;
   }
   return {
     schemaVersion: SAVE_SCHEMA_VERSION,
     allusions,
-    updatedAt: typeof data.updatedAt === 'number' ? data.updatedAt : now,
+    updatedAt: finiteNumber(data.updatedAt, now),
   };
 }
 
@@ -42,6 +107,7 @@ export class ProgressManager {
   private readonly store: ProgressStore;
   private readonly clock: () => number;
   private data: SaveData;
+  private loading: Promise<SaveData> | null = null;
 
   constructor(store: ProgressStore, clock: () => number, now = clock()) {
     this.store = store;
@@ -49,9 +115,22 @@ export class ProgressManager {
     this.data = emptySave(now);
   }
 
-  async init(): Promise<SaveData> {
-    this.data = migrate(await this.store.load(), this.clock());
-    return this.data;
+  /**
+   * 读档只做一次（single-flight）：界面可能从多个地方 await 它，
+   * 重复读会把"刚写进去的进度"用旧快照盖掉。
+   */
+  init(): Promise<SaveData> {
+    this.loading ??= (async () => {
+      let raw: unknown;
+      try {
+        raw = await this.store.load();
+      } catch {
+        raw = null;
+      }
+      this.data = migrate(raw, this.clock());
+      return this.data;
+    })();
+    return this.loading;
   }
 
   snapshot(): SaveData {

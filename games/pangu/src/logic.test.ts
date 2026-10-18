@@ -43,17 +43,13 @@ describe('盘古开天辟地 · 关卡数据', () => {
     }
   });
 
-  it('故事很短，屏幕上不超过两句话', () => {
-    expect(raw?.story.length).toBeLessThanOrEqual(2);
-  });
-
   it('模板 schema 会拒绝点不满的撑天脚本', () => {
     const broken = {
       ...raw!,
       game: {
-        template: 'tap',
+        template: 'tap' as const,
         stages: [
-          { template: 'tap', levelScript: { ...(tapLevel(raw!) as object), targetValue: 18500 } },
+          { template: 'tap' as const, levelScript: { ...(tapLevel(raw!) as object), targetValue: 18500 } },
           raw!.game.stages[1]!,
         ],
       },

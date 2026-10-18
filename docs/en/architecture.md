@@ -1,13 +1,15 @@
-# CHAGS Architecture · v1.2 (synced to §7.3)
+# CHAGS Architecture · v1.3 (architecture synced to §7.3; facts updated 2026-10-18)
 
 > Status: living document. Chinese version: [../技术方案.md](../技术方案.md)
 > A collection of small games about Chinese historical anecdotes and myths, for children aged 7–10.
 
-> ⚠️ **This file is only synced up to §7.3** (the bilingual round, 2026-10-13). The Chinese
-> [../技术方案.md](../技术方案.md) kept going: it has **§7.4–§7.17** — the review-and-optimisation pass,
-> the six stratagem volumes (36 games), the content summary/detail split, and the **due review** feature
-> (Chinese §7.17), which finally wired up `quiz` / `gradeFromScore` / `recordReview`.
-> **For anything after §7.3 the Chinese document is authoritative**; this file is not a mirror of it.
+> ⚠️ **The architecture narrative here is synced up to §7.3** (the bilingual round, 2026-10-13). The Chinese
+> [../技术方案.md](../技术方案.md) kept going through **§7.4–§7.18** — the review-and-optimisation passes,
+> the six stratagem volumes (36 games), the content summary/detail split, **due review** (Chinese §7.17),
+> and the 2026-10-15 review notes (Chinese §7.18).
+> **The factual parts of this file — counts, plan status, the template table, size budgets and the roadmap —
+> were updated on 2026-10-18 to match the code**; for anything after §7.3 the Chinese document is still
+> authoritative, and this file is not a mirror of it.
 > The stale claims that used to sit here have been corrected or removed: the template table that listed
 > templates which do not exist in code (and called `quiz` implemented), the "63.4 KB" shell figure, and
 > "which story is third" (long answered: seventeen stories plus all thirty-six stratagems).
@@ -40,8 +42,8 @@ through templates; story content is driven by JSON.
 2. **Games never touch the environment.** Storage, audio, lifecycle and sharing all go through the injected
    `GameContext`. No game may call `localStorage`, `fetch` or `wx.*` directly — this is the
    single cheap escape hatch for a future WeChat mini-game port or cloud saves.
-3. **Every game is headlessly drivable.** `#/play/<id>?seed=fixed&autoplay=1`, otherwise automated testing and
-   AI-assisted development are impossible.
+3. **Every game is headlessly drivable.** `#/play/<id>?autoplay=1` (plus the `?story=instant` / `?card=hold`
+   debug switches), otherwise automated testing and AI-assisted development are impossible.
 
 ---
 
@@ -81,7 +83,9 @@ impossible to review, diff or verify automatically.
 | Plain DOM/CSS | ★★★ (quiz only) | yes | Lightest, accessible | Can't do drag/physics/board interactions | album & review screens only |
 
 **Measured engine size** (`phaser@4.2.1/dist/phaser.min.js`, full build): 1,375,976 bytes raw, **357,778 bytes gzip (≈350 KB)**.
-This number is why the engine must never enter the shell bundle: it loads only when a game starts, and is cached afterwards.
+Since 2026-10-18 the build uses a **trimmed Phaser build** (sound / physics / tilemaps etc. removed); the
+actual `vendor-phaser-*.js` chunk measures **220.6 KB gzip / 856.3 KB raw**. Either way the engine must never
+enter the shell bundle: it loads only when a game starts, and is cached afterwards.
 
 ### 2.2 Shell: Vue 3.5, not all-Phaser
 
@@ -161,17 +165,18 @@ DOM plus Tailwind is far faster to build than drawing lists, scrolling and forms
 | Lint | eslint 10 flat + eslint-plugin-vue + typescript-eslint | Style, plus banned APIs (no `Math.random`/`Date.now` in logic) |
 | Unit | Vitest | Pure logic: judging, scoring, scheduling, merging |
 | Content | `content:check` | zod schemas, template stage schemas, **translation completeness**, cross-references |
-| End-to-end | Playwright | Real-mouse playthroughs, autoplay runs, screenshot capture, production-build chunk loading |
-| Size | `scripts/check-size.mjs` (runs in `pnpm verify` and CI) | Five budgets: initial gzip / initial raw / biggest lazy chunk gzip / chunk raw / whole-dist raw (see Chinese §5) |
+| End-to-end | Playwright | Real-mouse playthroughs (19 story cases + 5 stratagem cases), autoplay runs, bilingual mount checks, production-build chunk loading. Screenshots are for human inspection only — **no baseline diffing** |
+| Size | `scripts/check-size.mjs` (runs in `pnpm verify` and CI) | Seven budgets: initial gzip / initial raw / biggest lazy chunk gzip / chunk raw / whole-dist raw / single non-code asset / total non-code assets (see Chinese §5) |
 
-**One command: `pnpm verify` = typecheck → lint → test → content:check → build → size.** For AI-assisted work this
+**One command: `pnpm verify` = typecheck → lint → test → content:check → build → size** (the runner in `scripts/verify.mjs`
+executes the independent steps in parallel; size still runs after build). For AI-assisted work this
 command *is* the definition of done.
 
 ### 2.8 Deployment
 
 - Static output on a CDN. For mainland China: an ICP-registered domain plus a domestic CDN — registration is a hard
   prerequisite for the WeChat ecosystem, so start early.
-- PWA: precache the shell and played games.
+- PWA: precache the shell and played games (**planned, not implemented** — there is no service worker in the repo yet).
 
 ### 2.9 Anti-scope
 
@@ -229,7 +234,8 @@ packages/
 games/<id>/           one story / one stratagem per package (53 today; the list's single source
                       of truth is packages/content/src/entries/ + apps/site/src/registry.ts)
 e2e/                  Playwright
-scripts/              size guard (check-size.mjs), icon generation
+scripts/              size guard (check-size.mjs), icon generation (make-icons.py), APK build (build-apk.mjs),
+                      keystore generation (make-keystore.mjs), parallel verify runner (verify.mjs)
 docs/  docs/en/       design docs, Chinese and English
 ```
 
@@ -240,25 +246,23 @@ one edit is immediately visible everywhere.
 
 ```ts
 export interface GameManifest {
+  // Only fields that are actually read. orientation / sessionSeconds / skills / curriculum / assets
+  // had zero readers (and curriculum.figures had silently drifted), so they were removed —
+  // dynasty / figures / skills now come from the content JSON only.
   id: string;
   title: string;
   version: string;
   template: TemplateId;                 // primary template id, e.g. 'substitution'
-  orientation: 'portrait' | 'landscape';
   designSize: { width: number; height: number };
   ageRange: [number, number];
-  sessionSeconds: [number, number];
-  skills: string[];
-  curriculum: { dynasty: string; yearApprox?: number; figures: string[] };
-  assets: { cover: string };
 }
 
 export interface GameEventMap {
   'session:start':  { at: number };
   'scene:enter':    { scene: string };
   'beat:enter':     { beatId: string };
+  'story:ready':    { beatId: string };   // narration for this beat has actually finished
   'choice:made':    { beatId: string; choiceId: string; correct: boolean; latencyMs: number };
-  'hint:used':      { beatId: string; level: number };
   'level:complete': { levelId: string; stars: 0|1|2|3; mistakes: number; correct: number; total: number; durationMs: number };
   'card:unlocked':  { entryId: string; cardId: string };
   'session:exit':   { reason: 'complete'|'quit'|'background'; progress: number };
@@ -271,7 +275,7 @@ export interface GameContext {
   services: PlatformServices;    // storage / audio / lifecycle / share / telemetry
   locale: Locale;
   reducedMotion: boolean;
-  debug?: { seed?: string; skipIntro?: boolean; autoplay?: boolean };
+  debug?: DebugOptions;   // ?autoplay=1 / ?story=instant / ?card=hold (the ?seed= switch was removed)
   emit<K extends keyof GameEventMap>(type: K, payload: GameEventMap[K]): void;
   requestExit(): void;
 }
@@ -310,15 +314,18 @@ story (two opening beats) → chaos (bespoke: tap the egg, chaos bursts)
                           → reward (story card)
 ```
 
-Templates are registered by id in `packages/game-kit/src/contract.ts` (`TemplateId`, 36 ids today).
-The ones actually implemented and used by content are the shared story opener plus 26 gameplay templates:
-`substitution`, `tap`, `place`, `aim`, `sort`, `trace`, `wait`, `mark`, `split`, `burrow`,
-`butcher` (bespoke scene inside the Paoding package, schema-registered here), `beacon` (same, Fenghuo),
-`ruse`, `siege`, `borrow`, `stillness`, `window`, `show`, `twoline`, `read`, `matchup`, `probe`,
-`lure`, `chase`, `swap`, `chain`. Ids such as `match` / `order` / `drag` / `board` / `timing` /
-`react` / `branch` / `build` / `grow` are **reserved and not implemented**, and `quiz` no longer
-exists at all — the due-review quiz is a DOM page in the shell (Chinese §7.17). Per-template detail lives
-in the Chinese §3.4 and §7.10–§7.16.
+Template ids are defined once, in `TEMPLATE_IDS` in `packages/content/src/schema.ts` (`TemplateId` is
+re-exported from `packages/game-kit/src/contract.ts`). There are **26 today, and all of them are implemented
+and used by content**: `substitution`, `tap`, `place`, `aim`, `sort`, `trace`, `wait`, `mark`,
+`split`, `burrow`, `butcher` (bespoke scene inside the Paoding package, schema-registered here),
+`beacon` (same, Fenghuo), `ruse`, `siege`, `borrow`, `stillness`, `window`, `show`, `twoline`,
+`read`, `matchup`, `probe`, `lure`, `chase`, `swap`, `chain`.
+The shared story opener is *not* a template id (it is a scene all games compose first), and `chaos` in the
+Pangu package has no template id at all. The nine reserved ids that used to sit in the union
+(`match` / `order` / `drag` / `board` / `timing` / `react` / `branch` / `build` / `grow`) were
+**deleted on 2026-10-18** — implement them for real, with a schema and a scene, if they are ever needed.
+`quiz` no longer exists either — the due-review quiz is a DOM page in the shell (Chinese §7.17).
+Per-template detail lives in the Chinese §3.4 and §7.10–§7.16.
 
 Templates trade off against sameness. The hard rule is that **every story must declare a `keyMoment`** (the
 discovery the child should make), and that templates only supply interaction primitives — narration, art, feedback and
@@ -419,20 +426,22 @@ mini-game becomes an optional later branch.
 
 ## 5. Performance and size budget
 
-`pnpm size` (`scripts/check-size.mjs`, also wired into `pnpm verify` and CI) measures five budgets against
-`apps/site/dist` and fails the build when one is exceeded:
+`pnpm size` (`scripts/check-size.mjs`, also wired into `pnpm verify` and CI) measures **seven budgets**
+against `apps/site/dist` and fails the build when one is exceeded (budgets as narrowed on 2026-10-18):
 
 | Budget | Limit | Why |
 |---|---|---|
-| Initial JS + CSS (gzip) | ≤ 150 KB | What the user must download before seeing the hall |
-| Initial JS + CSS (raw) | ≤ 500 KB | The desktop and Android shells load **local files**, no gzip — raw bytes are their real cost |
-| Biggest lazy chunk (gzip) | ≤ 450 KB | Chunks fetched only when a game starts; Phaser is the biggest today |
-| Biggest lazy chunk (raw) | ≤ 1800 KB | Same local-loading reason |
-| Whole `dist` (raw) | ≤ 3500 KB | The bytes that go into the exe / APK |
+| Initial JS + CSS (gzip) | ≤ 65 KB | What the user must download before seeing the hall (measured **≈53.7 KB** on 2026-10-18) |
+| Initial JS + CSS (raw) | ≤ 180 KB | The desktop and Android shells load **local files**, no gzip — raw bytes are their real cost |
+| Biggest lazy chunk (gzip) | ≤ 260 KB | Chunks fetched only when a game starts; the trimmed Phaser build is the biggest today (220.6 KB) |
+| Biggest lazy chunk (raw) | ≤ 1000 KB | Same local-loading reason (Phaser ≈ 856 KB) |
+| Whole `dist` (raw) | ≤ 2900 KB | The bytes that go into the exe / APK |
+| Single non-code asset (image / font / audio) | ≤ 200 KB | The old "≤ 200 KB per image" rule used to live only in a doc; now it is a real gate |
+| Total non-code assets | ≤ 600 KB | Stops one 900 KB PNG from slipping through the remaining headroom |
 
 Everything else is still a target rather than a gate: Phaser ≈ 350 KB gzip (shared chunk), ≤ 2 MB of
-per-game assets, ≤ 200 KB per image, ≤ 100 KB per audio clip, playable within 3 s on 4G, 60 fps mid-range
-/ ≥ 30 fps low-end, 3–5 minute sessions. Concrete KB figures move every round — **`pnpm size` is the
+per-game assets, ≤ 100 KB per audio clip, playable within 3 s on 4G, 60 fps mid-range /
+≥ 30 fps low-end, 3–5 minute sessions. Concrete KB figures move every round — **`pnpm size` is the
 source of truth**, and the numbers in the Chinese §7.x are historical measurements from their own round.
 
 ---
@@ -510,8 +519,9 @@ at the far left of the timeline scroll, producing a span "from myth to recorded 
 
 **Two new reusable templates**
 - **`grow`** (persistence): repeated taps make one thing grow. Reusable for 愚公移山, 精卫填海, 铁杵磨针, 闻鸡起舞, 卧薪尝胆.
-  *(Later note: the Pangu hold stage ended up using `tap`; the id `grow` is still declared in the contract
-  but unused. Rewriting templates into a shared `tap` primitive turned out to be the cheaper reuse.)*
+  *(Later note: the Pangu hold stage ended up using `tap`; the id `grow` was deleted from the contract on
+  2026-10-18 together with the other eight reserved ids. Rewriting templates into a shared `tap` primitive
+  turned out to be the cheaper reuse.)*
 - **`place`** (belonging): drag things where they belong. Reusable for 孔融让梨, 完璧归赵, 负荆请罪.
 
 The "tap the egg until it bursts" scene is **game-specific code** (`games/pangu/src/scenes/chaos.ts`), not a template —
@@ -566,14 +576,16 @@ number comes from `pnpm size`.
 5. ✅ First story: Cao Chong Weighs the Elephant.
 6. ✅ Art style: rounded cartoon.
 7. ✅ Myth data model: a `kind` field; myths at the far left of the timeline.
-8. ✅ Second story: Pangu, shipping the `grow` and `place` templates.
+8. ✅ Second story: Pangu, shipping the `grow` and `place` templates (`grow` was later replaced by `tap` and removed from the contract).
 9. ✅ Bilingual UI / content / narration / docs, with build-time enforcement.
 
 ## 9. Still open
 
 - Everything the Chinese document added after §7.3 (bilingual follow-ups, the six stratagem volumes, the
-  size-guard budgets, the content split, the due-review feature of §7.17) has not been translated here —
-  see the banner at the top; the Chinese document is authoritative.
+  size-guard budgets, the content split, the due-review feature of §7.17 and the 2026-10-15 review notes of
+  §7.18) has not been translated here — see the banner at the top; the Chinese document is authoritative.
+  The factual parts of this file (counts, template table, budgets, roadmap) were updated to match the code
+  on 2026-10-18.
 - When real art enters the pipeline (everything is still drawn with geometry).
 - Whether the timeline scroll should tint myths differently (data is ready, UI is not).
 - Whether to pursue WeChat mini-games.

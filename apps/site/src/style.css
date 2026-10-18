@@ -15,7 +15,9 @@ body {
 
 body {
   background: #3a2f26;
-  /* iOS 会忽略 user-scalable=no，双击按钮仍可能缩放 */
+  /* 允许双击缩放手势，但游戏画布自己禁掉（见 .game-host canvas）。
+     ★ 不再用 maximum-scale=1 / user-scalable=no 锁死缩放：
+     那会让弱视用户在**大厅 / 图鉴 / 复习**这些文字页也没法放大（WCAG 1.4.4）。 */
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
@@ -37,4 +39,17 @@ body {
 #app {
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* 系统开了"减少动态效果"：DOM 层的过渡/动画一律压到最短。
+   游戏内的相机淡入等由 ctx.reducedMotion 单独处理（BaseScene.fadeIn）。 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

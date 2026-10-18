@@ -22,8 +22,4 @@ describe('夸父追日 · 关卡数据', () => {
     expect(river!.at).toBeGreaterThan(0.2);
     expect(river!.at).toBeLessThan(0.8);
   });
-
-  it('故事很短', () => {
-    expect(raw?.story.length).toBeLessThanOrEqual(2);
-  });
 });

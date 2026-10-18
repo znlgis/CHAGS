@@ -1,0 +1,9 @@
+{
+  "phaser": "4.2.1",
+  "recipe": "b-tier-v1",
+  "entryHash": "f4ca599564857035",
+  "artifact": "phaser-trim.esm.js",
+  "bytes": 880506,
+  "gzipBytes": 227189,
+  "builtAt": "2026-10-18T05:42:15.669Z"
+}

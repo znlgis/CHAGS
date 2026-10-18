@@ -29,8 +29,7 @@ describe('狡兔三窟 · 关卡数据', () => {
     expect(waveResult({ left: 4, mid: 4 }, level.waves[0]!, level)).toBe('safe');
   });
 
-  it('故事两幕：先看见兔子，再听冯谖那句话', () => {
-    expect(raw?.story.length).toBe(2);
+  it('关键抉择在第二幕，史源用《战国策》', () => {
     expect(raw?.keyMoment.beatId).toBe('s2');
     expect(raw?.source.book).toContain('战国策');
   });

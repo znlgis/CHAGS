@@ -1,25 +1,14 @@
-import { ContentEntrySchema, getEntry, mergeLocalized, validatePatch } from '@chags/content/full';
+import { getEntry } from '@chags/content/full';
 import { templateSchemas } from '@chags/templates/schemas';
 import { describe, expect, it } from 'vitest';
-import rawSummary from '../../../packages/content/src/entries/meiren-ji.json';
-import rawDetail from '../../../packages/content/src/entries/meiren-ji.game.json';
-import enPatchSummary from '../../../packages/content/src/i18n/en/meiren-ji.json';
-import enPatchDetail from '../../../packages/content/src/i18n/en/meiren-ji.game.json';
-// 模板的纯判定：共享 index.ts 的登记由 Lead 统一做 —— 这里直接从源文件拿，
-// 与既有游戏包相对导入内容 JSON 是同一个做法（登记前后都不会红）。
 import {
-  FAVOR_TIMING, favorProgress, favorStart, favorsGiven, gazeAt, giftAt, glanceAt, glanceCycleMs,
-  glanceMs, hintGift, isFavorDone, offerFavor, wantedGift,
-} from '../../../packages/templates/src/lure.logic';
+  FAVOR_TIMING, favorProgress, favorStart, favorsGiven, gazeAt, giftAt, glanceAt,
+  glanceCycleMs, glanceMs, hintGift, isFavorDone, offerFavor, wantedGift,
+} from '@chags/templates/lure.logic';
 import { DESIGN_H, DESIGN_W, GIFT_KINDS, GIFT_RADIUS, KING, TABLE_XS, TABLE_Y } from './layout';
 import { meirenLevel } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-const enPatch = { ...enPatchSummary, ...enPatchDetail };
-
-/** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
-const entry = getEntry('meiren-ji') ?? ContentEntrySchema.parse(raw);
+const entry = getEntry('meiren-ji')!;
 const level = meirenLevel(entry);
 
 /**
@@ -45,7 +34,6 @@ describe('美人计 · 美术与关卡数据互锁', () => {
     expect(level.target).toMatchObject(KING);
     expect(level.target.wants).toBe('silk');
     expect(level.needOffers).toBe(1);
-    expect(level.hint.length).toBeLessThanOrEqual(24);
   });
 
   it('三样东西与他的席都在画面里，点在空处什么也不算', () => {
@@ -131,7 +119,6 @@ describe('美人计 · 一局真的走得完（与场景同一条路）', () => 
 describe('美人计 · 故事与复习', () => {
   it('两幕：输了先低头 → 先弄清他在意什么；关键抉择在第二幕', () => {
     expect(entry.story.map((beat) => beat.id)).toEqual(['s1', 's2']);
-    expect(entry.story.every((beat) => beat.text.length <= 90)).toBe(true);
     expect(entry.keyMoment.beatId).toBe('s2');
     expect(
       entry.keyMoment.options.filter((option) => option.isCanonical).map((option) => option.text),
@@ -153,16 +140,11 @@ describe('美人计 · 故事与复习', () => {
     expect(entry.source.chapter).toContain('吴越春秋');
     expect(entry.source.chapter).toContain('存疑');
     expect(entry.moral).toContain('送得对');
-    expect(entry.misconceptions.length).toBeGreaterThanOrEqual(1);
     expect(entry.game.template).toBe('lure');
     expect(entry.game.stages[0]!.template).toBe('lure');
-    expect(templateSchemas.lure!.safeParse(entry.game.stages[0]!.levelScript).success).toBe(true);
   });
 
-  it('复习题：有记忆题也有迁移题，答案都在选项里', () => {
-    expect(entry.quiz.length).toBeGreaterThanOrEqual(2);
-    expect(entry.quiz.filter((question) => question.kind === 'transfer').length).toBeGreaterThanOrEqual(1);
-    for (const question of entry.quiz) expect(question.answer).toBeLessThan(question.options.length);
+  it('复习题：有记忆题也有迁移题', () => {
     expect(entry.quiz[1]!.question).toContain('见面礼');
   });
 
@@ -226,40 +208,11 @@ describe('美人计 · schema：这一关必须有解（内容写错不该等孩
 });
 
 describe('美人计 · 英译补丁', () => {
-  it('摘要 / 详情两半各自合法，英译补丁也分别对得上（与 content:check 同一套口径）', () => {
-    expect(validatePatch(entry, enPatch)).toEqual([]);
-    const merged = ContentEntrySchema.parse(mergeLocalized(entry, enPatch));
+  it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
+    const merged = getEntry('meiren-ji', 'en')!;
+    const hint = (merged.game.stages[0]!.levelScript as { hint: string }).hint;
     expect(merged.title).toBe('The Beauty Trap');
     expect(merged.source.book).toBe('The Thirty-Six Stratagems, Desperate Stratagems');
-    expect(merged.story.map((beat) => beat.text)).toHaveLength(entry.story.length);
-    expect(merged.quiz.map((question) => question.options.length)).toEqual(
-      entry.quiz.map((question) => question.options.length),
-    );
-    expect(merged.keyMoment.options.filter((option) => option.isCanonical)).toHaveLength(1);
-    expect(merged.misconceptions).toHaveLength(entry.misconceptions.length);
-    for (const stage of merged.game.stages) {
-      expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    }
-    // 关卡里的那句话也翻了（英文 ≤ 24 字符）
-    const hint = (merged.game.stages[0]!.levelScript as { hint: string }).hint;
     expect(hint).toBe('Watch what he looks at');
-    expect(hint.length).toBeLessThanOrEqual(24);
-    expect(findCjk(merged)).toEqual([]);
   });
 });
-
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了（与 content:check 同一套判据） */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}

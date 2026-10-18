@@ -7,6 +7,7 @@ import type { DragController } from '@chags/phaser-kit';
 import { PLACE, SCENE_KEYS } from './layout';
 import { findSlotAt, isCorrect, isPlaceComplete, slotFor } from './place.logic';
 import type { PlaceLevel, PlaceOrb, PlaceSlot } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 export interface PlaceConfig {
@@ -178,7 +179,8 @@ export function createPlaceScene(ctx: GameContext, cfg: PlaceConfig): Phaser.Typ
         this.settle(orb, node, slot);
         return;
       }
-      // 放错了不惩罚，弹回托盘继续试
+      // 放错了：不结束、不锁操作，弹回托盘继续试；这一下记进 mistakes（放错了一次）
+      recordAttempt(cfg.session, { ok: false });
       this.clearHint();
       node.setDepth(30);
       this.sfx('tap');
@@ -195,6 +197,8 @@ export function createPlaceScene(ctx: GameContext, cfg: PlaceConfig): Phaser.Typ
     private settle(orb: PlaceOrb, node: Phaser.GameObjects.Container, slot: PlaceSlot): void {
       this.clearHint();
       this.placed.push(slot.id);
+      // 归位一件：这一次做对了（不是接在 finish 之后，收尾动画里再放不算）
+      if (!this.finished) recordAttempt(cfg.session, { ok: true });
       this.sfx('correct');
       this.speak(orb.speak);
       sparkleAt(this, slot.x, slot.y, THEME.gold, 6);
@@ -220,17 +224,21 @@ export function createPlaceScene(ctx: GameContext, cfg: PlaceConfig): Phaser.Typ
     private finish(): void {
       if (this.finished) return;
       this.finished = true;
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, (PLACE.skyTop + PLACE.earthBottom) / 2, THEME.gold, 12);
-      // 先让孩子看一眼"完整的世界"，再出现那句话 —— 别让文字挡住日月的点亮时刻
-      // 放在地面下缘：别挡住刚刚点亮的日月星辰（英文句子更长，气泡也更高）
-      if (cfg.drawFinale) {
-        const finale = this.add.graphics().setDepth(40);
-        cfg.drawFinale(finale, [...this.placed]);
-      }
-      this.time.delayedCall(1400, () => this.showHint(cfg.reveal, 3200, 1030));
-      this.time.delayedCall(4200, () => this.scene.start(cfg.nextSceneKey));
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        sparkle: { x: this.W / 2, y: (PLACE.skyTop + PLACE.earthBottom) / 2, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealDelayMs: 1400,
+        revealY: 1030,
+        finalize: () => {
+          // 先让孩子看一眼"完整的世界"，再出现那句话 —— 别让文字挡住日月的点亮时刻
+          // 放在地面下缘：别挡住刚刚点亮的日月星辰（英文句子更长，气泡也更高）
+          if (cfg.drawFinale) {
+            const finale = this.add.graphics().setDepth(40);
+            cfg.drawFinale(finale, [...this.placed]);
+          }
+        }
+      });
     }
   };
 }

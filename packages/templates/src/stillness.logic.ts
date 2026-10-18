@@ -5,7 +5,7 @@ import type { StillnessBeat, StillnessFeignLevel, StillnessLevel, StillnessTest 
  *
  * 这一关的账本只有一条 —— **鼓响的时候出手，等于把力气白送给对方**。
  * 鼓一通接一通地响（beat 按时间顺序排），只有 correct 那一通的窗口里出手才算数；
- * 在别的时候出手只记一次"白费力气"，不扣星、不结束，接着等就是。
+ * 在别的时候出手记一次"白费力气"（记进 mistakes），不结束，接着等就是。
  *
  * 判定全部按**时间轴**算（t 是从这一轮开始算起的毫秒数）：
  * 场景用墙钟喂 t，单测直接喂数字 —— 同一份判定，两边不会跑偏。
@@ -26,7 +26,7 @@ export interface StillnessPhaseInfo {
 export interface StillnessState {
   /** 已经在正确的窗口里出手了 */
   done: boolean;
-  /** 白费力气了几次（不扣星，只用来复盘） */
+  /** 白费力气了几次（复盘用；场景据此记 mistakes） */
   early: number;
   /** 每一次白鼓是在哪一通上 —— 提示语与复盘用 */
   earlyBeatIds: string[];
@@ -189,7 +189,7 @@ export function effectiveLevel(
 
 /**
  * 假痴不癫（feign）的账本：对手一次次来**试探**，试探期里任何一下点击都算露馅
- * （记一笔 slip —— **零惩罚**：不扣星、不结束、不锁操作，接着忍就是）；
+ * （记一笔 slip —— 记进 mistakes；不结束、不锁操作，接着忍就是）；
  * 试探之间的**空档**里点一下，才推进一步；推够 `steps` 步，机会就成熟了。
  *
  * 三条刻意的设计：
@@ -214,7 +214,7 @@ export interface FeignPhaseInfo {
 export interface FeignState {
   /** 空档里行动了几次 */
   progress: number;
-  /** 试探期露馅了几次（零惩罚，只用来复盘 —— 这一计最好看的一笔账） */
+  /** 试探期露馅了几次（只用来复盘，场景据此记 mistakes —— 这一计最好看的一笔账） */
   slips: number;
   /** 每一次露馅是在哪一次试探上 */
   slipTestIds: string[];
@@ -284,7 +284,7 @@ export function feignCanAct(level: StillnessFeignLevel, t: number): boolean {
 
 /**
  * 动了一下手：
- * - 试探期 → 只记一笔 slip（**零惩罚**，不打断、不结束、不锁操作）；
+ * - 试探期 → 记一笔 slip（**不打断、不结束、不锁操作**，记进 mistakes）；
  * - 空档期 → progress 加一，推够 steps 就是成了；
  * - 一轮走完（done）→ 什么也不记（重开一轮就是了）。
  */
@@ -384,7 +384,7 @@ export function effectiveFeignLevel(
  * - **"什么都没做"也算一笔账**：一轮的"盯着"看完、这期间一下都没点，这一轮就记成"忍住"。
  *   进度是随时间长的，所以有一条 calmTick(level, state, t) 专门把墙钟喂进来
  *   （与 chase 的 tick 同一个路数：判定与画面不会跑偏）。
- * - **盯着的时候点一下 = 这一轮白忍**：记一笔 slip、这一轮不算"忍住"（**零惩罚**：不扣星、不结束、
+ * - **盯着的时候点一下 = 这一轮白忍**：记一笔 slip、这一轮不算"忍住"（记进 mistakes、不结束、
  *   也不锁操作，下一轮照样能赢）；他移开目光的那一段里点一下什么也不算 —— 他没看见。
  * - **忍够 needed 轮他就退**：cleanWatches(state) 数的是"忍住的那几轮"，一局里最多 needed。
  *
@@ -409,7 +409,7 @@ export interface CalmPhaseInfo {
 export interface CalmState {
   /** 城门大开 —— 开了才有后面那几轮盯着看 */
   gateOpen: boolean;
-  /** 动了几次（零惩罚，只用来复盘；同一轮里连点也只记一笔） */
+  /** 动了几次（只用来复盘，场景据此记 mistakes；同一轮里连点也只记一笔） */
   slips: number;
   /** 每一次"动了"是在哪一轮上 */
   slipWatchIds: string[];
@@ -524,7 +524,7 @@ export function calmTick(
 
 /**
  * 动了一下手（真实操作与无头验证走的是同一条路）：
- * - **他盯着的时候**：记一笔 slip，这一轮就不算"忍住"了（**零惩罚**：不打断、不结束、不锁操作）；
+ * - **他盯着的时候**：记一笔 slip，这一轮就不算"忍住"了（记进 mistakes、不打断、不结束、不锁操作）；
  * - **他移开目光的时候**：什么也不记 —— 他没看见；
  * - **城门还没开**：什么也不记（还没轮到"忍住"）。
  */

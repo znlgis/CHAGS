@@ -17,6 +17,7 @@ import {
 import type { StepState } from './chain.logic';
 import type { ChainGate, ChainLevel, ChainStepLevel } from './schemas';
 import type { ChainStepPost } from './chain.logic';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 // 第 35 计连环计（domino）的判定与类型：与 pass / step 那两段并列，互不影响
 import {
@@ -97,7 +98,7 @@ export interface ChainStageState {
   /** 刚拿下的关口 / 什么时候拿下的（画一次"这里拿下了"的强调） */
   lastGateId: string | null;
   lastGateAtMs: number;
-  /** 上一次"还轮不到这里"发生在什么时候（晃一下，不扣星） */
+  /** 上一次"还轮不到这里"发生在什么时候（记进 mistakes 的那一下） */
   lastWrongAtMs: number;
   /** 点空了几次：只是复盘用，不扣星也不结束 */
   misses: number;
@@ -128,8 +129,8 @@ export interface ChainConfig {
  * 三条刻意的设计：
  * - **顺序就是这一关**：没借到路，一个关口也拿不了；前一个关口没拿下，后一个动不了。
  *   判定全在 chain.logic 里（只认"下一个"），场景只负责"手指落在哪儿"与画面。
- * - **点错零惩罚**：跳着点、回头点、还没借路就点关口 —— 都只是没进展（原样返回），
- *   不扣星、不结束、不锁操作；小手马上指出该动的下一处。
+ * - **点错也记账**：跳着点、回头点、还没借路就点关口 —— 都只是没进展（原样返回），
+ *   记进 mistakes、不结束、不锁操作；小手马上指出该动的下一处。
  * - **关口木牌上的字来自关卡脚本**（label 字段），双语由译文补丁给 ——
  *   模板不写死任何一句话。
  *
@@ -326,14 +327,14 @@ function createPassChainScene(ctx: GameContext, cfg: ChainConfig): Phaser.Types.
         correct: true,
         latencyMs: this.now(),
       });
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
+      recordAttempt(cfg.session, { ok: true });
       this.time.delayedCall(CHAIN.envoyMs, () => this.pointAtNext());
     }
 
     /**
      * 取下一处关口：**只认"下一个"**。
-     * 还没借路 / 跳着点 / 回头点已经拿下的 —— 都是原样返回，零惩罚。
+     * 还没借路 / 跳着点 / 回头点已经拿下的 —— 都是原样返回：
+     * 不结束、不锁操作，但这一下记进 mistakes（见 rejected）。
      */
     private pressGate(gate: ChainGate): void {
       if (this.done) return;
@@ -355,8 +356,7 @@ function createPassChainScene(ctx: GameContext, cfg: ChainConfig): Phaser.Types.
         correct: true,
         latencyMs: this.now(),
       });
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
+      recordAttempt(cfg.session, { ok: true });
       this.hideHand();
       this.time.delayedCall(CHAIN.gateMs, () => this.pointAtNext());
     }
@@ -374,13 +374,13 @@ function createPassChainScene(ctx: GameContext, cfg: ChainConfig): Phaser.Types.
       this.sfx('correct');
       sparkleAt(this, this.level.home.x, this.level.home.y, THEME.gold, 8);
       this.ctx.emit('beat:enter', { beatId: 'chain:home' });
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
+      recordAttempt(cfg.session, { ok: true });
       this.finish();
     }
 
-    /** 还轮不到这里（零惩罚）：只是没进展，指一指该动的地方 */
+    /** 还轮不到这里：不结束、不锁操作；这一下记进 mistakes（点了不该点的关口 / 还没借到路） */
     private rejected(x: number, y: number, id: string): void {
+      recordAttempt(cfg.session, { ok: false });
       this.lastWrongAt = this.now();
       this.idleMs = 0;
       this.sfx('tap');
@@ -407,23 +407,22 @@ function createPassChainScene(ctx: GameContext, cfg: ChainConfig): Phaser.Types.
       this.done = true;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.level.home.x, this.level.home.y, THEME.gold, 12);
-      this.ctx.emit('beat:enter', { beatId: 'chain:done' });
-      this.ctx.emit('choice:made', {
-        beatId: 'chain:home',
-        choiceId: 'home',
-        correct: true,
-        latencyMs: this.now(),
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? CHAIN.finaleHoldMs,
+        sparkle: { x: this.level.home.x, y: this.level.home.y, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: CHAIN.hintY,
+        finalize: () => {
+          this.ctx.emit('beat:enter', { beatId: 'chain:done' });
+          this.ctx.emit('choice:made', {
+            beatId: 'chain:home',
+            choiceId: 'home',
+            correct: true,
+            latencyMs: this.now(),
+          });
+        }
       });
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, CHAIN.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? CHAIN.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
     }
 
     // ---------------- 小手与提示 ----------------
@@ -578,12 +577,12 @@ export interface ChainStepMetrics {
   granted: boolean;
   /** 一共求了几次允许（复盘用，不惩罚） */
   asks: number;
-  /** 允许过期作废过几次（零惩罚，只记一笔） */
+  /** 允许过期作废过几次（记进 mistakes 的那几笔） */
   lapses: number;
   /** 刚接手的那个岗位 / 什么时候接手的（画一次"这里接手了"的强调） */
   lastPostId: string | null;
   lastPostAtMs: number;
-  /** 上一次"还轮不到这里 / 还没被允许"发生在什么时候（晃一下，不扣星） */
+  /** 上一次"还轮不到这里 / 还没被允许"发生在什么时候（记进 mistakes 的那一下） */
   lastWrongAtMs: number;
   /** 点空了几次：只是复盘用，不扣星也不结束 */
   misses: number;
@@ -662,7 +661,7 @@ export function chainStepGrantBar(
  *   急不得（第 30 计的落点恰恰是"一步一步来"）。
  * - **判定全在 chain.logic 里**：场景只把墙钟喂给 isGranted / takeOver，
  *   单测与画面用的是同一份判定，不会跑偏。
- * - **过期零惩罚**：允许过期只是没进展 —— 不扣星、不结束、不锁操作；
+ * - **过期也记账**：允许过期只是没进展 —— 记进 mistakes、不结束、不锁操作；
  *   小手马上放回求允许的地方，重新求一次就好（lapses 只记一笔，用来复盘）。
  */
 function createStepChainScene(
@@ -746,7 +745,7 @@ function createStepChainScene(
     private tick(delta: number): void {
       const t = this.now();
       if (!this.done) {
-        // 允许过期：作废就作废（零惩罚）—— 只记一笔，把小手放回求允许的地方
+        // 允许过期：作废就作废 —— 记进 mistakes，把小手放回求允许的地方
         if (this.grantAlive && !isGranted(this.level, this.state, t)) {
           this.grantAlive = false;
           this.lapses += 1;
@@ -871,7 +870,8 @@ function createStepChainScene(
 
     /**
      * 接手一处岗位：**只认"下一个岗位 + 允许有效"**。
-     * 没求允许 / 允许过期 / 跳着点 / 回头点已经接手的 —— 都是原样返回，零惩罚。
+     * 没求允许 / 允许过期 / 跳着点 / 回头点已经接手的 —— 都是原样返回：
+     * 不结束、不锁操作，但这一下记进 mistakes（见 rejected）。
      */
     private pressPost(post: ChainStepPost): void {
       if (this.done) return;
@@ -895,8 +895,7 @@ function createStepChainScene(
         correct: true,
         latencyMs: t,
       });
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
+      recordAttempt(cfg.session, { ok: true });
       this.hideHand();
       this.redraw(t);
       if (isStepDone(this.level, this.state)) {
@@ -906,8 +905,9 @@ function createStepChainScene(
       this.pointAtNext();
     }
 
-    /** 还轮不到这里 / 还没被允许（零惩罚）：只是没进展，指一指该动的地方 */
+    /** 还轮不到这里 / 还没被允许：不结束、不锁操作；这一下记进 mistakes（点错了岗位 / 允许过期） */
     private rejected(x: number, y: number, id: string): void {
+      recordAttempt(cfg.session, { ok: false });
       this.lastWrongAt = this.now();
       this.idleMs = 0;
       this.sfx('tap');
@@ -934,24 +934,23 @@ function createStepChainScene(
       this.done = true;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
-      this.ctx.emit('beat:enter', { beatId: 'chain:done' });
-      this.ctx.emit('choice:made', {
-        beatId: 'chain:takeover',
-        choiceId: 'done',
-        correct: true,
-        latencyMs: this.now(),
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? CHAIN_STEP.finaleHoldMs,
+        sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: CHAIN_STEP.hintY,
+        finalize: () => {
+          this.ctx.emit('beat:enter', { beatId: 'chain:done' });
+          this.ctx.emit('choice:made', {
+            beatId: 'chain:takeover',
+            choiceId: 'done',
+            correct: true,
+            latencyMs: this.now(),
+          });
+          this.redraw(this.now());
+        }
       });
-      this.redraw(this.now());
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, CHAIN_STEP.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? CHAIN_STEP.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
     }
 
     // ---------------- 小手与提示 ----------------
@@ -1074,14 +1073,14 @@ export interface ChainDominoMetrics {
   running: boolean;
   /** 起过头没有（断过也算 —— 复盘看的是这个过程） */
   ignited: boolean;
-  /** 断了几次（零惩罚，只记一笔） */
+  /** 断了几次（记进 mistakes 的那几笔） */
   breaks: number;
   /** 起头了几次（重新起头也算） */
   ignites: number;
   /** 刚点亮的那一环 / 什么时候点亮的（画一次"这里接上了"的强调） */
   lastLinkId: string | null;
   lastLinkAtMs: number;
-  /** 上一次"还轮不到这里"发生在什么时候（晃一下，不扣星） */
+  /** 上一次"还轮不到这里"发生在什么时候（记进 mistakes 的那一下） */
   lastWrongAtMs: number;
   /** 点空了几次：只是复盘用，不扣星也不结束 */
   misses: number;
@@ -1175,9 +1174,9 @@ export const CHAIN_DOMINO = {
  * - **顺序就是这一关**：没起头，点哪一环都没反应；起头之后只认"下一环"，
  *   顺序点错和不点一样，只是没反应。判定全在 chain.logic 里，场景只把墙钟喂给它。
  * - **一环接一环**：每一环点亮之后，下一环要在关卡的 windowMs 之内点上 ——
- *   超时链子就断了，**从起头重来**（零惩罚，只记一笔 break）。所以这一关的节奏是
+ *   超时链子就断了，**从起头重来**（记进 mistakes，只记一笔 break）。所以这一关的节奏是
  *   "快而不乱"：急，但每一步都得落在点上（第 35 计的落点）。
- * - **断了零惩罚**：不扣星、不结束、不锁操作；断的那一刻只播一句关卡自己的 breakLine，
+ * - **断了也记账**：记进 mistakes、不结束、不锁操作；断的那一刻只播一句关卡自己的 breakLine，
  *   小手马上放回起头的地方，重新点一次就好。breaks 只用来复盘。
  */
 function createDominoChainScene(
@@ -1245,10 +1244,12 @@ function createDominoChainScene(
     private tick(delta: number): void {
       const t = this.now();
       if (!this.done) {
-        // 链子断了：落账（回到"还没起头"，记一笔 break —— 零惩罚）—— 每一帧都调，只记一次
+        // 链子断了：落账（回到"还没起头"，记一笔 break 与 mistakes）—— 每一帧都调，只记一次
         const settled = settleDomino(this.level, this.state, t);
         if (settled !== this.state) {
           this.state = settled;
+          // 没在时限里接上这一环：记一次做错（不结束、不锁操作，重新起头就是）
+          recordAttempt(cfg.session, { ok: false });
           this.ctx.emit('beat:enter', { beatId: 'chain:break:' + this.state.breaks });
           this.ctx.services.audio.tone(240, 200);
           this.showHint(cfg.level.breakLine, 2600, CHAIN_DOMINO.hintY);
@@ -1365,8 +1366,8 @@ function createDominoChainScene(
 
     /**
      * 点亮一环：**只认"下一环 + 还在时限里"**。
-     * 没起头 / 不是这一环 / 已经断了 —— 都不扣星、不结束：前两种只是没进展，
-     * 断了就回起头重来（场景提示 breakLine 的那一句）。
+     * 没起头 / 不是这一环 / 已经断了 —— 都不结束、不锁操作：前两种只是没进展
+     * （点错顺序记进 mistakes），断了就回起头重来（场景提示 breakLine 的那一句）。
      */
     private pressLink(link: ChainDominoLink): void {
       if (this.done) return;
@@ -1374,8 +1375,14 @@ function createDominoChainScene(
       const verdict = advanceDomino(this.level, this.state, link.id, t);
       if (verdict !== 'ok') {
         this.state = applyDomino(this.level, this.state, link.id, t);
-        if (verdict === 'expired') this.broken(link);
-        else this.rejected(link);
+        if (verdict === 'expired') {
+          this.broken(link);
+        } else {
+          // 'wrong'：点错了顺序（跳着点 / 回头点 / 不是这一环）—— 记一次做错；
+          // 'notStarted'：还没起头，点哪一环都没反应，不算（探索性点击）
+          if (verdict === 'wrong') recordAttempt(cfg.session, { ok: false });
+          this.rejected(link);
+        }
         return;
       }
       this.state = applyDomino(this.level, this.state, link.id, t);
@@ -1391,8 +1398,7 @@ function createDominoChainScene(
         correct: true,
         latencyMs: t,
       });
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
+      recordAttempt(cfg.session, { ok: true });
       this.hideHand();
       this.redraw(t);
       if (isDominoDone(this.level, this.state)) {
@@ -1402,8 +1408,10 @@ function createDominoChainScene(
       this.pointAtNext();
     }
 
-    /** 链子断了（零惩罚）：只是回到起头，指一指岸边那处火种 */
+    /** 链子断了：不结束、不锁操作；这一下记进 mistakes（点晚了，没在时限里接上） */
     private broken(link: ChainDominoLink): void {
+      // 同一个 break 只会走到这里一次：计时断链由 tick 的 settleDomino 落账，这里只处理"点晚了"
+      recordAttempt(cfg.session, { ok: false });
       this.idleMs = 0;
       this.ctx.services.audio.tone(240, 200);
       this.ripple(link.x, link.y, 52, THEME.inkSoft);
@@ -1412,7 +1420,7 @@ function createDominoChainScene(
       this.pointAtNext();
     }
 
-    /** 还轮不到这一环（零惩罚）：只是没进展，指一指该动的地方 */
+    /** 还轮不到这一环：只是没进展（点错顺序在 pressLink 里记账），指一指该动的地方 */
     private rejected(link: ChainDominoLink): void {
       this.lastWrongAt = this.now();
       this.idleMs = 0;
@@ -1440,24 +1448,23 @@ function createDominoChainScene(
       this.done = true;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
-      this.ctx.emit('beat:enter', { beatId: 'chain:domino:done' });
-      this.ctx.emit('choice:made', {
-        beatId: 'chain:light',
-        choiceId: 'done',
-        correct: true,
-        latencyMs: this.now(),
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? CHAIN_DOMINO.finaleHoldMs,
+        sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: CHAIN_DOMINO.hintY,
+        finalize: () => {
+          this.ctx.emit('beat:enter', { beatId: 'chain:domino:done' });
+          this.ctx.emit('choice:made', {
+            beatId: 'chain:light',
+            choiceId: 'done',
+            correct: true,
+            latencyMs: this.now(),
+          });
+          this.redraw(this.now());
+        }
       });
-      this.redraw(this.now());
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, CHAIN_DOMINO.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? CHAIN_DOMINO.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
     }
 
     // ---------------- 小手与提示 ----------------

@@ -6,10 +6,17 @@ export * from '../schema';
 export * from '../i18n';
 export * from './index';
 export { gamePatches, gamePatchFor } from '../i18n/game';
+// 摘要侧的纯工具（node 侧 CLI 与测试也走 full 这一个入口）
+export { stageScript } from '../stage';
+export { DETAIL_KEYS, SUMMARY_KEYS, splitEntry } from '../split';
 
-import { EntryDetailSchema, ContentEntrySchema } from '../schema';
-import type { ContentEntry, EntryDetail } from '../schema';
-import { patchFor } from '../i18n';
+import type { ContentEntry, EntryDetail, GameStage, QuizQuestion } from '../schema';
+import { patchFor, registerPatches } from '../i18n';
+// Node 侧一次注册全量摘要译文（浏览器用不到这里，见 loadEntry.ts）
+import { patches as summaryPatches } from '../i18n/en';
+registerPatches({ en: summaryPatches });
+/** 与旧接口一致：按语言分组的摘要译文补丁（内容体检用） */
+export const patches: Partial<Record<Locale, Record<string, unknown>>> = { en: summaryPatches };
 import { gamePatchFor } from '../i18n/game';
 import { DEFAULT_LOCALE } from '../locale';
 import type { Locale } from '../locale';
@@ -76,75 +83,87 @@ import rawZouGame from './zou-weishang.game.json';
  * Vite 因此会把它切成一个懒加载 chunk —— 首屏不会为了渲染卡片把 35 条关卡脚本一起下下来。
  * 游戏包与内容体检直接 import '@chags/content/full'（同步，好写测试）。
  */
-export const entryDetails: Record<string, EntryDetail> = {
-  'caochong-elephant': EntryDetailSchema.parse(raw),
-  'pangu': EntryDetailSchema.parse(rawPangu),
-  'houyi': EntryDetailSchema.parse(rawHouyi),
-  'nuwa': EntryDetailSchema.parse(rawNuwa),
-  'jingwei': EntryDetailSchema.parse(rawJingwei),
-  'kuafu': EntryDetailSchema.parse(rawKuafu),
-  'yugong': EntryDetailSchema.parse(rawYugong),
-  'shennong': EntryDetailSchema.parse(rawShennong),
-  'qiren': EntryDetailSchema.parse(rawQiren),
-  'fenghuo': EntryDetailSchema.parse(rawFenghuo),
-  'taigong': EntryDetailSchema.parse(rawTaigong),
-  'dayu': EntryDetailSchema.parse(rawDayu),
-  'kezhou': EntryDetailSchema.parse(rawKezhou),
-  'zhaosanmusi': EntryDetailSchema.parse(rawZhaosanmusi),
-  'jiaotu': EntryDetailSchema.parse(rawJiaotu),
-  'yangyouji': EntryDetailSchema.parse(rawYangyouji),
-  'paoding': EntryDetailSchema.parse(rawPaoding),
-  'mantian-guohai': EntryDetailSchema.parse(rawMantian),
-  'weiwei-jiuzhao': EntryDetailSchema.parse(rawWeiwei),
-  'jiedao-sharen': EntryDetailSchema.parse(rawJiedao),
-  'yiyi-dailao': EntryDetailSchema.parse(rawYiyi),
-  'chenhuo-dajie': EntryDetailSchema.parse(rawChenhuo),
-  'shengdong-jixi': EntryDetailSchema.parse(rawShengdong),
-  'wuzhong-shengyou': EntryDetailSchema.parse(rawWuzhong),
-  'andu-chencang': EntryDetailSchema.parse(rawAndu),
-  'gean-guanhuo': EntryDetailSchema.parse(rawGean),
-  'xiaoli-cangdao': EntryDetailSchema.parse(rawXiaoli),
-  'lidai-taojiang': EntryDetailSchema.parse(rawLidai),
-  'shunshou-qianyang': EntryDetailSchema.parse(rawShunshou),
-  'dacao-jingshe': EntryDetailSchema.parse(rawDacao),
-  'jieshi-huanhun': EntryDetailSchema.parse(rawJieshi),
-  'diaohu-lishan': EntryDetailSchema.parse(rawDiaohu),
-  'yuqin-guzong': EntryDetailSchema.parse(rawYuqin),
-  'paozhuan-yinyu': EntryDetailSchema.parse(rawPaozhuan),
-  'qinzei-qinwang': EntryDetailSchema.parse(rawQinzei),
-  'fudi-chouxin': EntryDetailSchema.parse(rawFudi),
-  'hunshui-moyu': EntryDetailSchema.parse(rawHunshui),
-  'jinchan-tuoqiao': EntryDetailSchema.parse(rawJinchan),
-  'guanmen-zhuozei': EntryDetailSchema.parse(rawGuanmen),
-  'yuanjiao-jingong': EntryDetailSchema.parse(rawYuanjiao),
-  'jiadao-faguo': EntryDetailSchema.parse(rawJiadao),
-  'touliang-huanzhu': EntryDetailSchema.parse(rawTouliang),
-  'zhisang-mahuai': EntryDetailSchema.parse(rawZhisang),
-  'jiachi-budian': EntryDetailSchema.parse(rawJiachi),
-  'shangwu-chouti': EntryDetailSchema.parse(rawShangwu),
-  'shushang-kaihua': EntryDetailSchema.parse(rawShushang),
-  'fanke-weizhu': EntryDetailSchema.parse(rawFanke),
-  'meiren-ji': EntryDetailSchema.parse(rawMeirenGame),
-  'kongcheng-ji': EntryDetailSchema.parse(rawKongchengGame),
-  'fanjian-ji': EntryDetailSchema.parse(rawFanjianGame),
-  'kurou-ji': EntryDetailSchema.parse(rawKurouGame),
-  'lianhuan-ji': EntryDetailSchema.parse(rawLianhuanGame),
-  'zou-weishang': EntryDetailSchema.parse(rawZouGame),
+/** 同 entries/index.ts：JSON 的字符串字面量会被拓宽，这里只校验结构完整性 */
+type RawQuizQuestion = Omit<QuizQuestion, 'kind'> & { kind: string };
+type RawStage = Omit<GameStage, 'template'> & { template: string };
+type RawDetail = Omit<EntryDetail, 'quiz' | 'game'> & {
+  quiz: RawQuizQuestion[];
+  game: Omit<EntryDetail['game'], 'template' | 'stages'> & {
+    template: string;
+    stages: RawStage[];
+  };
 };
 
-/** 完整条目：摘要 + 详情（两条记录合并之后再过一次完整 schema） */
-export const entries: ContentEntry[] = entrySummaries.map((summary) =>
-  ContentEntrySchema.parse({ ...summary, ...entryDetails[summary.id] }),
-);
+const detailOf = (raw: RawDetail): EntryDetail => raw as EntryDetail;
 
-/** 取某个模板的阶段脚本；缺了就早失败，别等玩到一半才发现 */
-export function stageScript(content: ContentEntry, template: string): unknown {
-  const stage = content.game.stages.find((s) => s.template === template);
-  if (!stage) {
-    throw new Error('内容 ' + content.id + ' 缺少 ' + template + ' 阶段脚本');
-  }
-  return stage.levelScript;
-}
+export const entryDetails: Record<string, EntryDetail> = {
+  'caochong-elephant': detailOf(raw),
+  'pangu': detailOf(rawPangu),
+  'houyi': detailOf(rawHouyi),
+  'nuwa': detailOf(rawNuwa),
+  'jingwei': detailOf(rawJingwei),
+  'kuafu': detailOf(rawKuafu),
+  'yugong': detailOf(rawYugong),
+  'shennong': detailOf(rawShennong),
+  'qiren': detailOf(rawQiren),
+  'fenghuo': detailOf(rawFenghuo),
+  'taigong': detailOf(rawTaigong),
+  'dayu': detailOf(rawDayu),
+  'kezhou': detailOf(rawKezhou),
+  'zhaosanmusi': detailOf(rawZhaosanmusi),
+  'jiaotu': detailOf(rawJiaotu),
+  'yangyouji': detailOf(rawYangyouji),
+  'paoding': detailOf(rawPaoding),
+  'mantian-guohai': detailOf(rawMantian),
+  'weiwei-jiuzhao': detailOf(rawWeiwei),
+  'jiedao-sharen': detailOf(rawJiedao),
+  'yiyi-dailao': detailOf(rawYiyi),
+  'chenhuo-dajie': detailOf(rawChenhuo),
+  'shengdong-jixi': detailOf(rawShengdong),
+  'wuzhong-shengyou': detailOf(rawWuzhong),
+  'andu-chencang': detailOf(rawAndu),
+  'gean-guanhuo': detailOf(rawGean),
+  'xiaoli-cangdao': detailOf(rawXiaoli),
+  'lidai-taojiang': detailOf(rawLidai),
+  'shunshou-qianyang': detailOf(rawShunshou),
+  'dacao-jingshe': detailOf(rawDacao),
+  'jieshi-huanhun': detailOf(rawJieshi),
+  'diaohu-lishan': detailOf(rawDiaohu),
+  'yuqin-guzong': detailOf(rawYuqin),
+  'paozhuan-yinyu': detailOf(rawPaozhuan),
+  'qinzei-qinwang': detailOf(rawQinzei),
+  'fudi-chouxin': detailOf(rawFudi),
+  'hunshui-moyu': detailOf(rawHunshui),
+  'jinchan-tuoqiao': detailOf(rawJinchan),
+  'guanmen-zhuozei': detailOf(rawGuanmen),
+  'yuanjiao-jingong': detailOf(rawYuanjiao),
+  'jiadao-faguo': detailOf(rawJiadao),
+  'touliang-huanzhu': detailOf(rawTouliang),
+  'zhisang-mahuai': detailOf(rawZhisang),
+  'jiachi-budian': detailOf(rawJiachi),
+  'shangwu-chouti': detailOf(rawShangwu),
+  'shushang-kaihua': detailOf(rawShushang),
+  'fanke-weizhu': detailOf(rawFanke),
+  'meiren-ji': detailOf(rawMeirenGame),
+  'kongcheng-ji': detailOf(rawKongchengGame),
+  'fanjian-ji': detailOf(rawFanjianGame),
+  'kurou-ji': detailOf(rawKurouGame),
+  'lianhuan-ji': detailOf(rawLianhuanGame),
+  'zou-weishang': detailOf(rawZouGame),
+};
+
+/**
+ * 完整条目：摘要 + 详情。
+ *
+ * 这里**不再跑 ContentEntrySchema.parse**：结构由两件事保证 ——
+ * ① 每个 JSON 的推断类型直接赋给 EntrySummary / EntryDetail（字段漏了/写错在 pnpm typecheck 就红）；
+ * ② 构建期 pnpm content:check 用同一套 zod schema 对全量内容（含中英合并后）跑一遍。
+ * 运行时再 parse 一次只会把 zod 拖进包里（曾经占首屏 24.7 KB gzip）。
+ */
+export const entries: ContentEntry[] = entrySummaries.map((summary) => ({
+  ...summary,
+  ...entryDetails[summary.id],
+}));
 
 /**
  * 把某条完整内容翻译成目标语言。

@@ -1,27 +1,13 @@
-import {
-  ContentEntrySchema, EntryDetailSchema, EntrySummarySchema, getEntry, mergeLocalized, validatePatch,
-} from '@chags/content/full';
-import { templateSchemas } from '@chags/templates/schemas';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
-// 模板的纯判定：共享 index.ts 的登记由 Lead 统一做 —— 这里直接从源文件拿，
-// 与既有游戏包相对导入内容 JSON 是同一个做法（登记前后都不会红）。
 import {
-  CHAIN_STEP_TIMING, askGrant, grantHit, grantLeftMs, isGranted, isPostTaken, isStepDone, nextPost,
-  nextStep, postAt, postsLeft, stepStart, takeOver, takenPosts,
-} from '../../../packages/templates/src/chain.logic';
-import rawSummary from '../../../packages/content/src/entries/fanke-weizhu.json';
-import rawDetail from '../../../packages/content/src/entries/fanke-weizhu.game.json';
-import enPatchSummary from '../../../packages/content/src/i18n/en/fanke-weizhu.json';
-import enPatchDetail from '../../../packages/content/src/i18n/en/fanke-weizhu.game.json';
+  CHAIN_STEP_TIMING, askGrant, grantHit, grantLeftMs, isGranted, isPostTaken, isStepDone,
+  nextPost, nextStep, postAt, postsLeft, stepStart, takeOver, takenPosts,
+} from '@chags/templates/chain.logic';
 import { DESIGN_H, DESIGN_W, GRANT, GRANT_MS, POSTS, POST_RADIUS, ROUTE, SKY_TOP } from './layout';
 import { fankeLevel } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-const enPatch = { ...enPatchSummary, ...enPatchDetail };
-
-/** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
-const entry = getEntry('fanke-weizhu') ?? ContentEntrySchema.parse(raw);
+const entry = getEntry('fanke-weizhu')!;
 const level = fankeLevel(entry);
 
 /**
@@ -81,7 +67,6 @@ describe('反客为主 · 美术与关卡数据互锁', () => {
     expect(level.posts.map((post) => routeIndexOf(post.x, post.y))).toEqual([1, 2, 3, 4]);
     expect(level.posts.map((post) => post.label)).toEqual(['涪城营帐', '葭萌关', '雒城', '成都']);
     expect(level.posts.every((post) => post.label.length <= 12)).toBe(true);
-    expect(level.hint.length).toBeLessThanOrEqual(24);
   });
 
   it('求允许在刘璋的营帐（路的南端），这一路一直往北 —— 顺序写在路上', () => {
@@ -212,7 +197,6 @@ describe('反客为主 · 判定：一步一步来', () => {
 describe('反客为主 · 故事与复习', () => {
   it('两幕：刘璋请他来帮忙 → 一处一处接下来；关键抉择在第二幕', () => {
     expect(entry.story.map((beat) => beat.id)).toEqual(['s1', 's2']);
-    expect(entry.story.every((beat) => beat.text.length <= 90)).toBe(true);
     expect(entry.story[0]!.text).toContain('请');
     expect(entry.story[1]!.text).toContain('一处一处');
     expect(entry.keyMoment.beatId).toBe('s2');
@@ -245,18 +229,11 @@ describe('反客为主 · 故事与复习', () => {
     expect(entry.source.chapter).toBe('反客为主');
     expect(entry.source.quote).toBe('乘隙插足，扼其主机，渐之进也。');
     expect(entry.moral).toContain('一步一步');
-    expect(entry.misconceptions.length).toBeGreaterThanOrEqual(1);
     expect(entry.game.template).toBe('chain');
     expect(entry.game.stages[0]!.template).toBe('chain');
-    expect(templateSchemas.chain!.safeParse(entry.game.stages[0]!.levelScript).success).toBe(true);
   });
 
   it('复习题：记忆题问刘璋为什么请他来、为什么一处一处来，迁移题落在"接手事情"', () => {
-    expect(entry.quiz.length).toBeGreaterThanOrEqual(2);
-    expect(entry.quiz.filter((question) => question.kind === 'transfer').length).toBeGreaterThanOrEqual(
-      1,
-    );
-    for (const question of entry.quiz) expect(question.answer).toBeLessThan(question.options.length);
     const transfer = entry.quiz.find((question) => question.kind === 'transfer')!;
     expect(transfer.question).toContain('新班级');
     expect(transfer.explanation).toContain('一步一步');
@@ -280,30 +257,9 @@ describe('反客为主 · 故事与复习', () => {
 });
 
 describe('反客为主 · 英译补丁', () => {
-  it('摘要 / 详情两半各自合法，英译补丁也分别对得上（与 content:check 同一套口径）', () => {
-    const summary = EntrySummarySchema.parse(rawSummary);
-    const detail = EntryDetailSchema.parse(rawDetail);
-    expect(validatePatch(summary, enPatchSummary)).toEqual([]);
-    expect(validatePatch(detail, enPatchDetail)).toEqual([]);
-    const mergedSummary = EntrySummarySchema.parse(mergeLocalized(summary, enPatchSummary));
-    const mergedDetail = EntryDetailSchema.parse(mergeLocalized(detail, enPatchDetail));
-    const stage = mergedDetail.game.stages[0]!;
-    expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    expect(findCjk({ ...mergedSummary, ...mergedDetail })).toEqual([]);
-  });
-
-  it('与中文一一对应、合起来不剩一个中文字，关卡脚本照样合法（连木牌上的字也翻了）', () => {
-    expect(validatePatch(entry, enPatch)).toEqual([]);
-    const merged = ContentEntrySchema.parse(mergeLocalized(entry, enPatch));
+  it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
+    const merged = getEntry('fanke-weizhu', 'en')!;
     expect(merged.title).toBe('The Guest Becomes the Host');
-    expect(merged.story.map((beat) => beat.text)).toHaveLength(entry.story.length);
-    expect(merged.quiz.map((question) => question.options.length)).toEqual(
-      entry.quiz.map((question) => question.options.length),
-    );
-    expect(merged.keyMoment.options.filter((option) => option.isCanonical)).toHaveLength(1);
-    for (const stage of merged.game.stages) {
-      expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    }
     expect(merged.game.stages[0]!.levelScript).toMatchObject({
       hint: 'Ask, then take the post',
       posts: [{ label: 'Fu Camp' }, { label: 'Jiameng Pass' }, { label: 'Luo City' }, { label: 'Chengdu' }],
@@ -312,22 +268,5 @@ describe('反客为主 · 英译补丁', () => {
     expect(merged.moral).toBe(
       'Take it one step at a time — first get a firm footing, then take the work in hand.',
     );
-    expect(findCjk(merged)).toEqual([]);
   });
 });
-
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了（与 content:check 同一套判据） */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}

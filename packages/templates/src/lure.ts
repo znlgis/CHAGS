@@ -9,6 +9,7 @@ import {
 } from './lure.logic';
 import type { LureDecoyState, LureTradeState } from './lure.logic';
 import type { LureBait, LureLevel, LureOffer, LureReturn } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 // 第六辑 · 第 31 计 美人计（favor）：新判定单独 import —— 上面那一行老模式的 import 一字没动
 import {
@@ -133,7 +134,7 @@ export interface LureConfig {
  *   单测与画面用的是同一份判定，不会跑偏。
  * - **按住才算"连续的空档"**（decoy）：松手就断，看守一回岗没拿完的清零。
  *   所以这一关考的不是手快，是"挑一个能空够久的诱饵点"。
- * - **零惩罚**：选错诱饵点只是白等一场，挑错砖只是再挑一次 —— 不扣星、不结束、不锁操作。
+ * - **零惩罚**：选错诱饵点只是白等一场（不算）；挑错砖只是再挑一次 —— 记进 mistakes、不结束、不锁操作。
  */
 function createLureDecoyTradeScene(ctx: GameContext, cfg: LureConfig): Phaser.Types.Scenes.SceneType {
   return class LureScene extends BaseScene {
@@ -455,11 +456,15 @@ function createLureDecoyTradeScene(ctx: GameContext, cfg: LureConfig): Phaser.Ty
       this.ctx.emit('choice:made', {
         beatId: 'lure:give',
         choiceId: offer.kind,
-        // 挑错了只是再挑一次（零惩罚）—— correct 只用来复盘
+        // 挑错了只是再挑一次（不结束、不锁操作）—— correct 只用来复盘
         correct: (next.lastReturn?.value ?? 0) >= level.needed,
         latencyMs: t,
       });
       const back = next.lastReturn;
+      // 换回来的东西不够值 / 没换到玉：这一块砖挑错了 —— 记一次 mistakes
+      if (back !== null && back.value < level.needed) {
+        recordAttempt(cfg.session, { ok: false });
+      }
       if (back !== null) {
         sparkleAt(this, level.partner.x, level.partner.y - 120, THEME.gold, 6);
         cfg.onGive?.(offer, back, this.api(t));
@@ -475,24 +480,22 @@ function createLureDecoyTradeScene(ctx: GameContext, cfg: LureConfig): Phaser.Ty
       this.holding = false;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      if (this.level.mode === 'decoy') {
-        sparkleAt(this, this.level.prize.x, this.level.prize.y - 60, THEME.gold, 10);
-      } else {
-        sparkleAt(this, this.level.partner.x, this.level.partner.y, THEME.gold, 12);
-      }
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'lure:done' });
-      this.redraw(this.now());
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, LURE.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? LURE.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? LURE.finaleHoldMs,
+        reveal: cfg.reveal,
+        revealY: LURE.hintY,
+        finalize: () => {
+          if (this.level.mode === 'decoy') {
+            sparkleAt(this, this.level.prize.x, this.level.prize.y - 60, THEME.gold, 10);
+          } else {
+            sparkleAt(this, this.level.partner.x, this.level.partner.y, THEME.gold, 12);
+          }
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'lure:done' });
+          this.redraw(this.now());
+        }
+      });
     }
 
     // ---------------- 小手与光圈 ----------------
@@ -696,7 +699,7 @@ export type LureAnyConfig = LureConfig | LureFavorConfig;
  * - **线索是看得见的**：他头顶那根条 + 被看着的那样东西外面那圈金环，都由同一个 gaze 画出来；
  *   停得最久的那一样就是他在意的（别的东西只被扫一眼就过去了）。
  * - **送错只是白送**：东西回到手里（refused），他说一句 refuseLine ——
- *   不扣星、不结束、不锁操作，连"试过几样"都只是记账。
+ *   记进 mistakes、不结束、不锁操作，连"试过几样"都只是记账。
  * - **没有倒计时**：这一关考的是"看"，不是手快。孩子想看多久就看多久。
  */
 export function createLureFavorScene(
@@ -901,7 +904,7 @@ export function createLureFavorScene(
       this.ctx.emit('choice:made', {
         beatId: 'lure:favor',
         choiceId: gift.kind,
-        // 送错了只是东西回到手里（零惩罚）—— correct 只用来复盘
+        // 送错了只是东西回到手里（记进 mistakes）—— correct 只用来复盘
         correct: verdict === 'loved',
         latencyMs: t,
       });
@@ -911,7 +914,8 @@ export function createLureFavorScene(
         sparkleAt(this, level.target.x, level.target.y - 120, THEME.gold, 6);
         this.showHint(gift.speak, 2600, LURE_FAVOR.hintY);
       } else {
-        // 他把东西还了回来：不扣星、不结束、不锁操作 —— 只是白送一次
+        // 他把东西还了回来：不结束、不锁操作 —— 白送一次，这一下记进 mistakes
+        recordAttempt(cfg.session, { ok: false });
         this.sfx('tap');
         tapRipple(this, gift.x, gift.y, gift.radius + 10, THEME.inkSoft);
         this.showHint(level.refuseLine, 2200, LURE_FAVOR.hintY);
@@ -927,20 +931,18 @@ export function createLureFavorScene(
       this.finished = true;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.level.target.x, this.level.target.y, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'lure:done' });
-      this.redraw(this.now());
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, LURE_FAVOR.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? LURE_FAVOR.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? LURE_FAVOR.finaleHoldMs,
+        sparkle: { x: this.level.target.x, y: this.level.target.y, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: LURE_FAVOR.hintY,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'lure:done' });
+          this.redraw(this.now());
+        }
+      });
     }
 
     // ---------------- 小手与光圈 ----------------

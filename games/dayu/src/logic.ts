@@ -1,5 +1,5 @@
 import type { ContentEntry } from '@chags/content';
-import { stageScript } from '@chags/content/full';
+import { stageScript } from '@chags/content';
 import { TapLevelSchema, TraceLevelSchema } from '@chags/templates/schemas';
 import type { TapLevel, TraceLevel } from '@chags/templates/schemas';
 

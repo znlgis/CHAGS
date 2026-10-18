@@ -14,7 +14,6 @@
     "@chags/content": "workspace:*",
     "@chags/game-kit": "workspace:*",
     "@chags/phaser-kit": "workspace:*",
-    "@chags/progress": "workspace:*",
     "@chags/templates": "workspace:*",
     "phaser": "^4.2.1"
   }

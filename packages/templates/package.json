@@ -19,7 +19,20 @@
     "./siege.logic": "./src/siege.logic.ts",
     "./borrow.logic": "./src/borrow.logic.ts",
     "./stillness.logic": "./src/stillness.logic.ts",
-    "./window.logic": "./src/window.logic.ts"
+    "./window.logic": "./src/window.logic.ts",
+    "./chain.logic": "./src/chain.logic.ts",
+    "./chase.logic": "./src/chase.logic.ts",
+    "./lure.logic": "./src/lure.logic.ts",
+    "./matchup.logic": "./src/matchup.logic.ts",
+    "./probe.logic": "./src/probe.logic.ts",
+    "./read.logic": "./src/read.logic.ts",
+    "./show.logic": "./src/show.logic.ts",
+    "./sort.logic": "./src/sort.logic.ts",
+    "./story.logic": "./src/story.logic.ts",
+    "./swap.logic": "./src/swap.logic.ts",
+    "./trace.logic": "./src/trace.logic.ts",
+    "./twoline.logic": "./src/twoline.logic.ts",
+    "./wait.logic": "./src/wait.logic.ts"
   },
   "scripts": {
     "test": "vitest run",

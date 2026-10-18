@@ -1,4 +1,4 @@
-import { stageScript } from '@chags/content/full';
+import { stageScript } from '@chags/content';
 import type { ContentEntry } from '@chags/content';
 import { SiegeCloseSchema } from '@chags/templates/schemas';
 import type { SiegeCloseLevel } from '@chags/templates/schemas';

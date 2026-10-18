@@ -2,9 +2,37 @@ import Phaser from 'phaser';
 import type { GameContext, SfxKey } from '@chags/game-kit';
 import { createTranslator } from '@chags/i18n';
 import type { MessageKey, MessageParams, Translator } from '@chags/i18n';
-import { createHand, groundShadow, popIn, roundRect, shade } from './cartoon';
+import { createHand, groundShadow, popIn, roundRect, shade, sparkleAt } from './cartoon';
 import { isTapArmed } from './tapGuard';
 import { CSS, THEME, textStyle } from './theme';
+
+/**
+ * 收尾序列的公共参数。
+ *
+ * 20 个模板本来各自抄一遍 finish()：sfx('complete') → 闪屏 → 金光 → 揭晓语 → 转场。
+ * 现在只把这一段收到 completeLevel() 里；各模板的 guard / 清小手 / 清圈 / 记账 /
+ * finale 画面仍留在自己的 finish() 里（通过 finalize 回调按原顺序执行）。
+ */
+export interface CompleteLevelOptions {
+  /** 收尾之后转去哪个场景（各模板传 cfg.nextSceneKey） */
+  nextSceneKey: string;
+  /** 收尾停留多久再转场（默认 4200ms） */
+  holdMs?: number;
+  /** 转场前闪一下白屏（默认 true） */
+  flash?: boolean;
+  /** 播 complete 音效（默认 true；个别模板已在别处播过就传 false） */
+  sfx?: boolean;
+  /** 收尾的一圈金光：位置 / 颜色 / 数量各模板不同，由调用方给 */
+  sparkle?: { x: number; y: number; color?: number; count?: number };
+  /** 揭晓语：传了才显示（各模板的延迟与高度不同） */
+  reveal?: string | undefined;
+  revealDelayMs?: number;
+  revealY?: number;
+  /** 这一模板特有的收尾画面：记账 / 事件 / finale 都放这里（在闪屏之后、揭晓语之前执行） */
+  finalize?: () => void;
+  /** 转场前的最后一步（可选） */
+  onDone?: () => void;
+}
 
 export interface ButtonOptions {
   width?: number;
@@ -28,6 +56,8 @@ export abstract class BaseScene extends Phaser.Scene {
   private translator: Translator | null = null;
   /** 上一次真的翻页的墙钟：连点保护从它起算（见 tapGuard） */
   private lastAdvanceAt = Number.NEGATIVE_INFINITY;
+  /** 这一关收过尾没有 —— 防止同一局重复转场（模板自己的 finished/done 仍然各管各的） */
+  private levelCompleted = false;
 
   protected constructor(key: string, ctx: GameContext) {
     super(key);
@@ -198,6 +228,37 @@ export abstract class BaseScene extends Phaser.Scene {
 
   protected sfx(key: SfxKey): void {
     this.ctx.services.audio.play(key);
+  }
+
+  /**
+   * 关卡收尾序列 —— 顺序与各模板原来的 finish() 逐字一致：
+   *
+   *   sfx('complete') → 闪屏 → 金光 → finalize() → 揭晓语（延迟）→ 停留 holdMs → 转场
+   *
+   * 各模板只保留自己的 guard、状态变更、清小手/清圈与 finalize 里的收尾画面；
+   * 时长与顺序没有任何变化（闪屏参数、金光参数、揭晓语延迟都是原来那一份）。
+   * 重复调用只会执行第一次 —— "同一局不可能收两次尾"由这里兜住。
+   */
+  protected completeLevel(opts: CompleteLevelOptions): void {
+    if (this.levelCompleted) return;
+    this.levelCompleted = true;
+    if (opts.sfx !== false) this.sfx('complete');
+    if (opts.flash !== false) this.cameras.main.flash(320, 255, 250, 220);
+    const sparkle = opts.sparkle;
+    if (sparkle !== undefined) {
+      sparkleAt(this, sparkle.x, sparkle.y, sparkle.color ?? THEME.gold, sparkle.count ?? 12);
+    }
+    opts.finalize?.();
+    const reveal = opts.reveal;
+    if (reveal !== undefined) {
+      this.time.delayedCall(opts.revealDelayMs ?? 1200, () =>
+        this.showHint(reveal, 3200, opts.revealY ?? 268),
+      );
+    }
+    this.time.delayedCall(opts.holdMs ?? 4200, () => {
+      opts.onDone?.();
+      this.scene.start(opts.nextSceneKey);
+    });
   }
 
   /** 界面文案：典故本身的文字走 ctx.content，通用标签走这里（带 {参数} 的句子传第二个参数） */

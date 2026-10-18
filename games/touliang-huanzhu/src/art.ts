@@ -3,6 +3,7 @@ import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit
 import { DESIGN, SWAP_BEAM, beamProgressBar } from '@chags/templates';
 import type { SwapBeamStageState } from '@chags/templates';
 import type { SwapBeamLevel } from '@chags/templates/schemas';
+import { clamp01 } from '@chags/game-kit';
 import {
   BEAM_BOTTOM, CHECKER, CHECK_MS, PILE_BOTTOM, PILE_TOP, PODIUM_BOTTOM, PODIUM_TOP, POST_RADIUS,
   POST_Y, ROOF_BOTTOM, ROOF_TOP, SKY_TOP, STEPS,
@@ -25,7 +26,6 @@ const SKIN = 0xf8dcbb;
 const ROBE = shade(THEME.teal, 0.82);
 
 /** 一个人 / 一根柱子的脚下那一点 */
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 // ---------------- 柱子上的花纹（龙 / 云 / 水 / 火） ----------------
 //

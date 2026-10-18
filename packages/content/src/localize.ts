@@ -32,6 +32,29 @@ export interface PatchIssue {
   message: string;
 }
 
+/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了 */
+const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
+
+/**
+ * 找出对象里所有含中日韩字符的字段路径（空数组 = 一个中文字都不剩）。
+ *
+ * **判据只有这一份**：pnpm content:check（全 53 条 × 全语言）与
+ * packages/content/src/localize.test.ts 都调它 —— 以前游戏测试里还抄了 26 份，
+ * 加上这两处一共 28 份；改规则要改 28 处，漏一处就有一半内容在裸奔。
+ */
+export function findCjk(value: unknown, path = ''): string[] {
+  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
+  }
+  if (value !== null && typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
+      findCjk(item, path === '' ? key : path + '.' + key),
+    );
+  }
+  return [];
+}
+
 /** 翻译补丁的体检：字段必须存在、数组必须等长 —— 漏翻译不该等到用户切语言才发现 */
 export function validatePatch(base: Json, patch: Json, path = ''): PatchIssue[] {
   const issues: PatchIssue[] = [];

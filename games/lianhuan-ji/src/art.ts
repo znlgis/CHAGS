@@ -3,6 +3,7 @@ import { THEME, circle, groundShadow, roundRect, shade, wavyBand } from '@chags/
 import { chainDominoBar, chainDominoWindowBar } from '@chags/templates';
 import type { ChainDominoMetrics } from '@chags/templates';
 import type { ChainDominoLevel } from '@chags/templates/schemas';
+import { clamp01 } from '@chags/game-kit';
 import {
   BOAT_LENGTH, CHAIN_WIDTH, DESIGN_H, DESIGN_W, IGNITE, RING_RADIUS, RINGS, RIVER_TOP, SHORE_Y,
   SKY_TOP, WAVES,
@@ -28,7 +29,6 @@ const SAIL = 0xf1e3c2;
 const CHAIN_IRON = 0x8b95a3;
 const CHAIN_DEEP = 0x565d68;
 
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 // ---------------- 江面与岸 ----------------
 

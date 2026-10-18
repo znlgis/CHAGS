@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { clickDesign, dragDesign, events, holdDesign, tapDesign } from './helpers';
+import {
+  clickDesign, dragDesign, entryIdsInGroup, events, holdDesign, loadContent, tapDesign,
+} from './helpers';
 import { archerAt } from '../games/yangyouji/src/layout';
-import { REWARD, SUB, SUB_PILES } from '../packages/templates/src/layout';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { REWARD, SUB, SUB_PILES } from '@chags/templates/layout';
 
 /**
  * 双语版面巡检：把两部游戏在两种语言下的**每一个画面**都截下来，写进 .scratch/i18n-audit/。
@@ -12,12 +12,7 @@ import { fileURLToPath } from 'node:url';
  *
  *   pnpm audit:i18n
  */
-const panguJson = JSON.parse(
-  readFileSync(
-    fileURLToPath(new URL('../packages/content/src/entries/pangu.game.json', import.meta.url)),
-    'utf8',
-  ),
-) as { game: { stages: { levelScript: unknown }[] } };
+const panguJson = loadContent('pangu');
 const place = panguJson.game.stages[1]!.levelScript as {
   slots: { id: string; x: number; y: number }[];
   orbs: { id: string; slotId: string; x: number; y: number }[];
@@ -62,32 +57,18 @@ const NEW_GAMES: {
 ];
 
 interface Point { x: number; y: number }
-/** 把一部典故的关卡脚本读出来（版面巡检要按真实坐标点） */
+/** 把一部典故的关卡脚本读出来（版面巡检要按真实坐标点）—— 走 helpers 的统一入口 */
 function levelOf(id: string, stage = 0): Record<string, unknown> {
-  const path = fileURLToPath(
-    new URL('../packages/content/src/entries/' + id + '.game.json', import.meta.url),
-  );
-  const json = JSON.parse(readFileSync(path, 'utf8')) as {
-    game: { stages: { levelScript: Record<string, unknown> }[] };
-  };
-  return json.game.stages[stage]!.levelScript;
+  return loadContent(id).game.stages[stage]!.levelScript as Record<string, unknown>;
 }
 
-const nuwaScript = JSON.parse(
-  readFileSync(
-    fileURLToPath(new URL('../packages/content/src/entries/nuwa.game.json', import.meta.url)),
-    'utf8',
-  ),
-) as { game: { stages: { levelScript: { slots: { id: string; x: number; y: number }[]; orbs: { slotId: string; x: number; y: number }[] } }[] } };
-const nuwaPlace = nuwaScript.game.stages[0]!.levelScript;
-
-const houyiScript = JSON.parse(
-  readFileSync(
-    fileURLToPath(new URL('../packages/content/src/entries/houyi.game.json', import.meta.url)),
-    'utf8',
-  ),
-) as { game: { stages: { levelScript: { targets: { x: number; y: number }[] } }[] } };
-const houyiTargets = houyiScript.game.stages[0]!.levelScript.targets;
+const nuwaPlace = loadContent('nuwa').game.stages[0]!.levelScript as {
+  slots: { id: string; x: number; y: number }[];
+  orbs: { slotId: string; x: number; y: number }[];
+};
+const houyiTargets = (loadContent('houyi').game.stages[0]!.levelScript as {
+  targets: { x: number; y: number }[];
+}).targets;
 const LOCALES = ['zh-CN', 'en'] as const;
 
 /**
@@ -548,6 +529,20 @@ const STRATAGEMS: [string, string][] = [
   ['lianhuan-ji', 'chain'],
   ['zou-weishang', 'trace'],
 ];
+
+/**
+ * 硬编码清单与内容目录必须一致 —— 守的是"新增第 37 计"。
+ *
+ * STRATAGEMS 保留手写是有意的：巡检按**计策序号分六辑**截图，分辑是版面巡检自己的事；
+ * 但"有哪些计策"必须来自内容目录，否则新增一条计策时巡检会静默漏掉它。
+ * 对不上时直接看差集：左边多/少了哪一条，修起来不用猜。
+ */
+test('巡检清单与内容目录一致：36 条计策一条不落', () => {
+  expect(
+    STRATAGEMS.map(([id]) => id),
+    'audit.spec.ts 的 STRATAGEMS 与内容目录对不上',
+  ).toEqual(entryIdsInGroup('stratagem'));
+});
 
 /** 六套各一条用例：每辑 6 计 */
 const STRATAGEM_SETS: [string, string][][] = [

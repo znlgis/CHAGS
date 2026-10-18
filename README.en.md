@@ -21,7 +21,7 @@ Requirements: **Node 24 + pnpm 11.22** — the same versions as the CI `NODE_VER
 pnpm install
 pnpm dev            # dev server at http://127.0.0.1:5183
 pnpm verify         # typecheck + lint + test + content:check + build + size (must be green before committing)
-pnpm e2e            # Playwright end-to-end (run npx playwright install chromium first)
+pnpm e2e            # Playwright end-to-end (run pnpm exec playwright install chromium first)
 pnpm e2e:dist       # same suite against the production build (verifies chunk lazy-loading)
 pnpm audit:i18n     # screenshot every screen in both languages into .scratch/i18n-audit/
 pnpm icons          # regenerate the app icons (needs Python + Pillow; only when icons change)
@@ -69,19 +69,21 @@ This is what every one of the 53 games touched, in order:
 2. **Both halves of the content**: `packages/content/src/entries/<id>.json` (summary: title / era /
    source / moral / keywords) and `<id>.game.json` (detail: story beats / key moment / quiz /
    misconceptions / level script). The quiz is **3 questions and must include one `transfer`**, which
-   `content:check` enforces. A new template also needs an id in `TemplateId`
-   (`packages/game-kit/src/contract.ts`) and a level schema registered in
-   `packages/templates/src/schemas.ts`;
+   `content:check` enforces. A new template also needs an id in `TEMPLATE_IDS`
+   (`packages/content/src/schema.ts`; `packages/game-kit/src/contract.ts` only re-exports `TemplateId`) and a
+   level schema registered in `packages/templates/src/schemas.ts`;
 3. **Translation patches**: `packages/content/src/i18n/en/<id>.json` and `<id>.game.json` (one per
    half). A missing field, a structural mismatch or Chinese left inside the English file fails the build;
-4. **Two registry lines**: `packages/content/src/entries/index.ts` and
-   `packages/content/src/i18n/index.ts`;
+4. **Four registry lines**: `packages/content/src/entries/index.ts`, `entries/detail.ts`,
+   `packages/content/src/i18n/index.ts` and `i18n/game.ts` (summary / detail / summary translation / detail
+   translation live in four files — miss one and the build or the registry unit test fails on the spot);
 5. **Shell wiring**: a dependency in `apps/site/package.json` plus one lazy `import` line in
    `apps/site/src/registry.ts`. `apps/site/src/registry.test.ts` guards both — **one line missing from
    the registry (or one line too many) fails a unit test** instead of surfacing as "game not found"
    after a child taps the card;
-6. **An end-to-end case** in `e2e/`: a headless `?autoplay=1` playthrough (a new template does not count
-   until it implements `runAutoplay()`);
+6. **End-to-end cases** in `e2e/`: one real-input playthrough plus a headless `?autoplay=1` playthrough
+   (the template must be drivable automatically — `runAutoplay()` or an inline autoplay, as long as it walks
+   the same judgement path as a real child);
 7. **`pnpm verify` green** (typecheck / lint / test / content:check / build / size), then `pnpm e2e`.
 
 The same file-level checklist lives in [docs/三十六计方案.md](docs/三十六计方案.md), section 6.
@@ -89,8 +91,9 @@ The same file-level checklist lives in [docs/三十六计方案.md](docs/三十�
 ## Current status
 
 **Seventeen stories plus all thirty-six stratagems (all six volumes)** are playable. `pnpm verify` is green
-(typecheck, lint, 1221 unit tests, content check, build, size) and every game has a headless playthrough
-in the end-to-end suite (`?autoplay=1` — a new template only counts once it implements `runAutoplay()`).
+(typecheck, lint, unit tests, content check, build, size; the unit-test count is whatever `pnpm test`
+prints). Every game has a headless playthrough in the end-to-end suite (`?autoplay=1`), and the stories and
+stratagems together have **24 real-pointer cases** tagged `@real` — the release gate runs exactly that subset.
 
 The shell stays small: no Phaser, and no story or level-script content either. Each game's own
 business code is only a few KB; Phaser is a shared chunk and the full content (stories, quizzes,
@@ -515,18 +518,21 @@ apps/mobile                Capacitor 8 Android shell (APK)
 packages/game-kit          Contracts (GameModule / GameContext / events) + TemplateId. No Phaser.
 packages/content           Content (summary <id>.json + detail <id>.game.json) + zod + English patches
 packages/i18n              UI message catalogs (zh-CN / en; a missing key is a compile error)
-packages/templates         Gameplay template implementations; the contract declares 36 template ids
-                           (packages/game-kit/src/contract.ts): 26 used by content plus the shared
-                           opening `story`; match / order / drag / board / timing / react / branch /
-                           build / grow are reserved ids, not implemented yet; butcher / beacon are
-                           bespoke scenes inside game packages, registered in the template layer;
-                           chaos has no template id at all and lives in the Pangu package
+packages/templates         Gameplay template implementations; the 26 template ids are defined once in
+                           TEMPLATE_IDS in packages/content/src/schema.ts (contract.ts only re-exports
+                           TemplateId), and all 26 are implemented and used by content; the shared opening
+                           `story` is a scene, not a template id; butcher / beacon are bespoke scenes inside
+                           game packages, registered in the template layer; chaos has no template id at all
+                           and lives in the Pangu package; the nine old reserved ids (match / order / drag /
+                           board / timing / react / branch / build / grow) were deleted on 2026-10-18
 packages/phaser-kit        Phaser bootstrap, cartoon drawing primitives, drag controller, base scene
 packages/platform          Web services: IndexedDB / WebAudio / TTS / lifecycle
 packages/progress          Save file, migration, spaced-repetition scheduling (pure functions)
 games/<id>                 53 game packages: one story / one stratagem each
 e2e                        Playwright smoke, real-input playthroughs, screenshot capture
-scripts                    Size guard (check-size.mjs), icon generation (make-icons.py)
+scripts                    Size guard (check-size.mjs), parallel verify runner (verify.mjs), icon
+                           generation (make-icons.py), APK build (build-apk.mjs), signing key
+                           (make-keystore.mjs)
 ```
 
 The single source of truth for the game list is `packages/content/src/entries/` (content) and
@@ -539,6 +545,7 @@ The single source of truth for the game list is `packages/content/src/entries/` 
 1. **Logic is separate from rendering** — rules live in plain TypeScript with no Phaser import, unit-testable in Node.
 2. **Games never touch the environment** — storage, audio and lifecycle go through `GameContext.services`;
    no direct `localStorage`, `fetch` or `wx.*`.
-3. **Every game is headlessly drivable** — `?seed=&autoplay=1` lets CI play it without a human.
+3. **Every game is headlessly drivable** — `?autoplay=1` (plus the `?story=instant` / `?card=hold` debug
+   switches) lets CI play it without a human.
 
 See [docs/en/architecture.md](docs/en/architecture.md) for the full design.

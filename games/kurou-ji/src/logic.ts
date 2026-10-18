@@ -1,5 +1,5 @@
 import type { ContentEntry } from '@chags/content';
-import { stageScript } from '@chags/content/full';
+import { stageScript } from '@chags/content';
 import { isSplitSolved, splitState } from '@chags/templates/split.logic';
 import { SplitLevelSchema } from '@chags/templates/schemas';
 import type { SplitBin, SplitLevel } from '@chags/templates/schemas';

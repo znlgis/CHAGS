@@ -9,6 +9,7 @@ import {
 } from './swap.logic';
 import type { SwapState } from './swap.logic';
 import type { SwapLevel, SwapPost, SwapSpare } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 // beam（偷梁换柱）：判定与类型另起一段引入 —— 老模式那几行一个字没改
 import {
@@ -63,7 +64,7 @@ export interface SwapStageState {
   /** 换好了几个 / 一共几个 */
   swappedCount: number;
   total: number;
-  /** 被看见了几次 —— 复盘用，不扣星 */
+  /** 被看见了几次 —— 复盘用，也记进 mistakes */
   seen: number;
   /** 距离下一次抬头还有多久（画面把这一刻度画出来） */
   nextPeekInMs: number;
@@ -72,7 +73,7 @@ export interface SwapStageState {
   /** 刚放上去的那个位置 / 什么时候放的（落位的动画按它演） */
   lastPlacePost: string | null;
   lastPlaceAtMs: number;
-  /** 上一次"样子不对"发生在什么时候（晃一下，不扣星） */
+  /** 上一次"样子不对"发生在什么时候（记进 mistakes 的那一下） */
   lastWrongAtMs: number;
   /** 点空了几次：只是复盘用，不扣星也不结束 */
   misses: number;
@@ -104,8 +105,8 @@ export interface SwapConfig {
  * 三条刻意的设计：
  * - **判定全在 swap.logic 里**：点哪一个替身、放不放到这个位置、什么时刻会被看见，
  *   单测与画面用的是同一份函数，不会跑偏。
- * - **零惩罚**：样子不对只是放不上去（原样返回，红圈晃一下）；
- *   被检查者看见也**不结束、不扣星** —— 只是那个位置要重新换。
+ * - **不结束**：样子不对只是放不上去（原样返回，红圈晃一下，记进 mistakes）；
+ *   被检查者看见也**不结束** —— 只是那个位置要重新换（记进 mistakes）。
  *   孩子可以放心地一个一个试过去。
  * - **提示给在点上**：小手只在两步之间指路 —— 空着手就指"该拿哪一个替身"，
  *   手上有替身就指"该放到哪一个位置"；全换好了就指院门。
@@ -208,6 +209,8 @@ function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.S
       this.idleMs = 0;
       if (caughtNow.length > 0) {
         // 被看见了：这是一次"戳穿"（事件照发，e2e 与复盘都看得见）
+        // 每个被戳穿的位置都是一次没换好的尝试：记进 mistakes（不结束、不锁操作）
+        caughtNow.forEach(() => recordAttempt(cfg.session, { ok: false }));
         this.ctx.emit('beat:enter', { beatId: 'swap:seen:' + seenCount(after) });
       }
       // 无头验证不出声、不表演（事件流照旧，画面与声音只给真孩子）
@@ -302,7 +305,7 @@ function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.S
         g.strokeCircle(post.x, post.y, post.radius + 14 + 54 * p);
       }
 
-      // 样子不对：灰圈晃一下（只提示，不扣星）—— 圈在手上那个替身那儿
+      // 样子不对：灰圈晃一下（只提示，记进 mistakes）—— 圈在手上那个替身那儿
       if (t - stage.lastWrongAtMs <= 460 && stage.lastWrongAtMs >= 0) {
         const p = (t - stage.lastWrongAtMs) / 460;
         const at = stage.carryingAt ?? { x: this.W / 2, y: this.H / 2 };
@@ -372,7 +375,7 @@ function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.S
       this.pointAtNext();
     }
 
-    /** 把手上的替身放到位置上：**样子不对就放不上去**（原样返回，零惩罚） */
+    /** 把手上的替身放到位置上：**样子不对就放不上去**（原样返回，记进 mistakes） */
     private placeOn(post: SwapPost): void {
       if (this.done) return;
       const spareId = this.carrying;
@@ -385,7 +388,9 @@ function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.S
       const before = this.state;
       this.state = placeSpare(this.level, this.state, post.id, spareId);
       if (this.state === before) {
-        // 样子不对：原样返回，只晃一下 —— 零惩罚，替身还在手上，换一个位置再试就是
+        // 样子不对：原样返回，只晃一下 —— 不结束、不锁操作；这一下记进 mistakes（放错了一次），
+        // 替身还在手上，换一个位置再试就是
+        recordAttempt(cfg.session, { ok: false });
         this.lastWrongAt = this.now();
         this.idleMs = 0;
         this.sfx('tap');
@@ -409,8 +414,7 @@ function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.S
         correct: true,
         latencyMs: t,
       });
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
+      recordAttempt(cfg.session, { ok: true });
       if (isAllSwapped(this.level, this.state)) {
         // 一排都换成替身了：院门开着小手在招手，走掉才算脱壳
         this.ctx.emit('beat:enter', { beatId: 'swap:ready' });
@@ -451,23 +455,22 @@ function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.S
       this.carryingAt = null;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.level.exit.x, this.level.exit.y, THEME.gold, 12);
-      this.ctx.emit('beat:enter', { beatId: 'swap:done' });
-      this.ctx.emit('choice:made', {
-        beatId: 'swap:leave',
-        choiceId: 'shell',
-        correct: true,
-        latencyMs: this.now(),
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? SWAP.finaleHoldMs,
+        sparkle: { x: this.level.exit.x, y: this.level.exit.y, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: SWAP.hintY,
+        finalize: () => {
+          this.ctx.emit('beat:enter', { beatId: 'swap:done' });
+          this.ctx.emit('choice:made', {
+            beatId: 'swap:leave',
+            choiceId: 'shell',
+            correct: true,
+            latencyMs: this.now(),
+          });
+        }
       });
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, SWAP.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? SWAP.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
     }
 
     // ---------------- 小手与提示 ----------------
@@ -663,7 +666,7 @@ export interface SwapBeamStageState {
   /** 换好了几根 / 一共几根 */
   rebuiltCount: number;
   total: number;
-  /** 被清点看见过几次 —— 复盘用，不扣星 */
+  /** 被清点看见过几次 —— 复盘用，也记进 mistakes */
   seen: number;
   /** 距离下一次清点还有多久（画面把这一刻度画出来） */
   nextCheckInMs: number;
@@ -712,8 +715,8 @@ export interface SwapBeamConfig {
  * 三条刻意的设计：
  * - **判定全在 swap.logic 里**：按住多久算换好、清点什么时候来、清点把谁的进度清掉，
  *   单测与画面用的是同一份函数（连无头验证也走同一条 startWork / tickWork）。
- * - **零惩罚**：被清点抓个正着只是"这一根白干了"（进度清零、记一次 seen），
- *   不结束、不扣星；点空处、按住不足，也什么都不发生。孩子可以放心地按着重来。
+ * - **零惩罚**：被清点抓个正着只是"这一根白干了"（进度清零、记一次 seen，也记进 mistakes），
+ *   不结束、不锁操作；点空处、按住不足，也什么都不发生。孩子可以放心地按着重来。
  * - **提示给在点上**：小手从头到尾只指"该按住的那一根"（正拆着的那根优先）；
  *   换好一根、或者被清点打断，就再指一次 —— 绝不让孩子对着屏幕干瞪眼。
  */
@@ -811,9 +814,11 @@ function createBeamSwapScene(
         this.lastCheckAt = t;
         this.idleMs = 0;
         if (next.seen > previous.seen) {
+          // 被清点抓个正着：这一次换柱白干了 —— 记进 mistakes（不结束、不锁操作）
+          recordAttempt(cfg.session, { ok: false });
           this.ctx.emit('beat:enter', { beatId: 'swap:seen:' + next.seen });
           if (!this.autoplay) {
-            // 一声低音 + 轻微一晃 —— "被看出来了"的分量，不扣星、不结束
+            // 一声低音 + 轻微一晃 —— "被看出来了"的分量
             this.ctx.services.audio.tone(196, 260);
             this.cameras.main.shake(180, 0.006);
           }
@@ -835,8 +840,7 @@ function createBeamSwapScene(
           correct: true,
           latencyMs: t,
         });
-        cfg.session.total += 1;
-        cfg.session.correct += 1;
+        recordAttempt(cfg.session, { ok: true });
         if (!this.autoplay && post !== undefined) {
           this.sfx('correct');
           sparkleAt(this, post.x, post.y - post.radius, THEME.gold, 6);
@@ -997,24 +1001,23 @@ function createBeamSwapScene(
       this.holding = false;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      const first = this.level.posts[0];
-      sparkleAt(this, this.W / 2, first === undefined ? this.H / 2 : first.y, THEME.gold, 12);
-      this.ctx.emit('beat:enter', { beatId: 'swap:done' });
-      this.ctx.emit('choice:made', {
-        beatId: 'swap:leave',
-        choiceId: 'beam',
-        correct: true,
-        latencyMs: this.now(),
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? SWAP_BEAM.finaleHoldMs,
+        reveal: cfg.reveal,
+        revealY: SWAP_BEAM.hintY,
+        finalize: () => {
+          const first = this.level.posts[0];
+          sparkleAt(this, this.W / 2, first === undefined ? this.H / 2 : first.y, THEME.gold, 12);
+          this.ctx.emit('beat:enter', { beatId: 'swap:done' });
+          this.ctx.emit('choice:made', {
+            beatId: 'swap:leave',
+            choiceId: 'beam',
+            correct: true,
+            latencyMs: this.now(),
+          });
+        }
       });
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, SWAP_BEAM.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? SWAP_BEAM.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
     }
 
     // ---------------- 小手与提示 ----------------

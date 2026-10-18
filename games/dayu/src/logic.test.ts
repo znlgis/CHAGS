@@ -1,17 +1,8 @@
-import { ContentEntrySchema } from '@chags/content/full';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
-import rawSummary from '../../../packages/content/src/entries/dayu.json';
-import rawDetail from '../../../packages/content/src/entries/dayu.game.json';
 import { tapLevel, traceLevel } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-
-/**
- * 内容按 id 注册在外壳的清单里，这里直接读原文：
- * 游戏包自己的单测不该依赖"外壳有没有登记这一行"。
- */
-const content = ContentEntrySchema.parse(raw);
+const content = getEntry('dayu')!;
 const tap = tapLevel(content);
 const trace = traceLevel(content);
 
@@ -29,10 +20,9 @@ describe('大禹治水 · 关卡数据', () => {
     expect(tap.targetValue / tap.stepValue).toBe(14);
   });
 
-  it('堵：筑堤是"使点劲"的手感，提示不超过 24 字', () => {
+  it('堵：筑堤的手感是"使点劲"，没有里程碑干扰', () => {
     expect(tap.resistance).toBeGreaterThan(0);
     expect(tap.resistance).toBeLessThanOrEqual(1);
-    expect(tap.hint.length).toBeLessThanOrEqual(24);
     expect(tap.milestones).toEqual([]);
   });
 

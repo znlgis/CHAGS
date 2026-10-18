@@ -1,24 +1,21 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
+import { baseline, retries } from './e2e/playwright.shared';
 
-/** 跑真实产物：先 build 再 preview，验证生产构建下的代码分割与懒加载是否正常 */
+/**
+ * 跑真实产物：验证生产构建下的代码分割与懒加载是否正常。
+ *
+ * build **不在 webServer 里做**：release/CI 跑的 e2e:dist 脚本已经 build 过了，
+ * 塞进 webServer 等于每次起服务都重复构建一遍（还会把构建失败的报错混进 Playwright 超时里）。
+ * 需要重新构建时用 `pnpm e2e:dist`（= pnpm build && playwright test --config 本文件）。
+ */
 export default defineConfig({
-  testDir: './e2e',
+  ...baseline,
   testMatch: 'preview.spec.ts',
   timeout: 90_000,
-  expect: { timeout: 20_000 },
-  fullyParallel: false,
-  workers: 1,
-  retries: process.env.CI ? 2 : 0,
-  reporter: [['list']],
-  // 产物链路挂了同样要留下证据（以前这份配置什么都没留）
-  use: {
-    baseURL: 'http://127.0.0.1:5199',
-    screenshot: 'only-on-failure',
-    trace: 'retain-on-failure',
-  },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  retries,
+  use: { ...baseline.use, baseURL: 'http://127.0.0.1:5199' },
   webServer: {
-    command: 'pnpm build && pnpm --filter @chags/site exec vite preview --port 5199 --strictPort',
+    command: 'pnpm --filter @chags/site exec vite preview --port 5199 --strictPort',
     url: 'http://127.0.0.1:5199',
     reuseExistingServer: false,
     timeout: 180_000,

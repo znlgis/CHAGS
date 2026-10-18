@@ -1,37 +1,27 @@
 import {
   DEFAULT_LOCALE,
   LOCALES,
-  EntryDetailSchema,
-  EntrySummarySchema,
+  findCjk,
   groupBy,
   isGroupId,
   mergeLocalized,
-  patches,
   splitEntry,
   validatePatch,
 } from '@chags/content';
-// 完整内容与详情译文：内容体检要的是全量，所以走 '@chags/content/full'
-import { ContentEntrySchema, entries, gamePatches } from '@chags/content/full';
+// 完整内容、详情译文与 zod schema：内容体检要的是全量，所以走 '@chags/content/full'
+import {
+  ContentEntrySchema,
+  EntryDetailSchema,
+  EntrySummarySchema,
+  entries,
+  gamePatches,
+  patches,
+} from '@chags/content/full';
 import { templateSchemas } from '../schemas';
 
 let errors = 0;
 
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了 */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}
-
+// 漏翻判据只有一份：packages/content/src/localize.ts 的 findCjk（单测与这里共用）
 function fail(message: string): void {
   console.error('  ✗ ' + message);
   errors += 1;
@@ -65,12 +55,6 @@ for (const entry of entries) {
   // 3) 迁移题是“真的记住”的证据，不能只有记忆题
   if (!entry.quiz.some((q) => q.kind === 'transfer')) {
     fail('缺少 transfer（迁移）题');
-  }
-
-  // 4) 声明了插图就必须存在对应文件（阶段 0 用 none 占位）
-  const beats = entry.story.filter((b) => b.illustration !== 'none');
-  if (beats.length > 0) {
-    console.log('  · 有 ' + beats.length + ' 幕使用图片资源，确认已放入 games/' + entry.id + '/public');
   }
 
   console.log(

@@ -94,6 +94,40 @@ describe('migrate', () => {
     const save: SaveData = { schemaVersion: SAVE_SCHEMA_VERSION, allusions: {}, updatedAt: 7 };
     expect(migrate(save, 42)).toEqual(save);
   });
+
+  it('单条进度坏掉只丢这一条，不连累整份存档（也不能抛异常）', () => {
+    // 以前这里是直接读 value.entryId：一条 null 就能让读档在 IDB 回调里抛异常，
+    // init 的 promise 永远不 resolve，大厅一直显示 0 星
+    const raw = {
+      schemaVersion: SAVE_SCHEMA_VERSION,
+      updatedAt: 9,
+      allusions: {
+        good: {
+          entryId: 'good', stars: 2, completions: 1, lastPlayedAt: 5,
+          review: { level: 1, dueAt: null, lastGrade: 2, reviews: 1 },
+        },
+        broken: null,
+        alsoBroken: 'nope',
+        partial: { stars: 'x' },
+      },
+    };
+    const result = migrate(raw, 42);
+    expect(Object.keys(result.allusions).sort()).toEqual(['good', 'partial']);
+    expect(result.allusions.good?.stars).toBe(2);
+    expect(result.allusions.partial).toEqual({
+      entryId: 'partial', stars: 0, completions: 0, lastPlayedAt: null,
+      review: { level: 0, dueAt: null, lastGrade: null, reviews: 0 },
+    });
+  });
+
+  it('来自未来版本的存档不猜：降级为空档', () => {
+    const future = { schemaVersion: SAVE_SCHEMA_VERSION + 1, allusions: {}, updatedAt: 1 };
+    expect(migrate(future, 42)).toEqual(emptySave(42));
+  });
+
+  it('缺少迁移函数的老版本降级为空档（而不是带着读不懂的结构往下跑）', () => {
+    expect(migrate({ schemaVersion: 0, allusions: {} }, 42)).toEqual(emptySave(42));
+  });
 });
 
 describe('ProgressManager', () => {

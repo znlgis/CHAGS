@@ -4,6 +4,7 @@ import { CHAIN_STEP, chainStepBar, chainStepGrantBar } from '@chags/templates';
 import type { ChainStepMetrics } from '@chags/templates';
 import type { ChainStepLevel } from '@chags/templates/schemas';
 import { DESIGN_H, DESIGN_W, GRANT, POST_RADIUS, POSTS, RIDGES, ROAD_WIDTH, ROUTE, SKY_TOP } from './layout';
+import { clamp01 } from '@chags/game-kit';
 
 /**
  * 第 30 计的这一屏：**没有一场交战**。
@@ -26,7 +27,6 @@ const WALL = 0xb3a68d;
 const WALL_DEEP = 0x8e8270;
 const CITY = 0xd0a06a;
 
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 // ---------------- 路 ----------------
 

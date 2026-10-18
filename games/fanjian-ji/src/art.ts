@@ -4,6 +4,7 @@ import { DESIGN } from '@chags/templates';
 import type { TwolinePlantStageState } from '@chags/templates';
 import type { TwolinePlantLevel } from '@chags/templates/schemas';
 import { BELL, DESK, LANTERN, SKY_TOP, TENT, VISITOR_RADIUS, WALK_MS } from './layout';
+import { clamp01 } from '@chags/game-kit';
 
 const W = DESIGN.width;
 const H = DESIGN.height;
@@ -21,7 +22,6 @@ const LACQUER = shade(THEME.red, 0.94);
 const BRONZE = shade(THEME.goldDeep, 1.06);
 const MOONLIGHT = 0xfff6d8;
 
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 // ---------------- 帐里的几样东西 ----------------
 

@@ -9,6 +9,7 @@ import {
 } from './burrow.logic';
 import type { DigCounts } from './burrow.logic';
 import type { BurrowLevel, BurrowSpot } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 export type BurrowPhase = 'dig' | 'danger' | 'done';
@@ -131,7 +132,8 @@ export function createBurrowScene(ctx: GameContext, cfg: BurrowConfig): Phaser.T
       if (isBurrowOpen(spot.id, this.digs, cfg.level)) {
         this.sfx('correct');
         sparkleAt(this, spot.x, spot.y - 60, THEME.leaf, 5);
-        cfg.session.total += 1;
+        // 挖通一个洞：这一次做对了（退路多了一条）
+        recordAttempt(cfg.session, { ok: true });
         this.ctx.emit('beat:enter', { beatId: 'burrow:open:' + spot.id });
         if (this.waitingForDig) {
           this.waitingForDig = false;
@@ -178,6 +180,8 @@ export function createBurrowScene(ctx: GameContext, cfg: BurrowConfig): Phaser.T
         beatId: 'burrow:wave:' + wave.id + ':' + this.result,
       });
       if (this.result === 'trapped') {
+        // 被守住：这一趟退路不够 —— 记一次做错（不结束、不锁操作，狐狸守一会儿就走）
+        recordAttempt(cfg.session, { ok: false });
         this.showHint(wave.speak, 2400, 300);
       } else {
         sparkleAt(this, this.W / 2, 760, THEME.gold, 6);
@@ -235,15 +239,17 @@ export function createBurrowScene(ctx: GameContext, cfg: BurrowConfig): Phaser.T
       this.phase = 'done';
       this.hideHand();
       this.clearRing();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      this.redraw();
-      const finale = this.add.graphics().setDepth(40);
-      cfg.drawFinale?.(finale, this.state());
-      if (cfg.reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(cfg.reveal as string, 3200, 300));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? 4200, () => this.scene.start(cfg.nextSceneKey));
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? 4200,
+        reveal: cfg.reveal,
+        revealY: 300,
+        finalize: () => {
+          this.redraw();
+          const finale = this.add.graphics().setDepth(40);
+          cfg.drawFinale?.(finale, this.state());
+        }
+      });
     }
 
     // ---------------- 提示 ----------------

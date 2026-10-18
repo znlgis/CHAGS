@@ -20,9 +20,9 @@ Phaser 4.2（游戏）· Vue 3.5 + Pinia（外壳）· Vite 8 · TypeScript 5.9.
 ```bash
 pnpm install
 pnpm dev            # 开发服务器 http://127.0.0.1:5183
-pnpm verify         # typecheck + lint + test + content:check + build + size（提交前必须全绿）
-pnpm e2e            # Playwright 端到端（需先 npx playwright install chromium）
-pnpm e2e:dist       # 针对生产构建产物再跑一遍（验证 chunk 懒加载）
+pnpm verify         # typecheck + lint + test + content:check + build + size（互不依赖的步骤并行跑；提交前必须全绿）
+pnpm e2e            # Playwright 端到端（需先 pnpm exec playwright install chromium）
+pnpm e2e:dist       # 先 build 再针对生产构建产物跑一遍（验证 chunk 懒加载；CI/发版用的是这条）
 pnpm audit:i18n     # 双语版面巡检：把两种语言下的每个画面截图到 .scratch/i18n-audit/
 pnpm icons          # 重新生成应用图标（需要 Python + Pillow；只在改图标时用）
 pnpm keystore       # 生成安卓签名密钥（可选：不生成也能打包，见 docs/打包与分发.md §4）
@@ -68,16 +68,18 @@ pnpm dist:apk       # 打包安卓 apk（直接安装）
 2. **内容两半** `packages/content/src/entries/<id>.json`（摘要：标题 / 年代 / 出处 / 寓意 / 关键词）
    与 `<id>.game.json`（详情：故事分幕 / 关键抉择 / 复习题 / 误解 / 关卡脚本）。
    复习题**每条 3 道、必须含 1 道 `transfer`**，`content:check` 强制；
-   用新模板的话，还要在 `packages/game-kit/src/contract.ts` 的 `TemplateId` 里加 id，
-   并在 `packages/templates/src/schemas.ts` 登记关卡 schema；
+   用新模板的话，还要在 `packages/content/src/schema.ts` 的 `TEMPLATE_IDS` 里加 id
+   （`contract.ts` 只再导出它），并在 `packages/templates/src/schemas.ts` 登记关卡 schema；
 3. **双语补丁** `packages/content/src/i18n/en/<id>.json` 与 `<id>.game.json`（两半各一份）
    —— 缺字段、结构对不上、英文里混了中文，构建期就报错；
-4. **两处登记** `packages/content/src/entries/index.ts` 与 `packages/content/src/i18n/index.ts`
-   各一行；
+4. **四处登记** `packages/content/src/entries/index.ts`、`entries/detail.ts`、
+   `packages/content/src/i18n/index.ts`、`i18n/game.ts` 各一行（摘要 / 详情 / 摘要译文 / 详情译文分属四个文件 ——
+   少登记一处，构建期或注册表单测会当场报错）；
 5. **外壳接线** `apps/site/package.json` 加依赖 + `apps/site/src/registry.ts` 加一行懒加载 import。
    —— 这两步有 `apps/site/src/registry.test.ts` 守着：**注册表少一行（或多一行）会被单测当场抓住**，
    不会等到用户点进去才发现"找不到这个游戏"；
-6. **端到端用例** `e2e/` 里加一条 `?autoplay=1` 的无头通关（新模板必须实现 `runAutoplay()` 才算数）；
+6. **端到端用例** `e2e/` 里加一条真实操作 + 一条 `?autoplay=1` 的无头通关
+   （模板必须能被自动走完：`runAutoplay()` 或内联 autoplay 均可，但必须走与真实操作同一条判定路径）；
 7. **`pnpm verify` 全绿**（typecheck / lint / test / content:check / build / size），再按需跑 `pnpm e2e`。
 
 同样一份文件级清单见 [docs/三十六计方案.md](docs/三十六计方案.md) 第六节。
@@ -85,11 +87,11 @@ pnpm dist:apk       # 打包安卓 apk（直接安装）
 ## 当前进度
 
 **十七个典故 + 三十六计全六辑（第 1–36 计）**全部跑通：`pnpm verify` 全绿（typecheck / lint /
-单测 1221 项 / 内容体检 / 构建 / 体积），端到端里每部游戏都有一条无头通关用例
-（`?autoplay=1`，新模板必须实现 `runAutoplay()` 才算数）。
-首屏很小（不含 Phaser，也**不含**内容的故事与关卡脚本）：每部游戏自己的业务 chunk 只有几 KB，
-Phaser 是共享 chunk、完整内容（故事 / 复习题 / 关卡脚本）是另一个懒加载 chunk，
-都只在进入游戏时加载 —— 具体数字看 `pnpm size`。
+单测 / 内容体检 / 构建 / 体积；单测数量以 `pnpm test` 输出为准）。端到端里每部游戏都有一条无头通关用例
+（`?autoplay=1`），典故与三十六计另有 24 条**真实指针操作**用例（带 `@real` 标签，发版门禁只跑这一子集）。
+首屏很小（不含 Phaser，也**不含**内容的故事与关卡脚本）：**53.8 KB gzip**（2026-10-18 实测）。
+Phaser 是共享 chunk（裁剪版，220.6 KB gzip），完整内容（故事 / 复习题 / 关卡脚本）按条目拆成独立 chunk ——
+打开任意一局只下它自己那 1–2 KB，英文译文只在切英文时才加载。具体数字看 `pnpm size`（七项预算都在门禁里）。
 
 ### 到期复习（本轮上线）
 
@@ -505,18 +507,19 @@ apps/mobile                Capacitor 8 安卓壳（apk）
 packages/game-kit          契约层（GameModule / GameContext / 事件）+ TemplateId，不含 Phaser
 packages/content           内容数据（摘要 <id>.json + 详情 <id>.game.json）+ zod schema + 英文译文补丁
 packages/i18n              界面文案表（中英各一份，少写一个键就编译报错）
-packages/templates         玩法模板实现；契约里有 36 个模板 id，见 packages/game-kit/src/contract.ts
-                           （已被内容用到的 26 个 + 所有游戏共用的开场 story；
-                           match / order / drag / board / timing / react / branch / build / grow
-                           是预留 id，还没有实现；
+packages/templates         玩法模板实现；26 个模板 id 的唯一定义在 packages/content/src/schema.ts
+                           的 TEMPLATE_IDS（contract.ts 只再导出），26 个全部已实现且被内容用到；
+                           开场 story 是所有游戏共用的场景、不算模板 id；
                            butcher / beacon 是游戏包内的专属场景，数据登记在模板层；
-                           chaos 连模板 id 都没有，是盘古包里的纯专属场景）
+                           chaos 连模板 id 都没有，是盘古包里的纯专属场景；
+                           原 9 个预留 id（match/order/drag/board/timing/react/branch/build/grow）已删除
 packages/phaser-kit        Phaser 启动器、主题、基础场景、拖拽控制器
 packages/platform          Web 实现：IndexedDB / WebAudio / TTS / 生命周期
 packages/progress          存档、复习调度（纯函数，可单测）
 games/<id>                 53 个游戏包：一个典故 / 一计一个包
 e2e                        Playwright 冒烟 + 真实操作 + 截图
-scripts                    体积守卫（check-size.mjs）、图标生成（make-icons.py）
+scripts                    体积守卫（check-size.mjs）、并行 verify 执行器（verify.mjs）、
+                           图标生成（make-icons.py）、APK 构建（build-apk.mjs）、签名密钥（make-keystore.mjs）
 ```
 
 游戏清单的唯一事实来源是 `packages/content/src/entries/`（内容）与
@@ -527,6 +530,6 @@ scripts                    体积守卫（check-size.mjs）、图标生成（mak
 
 1. **逻辑与渲染分离**：规则写在纯 TS 里，不 import Phaser，可脱离浏览器单测。
 2. **游戏不碰环境**：存档 / 音频 / 生命周期一律走 `GameContext.services`，禁止直接 `localStorage` / `fetch`。
-3. **每个游戏可无头直达**：支持 `?seed=&autoplay=1`，否则无法自动化验证。
+3. **每个游戏可无头直达**：支持 `?autoplay=1`（另有 `?story=instant` / `?card=hold` 两个调试开关），否则无法自动化验证。
 
 详见 [docs/技术方案.md](docs/技术方案.md)。

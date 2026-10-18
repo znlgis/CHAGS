@@ -304,9 +304,6 @@ importers:
       '@chags/phaser-kit':
         specifier: workspace:*
         version: link:../../packages/phaser-kit
-      '@chags/progress':
-        specifier: workspace:*
-        version: link:../../packages/progress
       '@chags/templates':
         specifier: workspace:*
         version: link:../../packages/templates

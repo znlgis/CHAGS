@@ -1,25 +1,15 @@
-import {
-  ContentEntrySchema, EntryDetailSchema, EntrySummarySchema, getEntry, mergeLocalized, validatePatch,
-} from '@chags/content/full';
-import { templateSchemas } from '@chags/templates/schemas';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
-import rawSummary from '../../../packages/content/src/entries/hunshui-moyu.json';
-import rawDetail from '../../../packages/content/src/entries/hunshui-moyu.game.json';
-import enPatchSummary from '../../../packages/content/src/i18n/en/hunshui-moyu.json';
-import enPatchDetail from '../../../packages/content/src/i18n/en/hunshui-moyu.game.json';
 import {
-  MURK_MAX, closeWindow, isJobDone, isMuddy, isWindowDone, jobWork, muddyLeftMs, murkAt, stirAt,
-  stirStart, tapAt,
-} from '../../../packages/templates/src/window.logic';
-import { BANK_TOP, CREEL, FISH_RADIUS, FISH_SPOTS, MURK_GAUGE, STIR_SPOT, WATER_TOP } from './layout';
+  MURK_MAX, closeWindow, isJobDone, isMuddy, isWindowDone, jobWork, muddyLeftMs, murkAt,
+  stirAt, stirStart, tapAt,
+} from '@chags/templates/window.logic';
+import {
+  BANK_TOP, CREEL, FISH_RADIUS, FISH_SPOTS, MURK_GAUGE, STIR_SPOT, WATER_TOP,
+} from './layout';
 import { windowLevel } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-const enPatch = { ...enPatchSummary, ...enPatchDetail };
-
-/** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
-const entry = getEntry('hunshui-moyu') ?? ContentEntrySchema.parse(raw);
+const entry = getEntry('hunshui-moyu')!;
 const level = windowLevel(entry);
 
 /** 搅一下水、把一条鱼摸到手里 —— 与场景走的是同一条路（stirAt → tapAt） */
@@ -42,7 +32,6 @@ describe('混水摸鱼 · 关卡数据', () => {
     expect(level.mode).toBe('stir');
     expect(level.goal).toBe(3);
     expect(level.workTapMs).toBe(320);
-    expect(level.hint.length).toBeLessThanOrEqual(24);
     // stir 里"稳 / 乱"的周期不参与判定（schema 与画面要有个参照），鱼最长 1600ms
     expect(level.cycle.windowMs).toBeGreaterThanOrEqual(1600);
     expect(level.workTapMs).toBeLessThan(level.cycle.windowMs);
@@ -182,8 +171,6 @@ describe('混水摸鱼 · 零惩罚：水清了只是重来', () => {
 describe('混水摸鱼 · 故事与复习', () => {
   it('两幕：一河之隔，人少的一方；阵脚一乱，趁乱过河', () => {
     expect(entry.story.map((beat) => beat.id)).toEqual(['s1', 's2']);
-    expect(entry.story.length).toBe(2);
-    for (const beat of entry.story) expect(beat.text.length).toBeLessThanOrEqual(90);
     expect(entry.story[0]!.text).toContain('人多');
     expect(entry.story[1]!.text).toContain('乱');
     expect(entry.keyMoment.beatId).toBe('s1');
@@ -199,22 +186,17 @@ describe('混水摸鱼 · 故事与复习', () => {
     expect(entry.yearApprox).toBe(383);
     expect(entry.figures).toEqual(['朱序', '谢玄']);
     expect(entry.ageRange).toEqual([8, 12]);
-    expect(entry.misconceptions.length).toBeGreaterThanOrEqual(1);
     expect(entry.game.template).toBe('window');
     expect(entry.game.stages[0]!.template).toBe('window');
   });
 
   it('关键抉择点恰好一个"先把水搅浑"', () => {
     const options = entry.keyMoment.options;
-    expect(options.filter((option) => option.isCanonical).length).toBe(1);
     expect(options.find((option) => option.isCanonical)?.text).toContain('搅');
     expect(entry.keyMoment.reveal).toContain('搅');
   });
 
   it('复习题：记忆题问朱序做了什么，迁移题问教室乱的时候怎么办', () => {
-    expect(entry.quiz.length).toBeGreaterThanOrEqual(2);
-    expect(entry.quiz.some((question) => question.kind === 'transfer')).toBe(true);
-    for (const question of entry.quiz) expect(question.answer).toBeLessThan(question.options.length);
     const transfer = entry.quiz.find((question) => question.kind === 'transfer');
     expect(transfer?.question).toContain('教室');
   });
@@ -232,46 +214,8 @@ describe('混水摸鱼 · 故事与复习', () => {
 });
 
 describe('混水摸鱼 · 英译补丁', () => {
-  it('摘要 / 详情两半各自合法，英译补丁也分别对得上（与 content:check 同一套口径）', () => {
-    const summary = EntrySummarySchema.parse(rawSummary);
-    const detail = EntryDetailSchema.parse(rawDetail);
-    expect(validatePatch(summary, enPatchSummary)).toEqual([]);
-    expect(validatePatch(detail, enPatchDetail)).toEqual([]);
-    const mergedSummary = EntrySummarySchema.parse(mergeLocalized(summary, enPatchSummary));
-    const mergedDetail = EntryDetailSchema.parse(mergeLocalized(detail, enPatchDetail));
-    expect(templateSchemas[mergedDetail.game.stages[0]!.template]!.safeParse(
-      mergedDetail.game.stages[0]!.levelScript,
-    ).success).toBe(true);
-    expect(findCjk({ ...mergedSummary, ...mergedDetail })).toEqual([]);
-  });
-
-  it('与中文一一对应、合起来不剩一个中文字，关卡脚本照样合法', () => {
-    expect(validatePatch(entry, enPatch)).toEqual([]);
-    const merged = ContentEntrySchema.parse(mergeLocalized(entry, enPatch));
+  it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
+    const merged = getEntry('hunshui-moyu', 'en')!;
     expect(merged.title).toBe('Muddy the Water to Catch Fish');
-    expect(merged.story.map((beat) => beat.text)).toHaveLength(entry.story.length);
-    expect(merged.quiz.map((question) => question.options.length)).toEqual(
-      entry.quiz.map((question) => question.options.length),
-    );
-    for (const stage of merged.game.stages) {
-      expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    }
-    expect(findCjk(merged)).toEqual([]);
   });
 });
-
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了（与 content:check 同一套判据） */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}

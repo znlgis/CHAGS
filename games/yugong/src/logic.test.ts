@@ -29,8 +29,4 @@ describe('愚公移山 · 关卡数据', () => {
     const level = tapLevel(raw!);
     expect(level.milestones[0]!.at).toBeLessThan(0.4);
   });
-
-  it('故事很短', () => {
-    expect(raw?.story.length).toBeLessThanOrEqual(2);
-  });
 });

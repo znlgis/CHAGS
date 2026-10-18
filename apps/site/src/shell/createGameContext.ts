@@ -9,21 +9,19 @@ export interface GameHostHooks {
   onEvent: <K extends keyof GameEventMap>(type: K, payload: GameEventMap[K]) => void;
 }
 
-/** ?autoplay=1&seed=xxx —— 无头直达的调试开关 */
+/** ?autoplay=1 —— 无头直达的调试开关（?story=instant、?card=hold 同理） */
 export function readDebugOptions(): DebugOptions | undefined {
   const params = new URLSearchParams(window.location.search);
   const autoplay = params.get('autoplay') === '1';
-  const seed = params.get('seed');
   // ?story=instant：截图巡检专用，跳过"听完才能继续"的等待（玩家界面上没有这个开关）
   const storyInstant = params.get('story') === 'instant';
   // ?card=hold：截图巡检专用，自动通关后停在典故卡上（同上，只有 URL 能给）
   const cardHold = params.get('card') === 'hold';
-  if (!autoplay && !seed && !storyInstant && !cardHold) return undefined;
+  if (!autoplay && !storyInstant && !cardHold) return undefined;
   const options: DebugOptions = {};
   if (autoplay) options.autoplay = true;
   if (storyInstant) options.storyInstant = true;
   if (cardHold) options.cardHold = true;
-  if (seed !== null && seed.length > 0) options.seed = seed;
   return options;
 }
 

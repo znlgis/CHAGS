@@ -3,6 +3,7 @@ import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit
 import { DESIGN, PROBE } from '@chags/templates';
 import type { ProbeStageState } from '@chags/templates';
 import type { ProbeLevel, ProbePatch } from '@chags/templates/schemas';
+import { clamp01 } from '@chags/game-kit';
 import {
   EXIT, GROUND_TOP, LANTERNS, PATCHES, PATCH_RADIUS, POLE_LEN, ROAD, WALKER, YARD_TOP,
 } from './layout';
@@ -14,7 +15,6 @@ const GRASS_DEEP = shade(THEME.leaf, 0.64);
 const SNAKE = THEME.tealDeep;
 const SKIN = 0xf8dcbb;
 
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 // ---------------- 景（画一次） ----------------
 

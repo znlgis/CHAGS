@@ -2,7 +2,9 @@ import { getEntry } from '@chags/content/full';
 import { ButcherLevelSchema } from '@chags/templates/schemas';
 import { describe, expect, it } from 'vitest';
 import { KNIFE, PIECES, PUSH } from './layout';
-import { angleGapDeg, isButcherComplete, isHintless, nickCount, pieceAt, pushOutcome } from './logic';
+import {
+  angleGapDeg, isButcherComplete, isHintless, nickCount, pieceAt, pushOutcome,
+} from './logic';
 
 function levelOf(): ReturnType<typeof ButcherLevelSchema.parse> {
   const raw = getEntry('paoding');

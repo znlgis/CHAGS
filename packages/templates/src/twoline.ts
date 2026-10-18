@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
-import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
+import { BaseScene, THEME, createHand } from '@chags/phaser-kit';
 import { SCENE_KEYS } from './layout';
 import {
   TWOLINE_TIMING, decoyRatio, hitDecoy, hitReal, isTwolineDone, needsTopUp, nextLineToTap,
@@ -8,6 +8,7 @@ import {
 } from './twoline.logic';
 import type { TwolineState } from './twoline.logic';
 import type { TwolineLevel } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 /**
@@ -47,7 +48,7 @@ export interface TwolineStageState {
   realGoal: number;
   realRatio: number;
   tapsLeft: number;
-  /** 被看穿了几次（零惩罚，只是记着） */
+  /** 被看穿了几次（记进 mistakes，只是记着） */
   exposed: number;
   /** 刚被看穿过去多久；没被抓过 = Infinity */
   sinceExposedMs: number;
@@ -91,7 +92,7 @@ export interface TwolineConfig {
  * - **判定全在 twoline.logic 里**：场景只做两件事 —— 每帧把明线结账（settleDecoy），
  *   孩子点哪条线就推哪条线。单测与画面用的是同一份判定。
  * - **被看穿不是失败**：明线跌破 minKeep 只是被补回 minKeep、记一次，接着玩就是。
- *   它会红一下、说一句 —— 但这一局不会因为被看见而结束（零惩罚是这一系列的地基）。
+ *   它会红一下、说一句 —— 但这一局不会因为被看见而结束（记进 mistakes，不结束、不锁操作）。
  * - **两条线都要人**：只顾暗线会被反复看穿，只顾明线推不动 —— 手在两条线之间来回，
  *   才是"明修栈道、暗度陈仓"落到手上的样子。
  */
@@ -240,8 +241,9 @@ export function createTwolineScene(ctx: GameContext, cfg: TwolineConfig): Phaser
       if (isTwolineDone(this.level, this.state)) this.finish();
     }
 
-    /** 被看穿了：红一下、说一句 —— 但**这一局不结束**（零惩罚） */
+    /** 被看穿了：红一下、说一句 —— 这一局不结束、不锁操作；这一下记进 mistakes */
     private onCaught(): void {
+      recordAttempt(cfg.session, { ok: false });
       this.clearRing();
       this.hideHand();
       this.sfx('wrong');
@@ -258,23 +260,21 @@ export function createTwolineScene(ctx: GameContext, cfg: TwolineConfig): Phaser
       this.finished = true;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.level.real.x, this.level.real.y, THEME.gold, 10);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'twoline:done' });
-      this.redraw(this.elapsed());
-      if (this.finaleGfx) {
-        cfg.drawFinale?.(this.finaleGfx, this.stageState(this.elapsed()), this.level);
-      }
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, TWOLINE.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? TWOLINE.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? TWOLINE.finaleHoldMs,
+        sparkle: { x: this.level.real.x, y: this.level.real.y, color: THEME.gold, count: 10 },
+        reveal: cfg.reveal,
+        revealY: TWOLINE.hintY,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'twoline:done' });
+          this.redraw(this.elapsed());
+          if (this.finaleGfx) {
+            cfg.drawFinale?.(this.finaleGfx, this.stageState(this.elapsed()), this.level);
+          }
+        }
+      });
     }
 
     // ---------------- 小手 ----------------
@@ -387,7 +387,7 @@ export interface TwolinePlantStageState {
   planted: boolean;
   /** 手指正按在案上（按住才往前走） */
   holding: boolean;
-  /** 被他回过头撞见过几次 —— 复盘用，不扣星 */
+  /** 被他回过头撞见过几次 —— 复盘用，也记进 mistakes */
   caught: number;
   /** 刚被撞见的那一刻；-1 = 还没被撞见过 */
   lastCaughtAtMs: number;
@@ -433,8 +433,8 @@ export interface TwolinePlantConfig {
  * 三条刻意的设计：
  * - **判定全在 twoline.logic 里**：空档什么时候开、按住推进了多少、他回过头时谁被清零，
  *   单测与画面用的是同一份函数（连无头验证也走同一条 onPress → plantStep）。
- * - **零惩罚**：被他回过头撞见只是"这一回白摆了"（进度清零、记一笔 caught），
- *   不结束、不扣星；他正看着的时候按住、点空处，也什么都不发生。
+ * - **零惩罚**：被他回过头撞见只是"这一回白摆了"（进度清零、记一笔 caught，也记进 mistakes），
+ *   不结束、不锁操作；他正看着的时候按住、点空处，也什么都不发生。
  * - **提示给在点上**：小手只指"此刻该动的那一处" —— 他正看着就指帐角（先弄出动静），
  *   空档开着就指案上（按住摆），绝不让画面自己说话。
  */
@@ -543,8 +543,9 @@ export function createTwolinePlantScene(
       }
     }
 
-    /** 被他回过头撞见了：进度清零（判定那边已经清了）、红光一下、说一句 —— **这一局不结束** */
+    /** 被他回过头撞见了：进度清零（判定那边已经清了）、红光一下、说一句 —— 这一局不结束；这一下记进 mistakes */
     private onCaught(): void {
+      recordAttempt(cfg.session, { ok: false });
       this.clearRing();
       this.hideHand();
       this.idleMs = 0;
@@ -712,27 +713,26 @@ export function createTwolinePlantScene(
       this.holding = false;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.level.spot.x, this.level.spot.y, THEME.gold, 10);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'twoline:done' });
-      this.ctx.emit('choice:made', {
-        beatId: 'twoline:plant',
-        choiceId: 'plant',
-        correct: true,
-        latencyMs: t,
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? TWOLINE_PLANT.finaleHoldMs,
+        sparkle: { x: this.level.spot.x, y: this.level.spot.y, color: THEME.gold, count: 10 },
+        reveal: cfg.reveal,
+        revealDelayMs: 1400,
+        revealY: TWOLINE_PLANT.hintY,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'twoline:done' });
+          this.ctx.emit('choice:made', {
+            beatId: 'twoline:plant',
+            choiceId: 'plant',
+            correct: true,
+            latencyMs: t,
+          });
+          this.redraw(t);
+          this.showHint(this.level.plantedLine, 3200, TWOLINE_PLANT.hintY);
+        }
       });
-      this.redraw(t);
-      this.showHint(this.level.plantedLine, 3200, TWOLINE_PLANT.hintY);
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1400, () => this.showHint(reveal, 3200, TWOLINE_PLANT.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? TWOLINE_PLANT.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
     }
 
     // ---------------- 小手 ----------------

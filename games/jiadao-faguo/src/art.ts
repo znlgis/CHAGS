@@ -2,6 +2,7 @@ import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
 import { CHAIN_TIMING, DESIGN, chainProgressBar } from '@chags/templates';
 import type { ChainLevel, ChainStageState } from '@chags/templates';
+import { clamp01 } from '@chags/game-kit';
 import {
   CAPITAL, ENVOY, GATE_RADIUS, GATES, HOME, ROAD_WIDTH, ROUTE, SKY_TOP,
 } from './layout';
@@ -28,7 +29,6 @@ const WALL_DEEP = 0x8e8270;
 const TENT = 0xd9b46a;
 const CITY = 0xd0a06a;
 
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 // ---------------- 路 ----------------
 

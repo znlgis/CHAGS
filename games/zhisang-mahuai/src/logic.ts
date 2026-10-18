@@ -1,4 +1,4 @@
-import { stageScript } from '@chags/content/full';
+import { stageScript } from '@chags/content';
 import type { ContentEntry } from '@chags/content';
 import { ProbeHintSchema } from '@chags/templates/schemas';
 import type { ProbeHintLevel } from '@chags/templates/schemas';

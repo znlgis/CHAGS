@@ -1,27 +1,13 @@
-import {
-  ContentEntrySchema, EntryDetailSchema, EntrySummarySchema, getEntry, mergeLocalized, validatePatch,
-} from '@chags/content/full';
-import { templateSchemas } from '@chags/templates/schemas';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
-import rawSummary from '../../../packages/content/src/entries/yuanjiao-jingong.json';
-import rawDetail from '../../../packages/content/src/entries/yuanjiao-jingong.game.json';
-import enPatchSummary from '../../../packages/content/src/i18n/en/yuanjiao-jingong.json';
-import enPatchDetail from '../../../packages/content/src/i18n/en/yuanjiao-jingong.game.json';
 import {
-  expectedNext, isOrderDone, neighborAt, nextIdInOrder, noteWrongPick, orderProgress, orderStart,
-  pick, pickedCount, pickedOrder, wrongPicks,
-} from '../../../packages/templates/src/matchup.logic';
-import {
-  CAPITAL, FAR_RING, NEAR_RING, NEIGHBORS, NEIGHBOR_RADIUS,
-} from './layout';
+  expectedNext, isOrderDone, neighborAt, nextIdInOrder, noteWrongPick, orderProgress,
+  orderStart, pick, pickedCount, pickedOrder, wrongPicks,
+} from '@chags/templates/matchup.logic';
+import { CAPITAL, FAR_RING, NEAR_RING, NEIGHBORS, NEIGHBOR_RADIUS } from './layout';
 import { matchupLevel } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-const enPatch = { ...enPatchSummary, ...enPatchDetail };
-
-/** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
-const entry = getEntry('yuanjiao-jingong') ?? ContentEntrySchema.parse(raw);
+const entry = getEntry('yuanjiao-jingong')!;
 const level = matchupLevel(entry);
 
 /** 一座城到秦都（地图中央）的距离 —— 近的一圈 / 远的一圈按它分 */
@@ -42,7 +28,6 @@ describe('远交近攻 · 关卡数据', () => {
     expect(level.mode).toBe('order');
     expect(level.neighbors.length).toBe(6);
     expect(level.sequence).toEqual(['han', 'wei', 'zhao', 'chu', 'yan', 'qi']);
-    expect(level.hint.length).toBeLessThanOrEqual(24);
     for (const neighbor of level.neighbors) expect(neighbor.label.length).toBeLessThanOrEqual(12);
   });
 
@@ -177,8 +162,6 @@ describe('远交近攻 · 手指粗也点得到（点空是零惩罚的）', () 
 describe('远交近攻 · 故事与复习', () => {
   it('两幕：范雎献计 → 秦国照这个顺序一步步往外走', () => {
     expect(entry.story.map((beat) => beat.id)).toEqual(['s1', 's2']);
-    expect(entry.story.length).toBe(2);
-    for (const beat of entry.story) expect(beat.text.length).toBeLessThanOrEqual(90);
     expect(entry.keyMoment.beatId).toBe('s1');
     expect(entry.story[0]!.text).toContain('远');
   });
@@ -193,22 +176,17 @@ describe('远交近攻 · 故事与复习', () => {
     expect(entry.yearApprox).toBe(-270);
     expect(entry.figures).toEqual(['范雎', '秦昭王']);
     expect(entry.ageRange).toEqual([8, 12]);
-    expect(entry.misconceptions.length).toBeGreaterThanOrEqual(1);
     expect(entry.game.template).toBe('matchup');
     expect(entry.game.stages[0]!.template).toBe('matchup');
   });
 
   it('关键抉择点恰好一个"先跟远的交好，再处理近的"', () => {
     const options = entry.keyMoment.options;
-    expect(options.filter((option) => option.isCanonical).length).toBe(1);
     expect(options.find((option) => option.isCanonical)?.text).toContain('远');
     expect(entry.keyMoment.reveal).toContain('先');
   });
 
   it('复习题：记忆题问先跟谁交好，迁移题问两个任务先做哪个', () => {
-    expect(entry.quiz.length).toBeGreaterThanOrEqual(2);
-    expect(entry.quiz.some((question) => question.kind === 'transfer')).toBe(true);
-    for (const question of entry.quiz) expect(question.answer).toBeLessThan(question.options.length);
     const transfer = entry.quiz.find((question) => question.kind === 'transfer');
     expect(transfer?.question).toContain('听写');
   });
@@ -226,46 +204,8 @@ describe('远交近攻 · 故事与复习', () => {
 });
 
 describe('远交近攻 · 英译补丁', () => {
-  it('摘要 / 详情两半各自合法，英译补丁也分别对得上（与 content:check 同一套口径）', () => {
-    const summary = EntrySummarySchema.parse(rawSummary);
-    const detail = EntryDetailSchema.parse(rawDetail);
-    expect(validatePatch(summary, enPatchSummary)).toEqual([]);
-    expect(validatePatch(detail, enPatchDetail)).toEqual([]);
-    const mergedSummary = EntrySummarySchema.parse(mergeLocalized(summary, enPatchSummary));
-    const mergedDetail = EntryDetailSchema.parse(mergeLocalized(detail, enPatchDetail));
-    expect(templateSchemas[mergedDetail.game.stages[0]!.template]!.safeParse(
-      mergedDetail.game.stages[0]!.levelScript,
-    ).success).toBe(true);
-    expect(findCjk({ ...mergedSummary, ...mergedDetail })).toEqual([]);
-  });
-
-  it('与中文一一对应、合起来不剩一个中文字，关卡脚本照样合法', () => {
-    expect(validatePatch(entry, enPatch)).toEqual([]);
-    const merged = ContentEntrySchema.parse(mergeLocalized(entry, enPatch));
+  it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
+    const merged = getEntry('yuanjiao-jingong', 'en')!;
     expect(merged.title).toBe('Befriend the Far, Attack the Near');
-    expect(merged.story.map((beat) => beat.text)).toHaveLength(entry.story.length);
-    expect(merged.keyMoment.options.map((option) => option.text)).toHaveLength(
-      entry.keyMoment.options.length,
-    );
-    for (const stage of merged.game.stages) {
-      expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    }
-    expect(findCjk(merged)).toEqual([]);
   });
 });
-
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了（与 content:check 同一套判据） */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}

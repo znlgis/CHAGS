@@ -2,6 +2,7 @@ import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
 import { DESIGN } from '@chags/templates';
 import type { SiegeLadderMetrics } from '@chags/templates';
+import { clamp01 } from '@chags/game-kit';
 import {
   BAIT, BAR, GROUND_TOP, LADDER_FOOT, LADDER_TOP, PULL, RUNGS, RUNG_RADIUS, SKY_TOP, WALL_TOP,
 } from './layout';
@@ -18,7 +19,6 @@ const GRASS = 0x7fae63;
 const SKIN = 0xf8dcbb;
 const ZHAO = 0x53607a;
 const HAN = 0xd0574a;
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 const ease = (t: number): number => t * t * (3 - 2 * t);
 
 // ---------------- 景 ----------------

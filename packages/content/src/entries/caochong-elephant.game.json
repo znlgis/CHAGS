@@ -8,15 +8,13 @@
       "id": "s1",
       "title": "一头大象",
       "text": "有人送给曹操一头大象。",
-      "narration": "有人送给曹操一头大象。",
-      "illustration": "none"
+      "narration": "有人送给曹操一头大象。"
     },
     {
       "id": "s2",
       "title": "有多重？",
       "text": "它到底有多重呢？",
-      "narration": "曹操想知道：它到底有多重呢？",
-      "illustration": "none"
+      "narration": "曹操想知道：它到底有多重呢？"
     }
   ],
   "keyMoment": {

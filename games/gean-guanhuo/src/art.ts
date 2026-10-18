@@ -2,6 +2,7 @@ import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
 import { DESIGN, WAIT } from '@chags/templates';
 import type { WaitLevel, WaitStageMetrics } from '@chags/templates';
+import { clamp01 } from '@chags/game-kit';
 
 /**
  * 隔岸观火：一条河，两岸。
@@ -45,9 +46,6 @@ export interface WorldState {
   shake: number;
 }
 
-function clamp01(value: number): number {
-  return Math.min(1, Math.max(0, value));
-}
 
 // ---------------- 天与两岸 ----------------
 

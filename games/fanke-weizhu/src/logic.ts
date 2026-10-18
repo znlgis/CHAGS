@@ -1,4 +1,4 @@
-import { stageScript } from '@chags/content/full';
+import { stageScript } from '@chags/content';
 import type { ContentEntry } from '@chags/content';
 import { ChainStepSchema } from '@chags/templates/schemas';
 import type { ChainStepLevel } from '@chags/templates/schemas';

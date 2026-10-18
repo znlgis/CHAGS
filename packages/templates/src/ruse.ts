@@ -13,6 +13,7 @@ import {
 } from './ruse.logic';
 import type { GazeSide, LampPhase } from './ruse.logic';
 import type { RuseItem, RuseLevel, RuseNoise } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 /**
@@ -106,7 +107,7 @@ export interface RuseConfig {
  * 三条刻意的设计：
  * - **灯是墙上的钟**：什么时候亮、照哪一边都由纯函数算（ruse.logic），
  *   画面只负责把"还有多久"画得看得见 —— 孩子是靠看征兆做决定的，不是靠背时间。
- * - **被看见只是退回原位**：不扣星、不结束、不锁操作。灯亮着的时候被照到，东西回原位，
+ * - **被看见只是退回原位**：记进 mistakes、不结束、不锁操作。灯亮着的时候被照到，东西回原位，
  *   再来一次就是（零惩罚是这一系列的地基）。
  * - **过关就永久安全**：拖过检查口的东西从此与灯无关 —— 这是"进度"唯一的来源，
  *   所以孩子看得见自己确实往前走了一步。
@@ -283,7 +284,7 @@ export function createRuseScene(ctx: GameContext, cfg: RuseConfig): Phaser.Types
       }
       this.drawMarks(stage, t);
 
-      // 被灯照到的东西退回原位（零惩罚）。手上那件不硬抢：记下来，松手再回。
+      // 被灯照到的东西退回原位（不结束、不锁操作；这一下记进 mistakes）。手上那件不硬抢：记下来，松手再回。
       for (const item of this.level.items) {
         if (this.passed.has(item.id)) continue;
         const node = this.nodes.get(item.id);
@@ -379,7 +380,7 @@ export function createRuseScene(ctx: GameContext, cfg: RuseConfig): Phaser.Types
       this.carried = null;
       if (!node || this.done) return;
       node.setDepth(30);
-      // 这一趟被灯看见过：松手就回原位（零惩罚，东西不会丢）
+      // 这一趟被灯看见过：松手就回原位（记进 mistakes，东西不会丢）
       if (this.caught === item.id) {
         this.sendHome(item);
         return;
@@ -413,7 +414,7 @@ export function createRuseScene(ctx: GameContext, cfg: RuseConfig): Phaser.Types
       return isExposed(this.level, item, t, this.sightFor(item, x));
     }
 
-    /** 退回原位：零惩罚 —— 不扣星、不停局，sfx 只是"哎呀"一声 */
+    /** 退回原位：不结束、不停局；这一下记进 mistakes（被灯照到了，sfx 只是"哎呀"一声） */
     private sendHome(item: RuseItem): void {
       const node = this.nodes.get(item.id);
       if (!node) return;
@@ -421,6 +422,8 @@ export function createRuseScene(ctx: GameContext, cfg: RuseConfig): Phaser.Types
       if (this.caught === item.id) this.caught = null;
       const away = Math.hypot(node.x - item.x, node.y - item.y) > RUSE.homeSlack;
       if (!away) return;
+      // 真的从别处被照回原位才算一次做错（本来就在原位时什么也不发生）
+      recordAttempt(cfg.session, { ok: false });
       this.carried = null;
       node.setDepth(30);
       this.sfx('wrong');
@@ -442,8 +445,7 @@ export function createRuseScene(ctx: GameContext, cfg: RuseConfig): Phaser.Types
       this.hideHand();
       this.sfx('correct');
       sparkleAt(this, this.level.gate.x, this.level.gate.y, THEME.gold, 6);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
+      recordAttempt(cfg.session, { ok: true });
       this.ctx.emit('beat:enter', { beatId: 'ruse:pass:' + item.id });
 
       this.tweens.killTweensOf(node);
@@ -480,18 +482,17 @@ export function createRuseScene(ctx: GameContext, cfg: RuseConfig): Phaser.Types
       this.done = true;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
-      const finale = this.add.graphics().setDepth(40);
-      cfg.drawFinale?.(finale, this.state(this.now()), this.level);
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, 300));
-      }
-      this.time.delayedCall(this.ms(cfg.finaleHoldMs ?? RUSE.finaleHoldMs), () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: this.ms(cfg.finaleHoldMs ?? RUSE.finaleHoldMs),
+        sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: 300,
+        finalize: () => {
+          const finale = this.add.graphics().setDepth(40);
+          cfg.drawFinale?.(finale, this.state(this.now()), this.level);
+        }
+      });
     }
 
     // ---------------- 提示 ----------------

@@ -1,120 +1,36 @@
+import { DEFAULT_LOCALE } from '../locale';
 import type { Locale } from '../locale';
-import enCaochong from './en/caochong-elephant.json';
-import enPangu from './en/pangu.json';
-import enHouyi from './en/houyi.json';
-import enNuwa from './en/nuwa.json';
-import enJingwei from './en/jingwei.json';
-import enKuafu from './en/kuafu.json';
-import enYugong from './en/yugong.json';
-import enShennong from './en/shennong.json';
-import enQiren from './en/qiren.json';
-import enFenghuo from './en/fenghuo.json';
-import enTaigong from './en/taigong.json';
-import enDayu from './en/dayu.json';
-import enKezhou from './en/kezhou.json';
-import enZhaosanmusi from './en/zhaosanmusi.json';
-import enJiaotu from './en/jiaotu.json';
-import enYangyouji from './en/yangyouji.json';
-import enPaoding from './en/paoding.json';
-import enMantian from './en/mantian-guohai.json';
-import enWeiwei from './en/weiwei-jiuzhao.json';
-import enJiedao from './en/jiedao-sharen.json';
-import enYiyi from './en/yiyi-dailao.json';
-import enChenhuo from './en/chenhuo-dajie.json';
-import enShengdong from './en/shengdong-jixi.json';
-import enWuzhong from './en/wuzhong-shengyou.json';
-import enAndu from './en/andu-chencang.json';
-import enGean from './en/gean-guanhuo.json';
-import enXiaoli from './en/xiaoli-cangdao.json';
-import enLidai from './en/lidai-taojiang.json';
-import enShunshou from './en/shunshou-qianyang.json';
-import enDacao from './en/dacao-jingshe.json';
-import enJieshi from './en/jieshi-huanhun.json';
-import enDiaohu from './en/diaohu-lishan.json';
-import enYuqin from './en/yuqin-guzong.json';
-import enPaozhuan from './en/paozhuan-yinyu.json';
-import enQinzei from './en/qinzei-qinwang.json';
-import enFudi from './en/fudi-chouxin.json';
-import enHunshui from './en/hunshui-moyu.json';
-import enJinchan from './en/jinchan-tuoqiao.json';
-import enGuanmen from './en/guanmen-zhuozei.json';
-import enYuanjiao from './en/yuanjiao-jingong.json';
-import enJiadao from './en/jiadao-faguo.json';
-import enTouliang from './en/touliang-huanzhu.json';
-import enZhisang from './en/zhisang-mahuai.json';
-import enJiachi from './en/jiachi-budian.json';
-import enShangwu from './en/shangwu-chouti.json';
-import enShushang from './en/shushang-kaihua.json';
-import enFanke from './en/fanke-weizhu.json';
-import enMeiren from './en/meiren-ji.json';
-import enKongcheng from './en/kongcheng-ji.json';
-import enFanjian from './en/fanjian-ji.json';
-import enKurou from './en/kurou-ji.json';
-import enLianhuan from './en/lianhuan-ji.json';
-import enZou from './en/zou-weishang.json';
 
 /**
- * 典故内容的翻译补丁。结构镜像原文，只写需要翻译的字段。
- * 完整性（缺键、数组长度、译文超长）由 pnpm content:check 在构建期强制。
+ * 摘要译文补丁（当前只有英文）。**按语言懒加载**：
+ * 53 份 en 补丁约 9 KB gzip，而默认语言（中文）永远用不到它们，
+ * 所以中文用户的首页不该为它们付钱（以前是静态 import，全量进首屏）。
+ *
+ * Node 侧（content:check / 单测）走 '@chags/content/full'：
+ * 那边同步注册全量补丁（见 entries/detail.ts），所以路径行为不变。
  */
-export const patches: Partial<Record<Locale, Record<string, unknown>>> = {
-  en: {
-    'caochong-elephant': enCaochong,
-    pangu: enPangu,
-    houyi: enHouyi,
-    nuwa: enNuwa,
-    jingwei: enJingwei,
-    kuafu: enKuafu,
-    yugong: enYugong,
-    shennong: enShennong,
-    qiren: enQiren,
-    fenghuo: enFenghuo,
-    taigong: enTaigong,
-    dayu: enDayu,
-    kezhou: enKezhou,
-    zhaosanmusi: enZhaosanmusi,
-    jiaotu: enJiaotu,
-    yangyouji: enYangyouji,
-    paoding: enPaoding,
-    'mantian-guohai': enMantian,
-    'weiwei-jiuzhao': enWeiwei,
-    'jiedao-sharen': enJiedao,
-    'yiyi-dailao': enYiyi,
-    'chenhuo-dajie': enChenhuo,
-    'shengdong-jixi': enShengdong,
-    'wuzhong-shengyou': enWuzhong,
-    'andu-chencang': enAndu,
-    'gean-guanhuo': enGean,
-    'xiaoli-cangdao': enXiaoli,
-    'lidai-taojiang': enLidai,
-    'shunshou-qianyang': enShunshou,
-    'dacao-jingshe': enDacao,
-    'jieshi-huanhun': enJieshi,
-    'diaohu-lishan': enDiaohu,
-    'yuqin-guzong': enYuqin,
-    'paozhuan-yinyu': enPaozhuan,
-    'qinzei-qinwang': enQinzei,
-    'fudi-chouxin': enFudi,
-    'hunshui-moyu': enHunshui,
-    'jinchan-tuoqiao': enJinchan,
-    'guanmen-zhuozei': enGuanmen,
-    'yuanjiao-jingong': enYuanjiao,
-    'jiadao-faguo': enJiadao,
-    'touliang-huanzhu': enTouliang,
-    'zhisang-mahuai': enZhisang,
-    'jiachi-budian': enJiachi,
-    'shangwu-chouti': enShangwu,
-    'shushang-kaihua': enShushang,
-    'fanke-weizhu': enFanke,
-    'meiren-ji': enMeiren,
-    'kongcheng-ji': enKongcheng,
-    'fanjian-ji': enFanjian,
-    'kurou-ji': enKurou,
-    'lianhuan-ji': enLianhuan,
-    'zou-weishang': enZou,
-  },
-};
+let loaded: Partial<Record<Locale, Record<string, unknown>>> = {};
+
+/** Node 侧同步注册（'@chags/content/full' 专用；浏览器不要调） */
+export function registerPatches(patches: Partial<Record<Locale, Record<string, unknown>>>): void {
+  loaded = { ...loaded, ...patches };
+}
 
 export function patchFor(locale: Locale, id: string): unknown {
-  return patches[locale]?.[id];
+  if (locale === DEFAULT_LOCALE) return undefined;
+  return loaded[locale]?.[id];
+}
+
+/**
+ * 切到某个语言之前，先把该语言的摘要补丁加载好（默认语言直接返回）。
+ * 只加载一次；失败就回落到中文文案，不能让切语言把界面搞挂。
+ */
+export async function ensurePatches(locale: Locale): Promise<void> {
+  if (locale === DEFAULT_LOCALE || loaded[locale] !== undefined) return;
+  try {
+    const mod = await import('./en');
+    loaded = { ...loaded, en: mod.patches };
+  } catch {
+    // 加载失败：patchFor 返回 undefined → 界面回落中文
+  }
 }

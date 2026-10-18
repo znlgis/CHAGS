@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
-import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
+import { BaseScene, THEME, createHand } from '@chags/phaser-kit';
 import { SCENE_KEYS } from './layout';
 import {
   CHASE_TIMING, chaseAutoplayLevel, chaseStart, distanceBand, hitHold, holdWanted, isChaseDone,
@@ -8,6 +8,7 @@ import {
 } from './chase.logic';
 import type { ChaseBand, ChaseState } from './chase.logic';
 import type { ChaseLevel } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 /**
@@ -225,23 +226,21 @@ export function createChaseScene(ctx: GameContext, cfg: ChaseConfig): Phaser.Typ
       this.holding = false;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.level.hold.x, this.level.hold.y - this.level.hold.radius, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'chase:done' });
-      this.redraw(this.elapsed());
-      if (this.finaleGfx) {
-        cfg.drawFinale?.(this.finaleGfx, this.stageState(this.elapsed()), this.level);
-      }
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, CHASE.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? CHASE.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? CHASE.finaleHoldMs,
+        sparkle: { x: this.level.hold.x, y: this.level.hold.y - this.level.hold.radius, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: CHASE.hintY,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'chase:done' });
+          this.redraw(this.elapsed());
+          if (this.finaleGfx) {
+            cfg.drawFinale?.(this.finaleGfx, this.stageState(this.elapsed()), this.level);
+          }
+        }
+      });
     }
 
     // ---------------- 小手 ----------------

@@ -8,6 +8,7 @@ import type { DragController } from '@chags/phaser-kit';
 import { SCENE_KEYS, SUB, SUB_BOAT_DROP, SUB_PILES, SUB_SCALE_DROP } from './layout';
 import { depthRatio, judge, markRatio, nextStoneFor } from './substitution.logic';
 import type { SubstitutionLevel, StoneDef } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 type Stage = 'load' | 'mark' | 'substitute' | 'weigh' | 'done';
@@ -289,7 +290,8 @@ export function createSubstitutionScene(
       const node = this.heavyNode;
       if (!node) return;
       this.scaleTries += 1;
-      cfg.session.mistakes += 1;
+      // 直接上秤是一次做错的尝试：不结束、不锁操作，但记账（只影响星数与复习间隔）
+      recordAttempt(cfg.session, { ok: false });
       this.sfx('wrong');
       this.ctx.emit('choice:made', {
         beatId: 'try-direct',
@@ -532,6 +534,8 @@ export function createSubstitutionScene(
       if (this.finished) return;
       this.finished = true;
       this.stage = 'weigh';
+      // 水痕对上了：这一次代换做对了（一次尝试、一次成功）
+      recordAttempt(cfg.session, { ok: true });
       this.sfx('correct');
       this.cameras.main.flash(240, 255, 246, 214);
       sparkleAt(this, SUB.boatX, SUB.waterTop - 30, THEME.gold, 8);

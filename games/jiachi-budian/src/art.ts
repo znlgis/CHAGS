@@ -3,6 +3,7 @@ import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit
 import { DESIGN } from '@chags/templates';
 import type { StillnessFeignStageState } from '@chags/templates';
 import { ACTION, AWAY, GROUND_TOP, MAX_MARKS, SKY_TOP, STEPS, SUNBIN, WALL_TOP, WATCH } from './layout';
+import { clamp01 } from '@chags/game-kit';
 
 const W = DESIGN.width;
 const H = DESIGN.height;
@@ -16,7 +17,6 @@ const SKIN = 0xf8dcbb;
 const ROBE = 0x9aa7bf;
 const ROBE_DEEP = 0x6f7d99;
 const SCOUT = 0x4a5568;
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 /** 平滑一步（走位用它，别一顿一顿的） */
 const ease = (t: number): number => t * t * (3 - 2 * t);
 

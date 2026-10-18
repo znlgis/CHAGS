@@ -15,6 +15,7 @@ import {
 import type { FeignPhase, FeignState } from './stillness.logic';
 import type { StillnessLevel } from './schemas';
 import type { StillnessFeignLevel } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 // calm（空城计）：第六辑给 stillness 加的第三个模式 —— 判定同样在 stillness.logic 里
 import {
@@ -96,7 +97,7 @@ export interface StillnessConfig {
  * 三条刻意的设计：
  * - **判定全在 stillness.logic 里**：场景只把墙钟喂给 `phaseAt` / `strikeAt`，
  *   单测与画面用的是同一份判定，不会跑偏。
- * - **白鼓零惩罚**：鼓响的时候出手只记一次"白费力气"，不扣星、不结束 —— 接着等就是。
+ * - **白鼓也记账**：鼓响的时候出手记进 mistakes（"白费力气"），不结束、不锁操作 —— 接着等就是。
  * - **一轮走完可以重来**：三通鼓敲完还没出手，鼓声停一下从头再响一遍（绝不卡死）。
  *   该出手的那一通窗口开了，小手才放到按钮上：提示给在**对的时候**。
  */
@@ -268,7 +269,8 @@ function createStillnessBideScene(
         return;
       }
 
-      // 白鼓：力气白使了一次 —— 不扣星、不结束，接着等下一通
+      // 白鼓：力气白使了一次 —— 不结束、不锁操作，接着等下一通；这一下记进 mistakes
+      recordAttempt(cfg.session, { ok: false });
       this.ctx.emit('beat:enter', { beatId: 'stillness:early:' + (info.beatId ?? '') });
       this.ctx.emit('choice:made', {
         beatId: info.beatId ?? '',
@@ -306,19 +308,19 @@ function createStillnessBideScene(
       this.finished = true;
       this.state = { ...this.state, done: true };
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.level.action.x, this.level.action.y - 120, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      const finale = this.add.graphics().setDepth(40);
-      cfg.drawFinale?.(finale, this.stageState(this.elapsed()));
-      if (cfg.reveal !== undefined) {
-        this.time.delayedCall(1400, () => this.showHint(cfg.reveal as string, 3200, STILLNESS.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? STILLNESS.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? STILLNESS.finaleHoldMs,
+        sparkle: { x: this.level.action.x, y: this.level.action.y - 120, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealDelayMs: 1400,
+        revealY: STILLNESS.hintY,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          const finale = this.add.graphics().setDepth(40);
+          cfg.drawFinale?.(finale, this.stageState(this.elapsed()));
+        }
+      });
     }
 
     // ---------------- 小手 ----------------
@@ -386,7 +388,7 @@ export interface StillnessFeignStageState {
   /** 空档里行动了几次 / 一共要几步 */
   progress: number;
   steps: number;
-  /** 试探期露馅了几次（零惩罚，"忍不住"那几笔账） */
+  /** 试探期露馅了几次（"忍不住"那几笔账，记进 mistakes） */
   slips: number;
   /** 刚刚那一下是露馅（true）还是推进一步（false）；还没动过是 null */
   lastSlip: boolean | null;
@@ -475,7 +477,7 @@ function isCalmConfig(cfg: StillnessAnyConfig): cfg is StillnessCalmConfig {
  * 四条刻意的设计：
  * - **判定全在 stillness.logic 里**：场景只把墙钟喂给 `feignPhaseAt` / `tapActionFeign`，
  *   单测与画面用的是同一份判定，不会跑偏。
- * - **试探期点什么都算露馅，但零惩罚**：不扣星、不结束、不锁操作，只记一笔账
+ * - **试探期点什么都算露馅**：记进 mistakes、不结束、不锁操作，只记一笔账
  *   （画面上那几笔账看得见）—— 孩子自己会发现"忍住那几秒，空档一来就顶上去了"。
  * - **空档里小手才出现**：提示给在**对的时候**。他盯着的时候小手是收起来的 ——
  *   这本身就是"现在别动"的信号。
@@ -626,7 +628,7 @@ function createStillnessFeignScene(
 
     /**
      * 手指落在屏幕上：
-     * - **试探期：点哪儿都算露馅**（他正盯着，"任何点击都算"）—— 记一笔，零惩罚；
+     * - **试探期：点哪儿都算露馅**（他正盯着，"任何点击都算"）—— 记进 mistakes；
      * - 空档期：只有点在"悄悄动手"的地方上才算推进一步，点别处只是没收获。
      */
     private pressAt(x: number, y: number): void {
@@ -658,7 +660,8 @@ function createStillnessFeignScene(
       cfg.onAction?.(slipped ? 'slip' : 'step', { scene: this });
 
       if (slipped) {
-        // 露馅了：只记一笔账 —— 不扣星、不结束、不锁操作，接着忍就是
+        // 露馅了：记进 mistakes —— 不结束、不锁操作，接着忍就是
+        recordAttempt(cfg.session, { ok: false });
         this.ctx.emit('beat:enter', { beatId: 'stillness:slip:' + (info.testId ?? '') });
         this.ctx.emit('choice:made', {
           beatId: info.testId ?? '',
@@ -707,20 +710,20 @@ function createStillnessFeignScene(
       this.finished = true;
       this.state = { ...this.state, done: true };
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.level.action.x, this.level.action.y - 120, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'stillness:done' });
-      const finale = this.add.graphics().setDepth(40);
-      cfg.drawFinale?.(finale, this.stageState(this.elapsed()));
-      if (cfg.reveal !== undefined) {
-        this.time.delayedCall(1400, () => this.showHint(cfg.reveal as string, 3200, FEIGN.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? STILLNESS.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? STILLNESS.finaleHoldMs,
+        sparkle: { x: this.level.action.x, y: this.level.action.y - 120, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealDelayMs: 1400,
+        revealY: FEIGN.hintY,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'stillness:done' });
+          const finale = this.add.graphics().setDepth(40);
+          cfg.drawFinale?.(finale, this.stageState(this.elapsed()));
+        }
+      });
     }
 
     // ---------------- 小手 ----------------
@@ -793,7 +796,7 @@ export interface StillnessCalmStageState {
   /** 忍住了几轮 / 一共要忍住几轮 */
   endured: number;
   needed: number;
-  /** 动了几次（零惩罚的那笔账） */
+  /** 动了几次（记进 mistakes 的那笔账） */
   slips: number;
   /** 哪几轮动过 —— 画面上那几笔账画在哪一轮 */
   slipWatchIds: string[];
@@ -821,7 +824,7 @@ export interface StillnessCalmConfig {
   onPhase?: (phase: CalmPhase, api: { scene: Phaser.Scene }) => void;
   /** 城门大开（开局唯一那个动作） */
   onGate?: (api: { scene: Phaser.Scene }) => void;
-  /** 他盯着的时候动了一下 —— 零惩罚，只记一笔 */
+  /** 他盯着的时候动了一下 —— 记进 mistakes */
   onSlip?: (api: { scene: Phaser.Scene }) => void;
   drawFinale?: (g: Phaser.GameObjects.Graphics, state: StillnessCalmStageState) => void;
   /** 过了之后念的那句话（关键抉择的揭晓语） */
@@ -837,7 +840,7 @@ export interface StillnessCalmConfig {
  *   calmTick / calmPhaseAt / tapCalm，单测与画面用的是同一份判定，不会跑偏。
  * - **开局只有一个动作**：大开城门。小手一直放在城门上，门一开手就收起来 ——
  *   收起来本身就是"从现在起什么都别做"的信号。
- * - **盯着的时候点哪儿都算"动了"，但零惩罚**：不扣星、不结束、不锁操作，只记一笔账 ——
+ * - **盯着的时候点哪儿都算"动了"**：记进 mistakes、不结束、不锁操作，只记一笔账 ——
  *   这一轮白忍了，下一轮照样能赢。孩子自己会发现"忍住那几秒，他就先疑心了"。
  * - **一轮全看完还没忍够就再来一遍**：忍住的轮数留着，账也留着（**零惩罚，也绝不会卡死**）。
  */
@@ -1008,7 +1011,7 @@ function createStillnessCalmScene(
     /**
      * 手指落在屏幕上：
      * - **城门还没开**：只有点在城门上才算 —— 那是开局唯一的动作；
-     * - **门开了以后**：点哪儿都算"他盯着的时候动了"（零惩罚，只记一笔）；
+     * - **门开了以后**：点哪儿都算"他盯着的时候动了"（记进 mistakes，只记一笔）；
      *   他移开目光的那一段点一下什么也不算 —— 他没看见。
      */
     private pressAt(x: number, y: number): void {
@@ -1037,8 +1040,9 @@ function createStillnessCalmScene(
       cfg.onGate?.({ scene: this });
     }
 
-    /** 他盯着的时候动了一下：只记一笔账 —— 这一轮白忍了，等下一轮 */
+    /** 他盯着的时候动了一下：记进 mistakes —— 这一轮白忍了，等下一轮（不结束、不锁操作） */
     private flinch(t: number): void {
+      recordAttempt(cfg.session, { ok: false });
       const info = calmPhaseAt(this.level, this.state, t);
       this.lastSlip = true;
       this.lastActionAt = t;
@@ -1085,25 +1089,23 @@ function createStillnessCalmScene(
       if (this.finished) return;
       this.finished = true;
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.level.gate.x, this.level.gate.y - 180, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'stillness:done' });
-      const finale = this.add.graphics().setDepth(40);
-      cfg.drawFinale?.(finale, this.stageState(this.calmElapsed()));
-      // 他退走时说的那句话，然后是这一计的揭晓语
-      this.showHint(cfg.level.leaveLine, CALM.leaveLineMs, CALM.hintY);
-      if (!this.autoplay) this.speak(cfg.level.leaveLine);
-      if (cfg.reveal !== undefined) {
-        this.time.delayedCall(CALM.leaveLineMs, () =>
-          this.showHint(cfg.reveal as string, 3200, CALM.hintY),
-        );
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? STILLNESS.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? STILLNESS.finaleHoldMs,
+        sparkle: { x: this.level.gate.x, y: this.level.gate.y - 180, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealDelayMs: CALM.leaveLineMs,
+        revealY: CALM.hintY,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'stillness:done' });
+          const finale = this.add.graphics().setDepth(40);
+          cfg.drawFinale?.(finale, this.stageState(this.calmElapsed()));
+          // 他退走时说的那句话，然后是这一计的揭晓语
+          this.showHint(cfg.level.leaveLine, CALM.leaveLineMs, CALM.hintY);
+          if (!this.autoplay) this.speak(cfg.level.leaveLine);
+        }
+      });
     }
 
     // ---------------- 小手 ----------------

@@ -8,8 +8,8 @@ import type { SwapBeamLevel, SwapLevel, SwapPost, SwapSpare } from './schemas';
  * **不 import Phaser** —— 判定比画面重要得多，这些函数单测直接调。
  *
  * 三条刻意的设计：
- * - **零惩罚**：样子不对的替身根本放不上去（原样返回，只提示"样子不对"）；
- *   被检查者看见也**不结束、不扣星** —— 只是那个位置被戳穿、要重新换一遍。
+ * - **不结束**：样子不对的替身根本放不上去（原样返回，只提示"样子不对"，记进 mistakes）；
+ *   被检查者看见也**不结束** —— 只是那个位置被戳穿、要重新换一遍（记进 mistakes）。
  *   孩子可以放心地一个一个试过去。
  * - **"撤销换装"就是检查者抬头的全部代价**：抬头一看，凡是没有换好的位置，
  *   它身上那份换装被撤销（本来就没换好的，撤销之后还是"没换好"，但账要记：
@@ -55,7 +55,7 @@ export interface SwapState {
   covers: Record<string, string>;
   /** 被检查者看见过、还没重新换好的位置（按被看见的先后） */
   caught: string[];
-  /** 被看见了几次 —— 复盘用，不扣星、不结束 */
+  /** 被看见了几次 —— 复盘用，场景据此记 mistakes */
   seen: number;
   /** 下一次抬头的时刻（毫秒，从这一局开始算起） */
   nextPeekAt: number;
@@ -166,7 +166,7 @@ export function canPlace(
  * 把一个替身放到位置上。
  *
  * - 样子不对 / 位置或替身不存在 / 这个替身正站在别处 → **原样返回**：
- *   场景据此只提示一句"样子不对"，不扣星、不结束（零惩罚）。
+ *   场景据此只提示一句"样子不对"，并记进 mistakes（不结束）。
  * - 放对了就换好；这个位置如果原本站着另一个替身，那一个就回草堆里去（换错了可以改）。
  * - 被戳穿过的位置一旦换好，就不再算"戳穿"了 —— 它重新换好了。
  */
@@ -207,7 +207,7 @@ export function caughtPosts(level: SwapLevel, state: SwapState): SwapPost[] {
     .filter((post): post is SwapPost => post !== undefined);
 }
 
-/** 被看见了几次 —— 只是复盘用，不扣星 */
+/** 被看见了几次 —— 只是复盘用，场景据此记 mistakes */
 export function seenCount(state: SwapState): number {
   return state.seen;
 }
@@ -333,13 +333,13 @@ export function isShellDone(level: SwapLevel, state: SwapState): boolean {
  * - **换一根要按住干一会儿**（workMs）：`startWork` 按下、`tickWork` 每帧往前推；
  *   松手只是停下来（进度留着），**不算失败**；
  * - **检查者每隔 checkMs 清点一次**：清点时**正拆着的那根**会被他看个正着 ——
- *   那根的进度清零、记一次 seen，**不结束、不扣星**（零惩罚）。
+ *   那根的进度清零、记一次 seen，**不结束**（记进 mistakes）。
  *
  * 三条刻意的设计：
  * - **一次只干一根**：进度只跟着"正拆着的那根"走 —— 换一根的同时，别的柱子不会偷偷攒进度。
  *   这正是"赶在下一次清点之前把它换好"这条手感的根（workMs < checkMs 是 schema 守的）。
- * - **零惩罚**：被清点抓个正着、按住不足、点空处，都只是"这一根白干了"或"什么都没发生"；
- *   不结束、不扣星、不锁操作，接着按就是。
+ * - **不结束**：被清点抓个正着、按住不足、点空处，都只是"这一根白干了"或"什么都没发生"；
+ *   点空处不记；被抓正着的记进 mistakes；不锁操作，接着按就是。
  * - **判定不看料堆**：料堆里的新柱（spares）只负责画面（这一根是给哪根柱子准备的），
  *   `isPostRebuilt` 只认进度 —— schema 只保证"每根柱子都找得到同 kind 的新柱"，
  *   那句话不能拿来当判定用（两根柱子同 kind、却只有一根新柱时，判定照样走得完）。
@@ -377,7 +377,7 @@ export interface SwapBeamState {
   covers: Record<string, string>;
   /** 正拆着的那一根 / 已经按住多久 / 什么时候按下去的（毫秒）；没在拆就是 null */
   working: { postId: string; ms: number; sinceMs: number } | null;
-  /** 被清点看见过几次 —— 复盘用，不扣星、不结束 */
+  /** 被清点看见过几次 —— 复盘用，场景据此记 mistakes */
   seen: number;
   /** 下一次清点的时刻（毫秒，从这一局开始算起） */
   nextCheckAt: number;
@@ -595,7 +595,7 @@ export function check(level: SwapBeamLevel, state: SwapBeamState, t: number): Sw
   };
 }
 
-/** 被清点看见过几次 —— 只是复盘用，不扣星 */
+/** 被清点看见过几次 —— 只是复盘用，场景据此记 mistakes */
 export function beamSeenCount(state: SwapBeamState): number {
   return state.seen;
 }

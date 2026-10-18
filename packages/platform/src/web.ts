@@ -16,13 +16,21 @@ function openDb(): Promise<IDBDatabase | null> {
       resolve(null);
       return;
     }
+    // 隐私模式、存储被禁、旧标签页占着升级（onblocked）都会让 open 永不回调：
+    // 超时就退内存档，绝不让启动流程挂在这里等（以前 init 会永远 pending）
+    const timer = setTimeout(() => resolve(null), 3000);
     const request = indexedDB.open(DB_NAME, 1);
+    const settle = (db: IDBDatabase | null): void => {
+      clearTimeout(timer);
+      resolve(db);
+    };
     request.onupgradeneeded = () => {
       const db = request.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
     };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => resolve(null);
+    request.onsuccess = () => settle(request.result);
+    request.onerror = () => settle(null);
+    request.onblocked = () => settle(null);
   });
 }
 
@@ -36,21 +44,39 @@ export function createIdbProgressStore(): ProgressStore {
       const db = await dbPromise;
       if (!db) return memory ?? emptySave(Date.now());
       return new Promise((resolve) => {
-        const tx = db.transaction(STORE_NAME, 'readonly');
-        const request = tx.objectStore(STORE_NAME).get(SAVE_KEY);
-        request.onsuccess = () => resolve(migrate(request.result, Date.now()));
-        request.onerror = () => resolve(emptySave(Date.now()));
+        try {
+          const tx = db.transaction(STORE_NAME, 'readonly');
+          const request = tx.objectStore(STORE_NAME).get(SAVE_KEY);
+          request.onsuccess = () => {
+            try {
+              resolve(migrate(request.result, Date.now()));
+            } catch {
+              // 读档本身出错也不能卡住启动（migrate 已对坏数据逐条兜底）
+              resolve(emptySave(Date.now()));
+            }
+          };
+          request.onerror = () => resolve(emptySave(Date.now()));
+        } catch {
+          resolve(emptySave(Date.now()));
+        }
       });
     },
     async save(data: SaveData): Promise<void> {
       memory = data;
       const db = await dbPromise;
       if (!db) return;
-      await new Promise<void>((resolve) => {
-        const tx = db.transaction(STORE_NAME, 'readwrite');
-        tx.objectStore(STORE_NAME).put(data, SAVE_KEY);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => resolve();
+      // ★ 写失败必须让调用方知道（配额满 / 无痕模式 / 存储被清）：
+      // 以前 onerror 也 resolve，等于把"进度没存上"静默吞掉
+      await new Promise<void>((resolve, reject) => {
+        try {
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          tx.objectStore(STORE_NAME).put(data, SAVE_KEY);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error ?? new Error('存档写入失败'));
+          tx.onabort = () => reject(tx.error ?? new Error('存档写入被中止'));
+        } catch (cause) {
+          reject(cause instanceof Error ? cause : new Error(String(cause)));
+        }
       });
     },
   };
@@ -234,6 +260,11 @@ export function createLocalTelemetry(): Telemetry {
 }
 
 export function createWebPlatform(): PlatformServices {
+  // 移动端存储压力下浏览器可能清掉 IndexedDB：能申请"持久存储"就申请一次。
+  // 失败（不支持 / 用户拒绝）不影响功能，只是少了这层保险。
+  if (typeof navigator !== 'undefined' && navigator.storage?.persist) {
+    void navigator.storage.persist();
+  }
   return {
     storage: createIdbProgressStore(),
     audio: createWebAudioBus(),

@@ -1,19 +1,9 @@
-import { ContentEntrySchema, getEntry, mergeLocalized, validatePatch } from '@chags/content/full';
-import { templateSchemas } from '@chags/templates/schemas';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
-import rawSummary from '../../../packages/content/src/entries/andu-chencang.json';
-import rawDetail from '../../../packages/content/src/entries/andu-chencang.game.json';
-import enPatchSummary from '../../../packages/content/src/i18n/en/andu-chencang.json';
-import enPatchDetail from '../../../packages/content/src/i18n/en/andu-chencang.game.json';
 import { CITY, CLIFF, FOOT_STEPS, GROUND_Y, PATH, PLANK, PLANK_CENTER, pathAt } from './layout';
 import { twolineLevel } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-const enPatch = { ...enPatchSummary, ...enPatchDetail };
-
-/** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
-const entry = getEntry('andu-chencang') ?? ContentEntrySchema.parse(raw);
+const entry = getEntry('andu-chencang')!;
 const level = twolineLevel(entry);
 
 describe('暗度陈仓 · 关卡数据', () => {
@@ -60,7 +50,6 @@ describe('暗度陈仓 · 关卡数据', () => {
 
   it('故事两幕：明面上慢慢修 → 夜里进了陈仓；关键抉择在第一幕', () => {
     expect(entry.story.map((b) => b.id)).toEqual(['s1', 's2']);
-    expect(entry.story.every((b) => b.text.length <= 90)).toBe(true);
     expect(entry.keyMoment.beatId).toBe('s1');
     expect(entry.keyMoment.options.filter((o) => o.isCanonical).map((o) => o.text)).toEqual([
       '一边修给大家看，一边从别处走',
@@ -83,44 +72,16 @@ describe('暗度陈仓 · 关卡数据', () => {
     expect(entry.ageRange).toEqual([8, 12]);
     expect(entry.source.book).toContain('三十六计');
     expect(entry.source.quote).toContain('益动而巽');
-    expect(entry.misconceptions.length).toBeGreaterThanOrEqual(1);
-    expect(level.hint.length).toBeLessThanOrEqual(24);
   });
 
-  it('复习题：有记忆题也有迁移题，答案都在选项里', () => {
+  it('复习题：有记忆题也有迁移题', () => {
     expect(entry.quiz.filter((q) => q.kind === 'transfer')).toHaveLength(1);
-    expect(entry.quiz.length).toBeGreaterThanOrEqual(2);
-    for (const q of entry.quiz) expect(q.answer).toBeLessThan(q.options.length);
   });
 });
 
 describe('暗度陈仓 · 英译补丁', () => {
-  it('与中文一一对应、合起来不剩一个中文字，关卡脚本照样合法', () => {
-    expect(validatePatch(entry, enPatch)).toEqual([]);
-    const merged = ContentEntrySchema.parse(mergeLocalized(entry, enPatch));
+  it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
+    const merged = getEntry('andu-chencang', 'en')!;
     expect(merged.title).toBe('Secretly March to Chencang');
-    expect(merged.story.map((b) => b.title)).toHaveLength(entry.story.length);
-    expect(merged.keyMoment.options.map((o) => o.text)).toHaveLength(entry.keyMoment.options.length);
-    for (const stage of merged.game.stages) {
-      expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    }
-    expect(findCjk(merged)).toEqual([]);
   });
 });
-
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了（与 content:check 同一套判据） */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}
-

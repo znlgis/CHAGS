@@ -31,7 +31,3 @@ minimumReleaseAgeExclude:
   - typescript-eslint@8.71.2
   - vue@3.5.44
   - zod@4.6.7
-
-onlyBuiltDependencies:
-  - esbuild
-  - '@tailwindcss/oxide'

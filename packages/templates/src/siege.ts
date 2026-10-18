@@ -23,6 +23,7 @@ import type { LadderPhase, LadderState, SiegeRung } from './siege.logic';
 import type {
   SiegeCloseLevel, SiegeLadderLevel, SiegeLevel, SiegeLog, SiegeSupportLevel, SiegeVital,
 } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 /** siege 模板自己的常量：不进 layout.ts，也不跟别的模板互相踩 */
@@ -171,7 +172,7 @@ export interface SiegeLadderMetrics {
   climbRatio: number;
   /** 下一级该搭哪一级；全搭好了就是 null */
   nextRungId: string | null;
-  /** 抽早了：他掉回来过几回（零惩罚，只用来复盘） */
+  /** 抽早了：他掉回来过几回（只用来复盘，记进 mistakes） */
   drops: number;
   /** 刚掉回来那一下是什么时候（画面按它演"从半截滑回地面"）；没掉过是 -1 */
   droppedAtMs: number;
@@ -250,7 +251,7 @@ export interface SiegeLadderConfig extends SiegeBaseConfig {
   drawLadder: (g: Phaser.GameObjects.Graphics, stage: SiegeLadderMetrics) => void;
   /** 搭上了一级（游戏可以让这一级真的架上去） */
   onBuild?: (rung: SiegeRung, api: SiegeApi) => void;
-  /** 抽早了：他掉回来了（零惩罚，画面按 droppedAtMs 演他滑下来） */
+  /** 抽早了：他掉回来了（记进 mistakes；画面按 droppedAtMs 演他滑下来） */
   onDrop?: (api: SiegeApi) => void;
   /** 他下不来了的收尾表现 */
   drawLadderFinale?: (g: Phaser.GameObjects.Graphics, stage: SiegeLadderMetrics) => void;
@@ -510,21 +511,19 @@ function createSiegeVitalScene(
       this.tapTimer = null;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'siege:done' });
-      this.redraw();
-      if (this.finaleGfx) cfg.drawFinale?.(this.finaleGfx, this.metrics(true));
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, cfg.revealY ?? 300));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? SIEGE.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? SIEGE.finaleHoldMs,
+        sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: cfg.revealY ?? 300,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'siege:done' });
+          this.redraw();
+          if (this.finaleGfx) cfg.drawFinale?.(this.finaleGfx, this.metrics(true));
+        }
+      });
     }
 
     // ---------------- 无头验证 ----------------
@@ -785,21 +784,19 @@ function createSiegeSupportScene(
       this.stepTimer = null;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, cfg.level.fire.x, cfg.level.fire.y, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'siege:done' });
-      this.redraw();
-      if (this.finaleGfx) cfg.drawSupportFinale?.(this.finaleGfx, this.metrics(true));
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, cfg.revealY ?? 300));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? SIEGE.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? SIEGE.finaleHoldMs,
+        sparkle: { x: cfg.level.fire.x, y: cfg.level.fire.y, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: cfg.revealY ?? 300,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'siege:done' });
+          this.redraw();
+          if (this.finaleGfx) cfg.drawSupportFinale?.(this.finaleGfx, this.metrics(true));
+        }
+      });
     }
 
     // ---------------- 无头验证 ----------------
@@ -1080,21 +1077,19 @@ function createSiegeCloseScene(
       this.stepTimer = null;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'siege:done' });
-      this.redraw();
-      if (this.finaleGfx) cfg.drawCloseFinale?.(this.finaleGfx, this.metrics(true));
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, cfg.revealY ?? 300));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? SIEGE.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? SIEGE.finaleHoldMs,
+        sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: cfg.revealY ?? 300,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'siege:done' });
+          this.redraw();
+          if (this.finaleGfx) cfg.drawCloseFinale?.(this.finaleGfx, this.metrics(true));
+        }
+      });
     }
 
     // ---------------- 无头验证 ----------------
@@ -1139,7 +1134,7 @@ export const LADDER = {
  * - **搭梯是孩子自己搭的**：点一下搭一级、**只认下一级**（跳级搭不上，零惩罚）；
  *   搭完最后一级的那一刻，他才抬脚往上走 —— "先给方便"这一步看得见。
  * - **抽早了只是掉回来**：他还在爬的时候抽梯，他会掉回地面、**进度清零、要重新搭**
- *   ——零惩罚，不扣星、不结束、不锁操作；孩子自己就明白"早了不算数"。
+ *   ——记进 mistakes、不结束、不锁操作；孩子自己就明白"早了不算数"。
  * - **没搭完的时候点绳桩什么也不发生**：梯子还没架上，抽的是空气。
  * - **他往上走的那一段，小手是收着的**：不该动手的时候不给提示 ——
  *   提示给在**对的时候**（搭下一级 / 他到位了抽梯）。
@@ -1245,7 +1240,7 @@ function createSiegeLadderScene(
       }
     }
 
-    /** 抽梯：只有他到位之后才算成；早了他掉回来（零惩罚）；没搭完什么也不发生 */
+    /** 抽梯：只有他到位之后才算成；早了他掉回来（记进 mistakes）；没搭完什么也不发生 */
     private pullNow(): void {
       if (this.finished) return;
       const before = this.state;
@@ -1262,7 +1257,9 @@ function createSiegeLadderScene(
         this.finish();
         return;
       }
-      // 早了：他从半截上滑回地面 —— 进度清零、要重新搭（零惩罚）
+      // 早了：他从半截上滑回地面 —— 进度清零、要重新搭（不结束、不锁操作）；
+      // 这一下是孩子主动抽早的，记一次 mistakes
+      recordAttempt(cfg.session, { ok: false });
       this.droppedAtMs = t;
       this.droppedFromRatio = climbedTo;
       this.ctx.emit('beat:enter', { beatId: 'siege:ladder:drop:' + this.state.drops });
@@ -1413,21 +1410,19 @@ function createSiegeLadderScene(
       this.stepTimer = null;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, cfg.level.bait.x, cfg.level.bait.y, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'siege:done' });
-      this.redraw();
-      if (this.finaleGfx) cfg.drawLadderFinale?.(this.finaleGfx, this.metrics(true));
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, cfg.revealY ?? 300));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? SIEGE.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? SIEGE.finaleHoldMs,
+        sparkle: { x: cfg.level.bait.x, y: cfg.level.bait.y, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: cfg.revealY ?? 300,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'siege:done' });
+          this.redraw();
+          if (this.finaleGfx) cfg.drawLadderFinale?.(this.finaleGfx, this.metrics(true));
+        }
+      });
     }
 
     // ---------------- 无头验证 ----------------

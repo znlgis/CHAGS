@@ -8,10 +8,42 @@ import { computed, ref } from 'vue';
 export const useProgress = defineStore('progress', () => {
   const save = ref<SaveData>(progressManager.snapshot());
   const ready = ref(false);
+  /** 写盘失败（配额满 / 无痕模式 / 存储被清）：界面可以据此提示"这次可能存不上" */
+  const unsaved = ref(false);
+  const initError = ref<string | null>(null);
+  let inflight: Promise<void> | null = null;
 
-  async function init(): Promise<void> {
-    save.value = await progressManager.init();
-    ready.value = true;
+  /**
+   * 读档：多次调用共享同一次（single-flight）。
+   * 以前 App.vue 直接 `void progress.init()` —— 深链直接进游戏时，
+   * 一次秒通关的写入可能早于读档完成，随后被旧快照盖掉（丢星）。
+   */
+  function init(): Promise<void> {
+    inflight ??= (async () => {
+      try {
+        save.value = await progressManager.init();
+      } catch (cause) {
+        // 存档坏了不是致命错误：本次会话从空档开始，大厅照样能用
+        initError.value = cause instanceof Error ? cause.message : String(cause);
+        console.warn('[chags] 存档读取失败，本次会话从空档开始', cause);
+      } finally {
+        ready.value = true;
+      }
+    })();
+    return inflight;
+  }
+
+  /** 所有写盘都走这里：失败要可见，不能让"进度没存上"静默消失 */
+  async function persist(action: () => Promise<unknown>): Promise<void> {
+    try {
+      await action();
+      unsaved.value = false;
+    } catch (cause) {
+      unsaved.value = true;
+      console.warn('[chags] 存档写入失败：本次进度可能不会保留', cause);
+    } finally {
+      save.value = progressManager.snapshot();
+    }
   }
 
   const collected = computed(
@@ -37,18 +69,16 @@ export const useProgress = defineStore('progress', () => {
   }
 
   async function recordCompletion(entryId: string, stars: Stars, grade: Stars): Promise<void> {
-    await progressManager.recordCompletion(entryId, stars, grade);
-    save.value = progressManager.snapshot();
+    await persist(() => progressManager.recordCompletion(entryId, stars, grade));
   }
 
   /** 复习小测验的评级：不动星星，只重排下次复习的间隔 */
   async function recordReview(entryId: string, grade: Stars): Promise<void> {
-    await progressManager.recordReview(entryId, grade);
-    save.value = progressManager.snapshot();
+    await persist(() => progressManager.recordReview(entryId, grade));
   }
 
   return {
-    save, ready, init, collected, starsFor, hasCard, reviewOf, reviewDue,
+    save, ready, unsaved, initError, init, collected, starsFor, hasCard, reviewOf, reviewDue,
     recordCompletion, recordReview,
   };
 });

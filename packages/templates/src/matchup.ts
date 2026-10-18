@@ -15,6 +15,7 @@ import type { OrderState, RaceResult, Roster } from './matchup.logic';
 import type {
   MatchupHorse, MatchupLevel, MatchupNeighbor, MatchupOrderLevel, MatchupRival,
 } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 /**
@@ -489,7 +490,7 @@ function createPairMatchupScene(
       });
     }
 
-    /** 三场跑完：赢够了就收尾，没赢够就等他自己重排（零惩罚） */
+    /** 三场跑完：赢够了就收尾，没赢够就等他自己重排（这一局记进 mistakes） */
     private settle(): void {
       if (this.finished) return;
       this.phase = 'settled';
@@ -499,7 +500,8 @@ function createPairMatchupScene(
         this.finish();
         return;
       }
-      // 没赢够：这一局认了 —— 只是"把马放回去重排"，不扣星、不结束
+      // 没赢够：这一局认了 —— 只是"把马放回去重排"，不结束、不锁操作；这一局记进 mistakes
+      recordAttempt(cfg.session, { ok: false });
       this.ctx.emit('beat:enter', {
         beatId: 'matchup:lost:' + this.wins + ':' + this.level.needWins,
       });
@@ -533,21 +535,19 @@ function createPairMatchupScene(
       this.won = true;
       this.phase = 'settled';
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', {
-        beatId: 'matchup:won:' + this.wins + ':' + this.level.rivals.length,
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? MATCHUP.finaleHoldMs,
+        sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: MATCHUP.hintY,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', {
+            beatId: 'matchup:won:' + this.wins + ':' + this.level.rivals.length,
+          });
+        }
       });
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, MATCHUP.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? MATCHUP.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
     }
 
     // ---------------- 底部两个按钮 ----------------
@@ -672,11 +672,11 @@ export interface OrderStageState {
   total: number;
   /** 0..1：走到了第几步 */
   ratio: number;
-  /** 点错了几次 —— 只是复盘用，不扣星也不结束 */
+  /** 点错了几次 —— 复盘用，也记进 mistakes */
   wrongs: number;
   /** 刚点中的那一个（画面给一次强调） */
   lastPicked: MatchupNeighbor | null;
-  /** 刚点错的那一个（零惩罚：只提示、可以重排） */
+  /** 刚点错的那一个（记进 mistakes 的那一下：只提示、可以重排） */
   lastWrong: MatchupNeighbor | null;
   /** 这一局过了多久（墙钟）—— 呼吸的光圈与刚落下的红光按它算 */
   elapsedMs: number;
@@ -715,7 +715,7 @@ export interface MatchupOrderConfig {
  * 三条刻意的设计：
  * - **顺序写在关卡里**（sequence），判定全在 matchup.logic：谁排在前面、这一步该点谁，
  *   单测与画面用的是同一份，孩子不会遇到"看起来该点这个、点了却没反应"。
- * - **点错零惩罚**：不是下一个就只是原样返回 —— 不扣星、不结束、也不改已经点对的那些；
+ * - **点错也记账**：不是下一个就只是原样返回 —— 记进 mistakes、不结束、也不改已经点对的那些；
  *   画面把小手挪回该点的那一个，重新排就是。
  * - **没有交战画面**：近处的"处理"是立下一根界桩，远处的"结好"是系上一根结绳 ——
  *   地图上看得见的两件事，仅此而已。
@@ -869,7 +869,7 @@ function createOrderMatchupScene(
       const before = this.state;
       const next = pick(this.state, neighbor.id);
       if (next === before) {
-        // 不是下一个：只提示，可以重排 —— 不扣星、不结束
+        // 不是下一个：只提示，可以重排 —— 记进 mistakes、不结束
         this.wrongPick(neighbor);
         return;
       }
@@ -897,9 +897,10 @@ function createOrderMatchupScene(
       this.time.delayedCall(MATCHUP_ORDER.stepHoldMs, () => this.pointAtNext());
     }
 
-    /** 点错了顺序：记一笔、亮一圈红光，把小手挪回该点的那一个（零惩罚） */
+    /** 点错了顺序：记进 mistakes、亮一圈红光，把小手挪回该点的那一个（不结束、不锁操作） */
     private wrongPick(neighbor: MatchupNeighbor): void {
       if (this.finished) return;
+      recordAttempt(cfg.session, { ok: false });
       this.state = noteWrongPick(this.state);
       this.lastWrong = neighbor;
       this.lastWrongAt = this.now();
@@ -932,19 +933,17 @@ function createOrderMatchupScene(
       if (this.finished) return;
       this.finished = true;
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'matchup:order:done' });
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, MATCHUP_ORDER.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? MATCHUP_ORDER.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? MATCHUP_ORDER.finaleHoldMs,
+        sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: MATCHUP_ORDER.hintY,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'matchup:order:done' });
+        }
+      });
     }
 
     // ---------------- 小手 ----------------

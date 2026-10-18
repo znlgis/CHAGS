@@ -1,0 +1,61 @@
+name: 双语版面巡检
+
+# 把 53 部游戏 × 2 种语言的每个画面截下来，人眼扫一遍（产物在 .scratch/i18n-audit/）。
+# 一次约 50–60 分钟，**所以不进每次推送的 CI**：每周固定跑一次 + 手动触发。
+# 之前它挂在 ci.yml 里，每次 push 到 main 都要多烧一小时机器，PR 上又因为太慢被跳过。
+on:
+  schedule:
+    # 每周一 03:17 UTC（北京时间 11:17），避开整点拥堵
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 巡检是给人看的：后一次覆盖前一次没有意义，排着队跑
+concurrency:
+  group: i18n-audit
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  # ---------- 双语版面巡检：把每个画面截下来，人工扫一眼 ----------
+  audit:
+    runs-on: ubuntu-latest
+    # 巡检本身约 50–60 分钟（两个语言 × 53 部游戏）。上限给足余量，
+    # 因为被 job 级掐断时连 if: always() 的截图都传不上来，而"挂在哪一屏"正是巡检要回答的
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # 浏览器下载 ~40–60s/job：按 lock 文件的哈希缓存，lock 没动就不再下第二遍
+      - name: 缓存 Playwright 浏览器
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - name: 中英双语版面巡检
+        run: pnpm audit:i18n
+
+      # 失败时更要看：卡在哪一屏，截图里就是。之前没写 if: always()，
+      # 一挂就什么都拿不到 —— 而"挂在哪"恰恰是巡检最需要回答的
+      - name: 上传巡检截图（人工过目）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: i18n-audit
+          path: .scratch/i18n-audit
+          retention-days: 14

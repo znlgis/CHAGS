@@ -39,8 +39,7 @@ describe('刻舟求剑 · 关卡数据', () => {
     );
   });
 
-  it('故事两幕，第一幕是剑掉下去，第二幕是刻记号', () => {
-    expect(raw?.story.length).toBe(2);
+  it('关键抉择在第二幕', () => {
     expect(raw?.keyMoment.beatId).toBe('s2');
   });
 });

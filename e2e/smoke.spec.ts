@@ -1,51 +1,21 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { clickDesign, dragDesign, events, holdDesign, tapDesign } from './helpers';
-import { REWARD, SUB, SUB_PILES } from '../packages/templates/src/layout';
+import {
+  allEntryIds, clickDesign, dragDesign, entryIdsInGroup, entrySummaries, events, holdDesign,
+  loadContent, tapDesign,
+} from './helpers';
+import { REWARD, SUB, SUB_PILES } from '@chags/templates/layout';
 import { archerAt } from '../games/yangyouji/src/layout';
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-interface StageScript { template: string; levelScript: unknown }
-
-/** 内容目录就是典故清单 —— 别再手抄一份，抄漏一个不会有任何测试发现 */
-function allEntryIds(): string[] {
-  const dir = fileURLToPath(new URL('../packages/content/src/entries', import.meta.url));
-  return readdirSync(dir)
-    .filter((name) => name.endsWith('.json') && !name.endsWith('.game.json'))
-    .map((name) => name.replace(/\.json$/, ''))
-    .sort();
-}
-
-/** 内容目录里某一组的内容 id —— 数量随时长，用例不写死 */
-function entryIdsInGroup(group: string): string[] {
-  const dir = fileURLToPath(new URL('../packages/content/src/entries', import.meta.url));
-  return readdirSync(dir)
-    // 内容拆成摘要（<id>.json）与详情（<id>.game.json）两半：这里只数摘要
-    .filter((name) => name.endsWith('.json') && !name.endsWith('.game.json'))
-    .filter((name) => {
-      const raw = JSON.parse(readFileSync(join(dir, name), 'utf8')) as { group?: string };
-      return raw.group === group;
-    })
-    .map((name) => name.replace(/\.json$/, ''))
-    .sort();
-}
-
-/** Playwright 的 ESM 加载器不接受裸 JSON 导入，这里自己读 */
-function loadContent(id: string): { game: { stages: StageScript[] } } {
-  // 关卡脚本在"详情"那半：<id>.game.json（见 docs/技术方案.md §7.13）
-  const path = fileURLToPath(new URL('../packages/content/src/entries/' + id + '.game.json', import.meta.url));
-  return JSON.parse(readFileSync(path, 'utf8')) as { game: { stages: StageScript[] } };
-}
-
+// 内容目录辅助（allEntryIds / entryIdsInGroup / entrySummaries / loadContent）
+// 在 e2e/helpers.ts 里：清单从数据来，抄漏一个不会有任何测试发现。
 const panguJson = loadContent('pangu');
 const houyiJson = loadContent('houyi');
 const nuwaJson = loadContent('nuwa');
 
 const BOAT = { x: SUB.boatX, y: 600 };
 
-test('真实操作通关：拖大象上船 → 刻水痕 → 搬石头 → 称出重量', async ({ page }) => {
+test('真实操作通关：拖大象上船 → 刻水痕 → 搬石头 → 称出重量', { tag: '@real' }, async ({ page }) => {
   await page.goto('/?story=instant#/play/caochong-elephant');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
@@ -92,9 +62,9 @@ test('真实操作通关：拖大象上船 → 刻水痕 → 搬石头 → 称�
 /**
  * 故事是正片，不是可以点掉的过场：
  * 每一幕的旁白没念完之前，点哪都不翻页，也不会提前发 story:ready。
- * 无头设备上放不出声音时，按"读一遍"的时间兜底（见 packages/templates/src/story.logic.ts）。
+ * 无头设备上放不出声音时，按"读一遍"的时间兜底（见 packages/templates 的 story.logic.ts）。
  */
-test('故事必须听完：旁白没念完之前，怎么点都不翻页', async ({ page }) => {
+test('故事必须听完：旁白没念完之前，怎么点都不翻页', { tag: '@real' }, async ({ page }) => {
   await page.goto('/#/play/caochong-elephant');
   await expect(page.locator('canvas')).toBeVisible();
 
@@ -123,7 +93,7 @@ test('故事必须听完：旁白没念完之前，怎么点都不翻页', async
 
 /**
  * 分组：小游戏合集的第一层结构。
- * 分组表在 packages/content/src/groups.ts —— 这里守的是"用户真的看得见分组"：
+ * 分组表在 @chags/content 的 groups.ts —— 这里守的是"用户真的看得见分组"：
  * 有内容的组正常列游戏，还没有内容的组显示"敬请期待"而不是消失。
  */
 test('分组：典故与三十六计各占一块，数量跟内容目录对齐', async ({ page }) => {
@@ -198,7 +168,7 @@ interface PlaceScript {
 
 const panguPlace = panguJson.game.stages[1]!.levelScript as unknown as PlaceScript;
 
-test('盘古：点蛋 → 连点撑天 → 拖光球化身，真实操作通关', async ({ page }) => {
+test('盘古：点蛋 → 连点撑天 → 拖光球化身，真实操作通关', { tag: '@real' }, async ({ page }) => {
   await page.goto('/?story=instant#/play/pangu');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
@@ -294,7 +264,7 @@ async function shootAt(page: Page, target: { x: number; y: number }): Promise<vo
   await page.waitForTimeout(240);
 }
 
-test('后羿射日：真实拖拽射箭，射九留一', async ({ page }) => {
+test('后羿射日：真实拖拽射箭，射九留一', { tag: '@real' }, async ({ page }) => {
   await page.goto('/?story=instant#/play/houyi');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
@@ -321,7 +291,7 @@ test('后羿射日：真实拖拽射箭，射九留一', async ({ page }) => {
   await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
 });
 
-test('后羿射日：把最后一个也射了，天黑之后太阳会自己回来（不会卡死）', async ({ page }) => {
+test('后羿射日：把最后一个也射了，天黑之后太阳会自己回来（不会卡死）', { tag: '@real' }, async ({ page }) => {
   await page.goto('/?story=instant#/play/houyi');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
@@ -353,7 +323,7 @@ interface PlaceScript2 {
 
 const nuwaPlace = nuwaJson.game.stages[0]!.levelScript as unknown as PlaceScript2;
 
-test('女娲补天：真实拖拽把五色石补进天上的洞', async ({ page }) => {
+test('女娲补天：真实拖拽把五色石补进天上的洞', { tag: '@real' }, async ({ page }) => {
   await page.goto('/?story=instant#/play/nuwa');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
@@ -382,7 +352,7 @@ test('女娲补天 autoplay 全流程', async ({ page }) => {
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('level:complete');
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });
-test('精卫填海：连点投石，一块一块把海填出小岛', async ({ page }) => {
+test('精卫填海：连点投石，一块一块把海填出小岛', { tag: '@real' }, async ({ page }) => {
   await page.goto('/?story=instant#/play/jingwei');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
@@ -404,7 +374,7 @@ test('精卫填海 autoplay 全流程', async ({ page }) => {
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });
 
-test('夸父追日：按住奔跑，追到河渭喝一口再接着追', async ({ page }) => {
+test('夸父追日：按住奔跑，追到河渭喝一口再接着追', { tag: '@real' }, async ({ page }) => {
   await page.goto('/?story=instant#/play/kuafu');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
@@ -436,7 +406,7 @@ test('夸父追日 autoplay 全流程（中途喝水不能卡死）', async ({ p
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });
 
-test('愚公移山：连点挖山，智叟与两次代际交接都能接着往下走', async ({ page }) => {
+test('愚公移山：连点挖山，智叟与两次代际交接都能接着往下走', { tag: '@real' }, async ({ page }) => {
   await page.goto('/?story=instant#/play/yugong');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
@@ -470,7 +440,7 @@ test('愚公移山 autoplay 全流程（三个里程碑都不能卡死）', asyn
 });
 // ---------------- 第二辑：神农 / 杞人 / 烽火 ----------------
 
-test('神农尝百草：没尝过就分不了类，会被送回嘴边先尝一口', async ({ page }) => {
+test('神农尝百草：没尝过就分不了类，会被送回嘴边先尝一口', { tag: '@real' }, async ({ page }) => {
   await page.goto('/?story=instant#/play/shennong');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
@@ -505,7 +475,7 @@ test('神农尝百草 autoplay 全流程（八株草先尝后分）', async ({ p
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });
 
-test('杞人忧天：把"想明白"送到担忧上，泡泡就破了', async ({ page }) => {
+test('杞人忧天：把"想明白"送到担忧上，泡泡就破了', { tag: '@real' }, async ({ page }) => {
   await page.goto('/?story=instant#/play/qiren');
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(() => events(page)).toContain('session:start');
@@ -525,7 +495,7 @@ test('杞人忧天 autoplay 全流程', async ({ page }) => {
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });
 
-test('烽火戏诸侯：三次点火把信用用完，真的来了一个人也没来', async ({ page }) => {
+test('烽火戏诸侯：三次点火把信用用完，真的来了一个人也没来', { tag: '@real' }, async ({ page }) => {
   test.setTimeout(120_000);
   const towers = (loadContent('fenghuo').game.stages[0]!.levelScript as {
     towers: { x: number; y: number }[];
@@ -567,7 +537,7 @@ test('烽火戏诸侯 autoplay 全流程', async ({ page }) => {
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });
 
-test('大禹治水：先堵到决口，再划三段河道（真实操作，三次路过家门都不卡）', async ({ page }) => {
+test('大禹治水：先堵到决口，再划三段河道（真实操作，三次路过家门都不卡）', { tag: '@real' }, async ({ page }) => {
   const trace = loadContent('dayu').game.stages[1]!.levelScript as {
     segments: { start: { x: number; y: number }; anchors: { x: number; y: number }[]; end: { x: number; y: number } }[];
   };
@@ -604,7 +574,7 @@ test('大禹治水 autoplay 全流程（决口 → 三段河道 → 三过家门
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });
 
-test('太公钓鱼：点了诱惑要多等，但永远等得到 —— 等到文王，收起直钩', async ({ page }) => {
+test('太公钓鱼：点了诱惑要多等，但永远等得到 —— 等到文王，收起直钩', { tag: '@real' }, async ({ page }) => {
   const level = loadContent('taigong').game.stages[0]!.levelScript as {
     temptations: { id: string; x: number; y: number }[];
     finale: { x: number; y: number };
@@ -656,7 +626,7 @@ test('中英双语下每个典故都能载入 —— 关卡数据在两种语言
     }
   }
 });
-test('刻舟求剑：刻在船帮上一定捞空，改刻在岸上就捞到了', async ({ page }) => {
+test('刻舟求剑：刻在船帮上一定捞空，改刻在岸上就捞到了', { tag: '@real' }, async ({ page }) => {
   const level = loadContent('kezhou').game.stages[0]!.levelScript as {
     surfaces: { id: string; x: number; y: number }[];
   };
@@ -696,7 +666,7 @@ test('刻舟求剑 autoplay 全流程（先刻船帮捞空一次，再从岸上�
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });
 
-test('朝三暮四：挪一格就从发怒变高兴，绳上一直是七颗', async ({ page }) => {
+test('朝三暮四：挪一格就从发怒变高兴，绳上一直是七颗', { tag: '@real' }, async ({ page }) => {
   const level = loadContent('zhaosanmusi').game.stages[0]!.levelScript as {
     total: number;
     initialLeft: number;
@@ -738,7 +708,7 @@ test('朝三暮四 autoplay 全流程（一步一格挪到让猴子高兴）', a
   await expect.poll(() => events(page), { timeout: 90_000 }).toContain('level:complete');
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });
-test('狡兔三窟：一个洞被狐狸守住，挖到三窟才躲得过', async ({ page }) => {
+test('狡兔三窟：一个洞被狐狸守住，挖到三窟才躲得过', { tag: '@real' }, async ({ page }) => {
   const level = loadContent('jiaotu').game.stages[0]!.levelScript as {
     spots: { id: string; x: number; y: number }[];
     digsNeeded: number;
@@ -782,54 +752,15 @@ test('狡兔三窟：一个洞被狐狸守住，挖到三窟才躲得过', async
 });
 
 /**
- * 三十六计 · 第一辑（胜战计 1–6）。
- * 每条计策一条 autoplay：模板层必须实现 runAutoplay()，否则这里就挂。
+ * 三十六计：每条计策一条 autoplay 冒烟（模板层必须能自动走完，否则这里就挂）。
+ *
+ * 清单从内容目录来（entrySummaries('stratagem')，按计策序号 1–36 排）：
+ * 以前这里手抄了 42 行"id + 中文名"—— 新增第 37 计时抄漏了不会有任何测试发现。
+ * 真实指针覆盖在 e2e/stratagems.spec.ts（五个共享场景各一条，名字带 @real）。
  */
-for (const [id, title] of [
-  ['mantian-guohai', '瞒天过海'],
-  ['weiwei-jiuzhao', '围魏救赵'],
-  ['jiedao-sharen', '借刀杀人'],
-  ['yiyi-dailao', '以逸待劳'],
-  ['chenhuo-dajie', '趁火打劫'],
-  ['shengdong-jixi', '声东击西'],
-  // 第二辑（敌战计 7–12）
-  ['wuzhong-shengyou', '无中生有'],
-  ['andu-chencang', '暗度陈仓'],
-  ['gean-guanhuo', '隔岸观火'],
-  ['xiaoli-cangdao', '笑里藏刀'],
-  ['lidai-taojiang', '李代桃僵'],
-  ['shunshou-qianyang', '顺手牵羊'],
-  // 第三辑（攻战计 13–18）
-  ['dacao-jingshe', '打草惊蛇'],
-  ['jieshi-huanhun', '借尸还魂'],
-  ['diaohu-lishan', '调虎离山'],
-  ['yuqin-guzong', '欲擒故纵'],
-  ['paozhuan-yinyu', '抛砖引玉'],
-  ['qinzei-qinwang', '擒贼擒王'],
-  // 第四辑（混战计 19–24）
-  ['fudi-chouxin', '釜底抽薪'],
-  ['hunshui-moyu', '混水摸鱼'],
-  ['jinchan-tuoqiao', '金蝉脱壳'],
-  ['guanmen-zhuozei', '关门捉贼'],
-  ['yuanjiao-jingong', '远交近攻'],
-  ['jiadao-faguo', '假道伐虢'],
-  // 第五辑（并战计 25–30）
-  ['touliang-huanzhu', '偷梁换柱'],
-  ['zhisang-mahuai', '指桑骂槐'],
-  ['jiachi-budian', '假痴不癫'],
-  ['shangwu-chouti', '上屋抽梯'],
-  ['shushang-kaihua', '树上开花'],
-  ['fanke-weizhu', '反客为主'],
-  // 第六辑（败战计 31–36）
-  ['meiren-ji', '美人计'],
-  ['kongcheng-ji', '空城计'],
-  ['fanjian-ji', '反间计'],
-  ['kurou-ji', '苦肉计'],
-  ['lianhuan-ji', '连环计'],
-  ['zou-weishang', '走为上'],
-] as const) {
-  test('三十六计 · ' + title + ' autoplay 全流程', async ({ page }) => {
-    await page.goto('/?autoplay=1#/play/' + id);
+for (const entry of entrySummaries('stratagem')) {
+  test('三十六计 · ' + entry.title + ' autoplay 全流程', async ({ page }) => {
+    await page.goto('/?autoplay=1#/play/' + entry.id);
     await expect.poll(() => events(page), { timeout: 120_000 }).toContain('level:complete');
     await expect.poll(() => events(page), { timeout: 60_000 }).toContain('card:unlocked');
     await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
@@ -842,7 +773,7 @@ test('狡兔三窟 autoplay 全流程（一窟被堵 → 三窟脱身）', async
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });
 
-test('百步穿杨：一档一档往后退，五片柳叶全中', async ({ page }) => {
+test('百步穿杨：一档一档往后退，五片柳叶全中', { tag: '@real' }, async ({ page }) => {
   const level = loadContent('yangyouji').game.stages[0]!.levelScript as {
     targets: { id: string; x: number; y: number }[];
     ladder: { rungs: { id: string; targetId: string }[]; advance: { x: number; y: number } };
@@ -879,7 +810,7 @@ test('百步穿杨 autoplay 全流程（五档一档一档练上去）', async (
   await expect.poll(() => events(page), { timeout: 120_000 }).toContain('level:complete');
   await expect.poll(() => events(page), { timeout: 60_000 }).toContain('session:exit');
 });
-test('庖丁解牛：先砍一刀留下缺口，再顺着缝一块块推出去', async ({ page }) => {
+test('庖丁解牛：先砍一刀留下缺口，再顺着缝一块块推出去', { tag: '@real' }, async ({ page }) => {
   const level = loadContent('paoding').game.stages[0]!.levelScript as {
     pieces: { id: string; x: number; y: number; grooveDeg: number }[];
   };

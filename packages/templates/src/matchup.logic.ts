@@ -13,7 +13,7 @@ import type {
  * - **六种配对全枚举**：三匹马对三场一共 3! = 6 种排法，好牌在手也排得完；
  *   bestRoster 用与内容校验同一套枚举（schemas.bestMatchupWins），
  *   所以"这一关到底能不能赢"在构建期和玩法里是同一个答案。
- * - **输了零惩罚**：把马放回架子上重排就是 —— 不扣星、不结束。李代桃僵的落点
+ * - **输了不结束**：把马放回架子上重排就是 —— 记进 mistakes、不结束。李代桃僵的落点
  *   恰恰是"故意舍一局"：输了第一场不等于输了整场。
  */
 
@@ -122,7 +122,7 @@ export function isMatchupDone(level: MatchupLevel, wins: number): boolean {
   return wins >= level.needWins;
 }
 
-/** 输了几场 —— 只是复盘用，不扣星也不结束 */
+/** 输了几场 —— 复盘用，场景据此记 mistakes */
 export function lossesFor(level: MatchupLevel, roster: Roster): number {
   return resolve(level, roster).filter((race) => !race.win).length;
 }
@@ -279,7 +279,7 @@ export interface OrderState {
   sequence: string[];
   /** 按顺序点过的势力（点中的先后就是正确顺序） */
   picked: string[];
-  /** 点错了几次 —— 只是复盘用，不扣星也不结束 */
+  /** 点错了几次 —— 复盘用，场景据此记 mistakes */
   wrongs: number;
 }
 
@@ -305,7 +305,7 @@ export function expectedNext(
 }
 
 /**
- * 点一个势力：**不是下一个就原样返回**（零惩罚 —— 只提示，顺序可以重排）。
+ * 点一个势力：**不是下一个就原样返回**（记进 mistakes —— 只提示，顺序可以重排）。
  * 点对了才记进 picked；点错了什么也不改（"错了几次"由 noteWrongPick 单独记）。
  */
 export function pick(state: OrderState, id: string): OrderState {
@@ -313,7 +313,7 @@ export function pick(state: OrderState, id: string): OrderState {
   return { ...state, picked: [...state.picked, id] };
 }
 
-/** 点错一次：只记一笔（复盘用）—— 不扣星、不结束，也不改已经点对的那些 */
+/** 点错一次：只记一笔（复盘用，场景据此记 mistakes）—— 不结束，也不改已经点对的那些 */
 export function noteWrongPick(state: OrderState): OrderState {
   return { ...state, wrongs: state.wrongs + 1 };
 }

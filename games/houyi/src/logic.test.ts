@@ -39,8 +39,4 @@ describe('后羿射日 · 关卡数据', () => {
       }
     }
   });
-
-  it('故事很短，屏幕上不超过两句话', () => {
-    expect(raw?.story.length).toBeLessThanOrEqual(2);
-  });
 });

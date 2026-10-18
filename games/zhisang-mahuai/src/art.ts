@@ -3,6 +3,7 @@ import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit
 import { DESIGN } from '@chags/templates';
 import type { ProbeHintStageState } from '@chags/templates';
 import type { ProbeHintLevel } from '@chags/templates/schemas';
+import { clamp01 } from '@chags/game-kit';
 import {
   BAR, GROUND_TOP, LACQUER, LISTENER_PATH, PROPS, PROP_RADIUS, PROP_Y, STEP_MS, STEPS, WALL,
   YOUSAN,
@@ -26,7 +27,6 @@ const SKIN = 0xf8dcbb;
 const ROBE = shade(THEME.teal, 0.86);
 const KING_ROBE = shade(THEME.red, 0.92);
 
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 // ---------------- 景（画一次） ----------------
 

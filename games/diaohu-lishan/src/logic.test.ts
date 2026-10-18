@@ -1,26 +1,14 @@
-import { ContentEntrySchema, getEntry, mergeLocalized, validatePatch } from '@chags/content/full';
-import { templateSchemas } from '@chags/templates/schemas';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
-// 模板的纯判定：共享 index.ts 的登记由 Lead 统一做 —— 这里直接从源文件拿，
-// 与既有游戏包相对导入内容 JSON 是同一个做法（登记前后都不会红）。
 import {
   bestBait, decoyStart, grabAt, guardBack, isDecoyDone, placeBait,
-} from '../../../packages/templates/src/lure.logic';
-import rawSummary from '../../../packages/content/src/entries/diaohu-lishan.json';
-import rawDetail from '../../../packages/content/src/entries/diaohu-lishan.game.json';
-import enPatchSummary from '../../../packages/content/src/i18n/en/diaohu-lishan.json';
-import enPatchDetail from '../../../packages/content/src/i18n/en/diaohu-lishan.game.json';
+} from '@chags/templates/lure.logic';
 import {
   BAIT_RADIUS, BAIT_XS, BAIT_YS, CHEST, FAR_HILLS, GROUND_TOP, PASS, RIDGE_BOTTOM, RIDGE_TOP,
 } from './layout';
 import { lureLevel } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-const enPatch = { ...enPatchSummary, ...enPatchDetail };
-
-/** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
-const entry = getEntry('diaohu-lishan') ?? ContentEntrySchema.parse(raw);
+const entry = getEntry('diaohu-lishan')!;
 const level = lureLevel(entry);
 if (level.mode !== 'decoy') throw new Error('第 15 计 · 调虎离山是 decoy（把看守引开）');
 const decoy = level;
@@ -101,7 +89,6 @@ describe('调虎离山 · 一局真的走得完（照模板 runAutoplay 的同�
 describe('调虎离山 · 内容', () => {
   it('故事两幕：山口一步不离 → 山那边闹起来；关键抉择在第一幕', () => {
     expect(entry.story.map((b) => b.id)).toEqual(['s1', 's2']);
-    expect(entry.story.every((b) => b.text.length <= 90)).toBe(true);
     expect(entry.keyMoment.beatId).toBe('s1');
     expect(entry.keyMoment.options.filter((o) => o.isCanonical).map((o) => o.text)).toEqual([
       '在山那边放个诱饵，把他引开',
@@ -126,44 +113,18 @@ describe('调虎离山 · 内容', () => {
     expect(entry.source.book).toContain('三十六计');
     expect(entry.source.chapter).toBe('调虎离山');
     expect(entry.source.quote).toContain('用人以诱之');
-    expect(entry.misconceptions.length).toBeGreaterThanOrEqual(1);
     expect(entry.game.template).toBe('lure');
     expect(entry.game.stages[0]!.template).toBe('lure');
   });
 
-  it('复习题：有记忆题也有迁移题，答案都在选项里', () => {
+  it('复习题：有记忆题也有迁移题', () => {
     expect(entry.quiz.filter((q) => q.kind === 'transfer')).toHaveLength(1);
-    expect(entry.quiz.length).toBeGreaterThanOrEqual(2);
-    for (const q of entry.quiz) expect(q.answer).toBeLessThan(q.options.length);
   });
 });
 
 describe('调虎离山 · 英译补丁', () => {
-  it('与中文一一对应、合起来不剩一个中文字，关卡脚本照样合法', () => {
-    expect(validatePatch(entry, enPatch)).toEqual([]);
-    const merged = ContentEntrySchema.parse(mergeLocalized(entry, enPatch));
+  it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
+    const merged = getEntry('diaohu-lishan', 'en')!;
     expect(merged.title).toBe('Lure the Tiger from the Mountain');
-    expect(merged.story.map((b) => b.title)).toHaveLength(entry.story.length);
-    expect(merged.quiz.map((q) => q.options.length)).toEqual(entry.quiz.map((q) => q.options.length));
-    for (const stage of merged.game.stages) {
-      expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    }
-    expect(findCjk(merged)).toEqual([]);
   });
 });
-
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了（与 content:check 同一套判据） */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}

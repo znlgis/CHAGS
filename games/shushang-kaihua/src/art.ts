@@ -3,6 +3,7 @@ import { THEME, circle, groundShadow, roundRect, shade, wavyBand } from '@chags/
 import { showBorrowBar } from '@chags/templates';
 import type { ShowBorrowMetrics } from '@chags/templates';
 import type { ShowBorrowLevel } from '@chags/templates/schemas';
+import { clamp01 } from '@chags/game-kit';
 import {
   BRIDGE, DESIGN_H, DESIGN_W, ENEMY, FAR_BANK_BOTTOM, PROPS, PROP_RADIUS, RIVER_BOTTOM,
   RIVER_TOP, SKY_TOP, ZHANG_FEI,
@@ -28,7 +29,6 @@ const PLANK = 0xcaa977;
 const PLANK_DEEP = 0x9c7c4f;
 const DUST = 0xe8d9b4;
 
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 // ---------------- 小零件 ----------------
 

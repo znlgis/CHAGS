@@ -12,6 +12,7 @@ import {
 } from './split.logic';
 import type { SplitState } from './split.logic';
 import type { SplitLevel } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 /** 交给游戏画的一切：树、猴子、它们的脸色 */
@@ -278,17 +279,18 @@ export function createSplitScene(ctx: GameContext, cfg: SplitConfig): Phaser.Typ
       this.finished = true;
       this.busy = true;
       this.hideHand();
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, (this.startX + this.endX) / 2, this.ropeY, THEME.gold, 12);
-      const finale = this.add.graphics().setDepth(40);
-      cfg.drawFinale?.(finale, this.stageState());
-      if (cfg.reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(cfg.reveal as string, 3200, 268));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? 4200, () => this.scene.start(cfg.nextSceneKey));
+      recordAttempt(cfg.session, { ok: true });
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? 4200,
+        sparkle: { x: (this.startX + this.endX) / 2, y: this.ropeY, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: 268,
+        finalize: () => {
+          const finale = this.add.graphics().setDepth(40);
+          cfg.drawFinale?.(finale, this.stageState());
+        }
+      });
     }
 
     // ---------------- 提示 ----------------

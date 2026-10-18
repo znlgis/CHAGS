@@ -3,6 +3,7 @@ import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit
 import { DESIGN } from '@chags/templates';
 import type { WindowStageState } from '@chags/templates';
 import type { WindowJob } from '@chags/templates/schemas';
+import { clamp01 } from '@chags/game-kit';
 
 /**
  * 顺手牵羊：雪夜赶路。
@@ -45,9 +46,6 @@ export const START_DEG = SPOT_DEG[2]!;
 export type OpportunityKind = 'sheep' | 'wood' | 'skin';
 const KINDS: readonly OpportunityKind[] = ['sheep', 'wood', 'skin'];
 
-function clamp01(value: number): number {
-  return Math.min(1, Math.max(0, value));
-}
 
 /** 这一点在路上哪儿 */
 export function roadPoint(deg: number): { x: number; y: number } {

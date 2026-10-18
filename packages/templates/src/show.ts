@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
-import { BaseScene, THEME, createHand, roundRect, shade, sparkleAt } from '@chags/phaser-kit';
+import { BaseScene, THEME, createHand, roundRect, shade } from '@chags/phaser-kit';
 import { SCENE_KEYS } from './layout';
 import {
   SHOW_RATES, aliveShadowIds, aliveShadows, beliefAt, isShowDone, missingShadows, nextSlotToPaint,
@@ -14,6 +14,7 @@ import {
 } from './show.logic';
 import type { BorrowState, ShowBorrowProp } from './show.logic';
 import type { ShowBorrowLevel, ShowLevel, ShowSlot } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 /**
@@ -231,23 +232,21 @@ function createDrawShowScene(ctx: GameContext, cfg: ShowConfig): Phaser.Types.Sc
       this.finished = true;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'show:done' });
-      this.redraw(this.elapsed());
-      if (this.finaleGfx) {
-        cfg.drawFinale?.(this.finaleGfx, this.stageState(this.elapsed()), this.level);
-      }
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, SHOW.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? SHOW.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? SHOW.finaleHoldMs,
+        sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: SHOW.hintY,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'show:done' });
+          this.redraw(this.elapsed());
+          if (this.finaleGfx) {
+            cfg.drawFinale?.(this.finaleGfx, this.stageState(this.elapsed()), this.level);
+          }
+        }
+      });
     }
 
     // ---------------- 小手 ----------------
@@ -588,21 +587,19 @@ function createBorrowShowScene(
       this.finished = true;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'show:done' });
-      this.redraw();
-      if (this.finaleGfx) cfg.drawFinale?.(this.finaleGfx, this.metrics(true), this.level);
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, SHOW.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? SHOW.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? SHOW.finaleHoldMs,
+        sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: SHOW.hintY,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'show:done' });
+          this.redraw();
+          if (this.finaleGfx) cfg.drawFinale?.(this.finaleGfx, this.metrics(true), this.level);
+        }
+      });
     }
 
     // ---------------- 小手 ----------------

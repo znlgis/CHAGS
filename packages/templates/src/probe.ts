@@ -8,6 +8,7 @@ import {
 } from './probe.logic';
 import type { ProbeState } from './probe.logic';
 import type { ProbeFigure, ProbeLevel, ProbePatch } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 // hint（指桑骂槐）：判定与类型另起一段引入 —— 老模式那几行一个字没改
 import {
@@ -99,8 +100,8 @@ export interface ProbeConfig {
  * 三条刻意的设计：
  * - **判定全在 probe.logic 里**：场景只负责"手指落在哪儿"与画面，
  *   敲哪一丛、能不能走、射中了谁，单测与画面用的是同一份判定，不会跑偏。
- * - **零惩罚**：点了没确认安全的地方、射错了人，都只是"没收获 / 少一个候选" ——
- *   不扣星、不结束、不锁操作。孩子可以放心地一处一处试过去。
+ * - **零惩罚**：点了没确认安全的地方只是"没收获"；射错了人记进 mistakes ——
+ *   不结束、不锁操作。孩子可以放心地一处一处试过去。
  * - **提示给在点上**：小手从来只指"最外圈那一丛"（打草惊蛇要避免先动中间）与
  *   "下一个该试的身影"；点错了马上再指一次，绝不让孩子对着屏幕干瞪眼。
  */
@@ -415,7 +416,9 @@ function createKnockSpotProbeScene(
         this.finish();
         return;
       }
-      // 蒿箭没有杀伤：他只是退到一边（少一个候选）—— 不扣星、不结束、接着试
+      // 蒿箭没有杀伤：他只是退到一边（少一个候选）—— 不结束、不锁操作、接着试；
+      // 射错一次记一次 mistakes（这一箭是孩子自己选的）
+      recordAttempt(cfg.session, { ok: false });
       this.sfx('tap');
       this.ctx.emit('beat:enter', {
         beatId: 'probe:tried:' + figure.id + ':' + this.state.tried.length,
@@ -444,19 +447,17 @@ function createKnockSpotProbeScene(
       this.finished = true;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'probe:done' });
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, PROBE.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? PROBE.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? PROBE.finaleHoldMs,
+        sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: PROBE.hintY,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'probe:done' });
+        }
+      });
     }
 
     // ---------------- 小手与提示 ----------------
@@ -571,7 +572,7 @@ export interface ProbeHintStageState {
   progress: number;
   /** 一共要走几步 */
   steps: number;
-  /** 敲错了几次 —— 复盘用，不扣星、不结束 */
+  /** 敲错了几次 —— 复盘用，也记进 mistakes */
   wrongKnocks: number;
   /** 敲过的东西（按敲的先后，重复的不记） */
   knocked: string[];
@@ -617,7 +618,7 @@ export interface ProbeHintConfig {
  * 三条刻意的设计：
  * - **判定全在 probe.logic 里**：敲的这样东西是不是他听得懂的、走了几步、敲错几笔，
  *   单测与画面用的是同一份函数（无头验证也走同一条 knockHint）。
- * - **零惩罚**：敲错了只是"记一笔"（wrongKnocks +1）——不扣星、不结束、不锁操作；
+ * - **零惩罚**：敲错了只是"记一笔"（wrongKnocks +1）——记进 mistakes、不结束、不锁操作；
  *   孩子可以放心地一样一样试过去。
  * - **提示给在点上**：小手从头到尾只指"他听得懂的那一样"；敲一下之后马上再指一次 ——
  *   孩子试错的时候，画面不会跟着乱。
@@ -758,7 +759,7 @@ function createHintProbeScene(
       this.knockProp(prop);
     }
 
-    /** 敲一样东西：敲对了，他往前走一步；敲别的只是没收获（零惩罚） */
+    /** 敲一样东西：敲对了，他往前走一步；敲错的记进 mistakes（不结束、不锁操作） */
     private knockProp(prop: ProbePatch): void {
       if (this.finished) return;
       const before = this.state;
@@ -786,14 +787,14 @@ function createHintProbeScene(
           correct: true,
           latencyMs: t,
         });
-        cfg.session.total += 1;
-        cfg.session.correct += 1;
+        recordAttempt(cfg.session, { ok: true });
         if (isHintDone(this.level, this.state)) {
           this.finish();
           return;
         }
       } else {
-        // 敲的不是他听得懂的那样：只是没收获 —— 记一笔，不扣星、不结束
+        // 敲的不是他听得懂的那样：记一笔 mistakes —— 不结束、不锁操作，接着试
+        recordAttempt(cfg.session, { ok: false });
         this.sfx('tap');
         this.ctx.emit('beat:enter', { beatId: 'probe:wrong:' + wrongKnocks(this.state) });
         this.showHint(this.level.hint, 2200, PROBE_HINT.hintY);
@@ -820,17 +821,16 @@ function createHintProbeScene(
       this.finished = true;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.level.listener.x, this.level.listener.y, THEME.gold, 12);
-      this.ctx.emit('beat:enter', { beatId: 'probe:done' });
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, PROBE_HINT.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? PROBE_HINT.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? PROBE_HINT.finaleHoldMs,
+        sparkle: { x: this.level.listener.x, y: this.level.listener.y, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: PROBE_HINT.hintY,
+        finalize: () => {
+          this.ctx.emit('beat:enter', { beatId: 'probe:done' });
+        }
+      });
     }
 
     // ---------------- 小手与提示 ----------------

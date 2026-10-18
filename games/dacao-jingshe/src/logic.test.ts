@@ -1,25 +1,13 @@
-import { ContentEntrySchema, getEntry, mergeLocalized, validatePatch } from '@chags/content/full';
-import { templateSchemas } from '@chags/templates/schemas';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
-import rawSummary from '../../../packages/content/src/entries/dacao-jingshe.json';
-import rawDetail from '../../../packages/content/src/entries/dacao-jingshe.game.json';
-import enPatchSummary from '../../../packages/content/src/i18n/en/dacao-jingshe.json';
-import enPatchDetail from '../../../packages/content/src/i18n/en/dacao-jingshe.game.json';
 import {
   canCross, cross, crossablePatches, hasSnake, isKnockDone, isKnocked, isSpooked, knock,
   knockOrder, nextKnockStep, probeStart,
-} from '../../../packages/templates/src/probe.logic';
-import {
-  EXIT, GROUND_TOP, PATCHES, PATCH_RADIUS, SCARE_RADIUS, WALKER, YARD_TOP,
-} from './layout';
+} from '@chags/templates/probe.logic';
+import { EXIT, GROUND_TOP, PATCHES, PATCH_RADIUS, SCARE_RADIUS, WALKER, YARD_TOP } from './layout';
 import { dacaoLevel } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-const enPatch = { ...enPatchSummary, ...enPatchDetail };
-
-/** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
-const entry = getEntry('dacao-jingshe') ?? ContentEntrySchema.parse(raw);
+const entry = getEntry('dacao-jingshe')!;
 const level = dacaoLevel(entry);
 
 /** 不在任何蛇的惊吓范围里的空草丛 —— 敲到蛇也搅不乱它，这一关的"解"就是它 */
@@ -44,7 +32,6 @@ describe('打草惊蛇 · 关卡数据', () => {
     }
     expect(level.scareRadius).toBe(SCARE_RADIUS);
     expect(level.exit).toEqual(EXIT);
-    expect(level.hint.length).toBeLessThanOrEqual(24);
   });
 
   it('五丛草全在画面里，小路从王鲁脚下通到右边的院门', () => {
@@ -130,7 +117,6 @@ describe('打草惊蛇 · 关卡数据', () => {
 describe('打草惊蛇 · 故事与复习', () => {
   it('两幕：案卷上的名字 → 拨草见蛇；关键抉择在第一幕', () => {
     expect(entry.story.map((beat) => beat.id)).toEqual(['s1', 's2']);
-    expect(entry.story.every((beat) => beat.text.length <= 90)).toBe(true);
     expect(entry.story[0]!.text).toContain('自己的名字');
     expect(entry.story[1]!.text).toContain('蛇');
     expect(entry.keyMoment.beatId).toBe('s1');
@@ -150,15 +136,11 @@ describe('打草惊蛇 · 故事与复习', () => {
     expect(entry.source.chapter).toBe('打草惊蛇');
     expect(entry.source.quote).toContain('疑以叩实');
     expect(entry.moral).toBe('先试一试，再动手 —— 但试本身也会惊动别人。');
-    expect(entry.misconceptions.length).toBeGreaterThanOrEqual(1);
     expect(entry.game.template).toBe('probe');
     expect(entry.game.stages[0]!.template).toBe('probe');
   });
 
-  it('复习题：有记忆题也有迁移题，答案都在选项里', () => {
-    expect(entry.quiz.filter((question) => question.kind === 'transfer').length).toBeGreaterThanOrEqual(1);
-    expect(entry.quiz.length).toBeGreaterThanOrEqual(2);
-    for (const question of entry.quiz) expect(question.answer).toBeLessThan(question.options.length);
+  it('复习题：有记忆题也有迁移题', () => {
     expect(entry.quiz[1]!.question).toContain('抽屉');
   });
 
@@ -176,33 +158,8 @@ describe('打草惊蛇 · 故事与复习', () => {
 });
 
 describe('打草惊蛇 · 英译补丁', () => {
-  it('与中文一一对应、合起来不剩一个中文字，关卡脚本照样合法', () => {
-    expect(validatePatch(entry, enPatch)).toEqual([]);
-    const merged = ContentEntrySchema.parse(mergeLocalized(entry, enPatch));
+  it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
+    const merged = getEntry('dacao-jingshe', 'en')!;
     expect(merged.title).toBe('Beating the Grass to Startle the Snake');
-    expect(merged.story.map((beat) => beat.text)).toHaveLength(entry.story.length);
-    expect(merged.quiz.map((question) => question.options.length)).toEqual(
-      entry.quiz.map((question) => question.options.length),
-    );
-    for (const stage of merged.game.stages) {
-      expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    }
-    expect(findCjk(merged)).toEqual([]);
   });
 });
-
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了（与 content:check 同一套判据） */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}

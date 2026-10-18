@@ -5,6 +5,7 @@ import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
 import { MARK, SCENE_KEYS } from './layout';
 import { hintSurface, markResult, surfaceAt, surfaceWorldX } from './mark.logic';
 import type { MarkLevel, MarkSurface } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 export type MarkPhase = 'carve' | 'drift' | 'dive' | 'done';
@@ -170,8 +171,7 @@ export function createMarkScene(ctx: GameContext, cfg: MarkConfig): Phaser.Types
 
       if (result === 'found') {
         this.state.phase = 'done';
-        cfg.session.total += 1;
-        cfg.session.correct += 1;
+        recordAttempt(cfg.session, { ok: true });
         this.sfx('complete');
         sparkleAt(this, cfg.level.sword.x, cfg.level.sword.y, THEME.gold, 10);
         cfg.onResult?.('found', { scene: this });
@@ -180,8 +180,8 @@ export function createMarkScene(ctx: GameContext, cfg: MarkConfig): Phaser.Types
         return;
       }
 
-      // 捞空：不惩罚、不倒扣，船回到上游重来
-      cfg.session.mistakes += 1;
+      // 捞空：不结束、不锁操作，船回到上游重来；这一下记进 mistakes（只影响星数与复习间隔）
+      recordAttempt(cfg.session, { ok: false });
       this.sfx('wrong');
       cfg.onResult?.('miss', { scene: this });
       this.ctx.emit('beat:enter', { beatId: 'mark:result:miss' });
@@ -239,13 +239,17 @@ export function createMarkScene(ctx: GameContext, cfg: MarkConfig): Phaser.Types
       this.finished = true;
       this.hideHand();
       this.clearRing();
-      this.cameras.main.flash(320, 255, 250, 220);
-      const finale = this.add.graphics().setDepth(40);
-      cfg.drawFinale?.(finale, this.state);
-      if (cfg.reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(cfg.reveal as string, 3200, 300));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? 4200, () => this.scene.start(cfg.nextSceneKey));
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? 4200,
+        sfx: false,
+        reveal: cfg.reveal,
+        revealY: 300,
+        finalize: () => {
+          const finale = this.add.graphics().setDepth(40);
+          cfg.drawFinale?.(finale, this.state);
+        }
+      });
     }
 
     // ---------------- 提示 ----------------

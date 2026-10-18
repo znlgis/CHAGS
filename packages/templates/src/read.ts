@@ -11,6 +11,7 @@ import {
 } from './read.logic';
 import type { ReadState } from './read.logic';
 import type { ReadLevel, ReadTell } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 /**
@@ -270,8 +271,7 @@ export function createReadScene(ctx: GameContext, cfg: ReadConfig): Phaser.Types
         correct: true,
         latencyMs: t,
       });
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
+      recordAttempt(cfg.session, { ok: true });
       // 看穿一个就报一句进度（写进事件流，e2e 与复盘都看得见）
       this.ctx.emit('beat:enter', {
         beatId: 'read:progress:' + this.state.read.length + ':' + this.level.goal,
@@ -297,16 +297,13 @@ export function createReadScene(ctx: GameContext, cfg: ReadConfig): Phaser.Types
       if (this.done) return;
       this.done = true;
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, READ.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? READ.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? READ.finaleHoldMs,
+        sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: READ.hintY
+      });
     }
 
     // ---------------- 小手 ----------------

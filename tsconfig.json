@@ -21,11 +21,22 @@
     "noImplicitOverride": true,
     "skipLibCheck": true,
     "noEmit": true,
+    // 本地重复跑 typecheck 时只重算变过的文件（CI 冷跑不受影响，见 scripts/verify.mjs）
+    "incremental": true,
+    "tsBuildInfoFile": "./node_modules/.cache/tsconfig.tsbuildinfo",
     "jsx": "preserve",
     "types": [
       "vite/client",
       "node"
-    ]
+    ],
+    // e2e 解析用：根 package 不是 workspace 依赖方，根 node_modules 里没有 @chags/*，
+    // 所以 e2e（e2e/*.ts，最近的 tsconfig 就是这一份）无法按包名解析 @chags 子路径。
+    // Playwright 与 vue-tsc 都读最近的 tsconfig，这里只补 e2e 真正用到的两条；
+    // 运行时仍走各包 package.json 的 exports（grep 深路径=0 由它保证）。
+    "paths": {
+      "@chags/templates/layout": ["./packages/templates/src/layout.ts"],
+      "@chags/content/full": ["./packages/content/src/entries/detail.ts"]
+    }
   },
   "include": [
     "packages/*/src/**/*.ts",

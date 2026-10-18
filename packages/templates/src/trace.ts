@@ -8,6 +8,7 @@ import {
 } from './trace.logic';
 import type { TraceCursor, TracePoint } from './trace.logic';
 import type { TraceLevel, TraceSegment } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 export interface TraceStageMetrics {
@@ -163,8 +164,7 @@ export function createTraceScene(ctx: GameContext, cfg: TraceConfig): Phaser.Typ
       this.sfx('correct');
       this.cameras.main.shake(160, 0.002);
       sparkleAt(this, this.W / 2, this.H / 2, THEME.teal, 8);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
+      recordAttempt(cfg.session, { ok: true });
 
       const done = (): void => {
         this.path = [];
@@ -187,15 +187,16 @@ export function createTraceScene(ctx: GameContext, cfg: TraceConfig): Phaser.Typ
       this.finished = true;
       this.clearGuide();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, this.H / 2, THEME.gold, 12);
-      if (this.finaleGfx) cfg.drawFinale?.(this.finaleGfx);
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, cfg.revealY ?? 268));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? 4200, () => this.scene.start(cfg.nextSceneKey));
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? 4200,
+        sparkle: { x: this.W / 2, y: this.H / 2, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: cfg.revealY ?? 268,
+        finalize: () => {
+          if (this.finaleGfx) cfg.drawFinale?.(this.finaleGfx);
+        }
+      });
     }
 
     // ---------------- 画面 ----------------

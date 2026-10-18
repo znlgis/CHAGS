@@ -13,6 +13,7 @@ import type { BannerState, BorrowState } from './borrow.logic';
 import type {
   BorrowBannerLevel, BorrowFlag, BorrowLevel, BorrowProp, BorrowScattered,
 } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 /** borrow 模板自己的常量：不进 layout.ts，也不跟别的模板互相踩 */
@@ -357,21 +358,19 @@ function createBannerScene(
       this.dragAt = null;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.level.pole.x, this.level.pole.y, THEME.gold, 14);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'borrow:done' });
-      this.redraw();
-      if (this.finaleGfx) cfg.drawBannerFinale?.(this.finaleGfx, this.metrics());
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, cfg.revealY ?? BORROW.bannerHintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? BORROW.bannerHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? BORROW.bannerHoldMs,
+        sparkle: { x: this.level.pole.x, y: this.level.pole.y, color: THEME.gold, count: 14 },
+        reveal: cfg.reveal,
+        revealY: cfg.revealY ?? BORROW.bannerHintY,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'borrow:done' });
+          this.redraw();
+          if (this.finaleGfx) cfg.drawBannerFinale?.(this.finaleGfx, this.metrics());
+        }
+      });
     }
 
     // ---------------- 小手 ----------------
@@ -525,7 +524,8 @@ function createForceBorrowScene(ctx: GameContext, cfg: BorrowConfig): Phaser.Typ
       const stage = this.metrics();
 
       if (result.result === 'stuck') {
-        // 纹丝不动：不惩罚，把该找的东西指出来
+        // 纹丝不动：不结束、不锁操作，把该找的东西指出来；这一下记进 mistakes（力还不够）
+        recordAttempt(cfg.session, { ok: false });
         this.sfx('wrong');
         this.cameras.main.shake(80, 0.002);
         sparkleAt(this, load.x, load.y + load.radius, THEME.stone, 4);
@@ -562,21 +562,19 @@ function createForceBorrowScene(ctx: GameContext, cfg: BorrowConfig): Phaser.Typ
       this.finished = true;
       this.clearRing();
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, cfg.level.load.x, cfg.level.load.y, THEME.gold, 12);
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
-      this.ctx.emit('beat:enter', { beatId: 'borrow:done' });
-      this.redraw();
-      if (this.finaleGfx) cfg.drawFinale?.(this.finaleGfx, this.metrics());
-      const reveal = cfg.reveal;
-      if (reveal !== undefined) {
-        this.time.delayedCall(1200, () => this.showHint(reveal, 3200, cfg.revealY ?? 300));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? BORROW.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? BORROW.finaleHoldMs,
+        sparkle: { x: cfg.level.load.x, y: cfg.level.load.y, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealY: cfg.revealY ?? 300,
+        finalize: () => {
+          recordAttempt(cfg.session, { ok: true });
+          this.ctx.emit('beat:enter', { beatId: 'borrow:done' });
+          this.redraw();
+          if (this.finaleGfx) cfg.drawFinale?.(this.finaleGfx, this.metrics());
+        }
+      });
     }
 
     // ---------------- 画面 ----------------

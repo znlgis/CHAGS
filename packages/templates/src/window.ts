@@ -16,6 +16,7 @@ import type { StirWindowLevel, WindowPhase, WindowState } from './window.logic';
  */
 export type { StirWindowLevel };
 import type { WindowJob, WindowLevel } from './schemas';
+import { recordAttempt } from './session';
 import type { SessionState } from './session';
 
 /** 模板常量放在模板自己文件里（坐标在关卡数据里，这里只放手感） */
@@ -152,7 +153,7 @@ export interface WindowStirConfig {
  * - **提示给在对的时候**：窗口开了才让小手落在还没干完的活儿上（稳的时候不引诱孩子去点）。
  *
  * glimpse（顺手牵羊）在同一个场景里加一条：**这一轮只有一件机会路过**。
- * 别处的、上一轮 / 下一轮的都点不动（零惩罚，只当白跑一趟）；
+ * 别处的、上一轮 / 下一轮的都点不动，但点了会记进 mistakes（只当白跑一趟）；
  * 这一趟（travelMs）走完还没抓够，就把队伍带回起点重走一遍 —— 抓到的留着，不扣星。
  *
  * 下面这一段是 **fire / glimpse 那条路（一行没改）**，只是从 createWindowScene 里
@@ -367,8 +368,10 @@ function createTimedWindowScene(
       this.idleMs = 0;
       const elapsed = this.elapsed();
 
-      // glimpse：只有这一轮路过的那件抓得住 —— 点到别处（上一轮 / 下一轮的机会）什么也不发生
+      // glimpse：只有这一轮路过的那件抓得住 —— 点到别处（上一轮 / 下一轮的机会）什么也不发生；
+      // 但这是孩子主动点错了目标，记一次 mistakes（不结束、不锁操作）
       if (this.level.mode === 'glimpse' && currentJob(this.level, elapsed)?.id !== job.id) {
+        recordAttempt(cfg.session, { ok: false });
         this.ctx.emit('beat:enter', { beatId: 'window:missed:' + job.id });
         this.sfx('tap');
         this.showHint(cfg.level.hint, 2200, WINDOW.hintY);
@@ -416,8 +419,7 @@ function createTimedWindowScene(
       this.sfx('correct');
       sparkleAt(this, job.x, job.y - 40, THEME.gold, 6);
       this.ctx.emit('beat:enter', { beatId: 'window:job:' + job.id });
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
+      recordAttempt(cfg.session, { ok: true });
       if (isWindowDone(this.level, this.state)) this.finish();
     }
 
@@ -425,17 +427,18 @@ function createTimedWindowScene(
       if (this.finished) return;
       this.finished = true;
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, 720, THEME.gold, 12);
-      const finale = this.add.graphics().setDepth(40);
-      cfg.drawFinale?.(finale, this.stageState(this.elapsed()));
-      if (cfg.reveal !== undefined) {
-        this.time.delayedCall(1400, () => this.showHint(cfg.reveal as string, 3200, WINDOW.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? WINDOW.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? WINDOW.finaleHoldMs,
+        sparkle: { x: this.W / 2, y: 720, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealDelayMs: 1400,
+        revealY: WINDOW.hintY,
+        finalize: () => {
+          const finale = this.add.graphics().setDepth(40);
+          cfg.drawFinale?.(finale, this.stageState(this.elapsed()));
+        }
+      });
     }
 
     // ---------------- 小手 ----------------
@@ -484,7 +487,7 @@ function createTimedWindowScene(
  * 与 fire / glimpse 的区别只有一条，但它就是这一计的全部：水本来是清的 ——
  * 点水面把水搅浑（浑度涨，封顶 100），只有浑水里鱼才慢下来、才摸得到；
  * 不搅就一直清，一直抓不到。浑度按 clearPerSec 澄清，水一清，
- * 摸到一半的那条鱼就摆尾滑走 —— **只是重来**：不扣星、不结束，搅一下就能接着摸。
+ * 摸到一半的那条鱼就摆尾滑走 —— **只是重来**：记进 mistakes、不结束，搅一下就能接着摸。
  */
 function createStirWindowScene(
   ctx: GameContext,
@@ -688,14 +691,14 @@ function createStirWindowScene(
       this.sfx('correct');
       sparkleAt(this, job.x, job.y - 40, THEME.gold, 6);
       this.ctx.emit('beat:enter', { beatId: 'window:fish:' + job.id });
-      cfg.session.total += 1;
-      cfg.session.correct += 1;
+      recordAttempt(cfg.session, { ok: true });
       if (isWindowDone(this.level, this.state)) this.finish();
     }
 
-    /** 水清了：点到鱼也抓不动 —— 它摆尾滑走了（零惩罚，搅一下再来） */
+    /** 水清了：点到鱼也抓不动 —— 它摆尾滑走了（不结束、不锁操作；这一下记进 mistakes，搅一下再来） */
     private slipAway(job: WindowJob, t: number): void {
       if (this.finished) return;
+      recordAttempt(cfg.session, { ok: false });
       this.lastTapAt = t;
       this.sfx('tap');
       const ripple = tapRipple(this, job.x, job.y, job.radius, THEME.inkSoft);
@@ -721,17 +724,18 @@ function createStirWindowScene(
       if (this.finished) return;
       this.finished = true;
       this.hideHand();
-      this.sfx('complete');
-      this.cameras.main.flash(320, 255, 250, 220);
-      sparkleAt(this, this.W / 2, 720, THEME.gold, 12);
-      const finale = this.add.graphics().setDepth(40);
-      cfg.drawFinale?.(finale, this.stageState(this.elapsed()));
-      if (cfg.reveal !== undefined) {
-        this.time.delayedCall(1400, () => this.showHint(cfg.reveal as string, 3200, WINDOW.hintY));
-      }
-      this.time.delayedCall(cfg.finaleHoldMs ?? WINDOW.finaleHoldMs, () =>
-        this.scene.start(cfg.nextSceneKey),
-      );
+      this.completeLevel({
+        nextSceneKey: cfg.nextSceneKey,
+        holdMs: cfg.finaleHoldMs ?? WINDOW.finaleHoldMs,
+        sparkle: { x: this.W / 2, y: 720, color: THEME.gold, count: 12 },
+        reveal: cfg.reveal,
+        revealDelayMs: 1400,
+        revealY: WINDOW.hintY,
+        finalize: () => {
+          const finale = this.add.graphics().setDepth(40);
+          cfg.drawFinale?.(finale, this.stageState(this.elapsed()));
+        }
+      });
     }
 
     // ---------------- 小手 ----------------

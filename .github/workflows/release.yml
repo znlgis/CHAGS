@@ -17,8 +17,16 @@ on:
 permissions:
   contents: read
 
+# 同一条 tag 的发布不并发：产物是一样的，两个 job 抢着发只会互相覆盖
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   NODE_VERSION: '24'
+  # 产物体积门禁（字节）：exe/apk 历史实测 3.3–3.6MB；超过这里说明误打进了调试符号、
+  # 多架构产物或未压缩资源 —— 与其发一个几十 MB 的包，不如在收集步骤直接失败。
+  ARTIFACT_MAX_BYTES: 6291456
 
 jobs:
   # ---------- 解析版本号 ----------
@@ -57,6 +65,7 @@ jobs:
   web:
     needs: version
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -86,10 +95,61 @@ jobs:
           path: apps/site/dist
           retention-days: 1
 
+  # ---------- 端到端门禁：玩法被改坏了不许发版 ----------
+  # 与 web/windows/android 并行（只依赖版本号）。跑**真实指针操作**子集：
+  # 用 test(..., { tag: '@real' }) 标出来的典故与三十六计用例，约 5–8 分钟。
+  # autoplay / 双语载入 / 静态用例不进发版门禁 —— 它们证明不了"点得到、拖得上"。
+  e2e:
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # 浏览器下载 ~40–60s/job：按 lock 文件的哈希缓存，lock 没动就不再下第二遍
+      - name: 缓存 Playwright 浏览器
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: 安装浏览器
+        run: pnpm exec playwright install --with-deps chromium
+
+      # 真实操作子集：典故 19 条（17 部）+ 三十六计 5 条（覆盖 chain/siege/stillness/swap/lure 五个场景）
+      - name: 真实操作端到端（发版门禁）
+        run: pnpm exec playwright test --grep "@real"
+
+      # 生产产物链路：首屏懒加载 + 重 chunk 归属。前一步挂了也要跑 ——
+      # 开发服务器挂了不代表产物链路坏了，反之亦然。
+      # 构建在 e2e:dist 里做（preview 配置的 webServer 只起 vite preview，不重复 build）
+      - name: 生产构建产物端到端
+        if: '!cancelled()'
+        run: pnpm e2e:dist
+
+      # 失败时留下截图与轨迹（配置了 only-on-failure / retain-on-failure）
+      - name: 失败时保留截图与轨迹
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-playwright-results
+          path: test-results
+          retention-days: 7
+          if-no-files-found: ignore
+
   # ---------- Windows 便携 exe ----------
   windows:
     needs: [version, web]
     runs-on: windows-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -123,12 +183,18 @@ jobs:
         working-directory: apps/desktop
         run: pnpm exec tauri build --no-bundle
 
-      - name: 收集产物
+      - name: 收集产物（含体积门禁）
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path out | Out-Null
-          Copy-Item apps/desktop/src-tauri/target/release/chags.exe "out/CHAGS-${{ needs.version.outputs.version }}-windows-x64-portable.exe"
+          $exe = "out/CHAGS-${{ needs.version.outputs.version }}-windows-x64-portable.exe"
+          Copy-Item apps/desktop/src-tauri/target/release/chags.exe $exe
           Get-ChildItem out | ForEach-Object { "{0:N2} MB  {1}" -f ($_.Length/1MB), $_.Name }
+          # 体积门禁：历史实测 3.3–3.5MB。超限多半是误打了调试符号或整个资源目录
+          $size = (Get-Item $exe).Length
+          if ($size -gt [long]$env:ARTIFACT_MAX_BYTES) {
+            throw ("exe 体积超标：{0:N2} MB > {1:N2} MB" -f ($size/1MB), ([long]$env:ARTIFACT_MAX_BYTES/1MB))
+          }
 
       - uses: actions/upload-artifact@v4
         with:
@@ -140,6 +206,7 @@ jobs:
   android:
     needs: [version, web]
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     outputs:
       # release（正式密钥）/ debug（没配 Secrets 时的兜底，能装但不能覆盖正式版）
       signature: ${{ steps.sign.outputs.kind }}
@@ -270,12 +337,20 @@ jobs:
             echo "::notice::已用正式密钥签名，可以直接覆盖安装旧版本"
           fi
 
-      - name: 收集产物
+      - name: 收集产物（含体积门禁）
         run: |
+          set -euo pipefail
           mkdir -p out
-          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk \
-             "out/CHAGS-${{ needs.version.outputs.version }}-android.apk"
+          apk="out/CHAGS-${{ needs.version.outputs.version }}-android.apk"
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk "$apk"
           ls -lh out
+          # 体积门禁：历史实测 3.4–3.6MB。超限多半是把未压缩资源或全部 ABI 一起打进来了
+          size=$(stat -c%s "$apk")
+          echo "APK 体积：$((size / 1024 / 1024)) MB（上限 $((ARTIFACT_MAX_BYTES / 1024 / 1024)) MB）"
+          if [ "$size" -gt "$ARTIFACT_MAX_BYTES" ]; then
+            echo "::error::APK 体积超标：$((size / 1024 / 1024))MB > $((ARTIFACT_MAX_BYTES / 1024 / 1024))MB"
+            exit 1
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
@@ -285,9 +360,11 @@ jobs:
 
   # ---------- 发 Release ----------
   release:
-    needs: [version, windows, android]
+    # e2e 也在里面：玩法被改坏时，宁可这一次发布失败，也不要把一个有问题的版本挂出去
+    needs: [version, web, windows, android, e2e]
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # 写权限只给这一步：上面那些 job 会跑第三方 action，不需要写仓库
     permissions:
       contents: write

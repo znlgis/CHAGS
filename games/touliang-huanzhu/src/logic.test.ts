@@ -1,28 +1,18 @@
-import { ContentEntrySchema, getEntry, mergeLocalized, validatePatch } from '@chags/content/full';
+import { getEntry } from '@chags/content/full';
 import { templateSchemas } from '@chags/templates/schemas';
 import { describe, expect, it } from 'vitest';
-import rawSummary from '../../../packages/content/src/entries/touliang-huanzhu.json';
-import rawDetail from '../../../packages/content/src/entries/touliang-huanzhu.game.json';
-import enPatchSummary from '../../../packages/content/src/i18n/en/touliang-huanzhu.json';
-import enPatchDetail from '../../../packages/content/src/i18n/en/touliang-huanzhu.game.json';
-// 模板的纯判定：共享 index.ts 的登记由 Lead 统一做 —— 这里直接从源文件拿，
-// 与既有游戏包相对导入内容 JSON 是同一个做法（登记前后都不会红）。
 import {
-  BEAM_TIMING, beamPostAt, beamStart, check, isBeamDone, isPostRebuilt, nextPostToWork, startWork,
-  tickWork, workingPostId,
-} from '../../../packages/templates/src/swap.logic';
+  BEAM_TIMING, beamPostAt, beamStart, check, isBeamDone, isPostRebuilt, nextPostToWork,
+  startWork, tickWork, workingPostId,
+} from '@chags/templates/swap.logic';
 import {
-  CHECK_MS, CHECKER, DESIGN_H, DESIGN_W, PILE_BOTTOM, PILE_TOP, PODIUM_BOTTOM, PODIUM_TOP, POST_KINDS,
-  POST_RADIUS, POST_XS, POST_Y, SKY_TOP, SPARE_KINDS, SPARE_RADIUS, SPARE_XS, SPARE_Y, WORK_MS,
+  CHECK_MS, CHECKER, DESIGN_H, DESIGN_W, PILE_BOTTOM, PILE_TOP, PODIUM_BOTTOM, PODIUM_TOP,
+  POST_KINDS, POST_RADIUS, POST_XS, POST_Y, SKY_TOP, SPARE_KINDS, SPARE_RADIUS, SPARE_XS,
+  SPARE_Y, WORK_MS,
 } from './layout';
 import { touliangLevel } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-const enPatch = { ...enPatchSummary, ...enPatchDetail };
-
-/** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
-const entry = getEntry('touliang-huanzhu') ?? ContentEntrySchema.parse(raw);
+const entry = getEntry('touliang-huanzhu')!;
 const level = touliangLevel(entry);
 
 /**
@@ -54,7 +44,6 @@ describe('偷梁换柱 · 美术与关卡数据互锁', () => {
     }
     expect(level.workMs).toBe(WORK_MS);
     expect(level.checkMs).toBe(CHECK_MS);
-    expect(level.hint.length).toBeLessThanOrEqual(24);
   });
 
   it('柱子与料堆都在画面里、都在自己该在的地方，手指点得着', () => {
@@ -185,7 +174,6 @@ describe('偷梁换柱 · 判定（按住才换得完，清点只是白干一根
 describe('偷梁换柱 · 故事与复习', () => {
   it('两幕：那头鹿 → 换掉关键的那一根；关键抉择在第二幕', () => {
     expect(entry.story.map((beat) => beat.id)).toEqual(['s1', 's2']);
-    expect(entry.story.every((beat) => beat.text.length <= 90)).toBe(true);
     expect(entry.story[0]!.text).toContain('鹿');
     expect(entry.story[1]!.text).toContain('换');
     expect(entry.keyMoment.beatId).toBe('s2');
@@ -206,16 +194,11 @@ describe('偷梁换柱 · 故事与复习', () => {
     expect(entry.source.chapter).toBe('偷梁换柱');
     expect(entry.source.quote).toContain('频更其阵');
     expect(entry.moral).toContain('关键的那一根');
-    expect(entry.misconceptions.length).toBeGreaterThanOrEqual(1);
     expect(entry.game.template).toBe('swap');
     expect(entry.game.stages[0]!.template).toBe('swap');
-    expect(templateSchemas.swap!.safeParse(entry.game.stages[0]!.levelScript).success).toBe(true);
   });
 
-  it('复习题：有记忆题也有迁移题，答案都在选项里', () => {
-    expect(entry.quiz.length).toBeGreaterThanOrEqual(2);
-    expect(entry.quiz.filter((question) => question.kind === 'transfer').length).toBeGreaterThanOrEqual(1);
-    for (const question of entry.quiz) expect(question.answer).toBeLessThan(question.options.length);
+  it('复习题：有记忆题也有迁移题', () => {
     expect(entry.quiz[1]!.question).toContain('纸桥');
   });
 
@@ -235,39 +218,10 @@ describe('偷梁换柱 · 故事与复习', () => {
 });
 
 describe('偷梁换柱 · 英译补丁', () => {
-  it('摘要 / 详情两半各自合法，英译补丁也分别对得上（与 content:check 同一套口径）', () => {
-    expect(validatePatch(entry, enPatch)).toEqual([]);
-    const merged = ContentEntrySchema.parse(mergeLocalized(entry, enPatch));
+  it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
+    const merged = getEntry('touliang-huanzhu', 'en')!;
     expect(merged.title).toBe('Replace the Beams with Rotten Timbers');
     expect(merged.source.book).toBe('The Thirty-Six Stratagems, Annexation Stratagems');
-    expect(merged.story.map((beat) => beat.text)).toHaveLength(entry.story.length);
-    expect(merged.quiz.map((question) => question.options.length)).toEqual(
-      entry.quiz.map((question) => question.options.length),
-    );
-    expect(merged.keyMoment.options.filter((option) => option.isCanonical)).toHaveLength(1);
-    for (const stage of merged.game.stages) {
-      expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    }
-    // 关卡里的那句提示也翻了（英文 ≤ 24 字符）
     expect(merged.game.stages[0]!.levelScript).toMatchObject({ hint: 'Hold on, beat the count' });
-    const hint = (merged.game.stages[0]!.levelScript as { hint: string }).hint;
-    expect(hint.length).toBeLessThanOrEqual(24);
-    expect(findCjk(merged)).toEqual([]);
   });
 });
-
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了（与 content:check 同一套判据） */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}

@@ -3,6 +3,7 @@ import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit
 import { DESIGN, PROBE } from '@chags/templates';
 import type { ProbeStageState } from '@chags/templates';
 import type { ProbeLevel } from '@chags/templates/schemas';
+import { clamp01 } from '@chags/game-kit';
 import {
   ARCHER, ARROW, ASIDE_SHIFT, ASIDE_Y, FIELD_TOP, FIGURE_Y, HILLS, KING_INDEX, WALL,
 } from './layout';
@@ -16,7 +17,6 @@ const ARMOR_DEEP = shade(THEME.teal, 0.6);
 const REED = 0xd8c98d;
 const SKIN = 0xf8dcbb;
 
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 // ---------------- 景（画一次） ----------------
 

@@ -6,7 +6,7 @@ import type { TwolineLevel } from './schemas';
  * 这一关的账本只有一本：明线（修栈道）随时间往下掉，点一下补一截；
  * 暗线（走小路）点一下推一截，到 goal 就成。两条线各占一只手的时间 ——
  * 只顾暗线会被看穿，只顾明线推不动。**被看穿不是失败**：明线立刻补回 minKeep、
- * 记一次"被看穿"，接着玩就是（零惩罚是这一系列的地基）。
+ * 记一次"被看穿"（场景记进 mistakes），接着玩就是。
  *
  * 判定全部按**时间轴**算（t 是从这一局开始算起的毫秒数）：
  * 场景每帧把墙钟喂进来结账，单测直接喂数字 —— 同一份判定，两边不会跑偏。
@@ -36,7 +36,7 @@ export interface TwolineState {
   decoyAtMs: number;
   /** 暗线推到多少了 */
   real: number;
-  /** 被看穿了几次（零惩罚，只用来复盘） */
+  /** 被看穿了几次（只用来复盘，场景据此记 mistakes） */
   exposed: number;
   /** 上一次被看穿是什么时候（表演与"别连珠炮记账"都用它） */
   lastExposedAtMs: number | null;
@@ -108,7 +108,7 @@ export function isExposed(level: TwolineLevel, state: TwolineState, t: number): 
  * - 跌破了：**立刻补回 minKeep**、记一次"被看穿"，然后停在 minKeep 上等你补一笔。
  *
  * 场景每帧调它一次，所以孩子看到的明线始终是最新的值；
- * 被看穿**不结束、不扣星**，只是把"你只顾着暗线"这件事说出来。
+ * 被看穿**不结束**，只是把"你只顾着暗线"这件事说出来（记进 mistakes）。
  */
 export function settleDecoy(level: TwolineLevel, state: TwolineState, t: number): TwolineState {
   const now = Math.max(0, t);
@@ -204,7 +204,7 @@ import type { TwolinePlantLevel } from './schemas';
  * 他来回踱步、时不时瞟一眼案上；点 `redirect`（弄出点动静）他会转头去看别处 `lookAwayMs` ——
  * **趁这个空档按住 `spot`**，把东西一点一点摆到他"自己会看到"的地方。
  * 摆到一半他回过头（空档结束）= 被你手忙脚乱的样子露了馅：进度清零、记一笔 caught，
- * **零惩罚** —— 不扣星、不结束、不锁操作：重新弄出动静、重新按住就是。
+ * **零惩罚** —— 记进 mistakes、不结束、不锁操作：重新弄出动静、重新按住就是。
  *
  * 三条刻意的设计：
  * - **判定全按时间轴算**（t 是从这一局开始算起的毫秒数）：空档什么时候开、什么时候关、
@@ -249,7 +249,7 @@ export interface TwolinePlantState {
   awayUntilMs: number;
   /** 点了几次 redirect（复盘用） */
   redirects: number;
-  /** 被他回过头撞见几次（零惩罚，只用来复盘）—— 这一计最诚实的一笔账 */
+  /** 被他回过头撞见几次（只用来复盘，场景据此记 mistakes）—— 这一计最诚实的一笔账 */
   caught: number;
   /** 上一次被撞见是什么时候；还没被撞见过就是 -1 */
   lastCaughtAtMs: number;
@@ -339,7 +339,7 @@ export function redirectLook(
  * 一帧的账（场景、无头验证、单测都走它）：
  * - **按住 && 空档开着** → 往前摆 dtMs；摆满 plantMs 就是摆好了（progressMs 封顶在 plantMs）；
  * - **按住 && 他回过头（空档结束）&& 手上已经有进度** → 露馅：进度清零、记一笔 caught
- *   （零惩罚：不结束、不扣星，重新弄出动静、重新按住就是）；
+ *   （记进 mistakes：不结束，重新弄出动静、重新按住就是）；
  * - 其余（没按住 / 刚开始按、一点进度都还没有）→ 什么都不发生。
  *
  * 顺序是刻意的：**先算"空档开着"，再算"回过头的代价"** ——
@@ -365,7 +365,7 @@ export function plantStep(
     return { state: { ...state, progressMs }, result: 'planting' };
   }
   if (state.progressMs > 0) {
-    // 他回过头，而你还按着、手上还有进度：被看见了（零惩罚，账要记）
+    // 他回过头，而你还按着、手上还有进度：被看见了（记进 mistakes，账要记）
     return {
       state: { ...state, progressMs: 0, caught: state.caught + 1, lastCaughtAtMs: now },
       result: 'exposed',

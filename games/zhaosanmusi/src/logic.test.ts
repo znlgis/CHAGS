@@ -1,5 +1,7 @@
 import { getEntry } from '@chags/content/full';
-import { countsFor, happyLeft, isSplitSolved, mood, splitState } from '@chags/templates/split.logic';
+import {
+  countsFor, happyLeft, isSplitSolved, mood, splitState,
+} from '@chags/templates/split.logic';
 import { describe, expect, it } from 'vitest';
 import { LEFT_X, RIGHT_X, ROPE_Y } from './layout';
 import { splitLevel } from './logic';
@@ -35,10 +37,5 @@ describe('朝三暮四 · 关卡数据', () => {
     expect(level.bins[0]!.x).toBe(LEFT_X);
     expect(level.bins[1]!.x).toBe(RIGHT_X);
     expect(level.bins[0]!.y).toBe(ROPE_Y);
-  });
-
-  it('故事两幕、有一道迁移题', () => {
-    expect(raw?.story.length).toBe(2);
-    expect(raw?.quiz.some((q) => q.kind === 'transfer')).toBe(true);
   });
 });

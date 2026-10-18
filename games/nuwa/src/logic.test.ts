@@ -42,8 +42,4 @@ describe('女娲补天 · 关卡数据', () => {
       expect(xs[i]! - xs[i - 1]!).toBeGreaterThan(90);
     }
   });
-
-  it('故事很短', () => {
-    expect(raw?.story.length).toBeLessThanOrEqual(2);
-  });
 });

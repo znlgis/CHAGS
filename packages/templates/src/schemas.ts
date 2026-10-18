@@ -1,3 +1,4 @@
+import type { TemplateId } from '@chags/content';
 import { z } from 'zod';
 
 export const StoneSchema = z.object({
@@ -613,7 +614,7 @@ export const ButcherLevelSchema = z
  * 两个模式：
  * - hide（瞒天过海）：每件显眼的东西选一个"最平常的外壳"，灯扫过来时外壳不对就被退回；
  * - divert（声东击西）：靠时机 —— 灯照哪一侧，另一侧才走得通；敲锣能把灯留在左侧。
- * 被识破 = 退回原位，**零惩罚**（不扣星、不结束）。
+ * 被识破 = 退回原位，**不结束、不锁操作**（记进 mistakes，只影响星数与复习间隔）。
  */
 export const RuseShellSchema = z.object({
   id: z.string().min(1),
@@ -932,7 +933,7 @@ export const ShowLevelSchema = z
 export const TwolineLevelSchema = z
   .object({
     mode: z.enum(['stack']),
-    /** 明线：会随时间回落，点一下补一截；跌破 minKeep 就被看穿（零惩罚） */
+    /** 明线：会随时间回落，点一下补一截；跌破 minKeep 就被看穿（记进 mistakes，不结束） */
     decoy: z.object({
       x: z.number(),
       y: z.number(),
@@ -1319,7 +1320,7 @@ export const SwapSpareSchema = z.object({
 
 /**
  * 金蝉脱壳：把一排"还站在那儿的人"换成替身，样子要对；
- * 检查者每隔 peekMs 抬头看一次，没换好的位置会被戳穿（撤销换装，零惩罚）。
+ * 检查者每隔 peekMs 抬头看一次，没换好的位置会被戳穿（撤销换装，不结束；这一下记进 mistakes）。
  */
 export const SwapLevelSchema = z
   .object({
@@ -1348,7 +1349,7 @@ export const SwapLevelSchema = z
 /**
  * 偷梁换柱：一排承重柱要换成新柱，外形要一模一样。
  * 与 shell（金蝉脱壳）的差别：换一根要**按住干一会儿**，而检查者每隔 checkMs **清点**一次 ——
- * 清点时正拆着的那根会被发现（那根的进度清零，零惩罚）。
+ * 清点时正拆着的那根会被发现（那根的进度清零，不结束；这一下记进 mistakes）。
  */
 export const SwapBeamSchema = z
   .object({
@@ -1414,7 +1415,7 @@ export const StillnessTestSchema = z.object({
 });
 
 /**
- * 假痴不癫：对手一次次试探 —— 试探期**任何点击都算露馅**（记一笔，零惩罚）；
+ * 假痴不癫：对手一次次试探 —— 试探期**任何点击都算露馅**（记进 mistakes，不结束、不锁操作）；
  * 试探之间的空档里才能行动，推够 steps 步机会就成熟。
  */
 export const StillnessFeignSchema = z
@@ -1512,7 +1513,7 @@ export const ShowBorrowSchema = z
 
 /**
  * 反客为主：每一步都要**先被允许** —— 点 grant 求允许，允许只持续 grantMs；
- * 在有效期内点下一个岗位才能接管，过期作废（重新求，零惩罚）。
+ * 在有效期内点下一个岗位才能接管，过期作废（重新求；过期与点错记进 mistakes）。
  */
 export const ChainStepSchema = z
   .object({
@@ -1685,7 +1686,7 @@ export const LureGiftSchema = z.object({
 
 /**
  * 美人计：投其所好 —— 他平时目光就落在**他最在意的那一样**上（glanceAt 周期回到它），
- * 孩子先看出来，再送对；送错只是东西回到手里（零惩罚）。
+ * 孩子先看出来，再送对；送错只是东西回到手里（记进 mistakes，不结束）。
  */
 export const LureFavorSchema = z
   .object({
@@ -1904,7 +1905,7 @@ export type ButcherLines = z.infer<typeof ButcherLinesSchema>;
 export type ButcherLevel = z.infer<typeof ButcherLevelSchema>;
 
 /** 模板 id → 关卡脚本 schema。新增模板时在这里登记，content:check 自动生效。 */
-export const templateSchemas: Record<string, z.ZodType> = {
+export const templateSchemas: Record<TemplateId, z.ZodType> = {
   substitution: SubstitutionLevelSchema,
   tap: TapLevelSchema,
   place: PlaceLevelSchema,

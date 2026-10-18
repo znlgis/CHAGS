@@ -50,9 +50,4 @@ describe('百步穿杨 · 关卡数据', () => {
       expect(level.targets.some((t) => t.id === rung.targetId)).toBe(true);
     });
   });
-
-  it('故事两幕，有一道迁移题（练出来的）', () => {
-    expect(raw?.story.length).toBe(2);
-    expect(raw?.quiz.some((q) => q.kind === 'transfer')).toBe(true);
-  });
 });

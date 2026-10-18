@@ -6,7 +6,7 @@ export interface BorrowState {
   connected: string[];
   /** "借力成功"这件事发生过（抬起来过一次） */
   lifted: boolean;
-  /** 点了几次重物 —— "纹丝不动"也是一次尝试，不惩罚 */
+  /** 点了几次重物 —— "纹丝不动"也是一次尝试（场景记进 mistakes），不结束操作 */
   tries: number;
 }
 
@@ -75,7 +75,7 @@ export function disconnectProp(level: BorrowLevel, state: BorrowState, propId: s
   return { connected, lifted: state.lifted && canLift(level, connected), tries: state.tries };
 }
 
-/** 点重物：力够了才抬得起来，不够就纹丝不动（不惩罚，接着试就是） */
+/** 点重物：力够了才抬得起来，不够就纹丝不动（记进 mistakes，接着试就是） */
 export function pull(level: BorrowLevel, state: BorrowState): BorrowPull {
   const tries = state.tries + 1;
   if (!canLift(level, state.connected)) {

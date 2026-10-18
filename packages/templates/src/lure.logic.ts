@@ -9,7 +9,7 @@ import type {
  *   岗位空出一段时间。拿东西要的是**连续**的空档：看守一回来，没拿完的就清零重来
  *   （零惩罚）。所以难的不是手快，是**挑一个能空够久的诱饵点**。
  * - **trade（抛砖引玉）**：先递出一块"砖"，对方拿出更好的来换。挑错了只是再挑一次
- *   （零惩罚）—— 难的是看出**哪块砖**才引来玉。
+ *   （挑错记进 mistakes）—— 难的是看出**哪块砖**才引来玉。
  *
  * 判定全部按**时间轴**算（t 是从这一局开始算起的毫秒数）：
  * 场景用墙钟喂 t，单测直接喂数字 —— 同一份判定，两边不会跑偏。
@@ -254,7 +254,7 @@ export function prizeHit(
 /** 一局 trade 里攒下来的东西：递过哪几块砖、换回的最好的是什么 */
 export interface LureTradeState {
   mode: 'trade';
-  /** 递出去过的"砖"（按先后；同一块递两次就记两笔 —— 零惩罚） */
+  /** 递出去过的"砖"（按先后；同一块递两次就记两笔，挑错记进 mistakes） */
   given: string[];
   /** 换回来的最好的一件值多少 */
   best: number;
@@ -282,7 +282,7 @@ export function offerFor(level: LureTradeLevel, offerId: string): LureReturn | u
 
 /**
  * 递出去一块"砖"：换回来什么都记下来。
- * 挑错了**只是再挑一次**：不扣星、不结束、不算失败 —— 只多记一笔。
+ * 挑错了**只是再挑一次**：记进 mistakes、不结束、不算失败 —— 只多记一笔。
  */
 export function give(
   level: LureTradeLevel,
@@ -413,7 +413,7 @@ export function lureAutoplayLevel(
  * - **线索全在他的目光里**：他每隔一个周期就把目光落回 `target.wants` 那一样
  *   （`glanceAt`）—— 落得**比别的东西久得多**，孩子盯一会儿就看出来了。
  *   判定与画面用的是同一个 `glanceAt`，所以"看得出他在意什么"这件事不靠美术、也不靠文案。
- * - **送错只是白送**：东西回到手里（`offerFavor` 返回 'refused'），不扣星、不结束、不锁操作，
+ * - **送错只是白送**：东西回到手里（`offerFavor` 返回 'refused'），记进 mistakes、不结束、不锁操作，
  *   连"试过几样"都只是记账（`state.offered`）。
  * - **他一动不动，孩子也不用赶时间**：这一关没有倒计时，只有一个"看谁看得久"的观察。
  *
@@ -452,7 +452,7 @@ export interface LureFavorState {
   mode: 'favor';
   /** 他收下过几次（送对几次）—— `needOffers` 次就算打动了他 */
   loved: number;
-  /** 递出去过的东西（按先后；送错的也记 —— 零惩罚，只记账） */
+  /** 递出去过的东西（按先后；送错的也记 —— 记进 mistakes，只记账） */
   offered: string[];
   /** 递了几次 */
   offers: number;
@@ -564,7 +564,7 @@ export function glanceLeftMs(level: LureFavorLevel, t: number): number {
  *
  * 三条规矩：
  * - **kind 对上 `target.wants` 才算送对** —— 判据只有关卡数据这一个来源；
- * - **送错零惩罚**：只多记一笔 `offered`，可以接着送别的（也可以再送它一遍）；
+ * - **送错也记账**：只多记一笔 `offered`（记进 mistakes），可以接着送别的（也可以再送它一遍）；
  * - **不存在的 id / 已经打动他之后**：什么都不改，按 'refused' 返回（场景据此不表演）。
  */
 export function offerFavor(

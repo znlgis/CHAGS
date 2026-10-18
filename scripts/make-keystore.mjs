@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { randomBytes } from 'node:crypto';
 
@@ -66,6 +66,12 @@ function findKeytool() {
 
 const force = args.includes('--force');
 mkdirSync(ANDROID_DIR, { recursive: true });
+if (existsSync(KEYSTORE) && force) {
+  // --force 必须**真的删掉**旧文件：以前只跳过下面的存在性检查，
+  // 随后 keytool 用新随机密码去打开旧 keystore，必然失败（"-force 必挂"）。
+  rmSync(KEYSTORE, { force: true });
+  rmSync(PROPS, { force: true });
+}
 if (existsSync(KEYSTORE) && !force) {
   console.error(
     [

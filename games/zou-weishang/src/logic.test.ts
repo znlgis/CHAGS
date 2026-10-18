@@ -1,27 +1,16 @@
-import {
-  ContentEntrySchema, EntryDetailSchema, EntrySummarySchema, getEntry, mergeLocalized, validatePatch,
-} from '@chags/content/full';
-import { templateSchemas } from '@chags/templates/schemas';
-import type { TraceLevel } from '@chags/templates/schemas';
-import { describe, expect, it } from 'vitest';
-// trace.logic 没有子路径导出（split.logic 有），这里直接从源文件拿：
 // 走 '@chags/templates' 会把 Phaser 拉进来，而纯逻辑测试要能在 node 里直接跑
 // —— 与既有游戏测试（如 shushang-kaihua）同一条规矩。
-import { advanceTrace, isTraceComplete, traceProgress, traceStart } from '../../../packages/templates/src/trace.logic';
-import type { TraceCursor } from '../../../packages/templates/src/trace.logic';
-import rawSummary from '../../../packages/content/src/entries/zou-weishang.json';
-import rawDetail from '../../../packages/content/src/entries/zou-weishang.game.json';
-import enPatchSummary from '../../../packages/content/src/i18n/en/zou-weishang.json';
-import enPatchDetail from '../../../packages/content/src/i18n/en/zou-weishang.game.json';
+import { getEntry } from '@chags/content/full';
+import type { TraceLevel } from '@chags/templates/schemas';
+import { describe, expect, it } from 'vitest';
+import {
+  advanceTrace, isTraceComplete, traceProgress, traceStart,
+} from '@chags/templates/trace.logic';
+import type { TraceCursor } from '@chags/templates/trace.logic';
 import { ALLY_FLAGS, DUST, HOME_CAMP, POST_OFFSET, SAFE_CAMP, SHES, SKY_TOP } from './layout';
 import { isRetreatComplete, retreatStops, stepsInLeg, traceLevel } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-const enPatch = { ...enPatchSummary, ...enPatchDetail };
-
-/** 登记（entries/index.ts + detail.ts）由 Lead 统一做：登记前直接读内容文件，测试不因登记顺序而红 */
-const entry = getEntry('zou-weishang') ?? ContentEntrySchema.parse(raw);
+const entry = getEntry('zou-weishang')!;
 const level = traceLevel(entry);
 
 /** 与 trace 场景的 autoplay 同一条路：沿锚点插值，逐点喂给真实判定 */
@@ -79,7 +68,6 @@ describe('走为上 · 三段退路：一舍一舍往后划', () => {
         expect(stop.y, segment.id + ' 的 y').toBeLessThan(1300);
       }
     }
-    expect(level.hint.length).toBeLessThanOrEqual(24);
   });
 
   it('上一段的终点就是下一段的起点 —— 一舍接一舍，退路才连得下去', () => {
@@ -179,7 +167,6 @@ describe('走为上 · 判定：顺序、零惩罚、走得完', () => {
 describe('走为上 · 故事与复习', () => {
   it('两幕：先"对面追上来了"，再"退到安全的地方" —— 关键抉择在第二幕', () => {
     expect(entry.story.map((beat) => beat.id)).toEqual(['s1', 's2']);
-    expect(entry.story.every((beat) => beat.text.length <= 90)).toBe(true);
     expect(entry.keyMoment.beatId).toBe('s2');
   });
 
@@ -190,6 +177,7 @@ describe('走为上 · 故事与复习', () => {
     expect(canonical.text).toContain('城濮');
     for (const option of options) {
       if (option.isCanonical) continue;
+      // 另外两个选项不是"点了就错"，都要说清楚后果 —— 这条不在 zod schema 里，得留着
       expect(option.hint.length).toBeGreaterThan(0);
     }
     expect(entry.keyMoment.reveal).toContain('退');
@@ -206,16 +194,11 @@ describe('走为上 · 故事与复习', () => {
     expect(entry.source.book).toBe('《左传·僖公二十八年》');
     expect(entry.source.quote).toBe('退三舍辟之，所以报也。');
     expect(entry.moral).toContain('退');
-    expect(entry.misconceptions.length).toBeGreaterThanOrEqual(1);
     expect(entry.game.template).toBe('trace');
     expect(entry.game.stages[0]!.template).toBe('trace');
-    expect(templateSchemas.trace!.safeParse(entry.game.stages[0]!.levelScript).success).toBe(true);
   });
 
   it('复习题：记忆题问"一舍多远""城濮是什么地方"，迁移题落在"先离开不利的地方"', () => {
-    expect(entry.quiz.length).toBeGreaterThanOrEqual(2);
-    expect(entry.quiz.filter((question) => question.kind === 'transfer').length).toBeGreaterThanOrEqual(1);
-    for (const question of entry.quiz) expect(question.answer).toBeLessThan(question.options.length);
     const transfer = entry.quiz.find((question) => question.kind === 'transfer')!;
     expect(transfer.question).toContain('走为上');
     expect(transfer.explanation).toContain('不是认输');
@@ -237,47 +220,9 @@ describe('走为上 · 故事与复习', () => {
 });
 
 describe('走为上 · 英译补丁', () => {
-  it('摘要 / 详情两半各自合法，补丁也分别对得上（与 content:check 同一套口径）', () => {
-    const summary = EntrySummarySchema.parse(rawSummary);
-    const detail = EntryDetailSchema.parse(rawDetail);
-    expect(validatePatch(summary, enPatchSummary)).toEqual([]);
-    expect(validatePatch(detail, enPatchDetail)).toEqual([]);
-    const mergedDetail = EntryDetailSchema.parse(mergeLocalized(detail, enPatchDetail));
-    expect(templateSchemas.trace!.safeParse(mergedDetail.game.stages[0]!.levelScript).success).toBe(true);
-    expect(findCjk(mergeLocalized(summary, enPatchSummary))).toEqual([]);
-  });
-
-  it('合起来不剩一个汉字，关卡脚本照样合法（连提示也翻了）', () => {
-    expect(validatePatch(entry, enPatch)).toEqual([]);
-    const merged = ContentEntrySchema.parse(mergeLocalized(entry, enPatch));
+  it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
+    const merged = getEntry('zou-weishang', 'en')!;
     expect(merged.title).toBe('Retreat Is the Best Course');
-    expect(merged.story.map((beat) => beat.text)).toHaveLength(entry.story.length);
-    expect(merged.story.every((beat) => beat.text.length <= 90)).toBe(true);
-    expect(merged.moral.length).toBeLessThanOrEqual(90);
-    expect(merged.quiz.map((question) => question.options.length)).toEqual(
-      entry.quiz.map((question) => question.options.length),
-    );
-    expect(merged.keyMoment.options.filter((option) => option.isCanonical)).toHaveLength(1);
-    for (const stage of merged.game.stages) {
-      expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    }
     expect(merged.game.stages[0]!.levelScript).toMatchObject({ hint: 'Drag on, march by march' });
-    expect(findCjk(merged)).toEqual([]);
   });
 });
-
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了（与 content:check 同一套判据） */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}

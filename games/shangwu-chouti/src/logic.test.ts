@@ -1,25 +1,15 @@
-import { ContentEntrySchema, getEntry, mergeLocalized, validatePatch } from '@chags/content/full';
-import { templateSchemas } from '@chags/templates/schemas';
+import { getEntry } from '@chags/content/full';
 import { describe, expect, it } from 'vitest';
-import rawSummary from '../../../packages/content/src/entries/shangwu-chouti.json';
-import rawDetail from '../../../packages/content/src/entries/shangwu-chouti.game.json';
-import enPatchSummary from '../../../packages/content/src/i18n/en/shangwu-chouti.json';
-import enPatchDetail from '../../../packages/content/src/i18n/en/shangwu-chouti.game.json';
 import {
   allRungsBuilt, buildRung, builtCount, climbRatio, isLadderDone, ladderAt, ladderPhase,
   ladderProgress, ladderStart, nextRung, pullLadder, rungAt,
-} from '../../../packages/templates/src/siege.logic';
+} from '@chags/templates/siege.logic';
 import {
   BAIT, CLIMB_MS, DESIGN_H, GROUND_TOP, HINT, PULL, RUNGS, RUNG_RADIUS, SKY_TOP, WALL_TOP,
 } from './layout';
 import { shangwuLevel } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-const enPatch = { ...enPatchSummary, ...enPatchDetail };
-
-/** 登记由 Lead 统一做：登记前直接看内容文件，测试不因登记顺序而红 */
-const entry = getEntry('shangwu-chouti') ?? ContentEntrySchema.parse(raw);
+const entry = getEntry('shangwu-chouti')!;
 const level = shangwuLevel(entry);
 
 /**
@@ -51,7 +41,6 @@ describe('上屋抽梯 · 关卡数据', () => {
     expect(level.ladder).toEqual({ x: PULL.x, y: PULL.y, radius: PULL.radius });
     expect(level.climbMs).toBe(CLIMB_MS);
     expect(level.hint).toBe(HINT);
-    expect(level.hint.length).toBeLessThanOrEqual(24);
   });
 
   it('梯子从下往上：一级比一级高、一级比一级靠墙那头', () => {
@@ -176,7 +165,6 @@ describe('上屋抽梯 · 一局真的走得完', () => {
 describe('上屋抽梯 · 故事与复习', () => {
   it('两幕：背水列阵 → 夺营换旗；关键抉择在第二幕', () => {
     expect(entry.story.map((beat) => beat.id)).toEqual(['s1', 's2']);
-    expect(entry.story.every((beat) => beat.text.length <= 90)).toBe(true);
     expect(entry.story[0]!.text).toContain('河边');
     expect(entry.story[1]!.text).toContain('两千轻骑');
     expect(entry.keyMoment.beatId).toBe('s2');
@@ -197,17 +185,11 @@ describe('上屋抽梯 · 故事与复习', () => {
     expect(entry.source.chapter).toBe('上屋抽梯');
     expect(entry.source.quote).toContain('假之以便');
     expect(entry.moral).toBe('先给方便，再讲条件 —— 等他上来了，梯子在你手里。');
-    expect(entry.misconceptions.length).toBeGreaterThanOrEqual(1);
     expect(entry.game.template).toBe('siege');
     expect(entry.game.stages[0]!.template).toBe('siege');
   });
 
-  it('复习题：有记忆题也有迁移题，答案都在选项里', () => {
-    expect(entry.quiz.filter((question) => question.kind === 'transfer').length).toBeGreaterThanOrEqual(1);
-    expect(entry.quiz.length).toBeGreaterThanOrEqual(2);
-    for (const question of entry.quiz) {
-      expect(question.answer).toBeLessThan(question.options.length);
-    }
+  it('复习题：有记忆题也有迁移题', () => {
     expect(entry.quiz[1]!.question).toContain('小表弟');
   });
 
@@ -227,37 +209,9 @@ describe('上屋抽梯 · 故事与复习', () => {
 });
 
 describe('上屋抽梯 · 英译补丁', () => {
-  it('与中文一一对应、合起来不剩一个中文字，关卡脚本照样合法', () => {
-    expect(validatePatch(entry, enPatch)).toEqual([]);
-    const merged = ContentEntrySchema.parse(mergeLocalized(entry, enPatch));
+  it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
+    const merged = getEntry('shangwu-chouti', 'en')!;
     expect(merged.title).toBe('Lure Him Up, Then Pull the Ladder');
     expect(merged.source.book).toBe('The Thirty-Six Stratagems, Annexation Stratagems');
-    expect(merged.story.map((beat) => beat.text)).toHaveLength(entry.story.length);
-    expect(merged.quiz.map((question) => question.options.length)).toEqual(
-      entry.quiz.map((question) => question.options.length),
-    );
-    for (const stage of merged.game.stages) {
-      expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    }
-    // 英译的 hint 同样 ≤24 字符（关卡里的短句换语言也得短）
-    const hint = (merged.game.stages[0]!.levelScript as { hint: string }).hint;
-    expect(hint.length).toBeLessThanOrEqual(24);
-    expect(findCjk(merged)).toEqual([]);
   });
 });
-
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了（与 content:check 同一套判据） */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}

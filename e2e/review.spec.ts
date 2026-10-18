@@ -1,19 +1,14 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { events } from './helpers';
+import { events, loadContent } from './helpers';
 
 interface QuizQuestion { question: string; options: string[]; answer: number; explanation: string }
 interface SavedReview { level: number; dueAt: number | null; lastGrade: number | null; reviews: number }
 interface SavedEntry { stars: number; completions: number; review: SavedReview }
 
-/** 复习题在"详情"那半：<id>.game.json（和 e2e/smoke.spec.ts 读关卡脚本同一个办法） */
+/** 复习题在"详情"那半：<id>.game.json —— 统一走 helpers.loadContent，不再手写跨包路径 */
 function quizOf(id: string): QuizQuestion[] {
-  const path = fileURLToPath(
-    new URL('../packages/content/src/entries/' + id + '.game.json', import.meta.url),
-  );
-  return (JSON.parse(readFileSync(path, 'utf8')) as { quiz: QuizQuestion[] }).quiz;
+  return loadContent(id).quiz;
 }
 
 /** 直接读 IndexedDB 存档：复习到底有没有写进"复习计划"，只有存档说了算 */

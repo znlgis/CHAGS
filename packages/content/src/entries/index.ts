@@ -4,7 +4,6 @@ import { patchFor } from '../i18n';
 import { DEFAULT_LOCALE } from '../locale';
 import type { Locale } from '../locale';
 import { mergeLocalized } from '../localize';
-import { EntrySummarySchema } from '../schema';
 import type { EntrySummary } from '../schema';
 import raw from './caochong-elephant.json';
 import rawPangu from './pangu.json';
@@ -61,6 +60,23 @@ import rawLianhuan from './lianhuan-ji.json';
 import rawZou from './zou-weishang.json';
 
 /**
+ * JSON 导入的类型是**宽**的（group / kind 会推成 string、ageRange 会推成 number[]），
+ * 直接赋给 EntrySummary 会类型不匹配。所以这里先过一道"结构完整性"检查：
+ * 漏字段、字段类型不对，pnpm typecheck 当场报错；枚举值与取值范围由构建期
+ * pnpm content:check 的 zod 校验兜底（CI 与发版都跑它）。
+ *
+ * **刻意不在运行时 parse**：那会把 zod 整个拖进首屏（实测 24.7 KB gzip / 首屏的 29%），
+ * 而校验结果与 content:check 完全重复。正确性 >= 体积，但这里两者并不冲突 ——
+ * 该跑校验的构建期跑，该省的首屏省。
+ */
+type RawSummary = Omit<EntrySummary, 'group' | 'kind' | 'ageRange'> & {
+  group: string;
+  kind: string;
+  ageRange: number[];
+};
+const summaryOf = (raw: RawSummary): EntrySummary => raw as EntrySummary;
+
+/**
  * **摘要层**：大厅与图鉴要用的那一小部分（标题 / 拼音 / 年代 / 寓意 / 关键词 / 出处…）。
  *
  * 这一层是首屏唯一的"内容"依赖 —— 故事、复习题与关卡脚本在 `./detail.ts` 里，
@@ -73,59 +89,59 @@ import rawZou from './zou-weishang.json';
  * - 三十六计：**登记顺序就是计策序号**（组内 orderBy: 'index'），1–36 依次往下写。
  */
 export const entrySummaries: EntrySummary[] = [
-  EntrySummarySchema.parse(raw),
-  EntrySummarySchema.parse(rawPangu),
-  EntrySummarySchema.parse(rawHouyi),
-  EntrySummarySchema.parse(rawNuwa),
-  EntrySummarySchema.parse(rawJingwei),
-  EntrySummarySchema.parse(rawKuafu),
-  EntrySummarySchema.parse(rawYugong),
-  EntrySummarySchema.parse(rawShennong),
-  EntrySummarySchema.parse(rawQiren),
-  EntrySummarySchema.parse(rawFenghuo),
-  EntrySummarySchema.parse(rawTaigong),
-  EntrySummarySchema.parse(rawDayu),
-  EntrySummarySchema.parse(rawKezhou),
-  EntrySummarySchema.parse(rawZhaosanmusi),
-  EntrySummarySchema.parse(rawJiaotu),
-  EntrySummarySchema.parse(rawYangyouji),
-  EntrySummarySchema.parse(rawPaoding),
-  EntrySummarySchema.parse(rawMantian),
-  EntrySummarySchema.parse(rawWeiwei),
-  EntrySummarySchema.parse(rawJiedao),
-  EntrySummarySchema.parse(rawYiyi),
-  EntrySummarySchema.parse(rawChenhuo),
-  EntrySummarySchema.parse(rawShengdong),
-  EntrySummarySchema.parse(rawWuzhong),
-  EntrySummarySchema.parse(rawAndu),
-  EntrySummarySchema.parse(rawGean),
-  EntrySummarySchema.parse(rawXiaoli),
-  EntrySummarySchema.parse(rawLidai),
-  EntrySummarySchema.parse(rawShunshou),
-  EntrySummarySchema.parse(rawDacao),
-  EntrySummarySchema.parse(rawJieshi),
-  EntrySummarySchema.parse(rawDiaohu),
-  EntrySummarySchema.parse(rawYuqin),
-  EntrySummarySchema.parse(rawPaozhuan),
-  EntrySummarySchema.parse(rawQinzei),
-  EntrySummarySchema.parse(rawFudi),
-  EntrySummarySchema.parse(rawHunshui),
-  EntrySummarySchema.parse(rawJinchan),
-  EntrySummarySchema.parse(rawGuanmen),
-  EntrySummarySchema.parse(rawYuanjiao),
-  EntrySummarySchema.parse(rawJiadao),
-  EntrySummarySchema.parse(rawTouliang),
-  EntrySummarySchema.parse(rawZhisang),
-  EntrySummarySchema.parse(rawJiachi),
-  EntrySummarySchema.parse(rawShangwu),
-  EntrySummarySchema.parse(rawShushang),
-  EntrySummarySchema.parse(rawFanke),
-  EntrySummarySchema.parse(rawMeiren),
-  EntrySummarySchema.parse(rawKongcheng),
-  EntrySummarySchema.parse(rawFanjian),
-  EntrySummarySchema.parse(rawKurou),
-  EntrySummarySchema.parse(rawLianhuan),
-  EntrySummarySchema.parse(rawZou),
+  summaryOf(raw),
+  summaryOf(rawPangu),
+  summaryOf(rawHouyi),
+  summaryOf(rawNuwa),
+  summaryOf(rawJingwei),
+  summaryOf(rawKuafu),
+  summaryOf(rawYugong),
+  summaryOf(rawShennong),
+  summaryOf(rawQiren),
+  summaryOf(rawFenghuo),
+  summaryOf(rawTaigong),
+  summaryOf(rawDayu),
+  summaryOf(rawKezhou),
+  summaryOf(rawZhaosanmusi),
+  summaryOf(rawJiaotu),
+  summaryOf(rawYangyouji),
+  summaryOf(rawPaoding),
+  summaryOf(rawMantian),
+  summaryOf(rawWeiwei),
+  summaryOf(rawJiedao),
+  summaryOf(rawYiyi),
+  summaryOf(rawChenhuo),
+  summaryOf(rawShengdong),
+  summaryOf(rawWuzhong),
+  summaryOf(rawAndu),
+  summaryOf(rawGean),
+  summaryOf(rawXiaoli),
+  summaryOf(rawLidai),
+  summaryOf(rawShunshou),
+  summaryOf(rawDacao),
+  summaryOf(rawJieshi),
+  summaryOf(rawDiaohu),
+  summaryOf(rawYuqin),
+  summaryOf(rawPaozhuan),
+  summaryOf(rawQinzei),
+  summaryOf(rawFudi),
+  summaryOf(rawHunshui),
+  summaryOf(rawJinchan),
+  summaryOf(rawGuanmen),
+  summaryOf(rawYuanjiao),
+  summaryOf(rawJiadao),
+  summaryOf(rawTouliang),
+  summaryOf(rawZhisang),
+  summaryOf(rawJiachi),
+  summaryOf(rawShangwu),
+  summaryOf(rawShushang),
+  summaryOf(rawFanke),
+  summaryOf(rawMeiren),
+  summaryOf(rawKongcheng),
+  summaryOf(rawFanjian),
+  summaryOf(rawKurou),
+  summaryOf(rawLianhuan),
+  summaryOf(rawZou),
 ];
 
 /** 把某条摘要翻译成目标语言（没有译文就原样返回） */

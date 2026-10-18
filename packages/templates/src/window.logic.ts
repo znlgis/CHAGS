@@ -198,7 +198,7 @@ export function tapJob(state: WindowState, level: WindowLevel, jobId: string): W
  * **只有窗口里才推得动** —— 稳的时候点它什么也不发生（这就是"被赶回来"）。
  *
  * glimpse 还多一条：**只接受"这一轮路过的那一件"**。
- * 点到上一轮 / 下一轮的机会，和点在空地上一样 —— 什么也不发生（零惩罚）。
+ * 点到上一轮 / 下一轮的机会，和点在空地上一样 —— 什么也不发生（不结束、不锁操作；场景把这一下记进 mistakes）。
  * 这一趟走完了也一样：那已经不是"错过"，是这一趟结束了（场景会把队伍带回起点重走）。
  *
  * stir（混水摸鱼）与前两个都不一样：**没有"稳 / 乱"的周期** ——
@@ -211,7 +211,7 @@ export function tapAt(
   t: number,
   warnMs: number = WINDOW_WARN_MS,
 ): WindowState {
-  // stir：浑水里才推得动；水一清，那条鱼摆尾滑走 —— 点它什么也不发生（零惩罚）
+  // stir：浑水里才推得动；水一清，那条鱼摆尾滑走 —— 点它什么也不发生（不结束、不锁操作；场景把这一下记进 mistakes）
   if (level.mode === 'stir') return isMuddy(level, state, t) ? tapJob(state, level, jobId) : state;
   if (phaseAt(level, t, warnMs) !== 'window') return state;
   if (level.mode === 'glimpse') {

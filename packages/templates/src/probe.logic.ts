@@ -12,8 +12,8 @@ import type { ProbeFigure, ProbeHintLevel, ProbeLevel, ProbePatch } from './sche
  *   （tried，少一个候选）；射中王的，就成了。
  *
  * 三条刻意的设计：
- * - **零惩罚**：敲了不能走的地方、射错了人，都只是"没收获 / 少一个候选" ——
- *   不扣星、不结束、不锁操作，接着试就是（零惩罚是这一系列的地基）。
+ * - **不结束**：敲了不能走的地方只是"没收获"；射错了人少一个候选（记进 mistakes）——
+ *   不结束、不锁操作，接着试就是（场景把敲错 / 射错记进 mistakes）。
  * - **同一个只算一次**：同一丛敲两下、同一个身影射两箭，都不重复记账。
  * - **一定有解**：schema 保证至少有一处 clear 的草丛不在任何蛇的 scareRadius 里 ——
  *   它永远搅不乱，所以无论按什么顺序敲，最后都走得过（见 nextPatchToKnock）。
@@ -224,7 +224,7 @@ export function figureAt(
 /**
  * 射一箭（**没有杀伤**的蒿箭）：
  * - 射中王：记下"就是他"，这一关就成了；
- * - 射中的不是王：他只退到一边（tried），少一个候选 —— 不扣星、不结束、接着试；
+ * - 射中的不是王：他只退到一边（tried），少一个候选 —— 记进 mistakes、不结束、接着试；
  * - 同一个身影射第二箭不重复计数；已经找到王之后，射谁都不再记账。
  */
 export function shoot(level: SpotLevel, state: ProbeState, figureId: string): ProbeState {
@@ -267,7 +267,7 @@ export function nextFigureToShoot(level: SpotLevel, state: ProbeState): ProbeFig
  * 而是**"这样东西是不是他听得懂的那一样"** ——
  * `props[].has` 在这个模式下就是"这样东西的类别"（字段名沿用老模式那个，
  * 关卡脚本里就两三种类别），`listener.wants` 是他的那一样。敲对了，他往前走一步；
- * 敲别的只是没收获 —— **记一笔 wrongKnocks 就完事，零惩罚**（不扣星、不结束、不锁操作）。
+ * 敲别的只是没收获 —— **记一笔 wrongKnocks 就完事**（记进 mistakes、不结束、不锁操作）。
  *
  * 四条刻意的设计：
  * - **判定只看"对不对"**：敲错多少次都不影响这一关走不走得完 —— 挨个试过去总能敲对
@@ -303,7 +303,7 @@ export const HINT_TIMING = {
 export interface ProbeHintState {
   /** 敲对了走了几步（他要走 steps 步） */
   progress: number;
-  /** 敲错了几次 —— 只是记一笔，不扣星、不结束 */
+  /** 敲错了几次 —— 复盘用，场景据此记 mistakes */
   wrongKnocks: number;
   /** 敲过的东西（按敲的先后，重复的不记）—— 画面据此画"敲过了" */
   knocked: string[];
@@ -357,7 +357,7 @@ export function hintProgress(state: ProbeHintState): number {
   return state.progress;
 }
 
-/** 敲错了几次 —— 只是记一笔，不扣星 */
+/** 敲错了几次 —— 复盘用，场景据此记 mistakes */
 export function wrongKnocks(state: ProbeHintState): number {
   return state.wrongKnocks;
 }
@@ -377,7 +377,7 @@ export function listenerStep(level: ProbeHintLevel, state: ProbeHintState): numb
  * - **敲到他听得懂的那一样**：`hintProgress` 加一 —— 他往前走一步；走够 steps 步，
  *   他自己就做出了正确的选择。
  * - **敲别的**：只是没收获 —— `wrongKnocks` 记一笔（同一样再敲，账照记），
- *   **不扣星、不结束、不锁操作**（零惩罚）：孩子可以放心地一样一样试过去。
+ *   **不结束、不锁操作**（记进 mistakes）：孩子可以放心地一样一样试过去。
  * - 脚本里没有这一样、或者他已经走够了：原样返回（连状态对象都不换）。
  */
 export function knockHint(

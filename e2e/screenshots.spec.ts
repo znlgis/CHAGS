@@ -1,18 +1,8 @@
 import { test } from '@playwright/test';
 import { expect } from '@playwright/test';
-import { clickDesign, dragDesign, events, holdDesign, tapDesign } from './helpers';
+import { clickDesign, dragDesign, events, holdDesign, loadContent, tapDesign } from './helpers';
 import { archerAt } from '../games/yangyouji/src/layout';
-import { REWARD, SUB, SUB_PILES } from '../packages/templates/src/layout';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-
-interface StageScript { template: string; levelScript: unknown }
-
-/** Playwright 的 ESM 加载器不接受裸 JSON 导入，这里自己读 */
-function loadContent(id: string): { game: { stages: StageScript[] } } {
-  const path = fileURLToPath(new URL('../packages/content/src/entries/' + id + '.game.json', import.meta.url));
-  return JSON.parse(readFileSync(path, 'utf8')) as { game: { stages: StageScript[] } };
-}
+import { REWARD, SUB, SUB_PILES } from '@chags/templates/layout';
 
 const panguJson = loadContent('pangu');
 

@@ -1,34 +1,25 @@
-import type { ContentEntry, Locale } from '@chags/content';
+import type { ContentEntry, Locale, TemplateId } from '@chags/content';
 
 export type { Locale };
+/** 模板 id 的唯一事实来源在 content（内容 schema 要用它做 z.enum 校验），这里只做契约层的再导出 */
+export type { TemplateId };
 export { speechLang } from '@chags/content';
 
-export type TemplateId =
-  | 'story' | 'substitution' | 'tap' | 'place' | 'aim' | 'match' | 'order' | 'drag'
-  | 'board' | 'timing' | 'react' | 'branch' | 'build' | 'grow'
-  | 'sort' | 'trace' | 'wait' | 'beacon'
-  | 'mark' | 'split' | 'burrow' | 'butcher'
-  // 三十六计：示形 / 要害 / 借力 / 忍 / 时机窗口
-  | 'ruse' | 'siege' | 'borrow' | 'stillness' | 'window'
-  // 三十六计第二辑：造势 / 双线 / 识破 / 配对编排
-  | 'show' | 'twoline' | 'read' | 'matchup'
-  // 三十六计第三辑：试探 / 诱饵 / 追而不逼
-  | 'probe' | 'lure' | 'chase'
-  // 三十六计第四辑：替换 / 连环
-  | 'swap' | 'chain';
-
+/**
+ * 游戏包的身份信息：只留**真的有人读**的字段。
+ *
+ * 以前还有 orientation / sessionSeconds / skills / curriculum / assets 五个字段，
+ * 全仓 0 读取（只有游戏测试顺手断言过），却要 53 个 manifest 各抄一遍 ——
+ * 其中 curriculum.figures 已经悄悄漂移了 3 处，没有任何测试会发现。
+ * 描述性信息（朝代 / 人物 / 技能）的唯一事实来源是内容 JSON。
+ */
 export interface GameManifest {
   id: string;
   title: string;
   version: string;
   template: TemplateId;
-  orientation: 'portrait' | 'landscape';
   designSize: { width: number; height: number };
   ageRange: [number, number];
-  sessionSeconds: [number, number];
-  skills: string[];
-  curriculum: { dynasty: string; yearApprox?: number; figures: string[] };
-  assets: { cover: string };
 }
 
 export interface GameEventMap {
@@ -38,7 +29,6 @@ export interface GameEventMap {
   /** 这一幕的旁白真的听完了 —— 故事页的小手到这一刻才出现 */
   'story:ready': { beatId: string };
   'choice:made': { beatId: string; choiceId: string; correct: boolean; latencyMs: number };
-  'hint:used': { beatId: string; level: number };
   'level:complete': {
     levelId: string;
     stars: 0 | 1 | 2 | 3;
@@ -145,7 +135,6 @@ export interface PlatformServices {
 }
 
 export interface DebugOptions {
-  seed?: string;
   autoplay?: boolean;
   /**
    * ?story=instant（自动化截图用）：跳过故事页"听完才能继续"的等待。

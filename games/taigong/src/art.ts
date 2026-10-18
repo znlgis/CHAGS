@@ -2,6 +2,7 @@ import type Phaser from 'phaser';
 import { THEME, circle, groundShadow, roundRect, shade } from '@chags/phaser-kit';
 import { DESIGN, WAIT } from '@chags/templates';
 import type { WaitLevel, WaitStageMetrics } from '@chags/templates';
+import { clamp01 } from '@chags/game-kit';
 
 /**
  * 太公钓鱼：一屏渭水。
@@ -67,9 +68,6 @@ export interface StageOptions {
   now?: number;
 }
 
-function clamp01(value: number): number {
-  return Math.min(1, Math.max(0, value));
-}
 
 /** 在子坐标系里画东西：分幕插图直接复用玩法里的人物，不用再抄一遍 */
 function withTransform(

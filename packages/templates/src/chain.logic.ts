@@ -9,9 +9,9 @@ import type { ChainGate, ChainLevel, ChainStepLevel } from './schemas';
  * - **顺序不能跳**：没借到路，一个关口也拿不了；前一个关口没拿下，后一个动不了。
  *   这不是"禁止点击"，而是这一计本身的样子 —— 别人愿意借路，是因为你说只是路过；
  *   你一步一步走进去，别人才发现回不了头。
- * - **点错零惩罚**：点在后一个关口上、重复点已经拿下的、还没借路就点关口 ——
+ * - **点错也记账**：点在后一个关口上、重复点已经拿下的、还没借路就点关口 ——
  *   都只是**原样返回**（场景把关卡自己的那句提示再亮一遍，并用小手指出该动的地方），
- *   不扣星、不结束、不锁操作。
+ *   记进 mistakes、不结束、不锁操作。
  * - **回师是最后一步**：全部关口拿下之后才回得了自己的营地（returnHome）；
  *   借路 + 关口全拿下 + 回师 = 这一局成了（isPassDone）。
  */
@@ -135,7 +135,7 @@ export function isGateTaken(state: ChainState, gateId: string): boolean {
  * - 不是下一个（跳着点 / 回头点已经拿下的 / 点了个不存在的）→ 原样返回；
  * - 正好是下一个 → 拿下，记进 taken。
  *
- * 三种情况都**不扣星、不结束**，只是没进展 —— 场景提示一句就是了。
+ * 三种情况都**不结束**，只是没进展 —— 场景提示一句，并把点错记进 mistakes。
  */
 export function takeGate(level: ChainLevel, state: ChainState, gateId: string): ChainState {
   if (!state.pass) return state;
@@ -157,7 +157,7 @@ export function isAllGatesTaken(level: ChainLevel, state: ChainState): boolean {
 
 /**
  * 收兵回师：**全部关口拿下之后才回得去**。
- * 还没拿完就点了自家营地：原样返回（场景只提示一句"前面还有关口"，零惩罚）。
+ * 还没拿完就点了自家营地：原样返回（场景提示一句"前面还有关口"，并记进 mistakes）。
  */
 export function returnHome(level: ChainLevel, state: ChainState, t: number): ChainState {
   if (state.home || !state.pass || !isAllGatesTaken(level, state)) return state;
@@ -201,14 +201,14 @@ export function chainStep(level: ChainLevel, state: ChainState): ChainStep | und
  *
  * 与 pass（假道伐虢）的差别在**门槛从哪儿来**：pass 的门槛是"顺序"（没借到路一个关口也拿不了），
  * step 的门槛是**一张会过期的允许** —— 点求允许的地方，允许只持续 grantMs；
- * 在有效期内点下一个岗位才接得下来，过期作废（重新求一次就是，零惩罚）。
+ * 在有效期内点下一个岗位才接得下来，过期作废（重新求一次就是；过期与点错记进 mistakes）。
  *
  * 三条刻意的设计：
  * - **先求，再接手**：手里没有有效允许时，点岗位原样返回 —— 不是禁止点击，
  *   而是"这一步本来就得先问过"。
  * - **允许是一次性的**：接管一个岗位，这次允许就用掉了；下一步要重新求。
  *   所以这一关的节奏是"一步一问"，急不得（第 30 计的落点）。
- * - **过期零惩罚**：允许过期只是没进展，不扣星、不结束、不锁操作；重新求一次就好。
+ * - **过期也记账**：允许过期只是没进展，记进 mistakes、不结束、不锁操作；重新求一次就好。
  *   schema 里还卡了一道 grantMs ≥ 600 —— 允许太短就变成比手速了。
  */
 export type ChainStepPost = ChainStepLevel['posts'][number];
@@ -250,7 +250,7 @@ export function stepStart(): StepState {
 
 /**
  * 求一次允许：允许从此刻起算，只持续关卡的 grantMs。
- * 已经求过、还没过期时再求一次 = 重新盖章（时间从新的一刻起算），零惩罚。
+ * 已经求过、还没过期时再求一次 = 重新盖章（时间从新的一刻起算），不结束、不锁操作。
  */
 export function askGrant(state: StepState, t: number): StepState {
   return { ...state, grantAtMs: clampMs(t), asks: state.asks + 1 };
@@ -272,7 +272,7 @@ export function grantLeftMs(level: ChainStepLevel, state: StepState, t: number):
   return Math.max(0, level.grantMs - since);
 }
 
-/** 此刻允许还有效吗 —— 过期就作废（重新求一次就是了，零惩罚） */
+/** 此刻允许还有效吗 —— 过期就作废（重新求一次就是了） */
 export function isGranted(level: ChainStepLevel, state: StepState, t: number): boolean {
   return grantLeftMs(level, state, t) > 0;
 }
@@ -347,7 +347,7 @@ export function isAllPostsTaken(level: ChainStepLevel, state: StepState): boolea
  * - 不是下一个（跳着点 / 回头点已经接手的 / 点了个不存在的）→ 原样返回；
  * - 正好是下一个、而且允许有效 → 接手，这次允许就用掉了（下一步要重新求）。
  *
- * 三种情况都**不扣星、不结束**，只是没进展 —— 场景提示一句、把小手放回该动的地方。
+ * 三种情况都**不结束**，只是没进展 —— 场景把点错记进 mistakes、把小手放回该动的地方。
  */
 export function takeOver(
   level: ChainStepLevel,
@@ -398,7 +398,7 @@ import type { ChainDominoLevel } from './schemas';
  * - **顺序照旧不能跳**：没起头，点哪一环都没反应（'notStarted'）；起头之后只认"下一环"，
  *   顺序点错和不点一样，只是没反应（'wrong'）—— 前一步为后一步铺路。
  * - **一环点亮后，下一环要在 windowMs 之内点上**：超时这一环就接不上，链子**从起头重来**
- *   （'expired'），记一笔 break。零惩罚：不扣星、不结束、不锁操作，小手马上放回起头的地方，
+ *   （'expired'），记一笔 break 与 mistakes：不结束、不锁操作，小手马上放回起头的地方，
  *   重新点一次就好。schema 里还卡了一道 windowMs ≥ 900 —— 时限短于这个数就不是"一环接一环"，
  *   而是比手速了。
  * - **判定一处、落账一处**：`advanceDomino` 只判"这一下会怎么样"，
@@ -439,7 +439,7 @@ export interface DominoState {
   lit: string[];
   /** 最近一次点亮（或者起头）的时刻 —— 下一环的时限从它起算 */
   lastAtMs: number;
-  /** 断了几次（零惩罚，只记一笔，复盘用） */
+  /** 断了几次（只记一笔，复盘用；场景据此记 mistakes） */
   breaks: number;
   /** 起头了几次（重新起头也算，复盘用） */
   ignites: number;
@@ -508,7 +508,7 @@ export function igniteHit(level: ChainDominoLevel, x: number, y: number, forgive
  * 起头：点着岸边的火种，链子从第一环重新开始走（时限从这一刻起算）。
  * - 已经全点亮了就不再来一遍（原样返回）；
  * - 走到一半再点一次起头 = **从头再来**：已经点亮的几环不算了，重新排队 ——
- *   零惩罚，也没有便宜可占（重来就是重来）。
+ *   不结束、也没有便宜可占（重来就是重来）。
  */
 export function igniteChain(level: ChainDominoLevel, state: DominoState, t: number): DominoState {
   if (isDominoDone(level, state)) return state;
@@ -574,7 +574,7 @@ export function dominoPhaseAt(
 }
 
 /**
- * 链子断了没有：断了就落账 —— 回到"还没起头"，记一笔 break（零惩罚）。
+ * 链子断了没有：断了就落账 —— 回到"还没起头"，记一笔 break（场景据此记 mistakes）。
  * 没断就**原样返回同一个对象**：场景据此知道"刚刚断了一下"，只播一次提示；
  * 每一帧调它也不会重复记账（断了之后 ignited 已经是 false）。
  */
@@ -598,7 +598,7 @@ export function settleDomino(level: ChainDominoLevel, state: DominoState, t: num
  * - 'ok'：正好是下一环，接上了；
  * - 'wrong'：不是下一环（跳着点 / 回头点已经亮的 / 点了个不存在的），或者已经全点亮了。
  *
- * 四种都**不扣星、不结束**：前三种只是没进展，'expired' 也只是重来一遍。
+ * 四种都**不结束**：前三种只是没进展，'expired' 也只是重来一遍（记进 mistakes）。
  */
 export function advanceDomino(
   level: ChainDominoLevel,

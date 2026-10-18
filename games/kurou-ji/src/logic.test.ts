@@ -1,26 +1,15 @@
+import { getEntry } from '@chags/content/full';
 import {
-  ContentEntrySchema, EntryDetailSchema, EntrySummarySchema, getEntry, mergeLocalized, validatePatch,
-} from '@chags/content/full';
-import {
-  countsFor, happyLeft, isGreedy, isSplitSolved, mood, moodLine, splitState, stepToward, watchedCount,
+  countsFor, happyLeft, isGreedy, isSplitSolved, mood, moodLine, splitState, stepToward,
+  watchedCount,
 } from '@chags/templates/split.logic';
-import { templateSchemas } from '@chags/templates/schemas';
 import { describe, expect, it } from 'vitest';
-import rawSummary from '../../../packages/content/src/entries/kurou-ji.json';
-import rawDetail from '../../../packages/content/src/entries/kurou-ji.game.json';
-import enPatchSummary from '../../../packages/content/src/i18n/en/kurou-ji.json';
-import enPatchDetail from '../../../packages/content/src/i18n/en/kurou-ji.game.json';
 import {
   CAMP, FAR_CAMP, LEFT_X, RIGHT_X, RIVER_LEFT, RIVER_RIGHT, ROPE_Y, TOWER, WATCHER,
 } from './layout';
 import { believableLefts, splitLevel, watchedBin } from './logic';
 
-/** 内容拆成了摘要（首屏）与详情（进游戏才加载）两半，测试里合起来用 */
-const raw = { ...rawSummary, ...rawDetail };
-const enPatch = { ...enPatchSummary, ...enPatchDetail };
-
-/** 登记（entries/index.ts + detail.ts）由 Lead 统一做：登记前直接读内容文件，测试不因登记顺序而红 */
-const entry = getEntry('kurou-ji') ?? ContentEntrySchema.parse(raw);
+const entry = getEntry('kurou-ji')!;
 const level = splitLevel(entry);
 
 describe('苦肉计 · 关卡数据：八袋粮，两边分', () => {
@@ -102,20 +91,18 @@ describe('苦肉计 · 美术与关卡数据互锁', () => {
     expect(WATCHER.y).toBeLessThan(TOWER.y);
   });
 
-  it('两个盘子彼此分得开，标签一眼读得完，提示不超过 24 字', () => {
+  it('两个盘子彼此分得开，标签一眼读得完', () => {
     for (const bin of level.bins) {
       expect(bin.label.length).toBeLessThanOrEqual(8);
       expect(bin.label.length).toBeGreaterThan(0);
     }
     expect(level.bins[1]!.x - level.bins[0]!.x).toBeGreaterThan(0);
-    expect(level.hint.length).toBeLessThanOrEqual(24);
   });
 });
 
 describe('苦肉计 · 故事与复习', () => {
   it('两幕：先问"对面凭什么信"，再送出去一份 —— 关键抉择在第二幕', () => {
     expect(entry.story.map((beat) => beat.id)).toEqual(['s1', 's2']);
-    expect(entry.story.every((beat) => beat.text.length <= 90)).toBe(true);
     expect(entry.keyMoment.beatId).toBe('s2');
   });
 
@@ -126,6 +113,7 @@ describe('苦肉计 · 故事与复习', () => {
     expect(canonical.text).toContain('送');
     for (const option of options) {
       if (option.isCanonical) continue;
+      // 另外两个选项不是"点了就错"，都要说清楚后果 —— 这条不在 zod schema 里，得留着
       expect(option.hint.length).toBeGreaterThan(0);
     }
     expect(entry.keyMoment.reveal).toContain('看得见');
@@ -144,16 +132,11 @@ describe('苦肉计 · 故事与复习', () => {
     expect(entry.source.chapter).toBe('苦肉计');
     expect(entry.source.quote).toBe('人不自害，受害必真。假真真假，间以得行。童蒙之吉，顺以巽也。');
     expect(entry.moral).toContain('看得见');
-    expect(entry.misconceptions.length).toBeGreaterThanOrEqual(1);
     expect(entry.game.template).toBe('split');
     expect(entry.game.stages[0]!.template).toBe('split');
-    expect(templateSchemas.split!.safeParse(entry.game.stages[0]!.levelScript).success).toBe(true);
   });
 
   it('复习题：记忆题问"凭什么信"与"为什么送"，迁移题落在"做出来比说更管用"', () => {
-    expect(entry.quiz.length).toBeGreaterThanOrEqual(2);
-    expect(entry.quiz.filter((question) => question.kind === 'transfer').length).toBeGreaterThanOrEqual(1);
-    for (const question of entry.quiz) expect(question.answer).toBeLessThan(question.options.length);
     const transfer = entry.quiz.find((question) => question.kind === 'transfer')!;
     expect(transfer.question).toContain('值日');
     expect(transfer.explanation).toContain('看得见');
@@ -176,57 +159,15 @@ describe('苦肉计 · 故事与复习', () => {
 });
 
 describe('苦肉计 · 英译补丁', () => {
-  it('摘要 / 详情两半各自合法，补丁也分别对得上（与 content:check 同一套口径）', () => {
-    const summary = EntrySummarySchema.parse(rawSummary);
-    const detail = EntryDetailSchema.parse(rawDetail);
-    expect(validatePatch(summary, enPatchSummary)).toEqual([]);
-    expect(validatePatch(detail, enPatchDetail)).toEqual([]);
-    const mergedDetail = EntryDetailSchema.parse(mergeLocalized(detail, enPatchDetail));
-    expect(templateSchemas.split!.safeParse(mergedDetail.game.stages[0]!.levelScript).success).toBe(true);
-    expect(findCjk(mergeLocalized(summary, enPatchSummary))).toEqual([]);
-  });
-
-  it('合起来不剩一个汉字，关卡脚本照样合法（连提示与观众那两句也翻了）', () => {
-    expect(validatePatch(entry, enPatch)).toEqual([]);
-    const merged = ContentEntrySchema.parse(mergeLocalized(entry, enPatch));
+  it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
+    const merged = getEntry('kurou-ji', 'en')!;
     expect(merged.title).toBe('Pay a Real Price');
-    expect(merged.story.map((beat) => beat.text)).toHaveLength(entry.story.length);
-    // 屏幕上的那句话按英文字符给的上限（90）—— 中文合规不代表英文也合规
-    expect(merged.story.every((beat) => beat.text.length <= 90)).toBe(true);
-    expect(merged.moral.length).toBeLessThanOrEqual(90);
-    expect(merged.quiz.map((question) => question.options.length)).toEqual(
-      entry.quiz.map((question) => question.options.length),
-    );
-    expect(merged.keyMoment.options.filter((option) => option.isCanonical)).toHaveLength(1);
-    for (const stage of merged.game.stages) {
-      expect(templateSchemas[stage.template]!.safeParse(stage.levelScript).success).toBe(true);
-    }
     expect(merged.game.stages[0]!.levelScript).toMatchObject({
       bins: [{ label: 'We keep' }, { label: 'We give' }],
       hint: 'Slide until he believes',
     });
-    // 盘子上的短标签两种语言都只有 8 个字符的位置
-    const script = merged.game.stages[0]!.levelScript as { bins: { label: string }[] };
-    for (const bin of script.bins) expect(bin.label.length).toBeLessThanOrEqual(8);
     expect(merged.moral).toBe(
       'Meaning it is not enough: put out something others can see, and then they believe you.',
     );
-    expect(findCjk(merged)).toEqual([]);
   });
 });
-
-/** 中日韩字符：英文版里出现它，就说明这个字段漏翻了（与 content:check 同一套判据） */
-const CJK = /[\u3400-\u9FFF\uF900-\uFAFF]/;
-
-function findCjk(value: unknown, path = ''): string[] {
-  if (typeof value === 'string') return CJK.test(value) ? [path] : [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => findCjk(item, path + '[' + index + ']'));
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-      findCjk(item, path === '' ? key : path + '.' + key),
-    );
-  }
-  return [];
-}
