@@ -79,6 +79,27 @@ export async function tapDesign(
 
 export const events = (page: Page): Promise<string[]> =>
   page.evaluate(() => window.__chags?.events ?? []);
+
+/**
+ * 等某个调试事件出现，返回是否等到。
+ *
+ * 为什么不直接用 expect.poll：CI 机器慢、页面主线程又被 Phaser 占着，
+ * 一次 evaluate 往返可能上百毫秒；像连环计这种"每环 2.2 秒"的玩法，
+ * 几次 poll 的间隔就足以让链子自己断掉（2026-10-18 的 CI 正是挂在这里）。
+ * waitForFunction 把轮询放进页面里（50ms 一次），往返只有一次。
+ */
+export async function waitEvent(page: Page, name: string, timeoutMs = 5000): Promise<boolean> {
+  try {
+    await page.waitForFunction(
+      (expected) => (window.__chags?.events ?? []).includes(expected),
+      name,
+      { timeout: timeoutMs, polling: 50 },
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
 /** 页面上的技术错误（有就说明游戏没起来） */
 export const lastError = (page: Page): Promise<string | undefined> =>
   page.evaluate(() => window.__chags?.lastError);

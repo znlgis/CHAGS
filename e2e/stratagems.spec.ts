@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { clickDesign, events, loadContent } from './helpers';
+import { clickDesign, events, loadContent, waitEvent } from './helpers';
 
 /**
  * 三十六计的真实指针操作：从五个**共享场景**各挑一计，用点/拖/等走一遍。
@@ -55,30 +55,53 @@ test(
   '连环计 · 连环：点火起头 → 按顺序一环一环接上（没起头、跳着点都不算数）',
   { tag: '@real' },
   async ({ page }) => {
+    // 每环 2.2 秒时限 + 断链重来，CI 上要多给几轮余量
+    test.setTimeout(180_000);
     const level = levelScript<DominoLevel>('lianhuan-ji');
     await enterGame(page, 'lianhuan-ji', 'chain');
 
     // ① 还没起头：点第一环不算数，只收到一声"还轮不到"（零惩罚）
     const first = level.links[0]!;
     await clickDesign(page, first.x, first.y);
-    await expect.poll(() => events(page)).toContain('beat:enter:chain:reject:' + first.id);
+    expect(await waitEvent(page, 'beat:enter:chain:reject:' + first.id)).toBe(true);
     expect(await events(page), '没起头不该点亮').not.toContain('beat:enter:chain:light:' + first.id);
 
     // ② 点岸边的火种起头：链子从第一环开始走
     await clickDesign(page, level.ignite.x, level.ignite.y);
-    await expect.poll(() => events(page)).toContain('beat:enter:chain:ignite:1');
+    expect(await waitEvent(page, 'beat:enter:chain:ignite:1')).toBe(true);
 
     // ③ 起头之后也要按顺序：跳到第三环上点不算数
     const third = level.links[2]!;
     await clickDesign(page, third.x, third.y);
-    await expect.poll(() => events(page)).toContain('beat:enter:chain:reject:' + third.id);
+    expect(await waitEvent(page, 'beat:enter:chain:reject:' + third.id)).toBe(true);
     expect(await events(page), '跳着点不该点亮').not.toContain('beat:enter:chain:light:' + third.id);
 
-    // ④ 按顺序一环一环接上（每环的时限 2.2 秒，点一下就接上；断了会从起头重来）
-    for (const link of level.links) {
-      await clickDesign(page, link.x, link.y);
-      await expect.poll(() => events(page)).toContain('beat:enter:chain:light:' + link.id);
+    // ④ 按顺序一环一环接上。每环时限 2.2 秒是关卡设计，但 CI 机器慢时
+    // "点一下 + 确认事件"就可能把时限吃掉；此时链子会自己断（回到岸边重新起头）。
+    // 所以这里断了就重新起头再来一轮 —— 这正是玩家的真实玩法（断链不结束、不锁操作），
+    // 不是给测试开的隐藏通道。每轮都断言中间态事件，覆盖没有变弱。
+    let ignites = 1;
+    await clickDesign(page, level.ignite.x, level.ignite.y);
+    ignites += 1;
+    expect(await waitEvent(page, 'beat:enter:chain:ignite:' + ignites, 8000)).toBe(true);
+
+    let litAll = false;
+    for (let attempt = 0; attempt < 3 && !litAll; attempt += 1) {
+      if (attempt > 0) {
+        await clickDesign(page, level.ignite.x, level.ignite.y);
+        ignites += 1;
+        expect(await waitEvent(page, 'beat:enter:chain:ignite:' + ignites, 8000)).toBe(true);
+      }
+      litAll = true;
+      for (const link of level.links) {
+        await clickDesign(page, link.x, link.y);
+        if (!(await waitEvent(page, 'beat:enter:chain:light:' + link.id, 1800))) {
+          litAll = false;
+          break;
+        }
+      }
     }
+    expect(litAll, '四环都要按顺序点亮（断了会回到岸边重新起头）').toBe(true);
 
     await expect.poll(() => events(page), { timeout: 20_000 }).toContain('beat:enter:chain:domino:done');
     await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
