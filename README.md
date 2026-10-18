@@ -6,6 +6,8 @@ Chinese Historical Anecdotes Game Series —— 一个典故一个小游戏，�
 
 ![Release](https://github.com/znlgis/CHAGS/actions/workflows/release.yml/badge.svg)
 
+> 🎮 **在线试玩（无需安装）**：<https://znlgis.github.io/chags/> —— 电脑 / 手机 / 平板浏览器打开即玩，53 个小游戏，中英文一键切换。
+
 ## 技术栈
 
 Phaser 4.2（游戏）· Vue 3.5 + Pinia（外壳）· Vite 8 · TypeScript 5.9.3 · pnpm workspace · Vitest · Playwright

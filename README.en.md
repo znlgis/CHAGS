@@ -6,6 +6,8 @@ One story, one small game — kids remember an anecdote by **playing** it, not b
 
 ![Release](https://github.com/znlgis/CHAGS/actions/workflows/release.yml/badge.svg)
 
+> 🎮 **Play online (no install)**: <https://znlgis.github.io/chags/> — open it in any desktop, phone or tablet browser. 53 mini-games, and one tap switches between Chinese and English.
+
 ## Tech stack
 
 Phaser 4.2 (games) · Vue 3.5 + Pinia (shell) · Vite 8 · TypeScript 5.9.3 · pnpm workspace · Vitest · Playwright
