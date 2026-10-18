@@ -41,9 +41,9 @@
     {
       "question": "After which drumming did Cao Gui let the army move?",
       "options": [
-        "The first",
-        "The second",
-        "The third"
+        "The first drumming",
+        "The third drumming",
+        "The second drumming"
       ],
       "answer": 2,
       "explanation": "The first drumming stirs courage, the second wears it thin, the third leaves them spent — so they waited for the third."
@@ -51,8 +51,8 @@
     {
       "question": "According to the Zuo Zhuan, what does a battle depend on?",
       "options": [
+        "Big numbers",
         "Courage",
-        "Numbers",
         "Speed"
       ],
       "answer": 0,
@@ -61,9 +61,9 @@
     {
       "question": "In a tug of war, when is it easiest to pull?",
       "options": [
-        "Give it everything at the start",
-        "Wait until the other side has spent most of their strength",
-        "Pull slowly the whole time"
+        "Give it everything at the very start",
+        "Pull slowly the whole time without ever really pulling hard",
+        "Wait until the other side has spent most of their strength"
       ],
       "answer": 1,
       "explanation": "Let them spend their strength first, then pull — that is waiting at ease."

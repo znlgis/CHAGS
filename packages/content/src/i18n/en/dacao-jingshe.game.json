@@ -6,7 +6,7 @@
     {
       "title": "The Name in the Case File",
       "text": "His own name turned up in the case file, and Wang Lu's heart sank.",
-      "narration": "In the Five Dynasties period Wang Lu was the magistrate of Dangtu county. One day the townspeople sent in a stack of complaints together, and the man they accused was the clerk who worked under him. Wang Lu read line after line, and the longer he read the less he could sit still — the things written on that paper were things he had done himself. As he read on, it felt as if he had seen his own name there."
+      "narration": "Wang Lu was a magistrate long ago. One day the townspeople brought him a stack of complaints about the clerk who worked under him. Wang Lu read line after line, and the more he read, the less still he could sit. The things on that paper were things he had done himself. It felt as if he saw his own name there."
     },
     {
       "title": "The Snake Bolts",
@@ -40,9 +40,9 @@
     {
       "question": "In the saying \"beating the grass startles the snake\", who was the \"snake\" that got startled?",
       "options": [
-        "Wang Lu himself, who was frightened",
-        "A snake down in the grass",
-        "The townspeople who brought the complaint"
+        "A snake hiding down in the grass",
+        "The townspeople who brought the complaint",
+        "Wang Lu himself, who was frightened"
       ],
       "answer": 0,
       "explanation": "The complaint described exactly what he had done himself — the moment the grass rustled, the \"snake\" that jumped was him."
@@ -51,11 +51,20 @@
       "question": "You want to know whether anything is in the drawer, but you do not want the whole family to know. What is better?",
       "options": [
         "Open it just a crack and take a look",
-        "Tip the whole drawer out",
-        "Carry the drawer to another room"
+        "Tip the whole drawer out on the floor",
+        "Carry the drawer to another room first"
       ],
       "answer": 0,
       "explanation": "A crack is enough to see inside — tip the whole drawer out and the noise tells the whole family."
+    },
+    {
+      "question": "Mum says not to touch the box on the shelf, but you want to know what is inside. What is better?",
+      "options": [
+        "Open the whole box and look inside",
+        "Give it a gentle shake and listen",
+        "Take the box down and tip it out"
+      ],
+      "explanation": "A tiny test tells you. Open it all the way, and Mum will notice at once."
     }
   ],
   "game": {

@@ -118,6 +118,13 @@ export function createStoryScene(
         return;
       }
       this.listenFirst(beat, handAt, next);
+
+      // 二周目：已经通关过的孩子可以直接跳过故事（首次仍然必须听完）。
+      // ★ 必须在 listenFirst 之后创建：它会给整屏加一层点击区（点早了只回一句"先听完"），
+      // 先建的按钮会被那层盖住、点不到。位置在标题条下面，离小手很远。
+      if (this.ctx.completedBefore) {
+        this.showSkip();
+      }
     }
 
     /**
@@ -167,6 +174,29 @@ export function createStoryScene(
       void handle.done.then(settle, () => settle('unavailable'));
       // 兜底：语音引擎一直不回报（部分 WebView 就是这样）也不能把孩子钉在这一幕
       this.time.delayedCall(gateWatchdogMs(narration, this.ctx.locale), () => settle('unavailable'));
+    }
+
+    /**
+     * 二周目的「跳过故事」：直接进玩法。
+     * 只在 ctx.completedBefore 为真时出现 —— 首次听故事这条硬规矩没有松动。
+     */
+    private showSkip(): void {
+      this.addButton(
+        this.W - 138,
+        228,
+        this.tr('story.skip'),
+        () => {
+          this.ctx.emit('choice:made', {
+            beatId: 'story:skip',
+            choiceId: 'skip',
+            correct: true,
+            latencyMs: this.ctx.services.now(),
+          });
+          this.ctx.services.audio.stopSpeech();
+          this.scene.start(cfg.nextSceneKey);
+        },
+        { width: 236, height: 92, fontSize: 34, color: THEME.inkSoft },
+      ).setDepth(950);
     }
 
     /** 点早了：不翻页，只告诉他故事还没听完 */

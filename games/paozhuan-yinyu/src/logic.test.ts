@@ -92,7 +92,7 @@ describe('抛砖引玉 · 内容', () => {
     expect(entry.kind).toBe('strategy');
     expect(entry.stratagem).toEqual({ number: 17, set: 3 });
     expect(entry.yearApprox).toBe(800);
-    expect(entry.ageRange).toEqual([9, 12]);
+    expect(entry.ageRange).toEqual([8, 12]);
     expect(entry.source.book).toContain('三十六计');
     expect(entry.source.chapter).toBe('抛砖引玉');
     expect(entry.source.quote).toBe('类以诱之，击蒙也。');

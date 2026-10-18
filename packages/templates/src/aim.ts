@@ -90,6 +90,8 @@ export function createAimScene(ctx: GameContext, cfg: AimConfig): Phaser.Types.S
     private advanceHand: Phaser.GameObjects.Graphics | null = null;
     private finished = false;
     private lockedUntil = 0;
+    /** 多久没射了 —— 卡住 9 秒给孩子一句图形化提示（与其他模板同一口径） */
+    private idleMs = 0;
 
     constructor() {
       super(SCENE_KEYS.aim, ctx);
@@ -102,6 +104,7 @@ export function createAimScene(ctx: GameContext, cfg: AimConfig): Phaser.Types.S
       this.world = this.add.graphics().setDepth(2);
       // 瞄准线要能盖住目标，单独一层
       this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        this.idleMs = 0;
         // 射中了、还没退档的时候，点木牌才是这一下该做的事
         if (this.tapAdvance(pointer.x, pointer.y)) return;
         this.dragging = true;
@@ -116,6 +119,13 @@ export function createAimScene(ctx: GameContext, cfg: AimConfig): Phaser.Types.S
       this.events.on(Phaser.Scenes.Events.UPDATE, (_t: number, delta: number) => {
         this.stepArrows(delta);
         this.redraw();
+        // 卡住兜底：瞄准射击是"拖一下"才会发现的操作，等满 9 秒给一句提示
+        if (this.finished) return;
+        this.idleMs += delta;
+        if (this.idleMs >= 9000) {
+          this.idleMs = 0;
+          this.showHint(this.tr('aim.hint'), 2600, 268);
+        }
       });
 
       this.redraw();

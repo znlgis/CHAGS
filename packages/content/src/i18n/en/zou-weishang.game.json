@@ -8,12 +8,12 @@
     {
       "title": "They Are Closing In",
       "text": "The Chu army came on. Duke Wen of Jin gave the order: withdraw — three marches.",
-      "narration": "Jin and Chu faced each other at Chengpu. The Chu army followed hard after the Jin army, yet Duke Wen gave the order to withdraw. His officers could not understand: no blows had been struck, so why fall back first? Zifan said: years ago, when our lord was in exile, Chu helped him, and he promised that if the two armies ever met he would give way three marches. Keeping that promise was also a chance for the weary army to catch its breath."
+      "narration": "At Chengpu, Jin and Chu faced each other. The Chu army followed hard, but Duke Wen ordered a retreat. Why fall back with no blows struck? Zifan said: long ago Chu helped our lord, and he promised to give way three marches if they ever met. That promise also let the tired army rest."
     },
     {
       "title": "Back to a Safe Place",
       "text": "One march, two, three — all the way to Chengpu, to stand with their friends.",
-      "narration": "A march is thirty li. One march back, then another, ninety li in all, until they reached Chengpu. There the walls were high, the grain was enough, and friendly armies were already waiting. The Chu army had chased far and was worn out, while the Jin army had rested and taken its stand — not one person, not one supply lost. To give way in time is not to admit defeat: it is to keep yourself, and choose your next move from firm ground."
+      "narration": "Back one march, then another — ninety li, to Chengpu. The walls were high, the grain was enough, and friendly armies waited. The Chu army had chased far and was worn out; the Jin army had rested. Giving way in time is not admitting defeat — it is keeping yourself for the next move."
     }
   ],
   "keyMoment": {
@@ -42,27 +42,27 @@
     {
       "question": "How far is one march (one she), and how many marches did Duke Wen give way?",
       "options": [
-        "One march is thirty li; he gave way three marches",
         "One march is ten li; he gave way three marches",
-        "One march is a hundred li; he gave way ninety marches"
+        "One march is a hundred li; he gave way ninety marches",
+        "One march is thirty li; he gave way three marches"
       ],
       "explanation": "One march is thirty li, so three marches is ninety li — hence 'to give way three marches'."
     },
     {
       "question": "What kind of place was Chengpu, where Duke Wen withdrew to?",
       "options": [
-        "High walls, plenty of grain, and friendly armies",
-        "Barren hills with nothing at all",
-        "The main camp of the Chu army"
+        "Barren hills with nothing at all around them anywhere",
+        "The main camp of the Chu army",
+        "High walls, plenty of grain, and friendly armies"
       ],
       "explanation": "He fell back to walls, grain and friends — his people and supplies were kept safe."
     },
     {
       "question": "Someone chases you in the corridor at break. What is closest to 'retreat is the best course'?",
       "options": [
-        "Stand there and argue with them",
-        "Walk away first, to where teachers and classmates are",
-        "Turn round and shove them, to see who is tougher"
+        "Stand there and argue it out",
+        "Turn round and shove them, to see who is tougher",
+        "Walk away first, to where there are people"
       ],
       "explanation": "Leave the bad spot first and nothing is lost — giving way is not admitting defeat."
     }

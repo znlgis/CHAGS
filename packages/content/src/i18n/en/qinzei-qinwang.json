@@ -1,7 +1,7 @@
 {
   "title": "Catch the Ringleader",
   "dynasty": "Tang",
-  "era": "Tang · An Lushan Rebellion",
+  "era": "Mid Tang · about 1,300 years ago",
   "source": {
     "book": "The Thirty-Six Stratagems, Attacking Stratagems",
     "chapter": "Catch the Ringleader",
@@ -12,5 +12,7 @@
     "Find the key one",
     "Test it",
     "Watch the reaction"
-  ]
+  ],
+  "thinkingTag": "Focus",
+  "transfer": "Fix the key part first when a toy breaks."
 }

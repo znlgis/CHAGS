@@ -5,7 +5,7 @@
   "title": "无中生有",
   "pinyin": "Wú zhōng shēng yǒu",
   "dynasty": "三国",
-  "era": "三国·汉建安十三年",
+  "era": "东汉末年 · 约一千八百年前",
   "yearApprox": 208,
   "source": {
     "book": "《三十六计·敌战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 7,
     "set": 2
-  }
+  },
+  "thinkingTag": "从无到有",
+  "transfer": "没有材料也可以先动手：一张白纸也能画出想要的东西。"
 }

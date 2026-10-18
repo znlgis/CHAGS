@@ -5,7 +5,7 @@
   "title": "擒贼擒王",
   "pinyin": "Qín zéi qín wáng",
   "dynasty": "唐",
-  "era": "唐 · 安史之乱",
+  "era": "唐朝中期 · 约一千三百年前",
   "yearApprox": 757,
   "source": {
     "book": "《三十六计·攻战计》",
@@ -19,11 +19,13 @@
     "看反应"
   ],
   "ageRange": [
-    9,
+    8,
     12
   ],
   "stratagem": {
     "number": 18,
     "set": 3
-  }
+  },
+  "thinkingTag": "找关键",
+  "transfer": "玩具坏了先找最关键的那个零件，修起来最快。"
 }

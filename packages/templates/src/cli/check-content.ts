@@ -126,7 +126,16 @@ if (stratagems.length > 0) {
   }
   for (const entry of stratagems) {
     const { number, set } = entry.stratagem!;
-    console.log('  · 第 ' + number + ' 计（第 ' + set + ' 套）' + entry.title);
+    // 三十六计的价值引导必须落地（docs/三十六计方案.md 的六条儿童化口径）：
+    // 每计一句「今天可以怎么用」的正向迁移 + 一枚思维标签，卡片与图鉴会展示。
+    // 英文译文缺失会由下面的"CJK 漏翻"检查兜住。
+    if (entry.thinkingTag === undefined || entry.thinkingTag.length === 0) {
+      fail('第 ' + number + ' 计（' + entry.title + '）缺少 thinkingTag：思维标签 2–6 字');
+    }
+    if (entry.transfer === undefined || entry.transfer.length < 12) {
+      fail('第 ' + number + ' 计（' + entry.title + '）缺少 transfer：一句 12–30 字的正向迁移');
+    }
+    console.log('  · 第 ' + number + ' 计（第 ' + set + ' 套）' + entry.title + '｜' + (entry.thinkingTag ?? '?'));
   }
 }
 

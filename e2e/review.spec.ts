@@ -33,6 +33,23 @@ function savedReview(page: Page, id: string): Promise<SavedEntry> {
   );
 }
 
+/**
+ * 按**选项文字**点击：复习页的选项顺序会被确定性洗牌（防止孩子只点第一个），
+ * 所以内容里的 answer 下标不再是屏幕上的位置。找到文字匹配的那个按钮点下去。
+ */
+async function clickOptionWithText(page: Page, text: string): Promise<void> {
+  const options = page.locator('[data-testid^="review-option-"]');
+  const count = await options.count();
+  for (let index = 0; index < count; index += 1) {
+    const option = options.nth(index);
+    if ((await option.innerText()).trim() === text.trim()) {
+      await option.click();
+      return;
+    }
+  }
+  throw new Error('选项里找不到：' + text);
+}
+
 /** 玩一局（autoplay 直达），图鉴里才会有这张卡 */
 async function finishOnce(page: Page, id: string): Promise<void> {
   await page.goto('/?autoplay=1#/play/' + id);
@@ -65,7 +82,7 @@ test('复习全对：3 级 → 间隔升到 7 天，存档里留下复习记录'
   for (const [index, question] of quiz.entries()) {
     await expect(page.getByTestId('review-progress')).toContainText(String(index + 1));
     await expect(page.getByTestId('review-question')).toHaveText(question.question);
-    await page.getByTestId('review-option-' + question.answer).click();
+    await clickOptionWithText(page, question.options[question.answer]!);
     await expect(page.getByTestId('review-feedback')).toBeVisible();
     await page.getByTestId('review-next').click();
   }
@@ -95,8 +112,9 @@ test('复习全错：给出解释、评级 0、间隔回到 1 天，但星星不
   await openReview(page, id);
 
   for (const question of quiz) {
-    const wrong = question.options.findIndex((_, index) => index !== question.answer);
-    await page.getByTestId('review-option-' + wrong).click();
+    // 选项已洗牌：按文字找一个"不是正确答案"的选项点下去
+    const wrongText = question.options.find((option) => option !== question.options[question.answer])!;
+    await clickOptionWithText(page, wrongText);
     // 答错也要有"为什么"：反馈里必须带上这条内容的解释
     await expect(page.getByTestId('review-feedback')).toContainText(question.explanation);
     await page.getByTestId('review-next').click();

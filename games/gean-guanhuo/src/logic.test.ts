@@ -7,8 +7,9 @@ const entry = getEntry('gean-guanhuo')!;
 const level = waitLevel(entry);
 
 describe('隔岸观火 · 关卡数据', () => {
-  it('等 45 秒：不短到没等过，也不长到坐不住', () => {
-    expect(level.durationMs).toBe(45000);
+  it('等 22 秒：不短到没等过，也不长到坐不住', () => {
+    // 2026-10-18 儿童体验轮：45 秒对 7–10 岁太长，缩到 22 秒
+    expect(level.durationMs).toBe(22000);
     expect(level.penaltyCap).toBe(3);
   });
 

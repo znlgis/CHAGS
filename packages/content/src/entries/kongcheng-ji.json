@@ -5,7 +5,7 @@
   "title": "空城计",
   "pinyin": "Kōng chéng jì",
   "dynasty": "三国",
-  "era": "三国 · 建安二十四年",
+  "era": "东汉末年 · 约一千八百年前",
   "yearApprox": 219,
   "source": {
     "book": "《三十六计·败战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 32,
     "set": 6
-  }
+  },
+  "thinkingTag": "沉住气",
+  "transfer": "心里很紧张时，先把动作放慢，别人就看不出。"
 }

@@ -37,18 +37,18 @@
     {
       "question": "How many suns did Houyi shoot down?",
       "options": [
-        "Nine",
-        "Ten",
-        "One"
+        "Shot down ten",
+        "Shot down nine",
+        "Shot down only one"
       ],
       "explanation": "He shot down nine and left one to light the world."
     },
     {
       "question": "Why shouldn't he shoot down all ten?",
       "options": [
-        "He ran out of arrows",
         "Then there would be no light or warmth at all",
-        "The suns would get angry"
+        "He would have run out of bows and arrows by then",
+        "The suns would get angry and never come out"
       ],
       "explanation": "With all ten gone the world would be dark and cold."
     },
@@ -57,7 +57,7 @@
       "options": [
         "Drinking a whole jug of water at once",
         "Watering a plant and stopping when it is enough",
-        "Taking all your toys apart"
+        "Taking all of your toys apart just to see inside"
       ],
       "explanation": "Being able to do something does not mean doing it to the extreme."
     }

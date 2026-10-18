@@ -5,7 +5,7 @@
   "title": "混水摸鱼",
   "pinyin": "Hùn shuǐ mō yú",
   "dynasty": "东晋",
-  "era": "东晋·太元八年",
+  "era": "东晋时期 · 约一千六百年前",
   "yearApprox": 383,
   "source": {
     "book": "《三十六计·混战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 20,
     "set": 4
-  }
+  },
+  "thinkingTag": "乱中稳住",
+  "transfer": "大家一乱的时候，先站稳别跟着跑，看清了再动。"
 }

@@ -52,7 +52,8 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     # 不给上限的话卡死会挂满默认 6 小时
-    timeout-minutes: 45
+    # 端到端 ~94 条串行：本机 20–25 分钟，CI 上约 35–45 分钟；给足余量
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

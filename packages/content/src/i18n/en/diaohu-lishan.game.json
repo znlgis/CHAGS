@@ -41,9 +41,9 @@
     {
       "question": "Why did the guard leave the mountain pass?",
       "options": [
-        "Something stirred beyond the mountain, so he went to look",
-        "He was tired and went to rest",
-        "Someone called him away to eat"
+        "He was tired and went to rest in his tent for a good long while",
+        "Someone called him away from the pass to come and eat",
+        "Something stirred beyond the mountain, so he went to look"
       ],
       "answer": 0,
       "explanation": "The lamps and the cooking smoke were the decoy — as soon as he went to look, the pass stood open."
@@ -51,12 +51,21 @@
     {
       "question": "Mum is standing right in the kitchen doorway and you need to carry the bowls out. What is the smarter way?",
       "options": [
-        "Ask her to take a phone call, and carry the bowls out while the doorway is clear",
-        "Squeeze past her with the bowls",
-        "Stand at the doorway and wait for her to move"
+        "Squeeze past her with the bowls anyway and run quickly down the hall",
+        "Stand at the doorway and wait until she moves away, and only then carry them out",
+        "Ask her to take a phone call and carry the bowls out while the way is clear"
       ],
       "answer": 0,
       "explanation": "Squeezing past spills the bowls and waiting gets you nowhere — give her something more urgent to do, and the doorway clears by itself."
+    },
+    {
+      "question": "What drew the guard away from the pass?",
+      "options": [
+        "Lights and cooking smoke beyond the mountain",
+        "A whole troop of men shouting loudly at the pass",
+        "A letter asking him to come down"
+      ],
+      "explanation": "Lights and cooking smoke beyond the mountain looked like trouble. He went to look, and the pass stood empty."
     }
   ],
   "game": {

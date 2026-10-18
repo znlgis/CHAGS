@@ -5,7 +5,7 @@
   "title": "抛砖引玉",
   "pinyin": "Pāo zhuān yǐn yù",
   "dynasty": "唐",
-  "era": "唐·贞元年间",
+  "era": "唐朝中期 · 约一千二百年前",
   "yearApprox": 800,
   "source": {
     "book": "《三十六计·攻战计》",
@@ -19,11 +19,13 @@
     "挑对"
   ],
   "ageRange": [
-    9,
+    8,
     12
   ],
   "stratagem": {
     "number": 17,
     "set": 3
-  }
+  },
+  "thinkingTag": "先给一点",
+  "transfer": "先说出自己想到的一半，大家就会接着帮你想另一半。"
 }

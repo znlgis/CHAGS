@@ -5,7 +5,7 @@
   "title": "假道伐虢",
   "pinyin": "Jiǎ dào fá guó",
   "dynasty": "春秋",
-  "era": "春秋 · 周惠王二十二年",
+  "era": "春秋前期 · 约两千七百年前",
   "yearApprox": -655,
   "source": {
     "book": "《三十六计·混战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 24,
     "set": 4
-  }
+  },
+  "thinkingTag": "想到后果",
+  "transfer": "把东西借给别人前，先想清楚他会拿去做什么。"
 }

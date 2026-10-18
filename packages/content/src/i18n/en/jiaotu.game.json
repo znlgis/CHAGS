@@ -41,9 +41,9 @@
     {
       "question": "How many burrows did Feng Xuan say a cunning rabbit needs?",
       "options": [
-        "One",
-        "Three",
-        "None — it is too much trouble"
+        "Only one burrow",
+        "Three burrows",
+        "As many as possible"
       ],
       "answer": 1,
       "explanation": "Three burrows — only then does it escape death."
@@ -51,9 +51,9 @@
     {
       "question": "Why could the rabbit not get out while the fox waited at one entrance?",
       "options": [
-        "Because it had only one burrow",
         "Because the fox runs faster",
-        "Because the burrow was too dark"
+        "Because the burrow was dark and narrow",
+        "Because it had only one burrow"
       ],
       "answer": 0,
       "explanation": "With a single way out, a fox at the entrance closes it — so dig more."
@@ -61,9 +61,9 @@
     {
       "question": "You are going away tomorrow and the forecast says rain in the afternoon. What do you do?",
       "options": [
-        "Take an umbrella",
         "Wait and see",
-        "Close the windows at home"
+        "Close the windows at home",
+        "Take an umbrella"
       ],
       "answer": 0,
       "explanation": "One extra preparation is one more way out — the same idea as the third burrow."

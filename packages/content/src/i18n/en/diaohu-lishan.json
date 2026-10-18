@@ -1,7 +1,7 @@
 {
   "title": "Lure the Tiger from the Mountain",
   "dynasty": "Late Eastern Han",
-  "era": "Late Eastern Han · Jian'an, year 4",
+  "era": "Late Eastern Han · about 1,800 years ago",
   "source": {
     "book": "The Thirty-Six Stratagems, Attacking Stratagems",
     "chapter": "Lure the Tiger from the Mountain",
@@ -12,5 +12,7 @@
     "A decoy",
     "An open window",
     "Draw him off"
-  ]
+  ],
+  "thinkingTag": "Lure",
+  "transfer": "Lead a pet away with its favourite toy."
 }

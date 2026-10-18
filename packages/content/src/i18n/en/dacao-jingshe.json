@@ -12,5 +12,7 @@
     "Probe first",
     "Watch the reaction",
     "Think, then move"
-  ]
+  ],
+  "thinkingTag": "Probe",
+  "transfer": "Try a small test first, then decide what to do."
 }

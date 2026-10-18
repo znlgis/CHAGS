@@ -42,7 +42,7 @@
       "question": "What did Xue Rengui disguise the ship as?",
       "options": [
         "A great camp",
-        "A warship",
+        "A great big warship",
         "A bridge"
       ],
       "answer": 0,
@@ -51,12 +51,21 @@
     {
       "question": "For a big thing that everyone would notice, which way is most like crossing the sea under camouflage?",
       "options": [
-        "Tuck it quietly into something you do every day",
-        "Tell everyone about it first",
-        "Leave it until the very last day"
+        "Tell everyone first, the louder the better",
+        "Leave it until the very last day and then rush it",
+        "Tuck it quietly into something you do every day"
       ],
       "answer": 0,
       "explanation": "The plainer the look, the less anyone suspects it — the big thing hides inside the ordinary."
+    },
+    {
+      "question": "Why would the emperor not step onto the ship at first?",
+      "options": [
+        "It was too dark to see the road ahead at all",
+        "The waves were too big and the ship rocked",
+        "The ship was too small for everyone"
+      ],
+      "explanation": "The waves were big and the ship rocked, so the emperor would not step aboard. Xue Rengui disguised the ship as a camp."
     }
   ],
   "game": {

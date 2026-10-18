@@ -66,6 +66,14 @@ but "remembered it and understood what it means."**
 Point 8 is not a footnote: it rules out editor-driven engines (Cocos, Unity) whose scenes are binary or giant JSON blobs —
 impossible to review, diff or verify automatically.
 
+**Child-safety defaults (shipped 2026-10-18):** global mute (remembered, reachable from the hall, inside a game
+and on the parent page; TTS volume 0.8), a 20-minute rest reminder once a day, an always-available in-game back
+button with a "go back now?" confirmation, a parent page behind a 3-second hold on the hall title (safety
+statement, this week's play, mute, clear-progress with 3-second confirm, version), and debug URL switches
+(?autoplay / ?story / ?card) that only work on the dev server or in automated browsers. Quiz options are
+deterministically shuffled so "tap the first option" is no longer a winning strategy, and the 36 stratagem cards
+carry a child-facing thinking tag plus one "how to use it today" transfer sentence.
+
 ---
 
 ## 2. Technology choices
@@ -192,8 +200,8 @@ two shipped languages. All of them raise cost and compliance risk while contribu
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Shell  apps/site  (Vue 3.5 SFC)                             │
-│  hall · album · game host · due review (the four views)       │
-│  timeline scroll / settings / parent area: planned, not built │
+│  hall · album · game host · due review · parent page          │
+│  global mute · 20-min rest reminder · timeline scroll: planned│
 │  ── state: Pinia ── routing: hash composable ── i18n: @chags/i18n
 └───────────────┬─────────────────────────────────────────────┘
                 │  dynamic import (code splitting; Phaser appears only here)

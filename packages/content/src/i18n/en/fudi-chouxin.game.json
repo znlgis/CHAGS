@@ -42,8 +42,8 @@
       "question": "Where was Yuan Shao's grain stored?",
       "options": [
         "Wuchao",
-        "Guandu",
-        "Xudu"
+        "Guandu town",
+        "Xudu city"
       ],
       "answer": 0,
       "explanation": "All the grain was at Wuchao — that is the place Cao Cao burned at night."
@@ -52,11 +52,20 @@
       "question": "The soup is too salty and adding water does not help. What is smarter?",
       "options": [
         "Put in less salt — fix it at the root",
-        "Add even more water",
+        "Add even more water to the pot and keep adding",
         "Turn the stove up"
       ],
       "answer": 0,
       "explanation": "More water leaves the saltiness in the pot; using less salt is pulling the firewood out from under the fire."
+    },
+    {
+      "question": "The catch on your pencil case is broken, so everything spills out every time. What is the best fix?",
+      "options": [
+        "Wrap the whole box round and round with sticky tape",
+        "Open the box very carefully each time",
+        "Swap the broken catch for a strong new one"
+      ],
+      "explanation": "The catch is what holds the box shut. Fix the catch itself, not your patience."
     }
   ],
   "game": {

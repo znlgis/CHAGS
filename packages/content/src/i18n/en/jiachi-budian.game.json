@@ -41,9 +41,9 @@
     {
       "question": "How did Sun Bin keep the men who watched him from seeing anything?",
       "options": [
+        "He packed up his things and slipped out of Wei by night",
         "He played a blank-faced fool who understood nothing",
-        "He slipped out of Wei by night",
-        "He argued with Pang Juan face to face"
+        "He argued it out with Pang Juan face to face"
       ],
       "answer": 0,
       "explanation": "He answered nothing and advised nothing, and prepared quietly in the gaps when no one was watching — holding still is the whole stratagem."
@@ -51,12 +51,21 @@
     {
       "question": "Your deskmate keeps looking back at your work, and you cannot get on with it. What is better?",
       "options": [
+        "Glare back at him at once and tell him to stop",
         "Finish this page quietly, and deal with it when he turns away",
-        "Glare back at him at once",
-        "Put your pen down and start chatting"
+        "Put your pen down and start chatting with him for the rest of the lesson"
       ],
       "answer": 0,
       "explanation": "The moment you cannot hold still is the moment things go wrong — do your own work first, and let that little stretch pass."
+    },
+    {
+      "question": "In class you want to pick up the eraser you dropped, without fuss. What is better?",
+      "options": [
+        "Bend down at once and grab it quickly while you can",
+        "Raise your hand and tell the teacher",
+        "Bend down when the teacher turns to the board"
+      ],
+      "explanation": "Move in the small moment when no one is watching. A moment of patience makes it safe."
     }
   ],
   "game": {

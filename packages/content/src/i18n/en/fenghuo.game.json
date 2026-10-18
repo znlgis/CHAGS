@@ -42,16 +42,16 @@
       "question": "What are the beacon fires for?",
       "options": [
         "To call the lords when an enemy comes",
-        "To celebrate a festival",
-        "To light the road for travellers"
+        "To celebrate a festival and watch the flames",
+        "To light the road for travellers at night"
       ],
       "explanation": "A beacon is an alarm: when the lords see the fire, they know the king is in danger."
     },
     {
       "question": "Why did the lords stop coming?",
       "options": [
-        "They had been tricked several times and no longer believed the fires",
-        "They lived too far away",
+        "They had been tricked several times and no longer believed",
+        "They lived so far away that they could not come in time at all",
         "They were angry and would not fight"
       ],
       "explanation": "The fire shouted \"enemy!\" again and again, and there was never anyone there — so no one believed it any more."
@@ -59,8 +59,8 @@
     {
       "question": "Which of these is most like the beacon fires?",
       "options": [
-        "Shouting \"Fire!\" as a joke, so no one believes you when there is a real fire",
-        "Always doing what you promised",
+        "Always doing what you promised, every single time you promise it",
+        "Shouting 'Fire!' as a joke, so no one believes a real fire",
         "Returning what you borrowed on time"
       ],
       "explanation": "Lie for fun and people stop trusting you — trust runs out a little at a time."

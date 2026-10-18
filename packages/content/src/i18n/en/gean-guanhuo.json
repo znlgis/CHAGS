@@ -1,7 +1,7 @@
 {
   "title": "Watch the Fire from Afar",
   "dynasty": "Late Eastern Han",
-  "era": "Late Eastern Han · Jian'an, year 10",
+  "era": "Late Eastern Han · about 1,800 years ago",
   "source": {
     "book": "The Thirty-Six Stratagems, Enemy Stratagems",
     "chapter": "Watch the Fire from Across the River",
@@ -12,5 +12,7 @@
     "Wait",
     "Do not step in",
     "Let them fall apart"
-  ]
+  ],
+  "thinkingTag": "Pause",
+  "transfer": "When friends argue, wait before taking a side."
 }

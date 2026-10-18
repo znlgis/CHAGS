@@ -36,9 +36,9 @@
     {
       "question": "What did Nuwa use to mend the sky?",
       "options": [
-        "Stones of five colours",
-        "Mud",
-        "Wood"
+        "A great big lump of wet mud",
+        "A few thick logs",
+        "Stones of five colours"
       ],
       "explanation": "She smelted stones of five colours and used them to fill the holes."
     },
@@ -54,9 +54,9 @@
     {
       "question": "Which of these is most like Nuwa mending the sky?",
       "options": [
+        "Throw the old clothes away and buy a whole new pair",
         "Sewing up a hole in your clothes, stitch by stitch",
-        "Throwing the clothes away",
-        "Buying a new pair"
+        "Leave it and buy new ones when you grow up"
       ],
       "explanation": "Both repair what is torn, a little at a time."
     }

@@ -1,7 +1,7 @@
 {
   "title": "Besiege Wei to Rescue Zhao",
   "dynasty": "Warring States",
-  "era": "Warring States · King Xian of Zhou, year 16",
+  "era": "Mid Warring States · about 2,300 years ago",
   "source": {
     "book": "Records of the Grand Historian, Biographies of Sun Tzu and Wu Qi",
     "quote": "Strike at what he must defend, and pierce where he is undefended; when he is held in check, the siege lifts by itself."
@@ -11,5 +11,7 @@
     "The vital point",
     "Lifting a siege",
     "Use your strength elsewhere"
-  ]
+  ],
+  "thinkingTag": "Detour",
+  "transfer": "When stuck, try helping from another direction."
 }

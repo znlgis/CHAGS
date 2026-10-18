@@ -1,7 +1,7 @@
 {
   "title": "Muddy the Water to Catch Fish",
   "dynasty": "Eastern Jin",
-  "era": "Eastern Jin · Taiyuan, year 8",
+  "era": "Eastern Jin · about 1,600 years ago",
   "source": {
     "book": "The Thirty-Six Stratagems, Confusion Stratagems",
     "chapter": "Muddy the Water to Catch Fish",
@@ -12,5 +12,7 @@
     "Muddy the water",
     "Act in the muddle",
     "Stay steady"
-  ]
+  ],
+  "thinkingTag": "Steady",
+  "transfer": "When everyone rushes, stand still and look."
 }

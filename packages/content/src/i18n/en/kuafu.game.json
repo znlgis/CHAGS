@@ -36,27 +36,27 @@
     {
       "question": "What was Kuafu chasing?",
       "options": [
-        "The sun",
         "The moon",
-        "A deer"
+        "A little deer",
+        "The sun"
       ],
       "explanation": "He meant to catch the sun that rose and set each day."
     },
     {
       "question": "What did his staff become after he fell?",
       "options": [
+        "A very big river, wide and long",
         "A grove of peach trees",
-        "A great river",
-        "A high mountain"
+        "A very high mountain"
       ],
       "explanation": "The staff he cast aside became a grove of peach trees."
     },
     {
       "question": "Which of these is most like Kuafu chasing the sun?",
       "options": [
-        "Practising football every day even though it is hard",
-        "Mastering it in one go",
-        "Switching to something easier"
+        "Practising every day even though it is hard",
+        "Mastering it in one go without daily practice",
+        "Switching to something easier and giving this up"
       ],
       "explanation": "Whether he catches it is one thing; whether he keeps chasing is another."
     }

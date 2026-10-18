@@ -11,5 +11,7 @@
     "Waiting",
     "Strength",
     "Timing"
-  ]
+  ],
+  "thinkingTag": "Rest",
+  "transfer": "Rest before a race, then run when strong."
 }

@@ -5,7 +5,7 @@
   "title": "暗度陈仓",
   "pinyin": "Àn dù chén cāng",
   "dynasty": "秦末",
-  "era": "秦末·汉元年",
+  "era": "秦朝末年 · 约两千二百年前",
   "yearApprox": -206,
   "source": {
     "book": "《三十六计·敌战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 8,
     "set": 2
-  }
+  },
+  "thinkingTag": "两条线",
+  "transfer": "复习功课时，一边做会的，一边悄悄补不会的。"
 }

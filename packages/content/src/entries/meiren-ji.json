@@ -5,7 +5,7 @@
   "title": "美人计",
   "pinyin": "Měi rén jì",
   "dynasty": "春秋",
-  "era": "春秋 · 越王勾践年间",
+  "era": "春秋末期 · 约两千五百年前",
   "yearApprox": -490,
   "source": {
     "book": "《三十六计·败战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 31,
     "set": 6
-  }
+  },
+  "thinkingTag": "送对东西",
+  "transfer": "送礼物前先看看朋友最近喜欢什么，送对最重要。"
 }

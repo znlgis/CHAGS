@@ -5,12 +5,24 @@ import { recordDebugEvent } from './debug';
 import { platform } from './platform';
 
 export interface GameHostHooks {
-  onExit: () => void;
+  /** 退出原因：replay = 原地再来一局（典故卡上的按钮） */
+  onExit: (reason?: 'quit' | 'replay') => void;
   onEvent: <K extends keyof GameEventMap>(type: K, payload: GameEventMap[K]) => void;
 }
 
-/** ?autoplay=1 —— 无头直达的调试开关（?story=instant、?card=hold 同理） */
+/**
+ * 调试开关只在两种情况下生效：开发服务器，或自动化浏览器（Playwright 会置 webdriver）。
+ * 生产环境的普通孩子拿不到 ?autoplay=1 —— 否则一个分享链接就能绕过"故事必须听完"，
+ * 并且自动通关还会把星星记进存档。
+ */
+function debugAllowed(): boolean {
+  if (import.meta.env.DEV) return true;
+  return typeof navigator !== 'undefined' && navigator.webdriver === true;
+}
+
+/** ?autoplay=1 —— 无头直达的调试开关（?story=instant、?card=hold 同理，仅开发/自动化可用） */
 export function readDebugOptions(): DebugOptions | undefined {
+  if (!debugAllowed()) return undefined;
   const params = new URLSearchParams(window.location.search);
   const autoplay = params.get('autoplay') === '1';
   // ?story=instant：截图巡检专用，跳过"听完才能继续"的等待（玩家界面上没有这个开关）
@@ -47,6 +59,7 @@ export async function createGameContext(
   container: HTMLElement,
   locale: Locale,
   hooks: GameHostHooks,
+  completedBefore: boolean,
 ): Promise<GameContext> {
   // 关键：交给游戏的是**已经翻译好**的内容，游戏本身不需要知道语言的存在
   const content = await loadEntry(manifest.id, locale);
@@ -60,13 +73,14 @@ export async function createGameContext(
     locale,
     reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     debug: readDebugOptions(),
+    completedBefore,
     emit(type, payload) {
       platform.telemetry.track(type, payload);
       recordDebugEvent(type, detailOf(type, payload));
       hooks.onEvent(type, payload);
     },
-    requestExit() {
-      hooks.onExit();
+    requestExit(reason) {
+      hooks.onExit(reason);
     },
   };
 }

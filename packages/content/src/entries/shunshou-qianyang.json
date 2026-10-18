@@ -5,7 +5,7 @@
   "title": "顺手牵羊",
   "pinyin": "Shùn shǒu qiān yáng",
   "dynasty": "唐",
-  "era": "唐·元和十二年",
+  "era": "唐朝中期 · 约一千二百年前",
   "yearApprox": 817,
   "source": {
     "book": "《三十六计·敌战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 12,
     "set": 2
-  }
+  },
+  "thinkingTag": "顺手做到",
+  "transfer": "路过时顺手把椅子推回桌下，不耽误你要做的事。"
 }

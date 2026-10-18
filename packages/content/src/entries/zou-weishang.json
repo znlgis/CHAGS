@@ -5,7 +5,7 @@
   "title": "走为上",
   "pinyin": "Zǒu wéi shàng",
   "dynasty": "春秋",
-  "era": "春秋 · 周襄王二十年",
+  "era": "春秋中期 · 约两千六百年前",
   "yearApprox": -632,
   "source": {
     "book": "《左传·僖公二十八年》",
@@ -24,5 +24,7 @@
   "stratagem": {
     "number": 36,
     "set": 6
-  }
+  },
+  "thinkingTag": "该退就退",
+  "transfer": "打不过的游戏局就退出，别一直耗着，下次再来。"
 }

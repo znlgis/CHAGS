@@ -5,7 +5,7 @@
   "title": "关门捉贼",
   "pinyin": "Guān mén zhuō zéi",
   "dynasty": "战国",
-  "era": "战国 · 周显王二十八年",
+  "era": "战国中期 · 约两千三百年前",
   "yearApprox": -341,
   "source": {
     "book": "《三十六计·混战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 22,
     "set": 4
-  }
+  },
+  "thinkingTag": "先想结局",
+  "transfer": "玩游戏前先说好怎么算赢、什么时候结束，就不容易吵起来。"
 }

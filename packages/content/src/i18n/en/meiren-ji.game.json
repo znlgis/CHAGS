@@ -8,7 +8,7 @@
     {
       "title": "Lost First, Bow First",
       "text": "Yue lost, so Gou Jian bowed to Wu and sent someone to learn what Fu Chai liked.",
-      "narration": "Yue and Wu went to war, and Yue lost. King Gou Jian did not push back head-on. He sent Fan Li to find out one thing: what did King Fu Chai of Wu really care about? The tale is told in the Wu Yue Chun Qiu, written down long after the events and often questioned, yet the lesson holds: to reach someone, first learn what he wants."
+      "narration": "Yue and Wu went to war, and Yue lost. King Gou Jian did not push back head-on. He sent Fan Li to find out one thing: what did King Fu Chai of Wu really care about? The story was told long, long ago, and the lesson still holds: to reach someone, first learn what he wants."
     },
     {
       "title": "Find Out What He Cares About",
@@ -42,9 +42,9 @@
     {
       "question": "Yue had a horse, silk and a sword. How could they know which to send?",
       "options": [
+        "Send all three together and leave none out",
         "Watch where Fu Chai's eyes kept resting",
-        "Send all three at once",
-        "Send the costliest one"
+        "Just send the costliest one"
       ],
       "answer": 0,
       "explanation": "What he wants is written in his eyes - watching where his gaze rests tells you more than asking."
@@ -52,12 +52,21 @@
     {
       "question": "Your class wants a welcome gift for a new classmate. What is the better way to choose?",
       "options": [
-        "Notice what he plays with and looks at, then prepare that",
+        "Notice what he plays with and looks at",
         "Buy the most expensive thing in the shop",
-        "Buy one of everything and let him choose"
+        "Buy one of everything and let him choose slowly"
       ],
       "answer": 0,
       "explanation": "Find out what he cares about, then give that one - that is the practical step in the Beauty Trap."
+    },
+    {
+      "question": "It is your grandma's birthday and you want to give her a present. How do you choose?",
+      "options": [
+        "Think about what she keeps talking about",
+        "Buy the most expensive thing in the shop",
+        "Buy anything — it is the thought that counts"
+      ],
+      "explanation": "The right gift pleases more than an expensive one. Find out what she likes first."
     }
   ],
   "game": {

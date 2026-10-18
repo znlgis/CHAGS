@@ -7,7 +7,7 @@
     {
       "title": "Lacquer the City Wall",
       "text": "Qin Er Shi wanted the wall lacquered bright. His ministers said it cost too much.",
-      "narration": "The Records of the Grand Historian, in its chapter on jesters, tells it this way: Qin Er Shi had a new idea — to lacquer the whole city wall until it shone. His ministers told him what it would cost in money and in labour, and the more they said, the less he listened."
+      "narration": "Qin Er Shi had a new idea — to paint the whole city wall, smooth and shiny. The ministers said it would cost a fortune and take forever. The more they said, the more annoyed he got, and he would not listen."
     },
     {
       "title": "You Zhan Says: Splendid",
@@ -41,9 +41,9 @@
     {
       "question": "How did You Zhan argue against lacquering the wall?",
       "options": [
-        "He called it splendid, then pointed out the giant sun-shed it would need",
-        "He said to the emperor's face that it cost too much",
-        "He asked the ministers to present a joint memorial"
+        "He said to his face it cost too much and was too much trouble",
+        "He asked all the ministers to oppose it together",
+        "He called it splendid, then mentioned the sun-shed"
       ],
       "answer": 0,
       "explanation": "He never said it was wrong: he laid out the difficulty, and the emperor laughed and changed his own mind."
@@ -53,10 +53,19 @@
       "options": [
         "After class: your trick looks great, but it makes me lose track",
         "Shout in front of the whole class: stop twirling that pen!",
-        "Say nothing and move to the back row"
+        "Say nothing at all about it and move to the back row of the class"
       ],
       "answer": 0,
       "explanation": "Say it another way and he takes it in himself — speaking to the one who needs to hear beats speaking louder."
+    },
+    {
+      "question": "Your little brother put your drawing up on the wall and you do not like it. What is the better way to say it?",
+      "options": [
+        "Say it is hung neatly, then ask to move it",
+        "Shout at him at once: take that down right now",
+        "Say nothing and secretly tear it down yourself"
+      ],
+      "explanation": "A kind word first, then the request. Say it differently and he will listen."
     }
   ],
   "game": {

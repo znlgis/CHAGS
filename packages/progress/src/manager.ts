@@ -137,6 +137,13 @@ export class ProgressManager {
     return this.data;
   }
 
+  /** 家长页的「清除本机存档」：清空并立刻落盘（界面上有长按确认，防误触） */
+  async clear(): Promise<SaveData> {
+    this.data = emptySave(this.clock());
+    await this.store.save(this.data);
+    return this.data;
+  }
+
   get(entryId: string): EntryProgress {
     return this.data.allusions[entryId] ?? emptyProgress(entryId);
   }

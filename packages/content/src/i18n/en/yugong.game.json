@@ -46,18 +46,18 @@
     {
       "question": "How did Yugong answer Zhisou's laughter?",
       "options": [
-        "I can't finish, but my sons and grandsons will, generation after generation",
-        "Then I will stop digging",
-        "I will ask someone else to dig"
+        "I can't finish, but my sons and grandsons will",
+        "Then I stop digging and save my strength",
+        "Let someone else dig the whole mountain while I rest"
       ],
       "explanation": "The mountains will not grow taller, but people go on generation after generation."
     },
     {
       "question": "Which of these is most like Yugong moving the mountains?",
       "options": [
-        "Reading a page a day and finishing a thick book in a year",
-        "Staying up all night to finish the book",
-        "Leaving the book because it is too hard"
+        "Staying up all night to finish the whole book",
+        "Reading a page a day and finishing a book in a year",
+        "This book is much too hard — let us just stop reading it"
       ],
       "explanation": "What one person cannot finish can be done slowly, and carried on."
     }

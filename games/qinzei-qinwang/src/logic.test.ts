@@ -101,7 +101,7 @@ describe('擒贼擒王 · 故事与复习', () => {
     expect(entry.stratagem).toEqual({ number: 18, set: 3 });
     expect(entry.yearApprox).toBe(757);
     expect(entry.figures).toEqual(['张巡', '尹子奇']);
-    expect(entry.ageRange).toEqual([9, 12]);
+    expect(entry.ageRange).toEqual([8, 12]);
     expect(entry.source.book).toContain('三十六计');
     expect(entry.source.chapter).toBe('擒贼擒王');
     expect(entry.source.quote).toContain('摧其坚');

@@ -18,7 +18,8 @@ test('不存在的游戏：给一句人话 + 一个出口，技术细节留给�
   await expect(page.getByText('找不到这个游戏：')).toBeVisible();
   // 详情进 window.__chags.lastError，屏幕上不该出现 zod 的报错原文
   await expect(page.locator('body')).not.toContainText('"code"');
-  await page.getByRole('button', { name: '回游戏馆' }).click();
+  // 游戏内工具条的小退回按钮与错误页按钮同名，用 testid 精确定位
+  await page.getByTestId('play-back').click();
   await expect(page.getByTestId('hall')).toBeVisible();
 });
 

@@ -1,7 +1,7 @@
 {
   "title": "The Golden Cicada Sheds Its Shell",
   "dynasty": "Southern Song",
-  "era": "Southern Song · The Kaixi Campaign",
+  "era": "Southern Song · about 800 years ago",
   "source": {
     "book": "The Thirty-Six Stratagems, Confusion Stratagems",
     "chapter": "The Golden Cicada Sheds Its Shell",
@@ -12,5 +12,7 @@
     "Stand-ins",
     "Same as before",
     "Slip away"
-  ]
+  ],
+  "thinkingTag": "Decoy",
+  "transfer": "Use a pretend move to slip away in tag."
 }

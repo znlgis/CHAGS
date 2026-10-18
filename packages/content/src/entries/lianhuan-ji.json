@@ -5,7 +5,7 @@
   "title": "连环计",
   "pinyin": "Lián huán jì",
   "dynasty": "东汉",
-  "era": "东汉 · 建安十三年",
+  "era": "东汉末年 · 约一千八百年前",
   "yearApprox": 208,
   "source": {
     "book": "《三十六计·败战计》",
@@ -19,11 +19,13 @@
     "不断档"
   ],
   "ageRange": [
-    8,
+    9,
     12
   ],
   "stratagem": {
     "number": 35,
     "set": 6
-  }
+  },
+  "thinkingTag": "一环扣一环",
+  "transfer": "大扫除时按顺序来：先收桌面，再扫地，最后擦桌子。"
 }

@@ -3,7 +3,7 @@
   "group": "stratagem",
   "kind": "strategy",
   "title": "趁火打劫",
-  "pinyin": "chèn huǒ dǎ jié",
+  "pinyin": "Chèn huǒ dǎ jié",
   "dynasty": "春秋",
   "era": "春秋末·吴",
   "yearApprox": -482,
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 5,
     "set": 1
-  }
+  },
+  "thinkingTag": "看准时机",
+  "transfer": "帮忙要在最合适的时候：他正忙时别添乱，等他停下来再开口。"
 }

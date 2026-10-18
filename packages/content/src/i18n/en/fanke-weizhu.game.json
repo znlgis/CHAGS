@@ -8,12 +8,12 @@
     {
       "title": "An Invitation to Help",
       "text": "Liu Zhang invites Liu Bei into Shu for help — he marches in and settles in the south.",
-      "narration": "Liu Zhang of Yi Province had word of trouble to the north, so he sent for Liu Bei to bring men into Shu and help. Liu Bei set out from Jing Province and marched into Shu. At that time every camp, pass and city there still belonged to Liu Zhang. Liu Bei did not rush anything: he settled in the south first and waited for a chance to be of use."
+      "narration": "Liu Zhang of Yi Province heard of trouble in the north, so he asked Liu Bei to bring men into Shu and help. Liu Bei marched in from Jing Province. Back then every camp, pass and city there still belonged to Liu Zhang. Liu Bei did not rush. He settled in the south first and waited for a chance to be useful."
     },
     {
       "title": "One Place at a Time",
       "text": "Liu Bei steadies one place, takes the work there in hand, then moves north.",
-      "narration": "Liu Bei did not try to take everything over at once. He began at Fu, taking the work of that place in hand first: holding the road, settling the people, and letting them come to know him. Only when that place was steady did he move north to the next — Jiameng Pass, then Luo, one place at a time, and finally Chengdu. There was no hurry: step by step, the work came into his hands of itself."
+      "narration": "Liu Bei did not take everything at once. He began at Fu: holding the roads, settling the people, letting them get to know him. When that place was steady he moved north to the next — Jiameng Pass, then Luo, one place at a time, and at last Chengdu. No hurry. Step by step, the work came into his hands."
     }
   ],
   "keyMoment": {
@@ -43,9 +43,9 @@
     {
       "question": "Why did Liu Zhang ask Liu Bei to come into Shu?",
       "options": [
+        "He wanted to give the whole of Yi Province away",
         "He wanted Liu Bei to bring men and help hold the border",
-        "He wanted to give Yi Province to Liu Bei",
-        "He wanted Liu Bei to be a teacher"
+        "He wanted Liu Bei to come to Shu and be a teacher over there"
       ],
       "answer": 0,
       "explanation": "It was Liu Zhang who invited him — that invitation was Liu Bei’s first step into Shu."
@@ -53,8 +53,8 @@
     {
       "question": "Once in Shu, why did Liu Bei take things over one place at a time?",
       "options": [
-        "Step by step, no one grows suspicious, and the work is taken in hand surely",
-        "He could not walk far",
+        "Step by step, so the work is taken in hand surely",
+        "He really could not walk very far at all on the long roads",
         "He was waiting for Liu Zhang to speak first"
       ],
       "answer": 0,
@@ -63,9 +63,9 @@
     {
       "question": "You have moved to a new class and want to get things done with everyone. What is the steadiest way?",
       "options": [
-        "Do your own part well, take one task after another in hand, and let them come to trust you",
-        "Announce on the first day that everyone listens to you from now on",
-        "Do nothing and wait to be chosen"
+        "Do your own part well, take one task after another",
+        "Announce on day one that everyone listens to you",
+        "Do absolutely nothing and wait for others to choose you"
       ],
       "answer": 0,
       "explanation": "It is not about seizing, but taking the work in hand step by step — like Liu Bei on the road into Shu."

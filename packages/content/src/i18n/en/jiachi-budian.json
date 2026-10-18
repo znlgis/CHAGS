@@ -1,7 +1,7 @@
 {
   "title": "Feign Madness, Keep Your Wits",
   "dynasty": "Warring States",
-  "era": "Warring States · King Xian of Zhou, year 14",
+  "era": "Mid Warring States · about 2,300 years ago",
   "source": {
     "book": "The Thirty-Six Stratagems, Annexation Stratagems",
     "chapter": "Feign Madness, Keep Your Wits",
@@ -12,5 +12,7 @@
     "Hold still",
     "Play the fool",
     "Wait for the moment"
-  ]
+  ],
+  "thinkingTag": "Feign",
+  "transfer": "If someone teases you, stay busy and finish up."
 }

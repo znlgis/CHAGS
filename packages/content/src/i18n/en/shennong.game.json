@@ -41,9 +41,9 @@
     {
       "question": "Why did Shennong taste a hundred herbs?",
       "options": [
-        "To learn what can be eaten and what can cure",
-        "To find the tastiest fruit",
-        "To count how many plants there are"
+        "To find the tastiest fruit in the hills",
+        "To count how many different plants grow there",
+        "To learn what can be eaten and what can cure"
       ],
       "explanation": "He wanted to find out what can be eaten, what can cure, and what must be left alone."
     },
@@ -51,17 +51,17 @@
       "question": "What did Shennong do when a plant tasted poisonous?",
       "options": [
         "He wrote it down and told everyone not to eat it",
-        "He threw it away and pretended he had not tasted it",
-        "He let someone else taste it too"
+        "He threw it away as if he had never tasted it",
+        "He let someone else taste it as well, just to check"
       ],
       "explanation": "Poison is knowledge too: write it down and nobody else will eat it by mistake."
     },
     {
       "question": "You see berries you do not recognise. What is closest to Shennong’s way?",
       "options": [
-        "Ask a grown-up, and leave them alone",
         "Eat one because it looks nice",
-        "Pick them and share them with your friends"
+        "Ask a grown-up, and leave them alone",
+        "Pick them and share them with friends"
       ],
       "explanation": "Shennong tasted every plant so that everyone else would not have to. You do not need that risk — ask a grown-up first."
     }

@@ -5,7 +5,7 @@
   "title": "声东击西",
   "pinyin": "Shēng dōng jī xī",
   "dynasty": "东汉",
-  "era": "东汉·汉章帝年间",
+  "era": "东汉初期 · 约一千九百年前",
   "yearApprox": 87,
   "source": {
     "book": "《三十六计·胜战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 6,
     "set": 1
-  }
+  },
+  "thinkingTag": "换个法子",
+  "transfer": "想让弟弟别抢玩具，先拿另一个玩具吸引他。"
 }

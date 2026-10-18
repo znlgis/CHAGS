@@ -7,7 +7,7 @@
     {
       "title": "A River Between Them",
       "text": "Across the Fei River, Qin had many men and Jin had few — neither side moved first.",
-      "narration": "In the year 383, the armies of Qin and Jin faced each other across the Fei River. Qin had far more men; Jin had few — and neither side would move first. On the Jin side they understood: a straight clash could not be won. First the whole situation had to change."
+      "narration": "Long, long ago, the armies of Qin and Jin faced each other across the Fei River. Qin had many more men; Jin had only a few. Neither side moved first. The Jin side knew a straight fight could not be won — first they had to change the whole situation."
     },
     {
       "title": "Across in the Muddle",
@@ -42,8 +42,8 @@
       "question": "How did Jin throw Qin's ranks into disorder?",
       "options": [
         "Someone shouted from behind the Qin lines",
-        "They stirred the river muddy",
-        "They waited for Qin to scatter"
+        "They stirred the whole river until it was muddy",
+        "They waited for Qin to scatter by itself"
       ],
       "answer": 0,
       "explanation": "Zhu Xu shouted from behind the Qin lines that Qin had been beaten — and Qin's own ranks fell apart."
@@ -51,9 +51,9 @@
     {
       "question": "According to the Thirty-Six Stratagems, when do you take your profit in muddy water?",
       "options": [
-        "When the other side is confused inside and no one is in charge",
-        "When the other side lines up and waits",
-        "When the other side has more men"
+        "When the other side has lined up neatly and is waiting for you to move",
+        "When the other side is many and in high spirits",
+        "When the other side is confused inside and no one is in charge"
       ],
       "answer": 0,
       "explanation": "Take advantage of their hidden confusion and of their weakness with no one in charge — move when the other side has no firm hand."
@@ -61,8 +61,8 @@
     {
       "question": "The classroom is noisy at break and your homework is not finished. What do you do?",
       "options": [
+        "Join in the noise with everyone and write only after it is all over",
         "Do the most important question first and do not join the noise",
-        "Join in the noise with everyone else",
         "Wait until the classroom is completely quiet"
       ],
       "answer": 0,

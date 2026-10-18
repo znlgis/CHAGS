@@ -1,7 +1,7 @@
 {
   "title": "Something Out of Nothing",
   "dynasty": "Three Kingdoms",
-  "era": "Three Kingdoms · Han, Jian'an 13",
+  "era": "Late Eastern Han · about 1,800 years ago",
   "source": {
     "book": "The Thirty-Six Stratagems, Enemy Stratagems",
     "chapter": "Something Out of Nothing",
@@ -12,5 +12,7 @@
     "Out of nothing",
     "Shadows",
     "Hold it up"
-  ]
+  ],
+  "thinkingTag": "Create",
+  "transfer": "A blank page is enough to start something new."
 }

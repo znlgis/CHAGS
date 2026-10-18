@@ -40,9 +40,9 @@
     {
       "question": "Did the column stop for the sheep?",
       "options": [
-        "No — they picked it up in passing",
-        "Yes — they stopped and searched for its owner",
-        "They turned back to camp"
+        "They stopped and searched for its owner",
+        "They turned back to camp",
+        "No — they picked it up in passing"
       ],
       "answer": 0,
       "explanation": "It was something they could do in passing, so the march was not held up — the column never stopped."
@@ -51,8 +51,8 @@
       "question": "What kind of chance does the Thirty-Six Stratagems say to take?",
       "options": [
         "The smallest gap and the smallest gain",
-        "Only big chances",
-        "Whatever chance someone hands you"
+        "Only the big chances",
+        "Whatever chance someone brings to your door"
       ],
       "answer": 0,
       "explanation": "Every small gap must be seized and every small gain must be taken — even a small chance is worth taking."
@@ -60,9 +60,9 @@
     {
       "question": "On your way to school you see a lost puppy. What do you do?",
       "options": [
-        "Take it along to somewhere it can be helped, without missing school",
         "Stay with it until its owner comes",
-        "Leave it alone — school comes first"
+        "Leave it alone and go on to school first without stopping",
+        "Take it somewhere it can be helped, then go to school"
       ],
       "answer": 0,
       "explanation": "Do your own errand first and help in passing — take it somewhere it can be helped, and you still get to school on time."

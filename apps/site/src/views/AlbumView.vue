@@ -68,13 +68,23 @@ const dueCount = computed(
               {{ stratagemLabel(i18n.t('stratagem.card'), entry.stratagem.number) }}
               · {{ i18n.t(stratagemSetKey(entry.stratagem.set)) }}
             </span>
+            <span v-if="entry.thinkingTag" class="rounded-full bg-[#e6f1ef] px-2 py-0.5 text-[#2c6b64]">
+              {{ entry.thinkingTag }}
+            </span>
             <span>{{ entry.pinyin }} · {{ entry.era }}</span>
           </p>
           <p class="mt-3 text-sm leading-relaxed">{{ entry.moral }}</p>
+          <p v-if="entry.transfer" class="mt-2 text-sm leading-relaxed text-[#2c6b64]">
+            {{ i18n.t('reward.transfer') }}：{{ entry.transfer }}
+          </p>
           <p class="mt-3 border-t border-dashed border-[#f0e0bd] pt-3 text-sm text-[#6b5a49]">
             {{ i18n.t('album.source') }}：{{ entry.source.book }}
           </p>
-          <p class="mt-1 text-sm leading-relaxed text-[#5c4b3d]">{{ entry.source.quote }}</p>
+          <!-- 原文是文言，7–10 岁读不懂：默认收起，孩子看寓意与迁移句就够了 -->
+          <details class="mt-1 text-sm text-[#5c4b3d]">
+            <summary class="cursor-pointer text-[#8a5f10]">{{ i18n.t('album.original') }}</summary>
+            <p class="mt-1 leading-relaxed">{{ entry.source.quote }}</p>
+          </details>
           <div class="mt-4 flex items-center justify-between gap-3">
             <span
               v-if="progress.reviewDue(entry.id)"
@@ -87,7 +97,7 @@ const dueCount = computed(
             <button
               type="button"
               :data-testid="'review-start-' + entry.id"
-              class="min-h-12 shrink-0 rounded-full bg-[#2c6b64] px-5 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
+              class="min-h-14 shrink-0 rounded-full bg-[#2c6b64] px-5 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
               @click="navigate('/review/' + entry.id)"
             >
               {{ i18n.t('album.review') }}

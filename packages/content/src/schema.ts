@@ -130,6 +130,13 @@ const summaryFields = {
     moral: z.string().min(1).max(90),
     keywords: z.array(z.string().min(1)).min(2).max(6),
     ageRange: z.tuple([z.number().int(), z.number().int()]),
+    /**
+     * 三十六计才有的"正向迁移"：这一计的思维今天可以怎么用（孩子/家长在卡片上看得见）。
+     * 三十六计讲的是"骗/忍/装"，方案文档要求把每一计翻成一句正向的生活智慧 —— 这一字段就是落点。
+     */
+    transfer: z.string().min(1).max(48).optional(),
+    /** 思维标签：2–6 字，图鉴/卡片上的一枚小徽章（例如「留退路」） */
+    thinkingTag: z.string().min(1).max(6).optional(),
 };
 
 const detailFields = {
@@ -140,7 +147,9 @@ const detailFields = {
     story: z.array(StoryBeatSchema).length(2),
     keyMoment: KeyMomentSchema,
     misconceptions: z.array(z.string().min(1)).min(1),
-    quiz: z.array(QuizQuestionSchema).min(2),
+    // 每条内容固定 3 道（含 1 道 transfer）：内容体检会强制"至少一道迁移题"，
+    // 数量固定后再也不会出现"有的 2 题有的 3 题"导致复习体验不一致。
+    quiz: z.array(QuizQuestionSchema).length(3),
     game: z.object({
       /** 主玩法模板，用于缩略图与筛选 */
       template: z.enum(TEMPLATE_IDS),

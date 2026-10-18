@@ -7,12 +7,12 @@
     {
       "title": "Almost No One in the Camp",
       "text": "Cao Cao's army reached the Han River, and almost no one was left in Zhao Yun's camp.",
-      "narration": "In the twenty-fourth year of Jian'an, Cao Cao came in person to fight for Hanzhong. Most of Zhao Yun's soldiers were out fetching grain, and only a small guard was left in the camp. Cao Cao's army pressed up to the walls, and everyone inside held their breath — to bar the gate, to fight, or to run, there was no time for any of it."
+      "narration": "Cao Cao himself came to fight for Hanzhong. Most of Zhao Yun's soldiers were out fetching grain, and only a small guard was left in the camp. Cao Cao's army pushed up to the walls. Everyone inside held their breath — bar the gate, fight, or run? There was no time for any of it."
     },
     {
       "title": "He Opened the Gate Wide",
       "text": "He opened the gate wide, laid the flags down, and Cao Cao's men withdrew.",
-      "narration": "Zhao Yun did not bar the gate and hold it. He had the gate thrown wide open, the flags laid down, and not a drum beaten — the camp was as quiet as if no one were there. Cao Cao's men watched from the gate for a while, and the longer they watched, the more certain they grew that someone was waiting inside; in the end they did not dare come in, and withdrew. This is recorded in the Yun Bielu, the supplementary life of Zhao Yun."
+      "narration": "Zhao Yun did not bar the gate. He had it thrown wide open, the flags laid down, and no drum beaten. The camp was as quiet as if no one were there. Cao Cao's men watched, and the longer they watched, the more sure they were that someone waited inside. In the end they dared not come in, and went away."
     }
   ],
   "keyMoment": {
@@ -41,9 +41,9 @@
     {
       "question": "How did Zhao Yun keep Cao Cao's army from entering the camp?",
       "options": [
-        "He opened the gate wide and laid the flags down, so the camp looked empty",
-        "He barred the gate and ran out the back",
-        "He shouted from the wall to look like a crowd"
+        "Open the gate wide, lay the flags down, and look empty",
+        "Bar the gate and slip out the back with the men",
+        "Shout from the wall to make it look like a big crowd was there"
       ],
       "answer": 0,
       "explanation": "The quieter it was, the less sure he felt — what he feared was not numbers, but not knowing."
@@ -52,11 +52,20 @@
       "question": "Before you go on stage your hands are shaking and the audience keeps watching you. What is better?",
       "options": [
         "Stand still, take one slow breath, then begin",
-        "Start at once and talk fast to cover it",
-        "Look down at the floor and wait for someone else to speak"
+        "Start talking quickly to cover the nerves",
+        "Look down at the floor and wait for someone else"
       ],
       "answer": 0,
       "explanation": "The more tense it gets, the less you may move — steady yourself first, and no one can see that you are nervous."
+    },
+    {
+      "question": "You are home alone and someone keeps knocking at the door. What is steadier?",
+      "options": [
+        "Ask who it is first, then decide about the door",
+        "Open the door at once and take a look at who it is",
+        "Hide in your room and pretend that nobody is home"
+      ],
+      "explanation": "Stay calm and get a clear look before you act. Acting in a panic is how mistakes happen."
     }
   ],
   "game": {

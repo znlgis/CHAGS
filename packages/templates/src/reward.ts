@@ -13,6 +13,10 @@ export interface RewardConfig {
   keywords: string[];
   source: { book: string; quote: string };
   session: SessionState;
+  /** 三十六计的正向迁移（孩子/家长看得见）；典故没有这一步 */
+  transfer?: string;
+  /** 思维标签（2–6 字），例如「留退路」 */
+  thinkingTag?: string;
 }
 
 /**
@@ -53,13 +57,23 @@ export function createRewardScene(ctx: GameContext, cfg: RewardConfig): Phaser.T
         block(cfg.title, textStyle(52, CSS.red, true)),
         block(cfg.pinyin, textStyle(28, CSS.inkSoft), false),
         block('★'.repeat(stars) + '☆'.repeat(3 - stars), textStyle(48, CSS.goldDeep, true), false),
+        // 星星不是评分羞辱，而是一句可理解的反馈：为什么这局少一颗、再来一次会怎样
+        block(
+          cfg.session.mistakes >= 2
+            ? this.tr('reward.starsWhy', { n: Math.max(2, cfg.session.mistakes) })
+            : this.tr('reward.starsFull'),
+          textStyle(26, CSS.inkSoft, true),
+        ),
         block(cfg.moral, textStyle(38, CSS.ink, true)),
+        ...(cfg.transfer === undefined
+          ? []
+          : [block(this.tr('reward.transfer') + '  ' + cfg.transfer, textStyle(28, CSS.tealDeep, true))]),
         block(this.tr('reward.keywords') + '  ' + cfg.keywords.join(' · '), textStyle(28, CSS.tealDeep, true)),
         block(this.tr('reward.source') + '  ' + cfg.source.book, textStyle(28, CSS.inkSoft)),
-        block(cfg.source.quote, textStyle(28, CSS.inkSoft)),
+        block(cfg.source.quote, textStyle(26, CSS.inkSoft)),
       ];
-      // 间距减半，把字号涨上去的这点空间腾回来（最坏的英文卡余量原本只剩 2%）
-      const gapAfter = [10, 9, 12, 12, 6, 4, 0];
+      // 间距按块数给：最后一个永远是 0（贴底），其余按行高微调
+      const gapAfter = blocks.map((_, index) => (index === blocks.length - 1 ? 0 : 8));
 
       let contentH = 0;
       blocks.forEach((item, index) => {
@@ -93,8 +107,19 @@ export function createRewardScene(ctx: GameContext, cfg: RewardConfig): Phaser.T
         cursor += (item.height + (gapAfter[index] ?? 0)) * scale;
       });
 
-      // 按钮位置固定，自动化用例直接按坐标点
-      this.addButton(REWARD.done.x, REWARD.done.y, this.tr('reward.accept'), () => this.done(), {
+      // 两个按钮并排：左边「再来一次」把"想再玩"从 6+ 步缩成 1 步；右边「收下」回游戏馆。
+      // 位置固定，自动化用例直接按坐标点。
+      this.addButton(
+        REWARD.done.x - 168,
+        REWARD.done.y,
+        this.tr('reward.again'),
+        () => this.replay(),
+        { width: 288, height: 104, fontSize: 38, color: THEME.teal },
+      );
+      this.addButton(REWARD.done.x + 168, REWARD.done.y, this.tr('reward.accept'), () => this.done(), {
+        width: 288,
+        height: 104,
+        fontSize: 38,
         color: THEME.red,
       });
 
@@ -123,6 +148,12 @@ export function createRewardScene(ctx: GameContext, cfg: RewardConfig): Phaser.T
     private done(): void {
       this.ctx.emit('session:exit', { reason: 'complete', progress: 1 });
       this.ctx.requestExit();
+    }
+
+    /** 原地再开一局：外壳会重新 mount 这一部游戏，不用回大厅再找一遍 */
+    private replay(): void {
+      this.ctx.emit('session:exit', { reason: 'replay', progress: 1 });
+      this.ctx.requestExit('replay');
     }
   };
 }

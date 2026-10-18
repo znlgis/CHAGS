@@ -5,7 +5,7 @@
   "title": "反客为主",
   "pinyin": "Fǎn kè wéi zhǔ",
   "dynasty": "东汉",
-  "era": "东汉 · 建安十六年",
+  "era": "东汉末年 · 约一千八百年前",
   "yearApprox": 211,
   "source": {
     "book": "《三十六计·并战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 30,
     "set": 5
-  }
+  },
+  "thinkingTag": "慢慢接手",
+  "transfer": "到了新班级，先做好一件小事，慢慢就熟起来了。"
 }

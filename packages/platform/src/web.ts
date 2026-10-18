@@ -173,7 +173,8 @@ export function createWebAudioBus(): AudioBus {
             lang: speechLang(locale),
             rate: locale === 'en' ? 0.95 : 0.9,
             pitch: 1.05,
-            volume: 1,
+            // 0.8 而不是 1.0：孩子的设备常在耳边/公交上，满音量容易过响、也容易吓一跳
+            volume: 0.8,
           })
           .then((): SpeechOutcome => 'ended')
           // 安卓设备没装语音包时会失败；静默降级，绝不让游戏卡住
@@ -190,6 +191,8 @@ export function createWebAudioBus(): AudioBus {
       utterance.lang = speechLang(locale);
       utterance.rate = locale === 'en' ? 0.95 : 0.9;
       utterance.pitch = 1.05;
+      // 与原生 TTS 口径一致：0.8 足够听清，又不会在耳边炸响
+      utterance.volume = 0.8;
       // 切语言时优先挑该语言的嗓音，没有就用系统默认
       const voices = speechSynthesis.getVoices();
       const match = voices.find((v) => v.lang.toLowerCase().startsWith(locale === 'en' ? 'en' : 'zh'));

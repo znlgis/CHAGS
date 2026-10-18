@@ -5,7 +5,7 @@
   "title": "调虎离山",
   "pinyin": "Diào hǔ lí shān",
   "dynasty": "东汉末",
-  "era": "东汉末·建安四年",
+  "era": "东汉末年 · 约一千八百年前",
   "yearApprox": 199,
   "source": {
     "book": "《三十六计·攻战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 15,
     "set": 3
-  }
+  },
+  "thinkingTag": "引开注意",
+  "transfer": "想安静写作业，先把爱叫的宠物引到别的房间。"
 }

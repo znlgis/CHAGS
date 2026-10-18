@@ -5,7 +5,7 @@
   "title": "欲擒故纵",
   "pinyin": "Yù qín gù zòng",
   "dynasty": "三国",
-  "era": "三国·蜀建兴三年",
+  "era": "三国时期 · 约一千八百年前",
   "yearApprox": 225,
   "source": {
     "book": "《三十六计·攻战计》",
@@ -19,11 +19,13 @@
     "让他心服"
   ],
   "ageRange": [
-    9,
+    8,
     12
   ],
   "stratagem": {
     "number": 16,
     "set": 3
-  }
+  },
+  "thinkingTag": "松一松",
+  "transfer": "小伙伴闹脾气的时候，先别追着讲道理，让他缓一缓。"
 }

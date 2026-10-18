@@ -41,26 +41,26 @@
       "question": "What did Pangu's left and right eyes become?",
       "options": [
         "The sun and the moon",
-        "Two stars",
-        "Two rivers"
+        "Two very bright stars",
+        "Two great rivers"
       ],
       "explanation": "His left eye became the sun, his right eye the moon."
     },
     {
       "question": "How long did Pangu hold the sky and the earth apart?",
       "options": [
-        "Eighteen thousand years",
-        "One hundred years",
-        "Three days and nights"
+        "As long as a hundred years",
+        "As long as three days and nights",
+        "Eighteen thousand years"
       ],
       "explanation": "The sky rose a zhang a day and the earth thickened a zhang a day, for eighteen thousand years."
     },
     {
       "question": "Which of these is also 'becoming something else'?",
       "options": [
-        "A caterpillar becomes a butterfly",
         "A rabbit runs very fast",
-        "A seed lies in the soil"
+        "A caterpillar becomes a butterfly",
+        "A seed in the soil begins to grow into a plant"
       ],
       "explanation": "In both, one thing turns into another."
     }

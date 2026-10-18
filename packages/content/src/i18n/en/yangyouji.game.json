@@ -40,8 +40,8 @@
     {
       "question": "How far away did Yang Youji stand when he shot at the willow leaf?",
       "options": [
-        "Ten paces",
         "A hundred paces",
+        "Ten paces away",
         "Right under the tree"
       ],
       "answer": 1,
@@ -51,8 +51,8 @@
       "question": "Why could he shoot so accurately?",
       "options": [
         "He practised, arrow after arrow",
-        "He was born with good eyes",
-        "He was lucky that day"
+        "He was born with very good eyes for it",
+        "He was very lucky that day"
       ],
       "answer": 0,
       "explanation": "Near first, then farther, one step at a time — accuracy is practised."
@@ -61,8 +61,8 @@
       "question": "The first time you try skipping rope, you cannot do a single skip. Which thought is right?",
       "options": [
         "The rope is bad — get another",
-        "I was born unable to skip",
-        "Take it slowly; today, just get over one"
+        "Take it slowly; today, just get over one",
+        "I was born unable to skip; there is nothing to do"
       ],
       "answer": 2,
       "explanation": "Just like the willow leaf: near to far, few to many, it comes with practice."

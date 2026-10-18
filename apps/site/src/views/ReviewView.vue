@@ -4,7 +4,14 @@ import type { ContentEntry, QuizQuestion } from '@chags/content';
 import { daysUntil } from '@chags/progress';
 import { computed, onMounted, ref } from 'vue';
 import { navigate } from '../router';
-import { createReviewQuiz, gradeOf, isFinished, nextQuestion, pickOption } from '../review/quiz';
+import {
+  createReviewQuiz,
+  gradeOf,
+  isFinished,
+  nextQuestion,
+  pickOption,
+  shuffledQuestions,
+} from '../review/quiz';
 import type { ReviewQuizState } from '../review/quiz';
 import { platform } from '../shell/platform';
 import { useLocale } from '../stores/locale';
@@ -29,7 +36,10 @@ const state = ref<ReviewQuizState>(createReviewQuiz());
 /** 结果页：下次复习隔几天（没算出来就不显示这一行） */
 const dueInDays = ref<number | null>(null);
 
-const questions = computed<QuizQuestion[]>(() => entry.value?.quiz ?? []);
+/** 选项顺序打散：内容里的原顺序 86.7% 的答案都在第一个，只点第一个就能过 */
+const questions = computed<QuizQuestion[]>(() =>
+  entry.value === null ? [] : shuffledQuestions(entry.value.quiz, entry.value.id),
+);
 const total = computed(() => questions.value.length);
 const question = computed<QuizQuestion | undefined>(() => questions.value[state.value.index]);
 const finished = computed(() => isFinished(state.value, total.value));
@@ -98,7 +108,7 @@ async function next(): Promise<void> {
         <button
           type="button"
           data-testid="review-again"
-          class="min-h-12 rounded-full bg-[#b03a31] px-6 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
+          class="min-h-14 rounded-full bg-[#b03a31] px-6 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
           @click="navigate('/play/' + entryId)"
         >
           {{ i18n.t('review.playAgain') }}
@@ -106,7 +116,7 @@ async function next(): Promise<void> {
         <button
           type="button"
           data-testid="review-back"
-          class="min-h-12 rounded-full bg-[#2c6b64] px-6 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
+          class="min-h-14 rounded-full bg-[#2c6b64] px-6 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
           @click="navigate('/album')"
         >
           {{ i18n.t('review.backToAlbum') }}
@@ -158,7 +168,7 @@ async function next(): Promise<void> {
         v-if="answered"
         type="button"
         data-testid="review-next"
-        class="mt-6 min-h-12 w-full rounded-full bg-[#b03a31] px-6 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
+        class="mt-6 min-h-14 w-full rounded-full bg-[#b03a31] px-6 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
         @click="next"
       >
         {{ state.index + 1 >= total ? i18n.t('review.seeResult') : i18n.t('review.next') }}

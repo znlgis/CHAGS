@@ -1,7 +1,7 @@
 {
   "title": "The Plum Stands In for the Peach",
   "dynasty": "Warring States",
-  "era": "Warring States · King Wei of Qi",
+  "era": "Mid Warring States · about 2,300 years ago",
   "source": {
     "book": "Records of the Grand Historian, Biographies of Sun Tzu and Wu Qi",
     "quote": "Now match your lowest team against his highest, your highest against his middle, and your middle against his lowest."
@@ -11,5 +11,7 @@
     "Matching up",
     "Give one away",
     "Best of three"
-  ]
+  ],
+  "thinkingTag": "Yield",
+  "transfer": "Lose one game, save your strength for the next."
 }

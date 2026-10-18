@@ -5,7 +5,7 @@
   "title": "李代桃僵",
   "pinyin": "Lǐ dài táo jiāng",
   "dynasty": "战国",
-  "era": "战国·齐威王年间",
+  "era": "战国中期 · 约两千三百年前",
   "yearApprox": -340,
   "source": {
     "book": "《史记·孙子吴起列传》",
@@ -24,5 +24,7 @@
   "stratagem": {
     "number": 11,
     "set": 2
-  }
+  },
+  "thinkingTag": "舍一局",
+  "transfer": "玩游戏输一局别急，把力气留给后面几局。"
 }

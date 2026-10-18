@@ -12,7 +12,7 @@
     {
       "title": "Red Flags on the Rampart",
       "text": "The riders sent ahead slipped into the empty camp and swapped every flag for a red one.",
-      "narration": "Han Xin had already sent two thousand light riders by a side road to watch the Zhao camp. The moment the whole Zhao army marched out, they rushed the empty camp and swapped the Zhao flags one after another for red Han flags. When the Zhao army turned and saw the ramparts covered in Han flags, they thought their leader had fallen, and their ranks fell apart."
+      "narration": "Han Xin had sent two thousand light riders to watch the Zhao camp. When the whole Zhao army marched out, they rushed the empty camp and swapped the Zhao flags for red Han flags. The Zhao army turned and saw the walls all in Han flags. They thought their leader had fallen, and their ranks fell apart."
     }
   ],
   "keyMoment": {
@@ -41,9 +41,9 @@
     {
       "question": "Which men did Han Xin send out early to watch the Zhao camp?",
       "options": [
-        "Two thousand light riders",
         "Ten thousand vanguard troops",
-        "His whole main force"
+        "The whole main force",
+        "Two thousand light riders"
       ],
       "answer": 0,
       "explanation": "The two thousand riders slipped into the empty camp and swapped the flags — when the Zhao army looked back at a camp full of Han flags, its ranks broke."
@@ -51,12 +51,21 @@
     {
       "question": "Your little cousin cannot reach the biscuits on the shelf and keeps fussing. What is better?",
       "options": [
-        "Set a stool out so he can reach, and agree he takes just one",
-        "Lift him up and let him grab whatever he wants",
+        "Lift him up and let him grab as much as he likes",
+        "Set out a stool, and agree on just one biscuit",
         "Take the biscuits away so nobody has any"
       ],
       "answer": 0,
       "explanation": "Give the easy way first (the stool), then name your terms (how many he takes) — that is where this stratagem really lands."
+    },
+    {
+      "question": "Your deskmate wants to borrow your eraser and you worry he will not give it back. What is better?",
+      "options": [
+        "Just say no and stop talking to him for good",
+        "Lend it, then keep asking him again and again to return it",
+        "Lend it, and agree he gives it back after school"
+      ],
+      "explanation": "Make it easy first, then agree the terms. Clear words keep borrowing friendly."
     }
   ],
   "game": {

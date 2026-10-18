@@ -4,9 +4,11 @@ import { groupMessageKey, stratagemLabel, stratagemSetKey } from '@chags/i18n';
 import { computed } from 'vue';
 import { navigate } from '../router';
 import { useLocale } from '../stores/locale';
+import { usePlaytime } from '../stores/playtime';
 import { useProgress } from '../stores/progress';
 
 const progress = useProgress();
+const playtime = usePlaytime();
 const i18n = useLocale();
 
 /** 五种定性各有各的徽章：神话 / 传说 / 信史 / 寓言 / 兵法 */
@@ -47,6 +49,17 @@ const dueIds = computed(() =>
   groups.value.flatMap(({ games }) => games.filter((g) => progress.reviewDue(g.id)).map((g) => g.id)),
 );
 
+/** 上次玩的那一局（"继续上次"入口：53 张卡里找同一张对孩子太费劲） */
+const lastPlayed = computed(() => {
+  const entries = groups.value.flatMap(({ games }) => games);
+  let best: { id: string; title: string; at: number } | null = null;
+  for (const entry of entries) {
+    const at = progress.save.allusions[entry.id]?.lastPlayedAt ?? 0;
+    if (at > 0 && (best === null || at > best.at)) best = { id: entry.id, title: entry.title, at };
+  }
+  return best;
+});
+
 const groupTitle = (id: string): string => i18n.t(groupMessageKey(id, 'title'));
 const groupNote = (id: string): string => i18n.t(groupMessageKey(id, 'note'));
 const groupEmpty = (id: string): string => i18n.t(groupMessageKey(id, 'empty'));
@@ -61,6 +74,44 @@ const groupEmpty = (id: string): string => i18n.t(groupMessageKey(id, 'empty'));
       / {{ total }} {{ i18n.t('hall.unit') }}
     </p>
 
+    <!-- 存档异常要让孩子/家长看得见：以前只有状态没有界面，星星白拿 -->
+    <div
+      v-if="progress.unsaved || progress.initError !== null"
+      data-testid="hall-save-warning"
+      class="mt-4 rounded-2xl border-2 border-[#c98a1c] bg-[#fffaf0] px-4 py-3 text-sm text-[#8a5f10]"
+    >
+      {{ progress.initError !== null ? i18n.t('progress.initFailed') : i18n.t('progress.unsaved') }}
+    </div>
+
+    <!-- 休息提醒：今天玩到 20 分钟才出现一次，点过就收起来 -->
+    <div
+      v-if="playtime.restDue"
+      data-testid="hall-rest"
+      class="mt-4 rounded-3xl border-2 border-[#2c6b64] bg-[#e6f1ef] p-4"
+    >
+      <p class="text-base font-bold text-[#2c6b64]">{{ i18n.t('rest.title') }}</p>
+      <p class="mt-1 text-sm text-[#3a2f26]">{{ i18n.t('rest.body') }}</p>
+      <button
+        type="button"
+        data-testid="hall-rest-ok"
+        class="mt-3 min-h-14 rounded-full bg-[#2c6b64] px-6 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
+        @click="playtime.dismissRest()"
+      >
+        {{ i18n.t('rest.ok') }}
+      </button>
+    </div>
+
+    <!-- 继续上次：53 张卡里找回同一张太费劲，给孩子一个一步到位的入口 -->
+    <button
+      v-if="lastPlayed"
+      type="button"
+      data-testid="hall-continue"
+      class="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-full border-2 border-[#2c6b64] bg-[#e6f1ef] px-5 py-3 text-base font-bold text-[#2c6b64] active:scale-95"
+      @click="navigate('/play/' + lastPlayed.id)"
+    >
+      {{ i18n.t('hall.continue', { title: lastPlayed.title }) }}
+    </button>
+
     <!-- 到期复习：只有真的到期了才出现，不然首页永远挂着一句废话 -->
     <div
       v-if="dueIds.length > 0"
@@ -73,7 +124,7 @@ const groupEmpty = (id: string): string => i18n.t(groupMessageKey(id, 'empty'));
       <button
         type="button"
         data-testid="hall-review-go"
-        class="min-h-12 shrink-0 rounded-full bg-[#2c6b64] px-5 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
+        class="min-h-14 shrink-0 rounded-full bg-[#2c6b64] px-5 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"
         @click="navigate('/review/' + dueIds[0])"
       >
         {{ i18n.t('hall.reviewGo') }}

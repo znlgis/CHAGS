@@ -8,7 +8,7 @@
     {
       "title": "The Best Dishes, Then Gone",
       "text": "Chen Ping set out his finest dishes — then had them carried away in front of the envoy.",
-      "narration": "The Records of the Grand Historian tell it this way: when an envoy from Xiang Yu came to the Han camp, Chen Ping had the finest food brought in. The moment he saw the man, he pretended to be startled: 'I thought this was Lord Fan's man — so it is Xiang Yu's!' The dishes were carried out again, and only plain rice was set down."
+      "narration": "An envoy from Xiang Yu came to the Han camp. Chen Ping had the finest food brought in. The moment he saw the man, he pretended to be startled: 'I thought this was Lord Fan's man — so it is Xiang Yu's!' The dishes were carried out again, and only plain rice was set down."
     },
     {
       "title": "What He Saw with His Own Eyes",
@@ -42,9 +42,9 @@
     {
       "question": "Why did Chen Ping have the best dishes carried away again?",
       "options": [
-        "So the envoy would see for himself the treatment 'Lord Fan' got",
-        "There was not enough food",
-        "He did not like that envoy"
+        "There was not enough food, so it was taken away",
+        "He simply did not like the envoy who had come to the camp that day",
+        "So the envoy would see for himself the treatment Lord Fan got"
       ],
       "answer": 0,
       "explanation": "He never said a word against Lord Fan; the whole trick was to let the envoy see it and start doubting for himself."
@@ -52,12 +52,21 @@
     {
       "question": "Your group's experiment failed and you want the teacher to know the equipment broke, not that you skipped it. What is better?",
       "options": [
-        "Run it once more in front of the teacher and let her see it for herself",
-        "Keep telling the teacher it was not your fault",
-        "Hide the broken equipment"
+        "Run it once more in front of the teacher and let her see",
+        "Keep telling the teacher again and again it was not your fault",
+        "Hide the broken equipment in another room"
       ],
       "answer": 0,
       "explanation": "The one time you let someone see it for themselves beats saying it ten times."
+    },
+    {
+      "question": "Your deskmate says he finished yesterday's homework long ago, but you are not sure. How do you find out?",
+      "options": [
+        "Ask him to explain a question and listen",
+        "Say he is boasting and start a quarrel with him",
+        "Secretly open his homework book and look through it"
+      ],
+      "explanation": "Let him explain it and you hear the truth for yourself — better than a quarrel."
     }
   ],
   "game": {

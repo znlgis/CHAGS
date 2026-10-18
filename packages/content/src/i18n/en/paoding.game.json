@@ -41,9 +41,9 @@
     {
       "question": "How long had Cook Ding used that knife?",
       "options": [
+        "A whole year",
         "Nineteen years",
-        "One year",
-        "Three days"
+        "Only three days"
       ],
       "answer": 0,
       "explanation": "Nineteen years and thousands of oxen — and the edge like new."
@@ -51,9 +51,9 @@
     {
       "question": "Why was his knife still like newly ground?",
       "options": [
-        "He followed the seams and never hacked",
-        "He was too weak to cut bone",
-        "He kept replacing it with new knives"
+        "He was far too weak to cut bone",
+        "He kept replacing the knife with new ones",
+        "He followed the seams and never hacked"
       ],
       "answer": 0,
       "explanation": "The spaces between joints are already there; follow them and the blade neither labours nor wears."
@@ -61,9 +61,9 @@
     {
       "question": "Your shoelace is in a tight knot. What do you do?",
       "options": [
-        "Yank hard until it breaks",
         "Look at how the knot is tied and pull the one end that frees it",
-        "Cut the lace with scissors"
+        "Yank and yank as hard as you possibly can until the lace snaps in two",
+        "Just take a pair of scissors and cut the lace in two"
       ],
       "answer": 1,
       "explanation": "Like carving the ox: find the seam first, and it takes far less force than pulling."

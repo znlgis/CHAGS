@@ -41,8 +41,8 @@
       "question": "What did Cao Cao do while they quarrelled across the river?",
       "options": [
         "He sat on the bank and waited; he did not cross",
-        "He crossed the river at once to break it up",
-        "He sent soldiers over to help"
+        "Crossed the river at once to pull the two of them apart",
+        "Sent a squad of soldiers over to help"
       ],
       "answer": 0,
       "explanation": "Cao Cao sat still on his own bank and waited for them to fall apart — and they scattered by themselves."
@@ -50,9 +50,9 @@
     {
       "question": "What does the Thirty-Six Stratagems say to do?",
       "options": [
-        "When their order breaks down in the open, wait quietly for them to turn on each other",
-        "Cross over and pull them apart first",
-        "Use the confusion to grab things"
+        "Cross over and pull the two sides apart first",
+        "When their order breaks down, wait quietly and then act",
+        "Use the confusion to run over and grab all of their things"
       ],
       "answer": 0,
       "explanation": "Their order breaks down in the open while you wait quietly — you do not rush to move."
@@ -60,9 +60,9 @@
     {
       "question": "Two classmates start quarrelling. When is the best time to step in?",
       "options": [
-        "After they have said their piece and cooled down",
         "Right away, standing between them",
-        "After they start fighting"
+        "After they have said their piece and cooled down",
+        "After they really start fighting and hitting each other"
       ],
       "answer": 0,
       "explanation": "If you step in at once, both of them will blame you — wait until they have finished and cooled down, then speak."

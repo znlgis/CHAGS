@@ -5,7 +5,7 @@
   "title": "偷梁换柱",
   "pinyin": "Tōu liáng huàn zhù",
   "dynasty": "秦",
-  "era": "秦 · 二世三年",
+  "era": "秦朝末年 · 约两千二百年前",
   "yearApprox": -207,
   "source": {
     "book": "《三十六计·并战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 25,
     "set": 5
-  }
+  },
+  "thinkingTag": "换关键处",
+  "transfer": "想改掉一个坏习惯，先换掉最关键的那一步。"
 }

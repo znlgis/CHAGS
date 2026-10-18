@@ -1,7 +1,7 @@
 {
   "title": "Cast a Brick to Attract Jade",
   "dynasty": "Tang",
-  "era": "Tang · Zhenyuan era",
+  "era": "Mid Tang · about 1,200 years ago",
   "source": {
     "book": "The Thirty-Six Stratagems, Attacking Stratagems",
     "chapter": "Cast a Brick to Attract Jade",
@@ -12,5 +12,7 @@
     "Give first",
     "Get back better",
     "Pick the right one"
-  ]
+  ],
+  "thinkingTag": "Offer",
+  "transfer": "Share half an idea and others will add to it."
 }

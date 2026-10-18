@@ -8,6 +8,9 @@ import type { ContentEntry, EntryDetail, EntrySummary } from './schema';
 export const SUMMARY_KEYS = [
   'id', 'group', 'kind', 'title', 'pinyin', 'dynasty', 'era', 'yearApprox', 'source', 'moral',
   'keywords', 'ageRange', 'stratagem',
+  // 2026-10-18 儿童向内容修订新增的两个摘要字段（schema.ts 已登记）：
+  // 漏在这里的话，content:check 会把英文补丁里的它们判成"原文里没有这个字段"
+  'transfer', 'thinkingTag',
 ] as const;
 
 export const DETAIL_KEYS = [

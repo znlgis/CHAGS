@@ -5,7 +5,7 @@
   "title": "瞒天过海",
   "pinyin": "Mán tiān guò hǎi",
   "dynasty": "唐",
-  "era": "唐·贞观十九年",
+  "era": "唐朝初期 · 约一千四百年前",
   "yearApprox": 645,
   "source": {
     "book": "《三十六计·胜战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 1,
     "set": 1
-  }
+  },
+  "thinkingTag": "不露声色",
+  "transfer": "准备一个惊喜时，先别急着说，悄悄把每一步做好。"
 }

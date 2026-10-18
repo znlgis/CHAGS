@@ -42,9 +42,9 @@
     {
       "question": "Who did Fan Ju advise King Zhao to befriend first?",
       "options": [
-        "The far states: Qi, Chu and Yan",
         "The near states: Han, Wei and Zhao",
-        "Nobody — just move first"
+        "The far states: Qi, Chu and Yan",
+        "Befriend nobody and strike first"
       ],
       "answer": 0,
       "explanation": "Befriend the far, attack the near: with the far states friendly, they will not step in to help the near ones."
@@ -52,9 +52,9 @@
     {
       "question": "Why does the Thirty-Six Stratagems say to take profit from the near?",
       "options": [
-        "Ground taken nearby joins up with yours and can be held",
-        "Things are cheaper nearby",
-        "Nobody lives far away"
+        "Ground taken nearby joins up and can be held",
+        "Things are cheaper to buy nearby",
+        "The far places are empty and nobody lives there"
       ],
       "answer": 0,
       "explanation": "Profit is taken from the near and harm is kept far off — reach across someone else's land to the far side, and even what you take cannot be held."
@@ -62,9 +62,9 @@
     {
       "question": "Two things to do this weekend: a dictation test due tomorrow, and a poster due next week. Which first?",
       "options": [
-        "The dictation due tomorrow",
         "The poster you enjoy",
-        "Both at the same time"
+        "The dictation due tomorrow",
+        "Both at once, a little of each"
       ],
       "answer": 0,
       "explanation": "Do the nearest and most pressing thing first — just like befriend the far, attack the near."

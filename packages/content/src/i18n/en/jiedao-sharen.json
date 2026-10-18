@@ -1,7 +1,7 @@
 {
   "title": "A Borrowed Sword",
   "dynasty": "Spring and Autumn",
-  "era": "Spring and Autumn · Duke Ai of Lu",
+  "era": "Late Spring and Autumn · about 2,500 years ago",
   "source": {
     "book": "Records of the Grand Historian, Biographies of the Disciples of Confucius",
     "quote": "So it was that one journey by Zigong preserved Lu, threw Qi into disorder, broke Wu, strengthened Jin, and made Yue master of the states."
@@ -11,5 +11,7 @@
     "Borrowed strength",
     "A lever",
     "Asking for help"
-  ]
+  ],
+  "thinkingTag": "Borrow",
+  "transfer": "Ask a friend to help with heavy things."
 }

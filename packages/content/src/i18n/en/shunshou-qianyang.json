@@ -1,7 +1,7 @@
 {
   "title": "Lead the Sheep Along",
   "dynasty": "Tang",
-  "era": "Tang · Yuanhe, year 12",
+  "era": "Mid Tang · about 1,200 years ago",
   "source": {
     "book": "The Thirty-Six Stratagems, Enemy Stratagems",
     "chapter": "Lead the Stray Sheep Along",
@@ -12,5 +12,7 @@
     "Along the way",
     "A small chance",
     "Do not miss the errand"
-  ]
+  ],
+  "thinkingTag": "Grab",
+  "transfer": "On your way, do one small helpful thing."
 }

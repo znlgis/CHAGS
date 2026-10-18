@@ -41,9 +41,9 @@
     {
       "question": "What was hiding behind Li Yifu's smile?",
       "options": [
-        "His own secret plan",
-        "A present",
-        "A joke"
+        "A present he had ready",
+        "A nice joke",
+        "His own secret plan"
       ],
       "answer": 0,
       "explanation": "His kind words only made people relax — his plan was hidden behind them, so you had to watch what his body was doing."
@@ -53,10 +53,19 @@
       "options": [
         "His hands, not his words",
         "Listen for more praise",
-        "Hand the toy over"
+        "Hand the toy straight to him"
       ],
       "answer": 0,
       "explanation": "Praise is easy to say; where the hand is reaching shows what he really means to do. Watch the hand first, then decide."
+    },
+    {
+      "question": "A new classmate keeps praising your snacks and reaches into your schoolbag. What do you do first?",
+      "options": [
+        "He praised you so kindly, so let him look through it",
+        "Hold your bag close and ask what he is doing",
+        "Share all of your snacks with him right away"
+      ],
+      "explanation": "Set the kind words aside and watch what the hands are doing."
     }
   ],
   "game": {

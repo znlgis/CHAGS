@@ -40,9 +40,9 @@
     {
       "question": "Why did the drums in Bi Zaiyu's camp beat all night?",
       "options": [
-        "Goats hung above them kicked them as they struggled",
-        "Soldiers took turns beating them all night",
-        "The wind made them sound by themselves"
+        "Goats hung above the drums kicked them as they struggled",
+        "Soldiers took turns beating the drums all night long without a stop",
+        "The night wind made the drums sound by themselves"
       ],
       "answer": 0,
       "explanation": "With goats hung above the drums, every struggle kicked a drum — and the other side heard a camp that was still full of men."
@@ -51,11 +51,20 @@
       "question": "You want to move the models on your desk to the next room tonight without your family seeing that anything moved. What is better?",
       "options": [
         "Leave a few things in place, arranged just as they were",
-        "Grab it all in one go and run",
-        "Turn on the big light and carry them one by one"
+        "Grab it all in one go and then run away as fast as you can",
+        "Turn on the big light and carry things out one by one"
       ],
       "answer": 0,
       "explanation": "If the shape stays the same, nobody looks twice — that is the golden cicada shedding its shell."
+    },
+    {
+      "question": "You want to leave before Mum gets up without her noticing you slept in. What is better?",
+      "options": [
+        "Tiptoe out of the house and run for the door",
+        "Make the bed and leave things as they were",
+        "Shut your door tight and hide in your room"
+      ],
+      "explanation": "Leave the room looking as it always does. You are gone, but the traces stay put."
     }
   ],
   "game": {

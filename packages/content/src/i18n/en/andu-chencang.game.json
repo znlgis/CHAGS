@@ -7,7 +7,7 @@
     {
       "title": "Hammering on the Plank Road",
       "text": "Out in the open, the soldiers hammered at the plank road, so slowly that people laughed.",
-      "narration": "In the first year of Han, Liu Bang and his army were shut out south of the Qin mountains. He sent men to rebuild the plank road in plain sight — board by board, so slowly that the guards on the other side laughed."
+      "narration": "Long, long ago, Liu Bang and his army were stopped south of the Qin mountains. Then he had his men rebuild the plank road where everyone could see — board by board, so slowly that the guards across the pass laughed."
     },
     {
       "title": "The Path at Night",
@@ -41,9 +41,9 @@
     {
       "question": "Which road did the main army really take?",
       "options": [
-        "The narrow back path over the mountain to Chencang",
-        "The plank road",
-        "The river"
+        "The wide plank road through the pass",
+        "The river route on a boat, going with the current",
+        "The small path over the mountain to Chencang"
       ],
       "answer": 0,
       "explanation": "The plank road was built for the other side to watch. The real army took the back path."
@@ -51,12 +51,21 @@
     {
       "question": "You want to finish your homework and practise the piano. How do you arrange it?",
       "options": [
-        "Do one of them out in the open and push the other along in the free moments",
-        "Put both off until tomorrow",
-        "Only practise the piano and skip the homework"
+        "Put both of them off until tomorrow and then do them all together",
+        "Do one out in the open and push the other in spare moments",
+        "Practise the piano only and leave the homework"
       ],
       "answer": 0,
       "explanation": "Hold up the one everyone can see, and push the other along in the free moments. Both get done."
+    },
+    {
+      "question": "What were Liu Bang's soldiers doing where everyone could see?",
+      "options": [
+        "Slip quietly into Chencang by a back path",
+        "Grow crops below the Qin mountains",
+        "Rebuild the plank road in plain sight"
+      ],
+      "explanation": "The plank road was built for the other side to see. The real army took the back path at night."
     }
   ],
   "game": {

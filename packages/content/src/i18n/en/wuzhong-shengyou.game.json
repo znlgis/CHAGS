@@ -7,7 +7,7 @@
     {
       "title": "Fog on the River",
       "text": "Fog on the river, and the boat was empty.",
-      "narration": "In the year 208 a thick fog came down on the Yangtze. The boat lay still in the middle of the river with nothing on board — not one person in sight."
+      "narration": "Long, long ago, a thick fog came down on the Yangtze. The boats lay still in the middle of the river with nothing on board — not one person in sight."
     },
     {
       "title": "Straw Men in the Fog",
@@ -52,11 +52,20 @@
       "question": "You want an empty classroom to look as if someone is inside. What do you do?",
       "options": [
         "Set a school bag and a water bottle on the seats",
-        "Turn off the lights",
-        "Shout from the doorway"
+        "Turn off every light in the classroom",
+        "Shout from the doorway so that people can hear you"
       ],
       "answer": 0,
       "explanation": "A bag and a bottle on the seats make the room look occupied from the window. Put the things out first."
+    },
+    {
+      "question": "Where did the arrows from the far bank land in the fog?",
+      "options": [
+        "They all fell into the river",
+        "They stuck in the boat's deck",
+        "They stuck in the straw men"
+      ],
+      "explanation": "In the fog they could not see; every arrow landed in the straw men. No real soldier was aboard."
     }
   ],
   "game": {

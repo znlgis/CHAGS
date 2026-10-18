@@ -5,7 +5,7 @@
   "title": "隔岸观火",
   "pinyin": "Gé àn guān huǒ",
   "dynasty": "东汉末",
-  "era": "东汉末·建安十年",
+  "era": "东汉末年 · 约一千八百年前",
   "yearApprox": 205,
   "source": {
     "book": "《三十六计·敌战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 9,
     "set": 2
-  }
+  },
+  "thinkingTag": "先别插手",
+  "transfer": "两个同学吵架时，先别急着站队，等他们自己说清楚。"
 }

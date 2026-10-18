@@ -12,7 +12,7 @@
     {
       "title": "A Road for the Water",
       "text": "Gun blocked the water with earth and failed. Yu said: give the water a road.",
-      "narration": "Yu's father Gun tried to block the flood with earth. The banks grew higher, but after nine years the water still won. Yu said: water runs downhill, so let us give it a road. Instead of blocking it, he opened channels. The Records of the Grand Historian say he was away thirteen years, and passed his own door three times without going in."
+      "narration": "Yu's father Gun tried to stop the flood with earth. The banks grew higher, but after nine years the water still won. Yu said: water runs downhill — so give it a road. Instead of blocking it, he opened channels. He was away thirteen years, and three times he passed his own door without going in."
     }
   ],
   "keyMoment": {
@@ -42,16 +42,16 @@
       "question": "Why did Gun's earth banks fail for nine years?",
       "options": [
         "Water can be blocked in one place, but not everywhere",
-        "His banks were not high enough",
-        "He did not ask anyone for help"
+        "His banks were not tall enough",
+        "He did not ask anyone at all to come along and help him out"
       ],
       "explanation": "The water came round and over. Blocking alone could not stop it."
     },
     {
       "question": "What did Yu do to tame the flood?",
       "options": [
+        "He built the bank higher and higher, up to the sky",
         "He opened channels and led the water to the sea",
-        "He built the bank up to the sky",
         "He kept the water standing in the fields"
       ],
       "explanation": "He did not block it; he opened a way and let the water run downhill."

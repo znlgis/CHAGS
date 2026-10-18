@@ -12,7 +12,7 @@
     {
       "title": "A Dust Cloud on Loan",
       "text": "The dust in the woods made the other side think an army waited behind — they stopped.",
-      "narration": "The riders dragged the branches back and forth and a great cloud of dust rose in the woods. Far off, Cao’s army saw that dust, and saw the lone man standing steady at the bridge head, and took it for a hidden army. So they halted across the river and came no closer. The bridge head still held one man — but the show was borrowed from the woods and the dust."
+      "narration": "The riders dragged branches back and forth, and a great cloud of dust rose in the woods. Cao's army saw the dust and the lone man standing at the bridge head. They thought a hidden army waited, and stopped across the river. One man held the bridge — but the show came from the woods and the dust."
     }
   ],
   "keyMoment": {
@@ -42,9 +42,9 @@
     {
       "question": "Why did Zhang Fei have branches tied to the horses’ tails?",
       "options": [
-        "Dragging them raised dust, so the other side thought an army waited behind",
-        "To sweep the woods clean",
-        "To find some grass for the horses"
+        "Sweep the floor of the whole woods completely clean",
+        "Dragging branches raised a great cloud of dust",
+        "Find some tasty grass for the horses"
       ],
       "answer": 0,
       "explanation": "Once the dust rose, the far bank believed an army was hidden there — that show was borrowed."
@@ -52,9 +52,9 @@
     {
       "question": "Why did Cao’s army stop across the river?",
       "options": [
-        "They saw the dust, and the steady man at the bridge, and thought an army waited",
         "There was no bridge, so they could not cross",
-        "It was dark and they could not see the road"
+        "They saw the dust and thought an army waited behind",
+        "It was far too dark for them to see the road that lay ahead"
       ],
       "answer": 0,
       "explanation": "What they saw was not a real army, but the show borrowed from the woods and the dust."
@@ -62,8 +62,8 @@
     {
       "question": "Your class sings in a choir, but fewer of you go on stage than the other classes. What is the steadiest plan?",
       "options": [
-        "Get the clothes, props and line-up neat, so you stand together just as well",
-        "Fewer of us — so do not go on stage at all",
+        "Get clothes and props neat, and stand in a line",
+        "So few of us — just do not go on stage",
         "Write down the names of classmates who did not come"
       ],
       "answer": 0,

@@ -1,7 +1,7 @@
 {
   "title": "Secretly March to Chencang",
   "dynasty": "End of Qin",
-  "era": "End of Qin · Han, year one",
+  "era": "End of Qin · about 2,200 years ago",
   "source": {
     "book": "The Thirty-Six Stratagems, Enemy Stratagems",
     "chapter": "Secretly March to Chencang",
@@ -12,5 +12,7 @@
     "Two lines",
     "Hold it up",
     "Walk quietly"
-  ]
+  ],
+  "thinkingTag": "Double",
+  "transfer": "Do easy work while quietly fixing hard bits."
 }

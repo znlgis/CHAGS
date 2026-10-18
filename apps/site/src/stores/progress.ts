@@ -77,8 +77,13 @@ export const useProgress = defineStore('progress', () => {
     await persist(() => progressManager.recordReview(entryId, grade));
   }
 
+  /** 家长页的「清除本机存档」（界面上有长按确认，防孩子误触） */
+  async function clear(): Promise<void> {
+    await persist(() => progressManager.clear());
+  }
+
   return {
     save, ready, unsaved, initError, init, collected, starsFor, hasCard, reviewOf, reviewDue,
-    recordCompletion, recordReview,
+    recordCompletion, recordReview, clear,
   };
 });

@@ -5,7 +5,7 @@
   "title": "树上开花",
   "pinyin": "Shù shàng kāi huā",
   "dynasty": "东汉",
-  "era": "东汉 · 建安十三年",
+  "era": "东汉末年 · 约一千八百年前",
   "yearApprox": 208,
   "source": {
     "book": "《三十六计·并战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 29,
     "set": 5
-  }
+  },
+  "thinkingTag": "借势壮胆",
+  "transfer": "上台前拉上小伙伴一起，胆子会大很多。"
 }

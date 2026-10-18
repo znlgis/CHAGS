@@ -5,7 +5,7 @@
   "title": "围魏救赵",
   "pinyin": "Wéi wèi jiù zhào",
   "dynasty": "战国",
-  "era": "战国·周显王十六年",
+  "era": "战国中期 · 约两千三百年前",
   "yearApprox": -354,
   "source": {
     "book": "《史记·孙子吴起列传》",
@@ -24,5 +24,7 @@
   "stratagem": {
     "number": 2,
     "set": 1
-  }
+  },
+  "thinkingTag": "换地方",
+  "transfer": "拼图卡住时，先拼旁边容易的那几块，回头就顺了。"
 }

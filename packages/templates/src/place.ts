@@ -45,6 +45,8 @@ export function createPlaceScene(ctx: GameContext, cfg: PlaceConfig): Phaser.Typ
     private slotGfx = new Map<string, Phaser.GameObjects.Graphics>();
     private hintRing: Phaser.GameObjects.Graphics | null = null;
     private finished = false;
+    /** 上一次操作的时间：卡住 9 秒给孩子一句提示（与其他模板同一口径） */
+    private lastActionAt = 0;
 
     constructor() {
       super(SCENE_KEYS.place, ctx);
@@ -62,6 +64,19 @@ export function createPlaceScene(ctx: GameContext, cfg: PlaceConfig): Phaser.Typ
       this.drawSlots();
       this.drawOrbs();
       this.fadeIn();
+      this.lastActionAt = this.ctx.services.now();
+
+      // 卡住兜底：归位玩法靠"拿起光球"才会发光，等满 9 秒给一句提示
+      this.time.addEvent({
+        delay: 1000,
+        loop: true,
+        callback: () => {
+          if (this.finished) return;
+          if (this.ctx.services.now() - this.lastActionAt < 9000) return;
+          this.lastActionAt = this.ctx.services.now();
+          this.showHint(this.tr('place.hint'), 2600, 268);
+        },
+      });
 
       if (this.autoplay) {
         cfg.level.orbs.forEach((orb, i) => {
@@ -139,10 +154,14 @@ export function createPlaceScene(ctx: GameContext, cfg: PlaceConfig): Phaser.Typ
           obj: node,
           radius: 92,
           onGrab: () => {
+            this.lastActionAt = this.ctx.services.now();
             node.setDepth(80);
             this.showHintAt(slotFor(cfg.level, orb));
           },
-          onDrop: () => this.onDrop(orb, node),
+          onDrop: () => {
+            this.lastActionAt = this.ctx.services.now();
+            this.onDrop(orb, node);
+          },
         });
       }
     }

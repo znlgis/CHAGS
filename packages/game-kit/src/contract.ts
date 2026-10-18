@@ -38,7 +38,8 @@ export interface GameEventMap {
     durationMs: number;
   };
   'card:unlocked': { entryId: string; cardId: string };
-  'session:exit': { reason: 'complete' | 'quit' | 'background'; progress: number };
+  /** replay = 孩子点了「再来一次」：外壳会原地重开这一局，而不是回游戏馆 */
+  'session:exit': { reason: 'complete' | 'quit' | 'background' | 'replay'; progress: number };
 }
 
 export type SfxKey = 'tap' | 'correct' | 'wrong' | 'splash' | 'unlock' | 'complete';
@@ -157,8 +158,15 @@ export interface GameContext {
   locale: Locale;
   reducedMotion: boolean;
   debug?: DebugOptions;
+  /**
+   * 这条内容之前通关过没有（外壳从存档里读）。
+   * 故事页用它放开「跳过故事」：**首次必须听完**，二周目才允许跳过 ——
+   * 这样既守住"故事是正片"，又不让愿意再玩的孩子每次都等 24–48 秒。
+   */
+  completedBefore: boolean;
   emit<K extends keyof GameEventMap>(type: K, payload: GameEventMap[K]): void;
-  requestExit(): void;
+  /** replay：原地再开一局（典故卡上的「再来一次」）；不传 = 正常退出回游戏馆 */
+  requestExit(reason?: 'quit' | 'replay'): void;
 }
 
 export interface GameModule {

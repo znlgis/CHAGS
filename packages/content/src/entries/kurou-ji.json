@@ -5,7 +5,7 @@
   "title": "苦肉计",
   "pinyin": "Kǔ ròu jì",
   "dynasty": "东汉",
-  "era": "东汉 · 建安十三年",
+  "era": "东汉末年 · 约一千八百年前",
   "yearApprox": 208,
   "source": {
     "book": "《三十六计·败战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 34,
     "set": 6
-  }
+  },
+  "thinkingTag": "拿出真心",
+  "transfer": "想表示真心，用行动帮一次忙，比说十句都管用。"
 }

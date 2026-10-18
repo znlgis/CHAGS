@@ -5,7 +5,7 @@
   "title": "借刀杀人",
   "pinyin": "Jiè dāo shā rén",
   "dynasty": "春秋",
-  "era": "春秋·鲁哀公年间",
+  "era": "春秋末期 · 约两千五百年前",
   "yearApprox": -484,
   "source": {
     "book": "《史记·仲尼弟子列传》",
@@ -24,5 +24,7 @@
   "stratagem": {
     "number": 3,
     "set": 1
-  }
+  },
+  "thinkingTag": "借力",
+  "transfer": "搬不动的东西，可以请别人搭把手，一起搬。"
 }

@@ -41,9 +41,9 @@
     {
       "question": "How many states' strength did Zigong borrow on that one journey?",
       "options": [
-        "One",
-        "Four",
-        "Ten"
+        "Two states",
+        "As many as ten states",
+        "Four states"
       ],
       "answer": 1,
       "explanation": "The armies of Qi, Wu, Jin and Yue held each other in check — after one journey, Lu was safe."
@@ -51,12 +51,21 @@
     {
       "question": "A stone is too heavy for one person to move. What is the best plan?",
       "options": [
-        "Find a strong pole and a stone to rest it on, and pry it up",
-        "Bite your teeth and push once more",
-        "Dig away a little of the soil beside it"
+        "Find a pole, rest it on a stone, and pry the rock up",
+        "Bite your teeth and push once more on your own",
+        "Dig away the soil beside the rock bit by bit with a spade"
       ],
       "answer": 0,
       "explanation": "A pole resting on a stone is a lever — you are borrowing its strength, and it is far easier than pushing alone."
+    },
+    {
+      "question": "You want to move a big table to the wall, but you cannot push it alone. What is better?",
+      "options": [
+        "Push once more on your own with all your strength",
+        "Ask Dad to take the other end with you",
+        "Sit by the table and wait for someone to help"
+      ],
+      "explanation": "Too heavy to move alone: asking for another pair of hands is a skill, not a shame."
     }
   ],
   "game": {

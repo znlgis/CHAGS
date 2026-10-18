@@ -1,7 +1,7 @@
 {
   "title": "Pull the Firewood from Under the Pot",
   "dynasty": "Eastern Han",
-  "era": "Eastern Han · Jian'an, year 5",
+  "era": "Late Eastern Han · about 1,800 years ago",
   "source": {
     "book": "The Thirty-Six Stratagems, Confusion Stratagems",
     "chapter": "Pull the Firewood from Under the Pot",
@@ -12,5 +12,7 @@
     "Fix it at the root",
     "Do not push head-on",
     "Take the base log"
-  ]
+  ],
+  "thinkingTag": "Root",
+  "transfer": "Find what really causes the mess, then fix that."
 }

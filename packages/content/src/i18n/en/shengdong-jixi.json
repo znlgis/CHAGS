@@ -1,7 +1,7 @@
 {
   "title": "Make a Noise in the East, Attack in the West",
   "dynasty": "Eastern Han",
-  "era": "Eastern Han · Emperor Zhang",
+  "era": "Early Eastern Han · about 1,900 years ago",
   "source": {
     "book": "The Thirty-Six Stratagems · Winning Stratagems",
     "chapter": "Make a Noise in the East, Attack in the West",
@@ -12,5 +12,7 @@
     "Look over there",
     "Go the other way",
     "A noise in the east"
-  ]
+  ],
+  "thinkingTag": "Switch",
+  "transfer": "If a friend won't share, offer another toy."
 }

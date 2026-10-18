@@ -37,9 +37,9 @@
     {
       "question": "Who was Jingwei before?",
       "options": [
+        "A sea bird that could fly",
         "Nüwa, the Yan Emperor's youngest daughter",
-        "A sea bird",
-        "A little fish"
+        "A little fish swimming in the Eastern Sea, far away"
       ],
       "explanation": "Nüwa met her end by the Eastern Sea and became a little bird called Jingwei."
     },
@@ -47,17 +47,17 @@
       "question": "What does Jingwei do every day?",
       "options": [
         "Carries stones and twigs and drops them into the sea",
-        "Plays by the shore",
-        "Looks for the way home"
+        "Plays in the water by the shore all day",
+        "Keeps looking for the way home again and again, all day long"
       ],
       "explanation": "Trip after trip, she carries wood and stone to fill the Eastern Sea."
     },
     {
       "question": "Which of these is most like Jingwei filling the sea?",
       "options": [
-        "Practising ten characters a day until your writing is good",
-        "Writing a thousand characters in one day",
-        "Not practising today"
+        "Writing a thousand characters in one go",
+        "Not writing any of it today at all; maybe it can wait until tomorrow",
+        "Practising ten characters a day until your writing is good"
       ],
       "explanation": "A little at a time looks slow, but it keeps moving forward."
     }

@@ -206,7 +206,7 @@ describe('连环计 · 故事与复习', () => {
     expect(entry.yearApprox).toBe(208);
     expect(entry.figures).toContain('曹操');
     expect(entry.figures).toContain('周瑜');
-    expect(entry.ageRange).toEqual([8, 12]);
+    expect(entry.ageRange).toEqual([9, 12]);
     expect(entry.source.book).toBe('《三十六计·败战计》');
     expect(entry.source.chapter).toContain('三国演义');
     expect(entry.source.chapter).toContain('演义');

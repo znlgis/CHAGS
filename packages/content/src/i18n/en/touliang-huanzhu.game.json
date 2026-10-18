@@ -7,7 +7,7 @@
     {
       "title": "The Deer in the Great Hall",
       "text": "Zhao Gao led in a deer and told the whole court: this is a horse.",
-      "narration": "The Records of the Grand Historian tell it this way: Zhao Gao wanted to see who would say what he said. He led a deer into the hall and told Qin Er Shi and the whole court that it was a horse. Some said horse, some looked down and said nothing, and some honestly said deer."
+      "narration": "Zhao Gao wanted to see who would say what he said. He led a deer into the hall and told the emperor and the whole court that it was a horse. Some said horse. Some looked down and said nothing. And some honestly said deer."
     },
     {
       "title": "Swap the Post That Matters",
@@ -41,9 +41,9 @@
     {
       "question": "Why did Zhao Gao call the deer a horse in front of the court?",
       "options": [
-        "To see who would say what he said",
-        "He really mistook it",
-        "He wanted to give the deer to the emperor"
+        "He really mistook the deer for a horse",
+        "He wanted to give the deer to the emperor",
+        "To see who would say what he said"
       ],
       "answer": 0,
       "explanation": "What he wanted was not the words but the answer: who would stand with him."
@@ -51,12 +51,21 @@
     {
       "question": "Your group built a paper bridge and must swap the piece that carries the most load, without the teacher seeing that the bridge changed. What is better?",
       "options": [
-        "Find an identical piece and swap that one while nobody is looking",
-        "Take every paper stick apart and rebuild the bridge",
-        "Announce to the class that you are changing the material"
+        "Take every paper stick apart and rebuild the whole bridge",
+        "Announce to the whole class that the material changes",
+        "Find an identical piece and swap it while nobody looks"
       ],
       "answer": 0,
       "explanation": "Swap the one piece that matters and the bridge still looks like the same bridge — that is replacing the beams."
+    },
+    {
+      "question": "A book is missing from the class shelf and you want to replace it with an identical one without anyone noticing. What is better?",
+      "options": [
+        "Take every book off the shelf and sort them all again",
+        "Announce to the class that the book is found",
+        "Find an identical copy and slip it back in place"
+      ],
+      "explanation": "Swap the one book and leave the rest in place — nothing looks changed."
     }
   ],
   "game": {

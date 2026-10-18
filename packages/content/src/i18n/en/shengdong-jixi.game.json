@@ -40,9 +40,9 @@
     {
       "question": "Ban Chao said he was going east. Where did the enemy move their soldiers?",
       "options": [
-        "To the east",
         "To the west",
-        "They stayed where they were"
+        "They stayed where they were",
+        "To the east"
       ],
       "answer": 0,
       "explanation": "He put all the bustle in the east, so the enemy moved every soldier east to watch."
@@ -50,12 +50,21 @@
     {
       "question": "You want to put a present on the table without your little brother seeing. What do you do?",
       "options": [
+        "Call out loudly that he must not look this way",
         "Put his favourite toy on the other side of the room",
-        "Tell him not to look",
-        "Turn off the light"
+        "Reach over and switch off the light in the whole room"
       ],
       "answer": 0,
       "explanation": "Draw his eyes to the other side and your own job gets done quietly — that is making a noise in the east."
+    },
+    {
+      "question": "What did Ban Chao have his men say everywhere?",
+      "options": [
+        "That we are going west",
+        "That we are going nowhere at all",
+        "That we are going east"
+      ],
+      "explanation": "Word went out, and the enemy moved their troops east — while he went west."
     }
   ],
   "game": {

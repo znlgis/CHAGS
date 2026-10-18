@@ -73,6 +73,8 @@ export function defineGame(definition: GameDefinition): GameModule {
             keywords: ctx.content.keywords,
             source: ctx.content.source,
             session,
+            transfer: ctx.content.transfer,
+            thinkingTag: ctx.content.thinkingTag,
           }),
         ],
       });

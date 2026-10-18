@@ -87,7 +87,7 @@ describe('欲擒故纵 · 关卡数据', () => {
     expect(entry.stratagem).toEqual({ number: 16, set: 3 });
     expect(entry.yearApprox).toBe(225);
     expect(entry.figures).toEqual(['诸葛亮', '孟获']);
-    expect(entry.ageRange).toEqual([9, 12]);
+    expect(entry.ageRange).toEqual([8, 12]);
     expect(entry.source.book).toContain('三十六计');
     expect(entry.source.chapter).toBe('欲擒故纵');
     expect(entry.source.quote).toContain('逼则反兵');

@@ -35,10 +35,22 @@ pnpm dist:apk       # Android APK (sideload)
 > `pnpm keystore` only when you want future builds to install straight over the old one
 > (keeping saves) and to configure the four GitHub Secrets.
 
-Handy debug links:
+Handy debug links (**only active on the dev server and in automated browsers** — a shared link will not trigger them):
 
 - `/?autoplay=1#/play/caochong-elephant` — play the whole game automatically (used for headless verification)
 - `/?lang=en` — force English
+
+## For parents
+
+- **No network, no ads, no purchases, no account, no social features or leaderboards.** Your child's progress
+  lives only on this device and is removed when the app is uninstalled.
+- **A 20-minute rest reminder** appears once a day in the hall after 20 minutes of play.
+- **Sound can be turned off anywhere** — top-right in the hall, top-right inside a game, and on the parent page;
+  the choice is remembered.
+- **Parent page**: **hold the hall title for 3 seconds**. It shows what was played this week, the sound toggle,
+  "clear progress on this device" (hold 3 seconds to confirm) and the version number.
+- **Leaving a game is always possible**: the back button in the top-left asks "Go back now?" first, so an
+  accidental tap will not end a round.
 
 ## Groups: two today, more later
 
@@ -93,7 +105,7 @@ The same file-level checklist lives in [docs/三十六计方案.md](docs/三十�
 **Seventeen stories plus all thirty-six stratagems (all six volumes)** are playable. `pnpm verify` is green
 (typecheck, lint, unit tests, content check, build, size; the unit-test count is whatever `pnpm test`
 prints). Every game has a headless playthrough in the end-to-end suite (`?autoplay=1`), and the stories and
-stratagems together have **24 real-pointer cases** tagged `@real` — the release gate runs exactly that subset.
+stratagems together have **30 real-pointer / child-experience cases** tagged `@real` — the release gate runs that subset.
 
 The shell stays small: no Phaser, and no story or level-script content either — **54.1 KB gzip**
 (measured 2026-10-18). Entering one game costs **≈226 KB gzip** in total: the trimmed Phaser chunk

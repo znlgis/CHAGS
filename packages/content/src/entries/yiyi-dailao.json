@@ -3,7 +3,7 @@
   "group": "stratagem",
   "kind": "strategy",
   "title": "以逸待劳",
-  "pinyin": "yǐ yì dài láo",
+  "pinyin": "Yǐ yì dài láo",
   "dynasty": "春秋",
   "era": "春秋·鲁",
   "yearApprox": -684,
@@ -24,5 +24,7 @@
   "stratagem": {
     "number": 4,
     "set": 1
-  }
+  },
+  "thinkingTag": "攒足力气",
+  "transfer": "跑步比赛前先休息好，等对手喘气了再冲刺。"
 }

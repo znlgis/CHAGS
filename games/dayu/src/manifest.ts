@@ -7,5 +7,5 @@ export const manifest: GameManifest = {
   version: '0.1.0',
   template: 'trace',
   designSize: { width: DESIGN.width, height: DESIGN.height },
-  ageRange: [7, 10],
+  ageRange: [8, 11],
 };

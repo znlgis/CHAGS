@@ -12,7 +12,7 @@
     {
       "title": "The Willing One",
       "text": "At the Wei River he fished with a straight hook, no bait, three feet above the water.",
-      "narration": "He fished in the Wei River. Legend says his hook was straight, with no bait, and it hung three feet above the water. People laughed at him, and he said: “The willing one will come.” Later storytellers turned it into the saying “Grand Duke Jiang fishes — the willing one takes the hook.”"
+      "narration": "He fished in the Wei River. People say his hook was straight, with no bait, and it hung three feet above the water. People laughed at him. He said: 'The willing one will come.' That is where the old saying comes from: the Grand Duke fishes, and the willing one takes the hook."
     }
   ],
   "keyMoment": {
@@ -41,8 +41,8 @@
     {
       "question": "How did Jiang Ziya fish in the Wei River?",
       "options": [
+        "With a bent hook and some tasty bait",
         "With a straight hook and no bait",
-        "With a bent hook and tasty bait",
         "With a big net instead of a rod"
       ],
       "explanation": "Legend says his hook was straight, with no bait, hanging three feet above the water — he was not fishing for fish."
@@ -50,9 +50,9 @@
     {
       "question": "In “the willing one takes the hook”, who is the willing one?",
       "options": [
-        "Someone who comes of his own accord",
-        "A fish that wants to bite",
-        "A customer who wants to buy fish"
+        "A fish that really wants to bite the hook",
+        "A customer who wants to buy fish",
+        "Someone who comes of his own accord"
       ],
       "explanation": "He was waiting for someone who would come by choice — and in the end King Wen came himself."
     },
@@ -60,7 +60,7 @@
       "question": "You want a big fish, but small fish keep biting. What do you do?",
       "options": [
         "Let them go and keep waiting for the big one",
-        "Catch a basket of small fish first",
+        "Catch a whole basket of small fish first of all",
         "Keep every small fish, let none go"
       ],
       "explanation": "The small fish were not what he wanted. He did not change his mind for them, and so he met the one worth waiting for."

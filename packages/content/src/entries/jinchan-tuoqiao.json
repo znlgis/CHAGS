@@ -5,7 +5,7 @@
   "title": "金蝉脱壳",
   "pinyin": "Jīn chán tuō qiào",
   "dynasty": "南宋",
-  "era": "南宋 · 开禧北伐",
+  "era": "南宋时期 · 约八百年前",
   "yearApprox": 1206,
   "source": {
     "book": "《三十六计·混战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 21,
     "set": 4
-  }
+  },
+  "thinkingTag": "留个替身",
+  "transfer": "玩游戏被追时，先留一个假方向再跑。"
 }

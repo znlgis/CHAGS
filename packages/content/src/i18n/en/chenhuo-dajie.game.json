@@ -41,9 +41,9 @@
     {
       "question": "What did Yue wait for before it moved?",
       "options": [
+        "Wu had mended its city gates and made them strong",
         "Wu's best troops had gone north to a meeting",
-        "Wu had mended its city gates",
-        "A heavy rain had fallen"
+        "A very heavy rain had fallen"
       ],
       "answer": 0,
       "explanation": "Wu's best troops had marched north, and the city was nearly empty — that was the window."
@@ -52,7 +52,7 @@
       "question": "What does the Thirty-Six Stratagems say to do when the fire burns?",
       "options": [
         "Take the advantage the moment offers",
-        "Attack head-on with your main force",
+        "Charge straight at them head-on with everything",
         "Wait until the other side is ready"
       ],
       "answer": 0,
@@ -61,9 +61,9 @@
     {
       "question": "You want to finish your building blocks in peace. When is the best time?",
       "options": [
-        "When your little brother is busy with something else",
         "When your little brother sits beside you watching",
-        "When your little brother has just woken up"
+        "When your little brother is busy with something else",
+        "When your little brother has just woken up and is dozing"
       ],
       "answer": 0,
       "explanation": "When his attention is somewhere else — that is your window."

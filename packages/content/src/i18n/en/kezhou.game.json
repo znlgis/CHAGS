@@ -40,9 +40,9 @@
     {
       "question": "Where did he carve the mark after the sword fell?",
       "options": [
-        "On the side of the boat",
-        "On a tree on the bank",
-        "On the surface of the water"
+        "On a tree by the bank",
+        "On the face of the water",
+        "On the side of the boat"
       ],
       "answer": 0,
       "explanation": "He carved it on the boat — but the boat moves, and the mark went with it."
@@ -50,9 +50,9 @@
     {
       "question": "Why did he find no sword where he dived?",
       "options": [
-        "The boat had drifted away, and the mark drifted with it",
-        "Someone had picked the sword up",
-        "The water was too deep"
+        "Someone passing by picked the sword up",
+        "The water was far too deep for him to dive down into",
+        "The boat drifted away, and the mark drifted too"
       ],
       "answer": 0,
       "explanation": "The boat drifted downstream while the sword stayed put — the mark no longer pointed at the sword."
@@ -60,9 +60,9 @@
     {
       "question": "Which way of remembering the road home can be trusted?",
       "options": [
-        "Follow the car in front",
-        "Remember: straight from the school gate, turn right at the second crossing",
-        "Remember: today the sun is on the left"
+        "Follow the car in front and turn when it turns",
+        "Remember the sun is on your left today, and it will work",
+        "Remember the crossings and signposts and follow them"
       ],
       "answer": 1,
       "explanation": "Things that move cannot be your mark. Crossings and signposts stay put, so they can."

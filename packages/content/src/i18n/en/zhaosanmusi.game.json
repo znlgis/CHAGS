@@ -41,9 +41,9 @@
     {
       "question": "What did the monkeys do when the keeper said three in the morning and four at night?",
       "options": [
-        "They all leapt up in anger",
         "They all lay down delighted",
-        "They said nothing at all"
+        "They said nothing and stayed quiet",
+        "They all leapt up in anger"
       ],
       "answer": 0,
       "explanation": "Hearing only three in the morning, they all leapt up in anger."
@@ -51,9 +51,9 @@
     {
       "question": "After the change to four in the morning and three at night, did the total number of acorns change?",
       "options": [
+        "It went up by several",
         "No, still seven",
-        "It went up",
-        "It went down"
+        "It went down by several"
       ],
       "answer": 0,
       "explanation": "Three plus four, four plus three — seven either way. What changed was the wording, not the acorns."
@@ -61,9 +61,9 @@
     {
       "question": "Mum says 'homework first, then cartoons'; you say 'cartoons first, then homework'. Does the homework get smaller?",
       "options": [
-        "Yes, smaller",
+        "Yes, a little less to write",
         "No — both still have to be done",
-        "Only if the cartoons are short"
+        "It depends on how long the cartoons are"
       ],
       "answer": 1,
       "explanation": "The order changed, but not one task disappeared — just like the seven acorns."

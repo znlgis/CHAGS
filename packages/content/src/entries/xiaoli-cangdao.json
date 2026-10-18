@@ -5,7 +5,7 @@
   "title": "笑里藏刀",
   "pinyin": "Xiào lǐ cáng dāo",
   "dynasty": "唐",
-  "era": "唐·永徽年间",
+  "era": "唐朝初期 · 约一千三百年前",
   "yearApprox": 655,
   "source": {
     "book": "《三十六计·敌战计》",
@@ -24,5 +24,7 @@
   "stratagem": {
     "number": 10,
     "set": 2
-  }
+  },
+  "thinkingTag": "看行动",
+  "transfer": "别人答应你时，不只听他说什么，还要看他做什么。"
 }

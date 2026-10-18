@@ -5,7 +5,7 @@
   "title": "上屋抽梯",
   "pinyin": "Shàng wū chōu tī",
   "dynasty": "西汉",
-  "era": "西汉 · 汉高祖三年",
+  "era": "西汉初期 · 约两千二百年前",
   "yearApprox": -204,
   "source": {
     "book": "《三十六计·并战计》",
@@ -25,5 +25,7 @@
   "stratagem": {
     "number": 28,
     "set": 5
-  }
+  },
+  "thinkingTag": "先说条件",
+  "transfer": "答应帮别人前，先说清帮到哪一步为止。"
 }

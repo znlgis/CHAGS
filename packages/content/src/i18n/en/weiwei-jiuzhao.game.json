@@ -8,7 +8,7 @@
     {
       "title": "Handan Is Surrounded",
       "text": "Handan was surrounded, and cart after cart came begging for help.",
-      "narration": "In 354 BC the armies of Wei surrounded Handan, the capital of Zhao. Cart after cart of messengers raced to Qi to ask for help."
+      "narration": "Long, long ago, the armies of Wei surrounded Handan, the capital of Zhao. Cart after cart of messengers raced to Qi to ask for help."
     },
     {
       "title": "Straight for Daliang",
@@ -42,9 +42,9 @@
     {
       "question": "Handan was in danger. Where did Sun Bin lead his army instead?",
       "options": [
-        "Daliang",
         "Handan",
-        "Qi"
+        "Back to Qi",
+        "Daliang"
       ],
       "answer": 0,
       "explanation": "Daliang was the city Wei had to protect — as soon as Qi marched on it, the Wei army turned back."
@@ -52,12 +52,21 @@
     {
       "question": "Your brother's block tower is leaning, and he keeps holding the top block. How can you help better?",
       "options": [
-        "Steady the layer most likely to fall",
         "Press the top block down harder",
-        "Tell him to keep holding it"
+        "Steady the layer most likely to fall",
+        "Tell him to keep on holding it there for now"
       ],
       "answer": 0,
       "explanation": "Holding the top block fixes one block, but the tower still leans — steady the layer that would fall first, and the whole tower stands."
+    },
+    {
+      "question": "Your craft group's glue will not hold and everyone keeps pressing it by hand. What is the smarter fix?",
+      "options": [
+        "Everyone keep pressing it down hard by hand",
+        "Put the craft aside and stop making it",
+        "Use a stronger glue that actually sticks"
+      ],
+      "explanation": "Pressing harder will not fix it. Change the thing that cannot hold."
     }
   ],
   "game": {

@@ -42,8 +42,8 @@
     {
       "question": "Which of Tian Ji's horses did Sun Bin send against the king's highest?",
       "options": [
-        "The weakest, lowest team",
-        "The best, highest team",
+        "The highest team",
+        "The lowest team",
         "The middle team"
       ],
       "answer": 0,
@@ -52,12 +52,21 @@
     {
       "question": "In a best-of-three game you know you will lose the first round. What is the smarter plan?",
       "options": [
-        "Give away the weakest round and save your strength for the two you can win",
-        "Fight at full strength in every round",
-        "Forfeit the whole game"
+        "Fight at full strength in every round and give up none",
+        "Just forfeit the whole game and refuse to play at all",
+        "Give away the weakest round and keep the other two"
       ],
       "answer": 0,
       "explanation": "Let the round you cannot win go, and put your care into the two you can — the match is what counts."
+    },
+    {
+      "question": "You are in a best-of-three reciting contest and you will surely lose the first round. What is the smarter plan?",
+      "options": [
+        "Try your very hardest in every single round",
+        "Just give up and refuse to play at all",
+        "Give away round one and save the next two"
+      ],
+      "explanation": "Losing the first try is fine. Save your best effort for the tries you can win."
     }
   ],
   "game": {

@@ -8,9 +8,10 @@ const raw = getEntry('taigong')!;
 const level = waitLevel(raw);
 
 describe('太公钓鱼 · 关卡数据', () => {
-  it('等将近一分钟：不短到没等过，也不长到坐不住', () => {
-    expect(level.durationMs).toBeGreaterThanOrEqual(30_000);
-    expect(level.durationMs).toBeLessThanOrEqual(90_000);
+  it('等 25 秒：不短到没等过，也不长到坐不住', () => {
+    // 2026-10-18 儿童体验轮：58 秒对 7–10 岁太长，缩到 25 秒（"点诱惑会延后"的因果保留）
+    expect(level.durationMs).toBe(25_000);
+    expect(level.durationMs).toBeLessThanOrEqual(30_000);
   });
 
   it('三个诱惑，每一个都有一句老人说的话（说了才看得懂"点了没用"）', () => {

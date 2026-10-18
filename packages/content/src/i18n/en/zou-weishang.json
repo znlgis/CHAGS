@@ -1,7 +1,7 @@
 {
   "title": "Retreat Is the Best Course",
   "dynasty": "Spring and Autumn",
-  "era": "Spring and Autumn · King Xiang, year 20",
+  "era": "Mid Spring and Autumn · about 2,600 years ago",
   "source": {
     "book": "Zuo Commentary (Zuo Zhuan), Duke Xi, Year 28",
     "quote": "To give way three marches and avoid him: that is how we repay him."
@@ -11,5 +11,7 @@
     "Give way first",
     "Keep people and goods",
     "Not defeat"
-  ]
+  ],
+  "thinkingTag": "Exit",
+  "transfer": "If a game is too hard, step out and try later."
 }

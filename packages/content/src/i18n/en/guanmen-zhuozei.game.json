@@ -41,9 +41,9 @@
     {
       "question": "Where did Sun Bin set his ambush?",
       "options": [
+        "Outside the gate of Handan",
         "The Maling road",
-        "Below the walls of Handan",
-        "Outside Daliang"
+        "At the gate of Daliang"
       ],
       "answer": 0,
       "explanation": "The Maling road is narrow and steep — once both ends are sealed, nobody inside can get out."
@@ -57,6 +57,15 @@
       ],
       "answer": 0,
       "explanation": "Block the doorway and the rest can be picked up calmly — seal the way out, or they all roll away."
+    },
+    {
+      "question": "Playing hide-and-seek, your little brother always runs to the balcony. How do you make sure he has nowhere to hide this time?",
+      "options": [
+        "Chase him all over the house first",
+        "Close the balcony door softly first",
+        "Hide yourself somewhere and wait for him to run past"
+      ],
+      "explanation": "Block the way out first, then look — then he has nowhere to run."
     }
   ],
   "game": {

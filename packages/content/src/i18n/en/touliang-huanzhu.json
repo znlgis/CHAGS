@@ -1,7 +1,7 @@
 {
   "title": "Replace the Beams with Rotten Timbers",
   "dynasty": "Qin",
-  "era": "Qin · Second Emperor, year 3",
+  "era": "End of Qin · about 2,200 years ago",
   "source": {
     "book": "The Thirty-Six Stratagems, Annexation Stratagems",
     "chapter": "Replace the Beams with Rotten Timbers",
@@ -12,5 +12,7 @@
     "Swap the post",
     "The key one",
     "Nothing looks changed"
-  ]
+  ],
+  "thinkingTag": "Swap",
+  "transfer": "Change the key step to change the habit."
 }

@@ -37,27 +37,27 @@
     {
       "question": "How did Cao Chong find out the elephant's weight?",
       "options": [
-        "He cut the elephant up",
-        "He swapped it for stones up to the same waterline",
-        "He simply looked at it"
+        "Drive the elephant onto a very big scale and weigh it",
+        "Swap it for stones up to the same waterline",
+        "Just look at it and guess the weight"
       ],
       "explanation": "The stones and the elephant sank the boat to the same depth, so they weighed the same."
     },
     {
       "question": "Why carve a mark on the boat?",
       "options": [
-        "To make it look nice",
-        "To remember how deep the boat sank with the elephant aboard",
-        "To find the boat later"
+        "To make a pretty mark on the side of the boat, just for fun",
+        "To find the boat again next time",
+        "Remember how deep the boat sank with the elephant aboard"
       ],
       "explanation": "The mark is the record of how heavy the elephant was."
     },
     {
       "question": "Which of these is as clever as Cao Chong's idea?",
       "options": [
-        "Measure a table with a ruler",
         "Work out a stone's volume with a bucket of water",
-        "Empty your schoolbag and weigh it"
+        "Measure how long the table is with a ruler",
+        "Empty out the whole schoolbag and then weigh all of it"
       ],
       "explanation": "Both swap something hard to measure for something easy to measure."
     }
