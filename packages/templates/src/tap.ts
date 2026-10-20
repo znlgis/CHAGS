@@ -68,6 +68,8 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
     private hand: Phaser.GameObjects.Graphics | null = null;
 
     private holding = false;
+    /** 现在按着的手指数：多点触控下，抬起其中一根不能算"松手"（长按玩法会断） */
+    private readonly holdPointers = new Set<number>();
     private started = false;
     private finished = false;
     private paused = false;
@@ -103,7 +105,10 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
         this.input.on('pointerdown', () => this.tap());
       } else {
         // 长按：松手就停，会有"追不上"的紧张感
-        this.input.on('pointerdown', () => {
+        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+          this.holdPointers.add(pointer.id);
+          // 第二根手指落下时不要重置起点，否则进度会从"此刻"重新算、白按一段
+          if (this.holding) return;
           this.holding = true;
           // 记下起点，之后**按墙钟时间**算进度，不再累加帧间隔。
           // Phaser 在帧率低时会钳制 delta，慢机器上"按住 6 秒"累积不到 6 秒的进度 ——
@@ -111,12 +116,11 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
           this.holdStartedAt = this.ctx.services.now();
           this.holdStartValue = this.value;
         });
-        this.input.on('pointerup', () => {
-          this.holding = false;
-        });
-        this.input.on('pointerupoutside', () => {
-          this.holding = false;
-        });
+        // 手指一根一根抬：还有手指按着就继续算"按住"（孩子常用两根拇指交替按）
+        this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => this.releaseHold(pointer));
+        this.input.on('pointerupoutside', (pointer: Phaser.Input.Pointer) =>
+          this.releaseHold(pointer),
+        );
       }
 
       this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
@@ -132,8 +136,20 @@ export function createTapScene(ctx: GameContext, cfg: TapConfig): Phaser.Types.S
 
     // ---------------- 输入 ----------------
 
+    /** 松手：只在自己这根手指抬起、且没有别的手指按着时才算真的松手 */
+    private releaseHold(pointer: Phaser.Input.Pointer): void {
+      this.holdPointers.delete(pointer.id);
+      if (this.holdPointers.size === 0) this.holding = false;
+    }
+
     private tap(): void {
-      if (this.finished || this.paused) return;
+      // 暂停（里程碑等玩家点一下）时不再静默：给一声回应，孩子才知道"屏幕收到了，
+      // 只是现在要等这一步"；真正的恢复由游戏自己注册的 pointerdown 负责。
+      if (this.paused) {
+        this.tapAck();
+        return;
+      }
+      if (this.finished) return;
       const now = this.ctx.services.now();
       const combo = this.lastInputAt === 0 ? 0 : comboLevel(now - this.lastInputAt);
       this.lastInputAt = now;

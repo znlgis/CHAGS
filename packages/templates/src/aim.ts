@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import type { MessageKey } from '@chags/i18n';
-import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
+import { BaseScene, THEME, createGestureGuard, createHand, sparkleAt } from '@chags/phaser-kit';
 import { aimDirection, firstHit, pullAmount } from './aim.logic';
 import type { AimPoint } from './aim.logic';
 import { SCENE_KEYS, resolveEnding } from './layout';
@@ -82,6 +82,8 @@ export function createAimScene(ctx: GameContext, cfg: AimConfig): Phaser.Types.S
     private aliveIds: string[] = [...cfg.level.targets.map((t) => t.id)];
     private arrows: Arrow[] = [];
     private dragging = false;
+    /** 这次拉弓属于哪根手指（多点触控下别的手指不能替你放箭） */
+    private readonly gesture = createGestureGuard();
     private aimPoint: AimPoint | null = null;
     private shots = 0;
     private hitIds: string[] = [];
@@ -105,16 +107,28 @@ export function createAimScene(ctx: GameContext, cfg: AimConfig): Phaser.Types.S
       // 瞄准线要能盖住目标，单独一层
       this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
         this.idleMs = 0;
+        // 多点触控：一次拉弓只属于一根手指（别的手指抬起不能替你把箭放出去）
+        if (!this.gesture.begin(pointer)) return;
         // 射中了、还没退档的时候，点木牌才是这一下该做的事
-        if (this.tapAdvance(pointer.x, pointer.y)) return;
+        if (this.tapAdvance(pointer.x, pointer.y)) {
+          this.gesture.end(pointer);
+          return;
+        }
         this.dragging = true;
         this.aimPoint = { x: pointer.x, y: pointer.y };
       });
       this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-        if (this.dragging) this.aimPoint = { x: pointer.x, y: pointer.y };
+        if (this.dragging && this.gesture.isActive(pointer)) {
+          this.aimPoint = { x: pointer.x, y: pointer.y };
+        }
       });
-      this.input.on('pointerup', () => this.release());
-      this.input.on('pointerupoutside', () => this.release());
+      const release = (pointer: Phaser.Input.Pointer): void => {
+        if (!this.gesture.isActive(pointer)) return;
+        this.gesture.end(pointer);
+        this.release();
+      };
+      this.input.on('pointerup', release);
+      this.input.on('pointerupoutside', release);
 
       this.events.on(Phaser.Scenes.Events.UPDATE, (_t: number, delta: number) => {
         this.stepArrows(delta);

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
-import { BaseScene, THEME, createHand } from '@chags/phaser-kit';
+import { BaseScene, THEME, createGestureGuard, createHand } from '@chags/phaser-kit';
 import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   TWOLINE_TIMING, decoyRatio, hitDecoy, hitReal, isTwolineDone, needsTopUp, nextLineToTap,
@@ -450,6 +450,8 @@ export function createTwolinePlantScene(
     private startedAt = 0;
     /** 手指按在案上没有：按住才往前走（真实操作与无头验证都是这个开关） */
     private holding = false;
+    /** 按住的是哪根手指（多点触控） */
+    private readonly gesture = createGestureGuard();
     private done = false;
     private misses = 0;
     private lastMissAt: { x: number; y: number } | null = null;
@@ -788,12 +790,19 @@ export function createTwolinePlantScene(
       this.finaleGfx = this.add.graphics().setDepth(40);
       this.markGfx = this.add.graphics().setDepth(60);
 
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
-        this.onPress(pointer.x, pointer.y),
-      );
-      this.input.on('pointerup', () => this.onRelease());
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        // 多点触控：按住的这根才作数（别的手指抬起不能算"松手"）
+        if (!this.gesture.begin(pointer)) return;
+        this.onPress(pointer.x, pointer.y);
+      });
+      const release = (pointer: Phaser.Input.Pointer): void => {
+        if (!this.gesture.isActive(pointer)) return;
+        this.gesture.end(pointer);
+        this.onRelease();
+      };
+      this.input.on('pointerup', release);
       // 手指滑出画面也算松手：进度不会因为一次意外一直攒着
-      this.input.on('pointerupoutside', () => this.onRelease());
+      this.input.on('pointerupoutside', release);
       this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
         this.tick(delta),
       );

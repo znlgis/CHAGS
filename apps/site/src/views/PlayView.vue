@@ -28,6 +28,8 @@ const playtime = usePlaytime();
 const settings = useSettings();
 const i18n = useLocale();
 let disposed = false;
+/** 正在原地重开：典故卡上的按钮连点两下会进来两次，不挡住就会挂出两个 Phaser 实例 */
+let restarting = false;
 let offPause: (() => void) | null = null;
 let offResume: (() => void) | null = null;
 let playTimer: ReturnType<typeof setInterval> | null = null;
@@ -107,17 +109,28 @@ async function start(): Promise<void> {
   }
 }
 
-/** 原地再来一局：卸掉旧 Phaser 实例，再挂一次（不刷新页面、不回大厅） */
+/**
+ * 原地再来一局：卸掉旧 Phaser 实例，再挂一次（不刷新页面、不回大厅）。
+ *
+ * ★ 必须是幂等的：孩子会把「再来一次」连点两三下。卸载→重新挂载之间有一小段
+ * 空窗，第二下如果也进来，就会在同一个容器里再挂一个 Phaser 实例
+ * （两块 canvas 叠着、输入只落在最上面那块）—— 表现就是"游戏没反应了"。
+ */
 async function restart(): Promise<void> {
-  if (disposed) return;
-  offPause?.();
-  offResume?.();
-  offPause = null;
-  offResume = null;
-  await mod.value?.unmount();
-  mod.value = null;
-  if (host.value) host.value.innerHTML = '';
-  await start();
+  if (disposed || restarting) return;
+  restarting = true;
+  try {
+    offPause?.();
+    offResume?.();
+    offPause = null;
+    offResume = null;
+    await mod.value?.unmount();
+    mod.value = null;
+    if (host.value) host.value.innerHTML = '';
+    await start();
+  } finally {
+    restarting = false;
+  }
 }
 
 onMounted(() => {

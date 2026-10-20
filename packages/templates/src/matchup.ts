@@ -315,8 +315,11 @@ function createPairMatchupScene(
     private onTap(pointer: Phaser.Input.Pointer): void {
       this.idleMs = 0;
       if (this.finished) return;
-      // 跑着呢：先看完这几场（点什么都不算，但也不锁死 —— 一会儿就松）
-      if (this.phase === 'racing') return;
+      // 跑着呢：先看完这几场（点什么都不算，但要让孩子知道"我收到了"）
+      if (this.phase === 'racing') {
+        this.tapAck(pointer.x, pointer.y);
+        return;
+      }
       // 跑完了还没重排：点哪都当作"重新编排"
       if (this.phase === 'settled') {
         this.rearrange();
@@ -531,12 +534,18 @@ function createPairMatchupScene(
       this.resetButton.setVisible(false);
     }
 
-    /** 按钮跟着演出走：编排时"开赛"（没排满就暗着）、跑完了"重新编排" */
+    /**
+     * 按钮跟着演出走：编排时"开赛"（没排满就暗着）、跑完了"重新编排"。
+     *
+     * ★ 跑马途中（racing）两个按钮都要收起来：以前「重新编排」在 racing 时是**可见**的，
+     * 点下去有"嗒"一声却不做任何事（rearrange 里 phase==='racing' 直接 return）——
+     * 一个亮在屏幕上、按了没反应的按钮，比没有按钮更让孩子困惑。
+     */
     private syncButtons(stage: MatchupStageState): void {
       if (!this.startButton || !this.resetButton) return;
       const arranging = stage.phase === 'arrange';
       this.startButton.setVisible(arranging);
-      this.resetButton.setVisible(!arranging && !this.won);
+      this.resetButton.setVisible(!arranging && !this.won && stage.phase === 'settled');
       if (arranging) this.startButton.setAlpha(stage.full ? 1 : 0.45);
     }
 

@@ -93,6 +93,8 @@ export function createChaseScene(ctx: GameContext, cfg: ChaseConfig): Phaser.Typ
     private startedAt = 0;
     private finished = false;
     private holding = false;
+    /** 按住的指针 id（多点触控下用来分辨"哪根手指在按住"） */
+    private holdPointerId: number | null = null;
     private lastBand: ChaseBand = 'good';
     private stageGfx: Phaser.GameObjects.Graphics | null = null;
     private finaleGfx: Phaser.GameObjects.Graphics | null = null;
@@ -160,6 +162,7 @@ export function createChaseScene(ctx: GameContext, cfg: ChaseConfig): Phaser.Typ
       this.idleMs = 0;
       if (this.holding) return;
       this.holding = true;
+      this.holdPointerId = pointer.id;
       this.clearRing();
       this.hideHand();
       this.sfx('tap');
@@ -167,7 +170,10 @@ export function createChaseScene(ctx: GameContext, cfg: ChaseConfig): Phaser.Typ
       cfg.onHold?.(true, { scene: this, stage: this.stageState(this.elapsed()) });
     }
 
-    private release(): void {
+    private release(pointer?: Phaser.Input.Pointer): void {
+      // 多点触控：只认按下时的那根手指，别的手指抬起不该松开
+      if (pointer && this.holdPointerId !== null && pointer.id !== this.holdPointerId) return;
+      this.holdPointerId = null;
       if (!this.holding || this.finished) return;
       this.holding = false;
       this.ctx.emit('beat:enter', { beatId: 'chase:release' });
@@ -284,8 +290,8 @@ export function createChaseScene(ctx: GameContext, cfg: ChaseConfig): Phaser.Typ
       this.finaleGfx = this.add.graphics().setDepth(40);
 
       this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.press(pointer));
-      this.input.on('pointerup', () => this.release());
-      this.input.on('pointerupoutside', () => this.release());
+      this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => this.release(pointer));
+      this.input.on('pointerupoutside', (pointer: Phaser.Input.Pointer) => this.release(pointer));
       this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
         this.tick(delta),
       );

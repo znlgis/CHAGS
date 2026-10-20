@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
-import { BaseScene, THEME, createHand, sparkleAt, tapRipple } from '@chags/phaser-kit';
+import { BaseScene, THEME, createGestureGuard, createHand, sparkleAt, tapRipple } from '@chags/phaser-kit';
 import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   SWAP_TIMING, caughtPosts, gateHit, isAllSwapped, isPostSwapped, isShellDone, leave, nextPeekInMs,
@@ -123,6 +123,7 @@ function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.S
     private startedAt = 0;
     private done = false;
     private misses = 0;
+    private readonly gesture = createGestureGuard();
     private carrying: string | null = null;
     /** 无头验证：已经排过一次"走掉"了没有 */
     private autoplayLeaving = false;
@@ -279,6 +280,8 @@ function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.S
     // ---------------- 点 ----------------
 
     private onPress(pointer: Phaser.Input.Pointer): void {
+      // 多点触控：正在拖/拿着的时候，别的手指不参与（否则会把它接走或提前放下）
+      if (!this.gesture.begin(pointer)) return;
       this.idleMs = 0;
       this.pointerAt = { x: pointer.x, y: pointer.y };
       if (this.carrying !== null) this.carryingAt = this.pointerAt;
@@ -308,6 +311,8 @@ function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.S
      * 点一下拿起、再点一下位置，也走同一条路 —— 两种手感都支持。
      */
     private onRelease(pointer: Phaser.Input.Pointer): void {
+      if (!this.gesture.isActive(pointer)) return;
+      this.gesture.end(pointer);
       this.pointerAt = { x: pointer.x, y: pointer.y };
       if (this.done || this.carrying === null) return;
       const post = postAt(this.level, pointer.x, pointer.y, SWAP.tapForgive);
@@ -580,10 +585,13 @@ function createShellSwapScene(ctx: GameContext, cfg: SwapConfig): Phaser.Types.S
 
       this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onPress(pointer));
       this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+        if (!this.gesture.isActive(pointer)) return;
         this.pointerAt = { x: pointer.x, y: pointer.y };
         if (this.carrying !== null) this.carryingAt = this.pointerAt;
       });
       this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => this.onRelease(pointer));
+      // 手指/鼠标滑出画面再松手也算放下：不然手里那张卡一直挂着（同文件第二条玩法已有这行）
+      this.input.on('pointerupoutside', (pointer: Phaser.Input.Pointer) => this.onRelease(pointer));
       this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
         this.tick(delta),
       );
@@ -732,6 +740,8 @@ function createBeamSwapScene(
     private startedAt = 0;
     /** 手指按着没有：按住才往前走（真实操作与无头验证都是这个开关） */
     private holding = false;
+    /** 只认按住的那根手指：别的手指抬起不能算"松手"（多点触控） */
+    private readonly gesture = createGestureGuard();
     private done = false;
     private misses = 0;
     private lastCheckAt = -1;
@@ -1076,12 +1086,18 @@ function createBeamSwapScene(
       this.finaleGfx = this.add.graphics().setDepth(40);
       this.markGfx = this.add.graphics().setDepth(60);
 
-      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
-        this.onPress(pointer.x, pointer.y),
-      );
-      this.input.on('pointerup', () => this.onRelease());
+      this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        if (!this.gesture.begin(pointer)) return;
+        this.onPress(pointer.x, pointer.y);
+      });
+      const release = (pointer: Phaser.Input.Pointer): void => {
+        if (!this.gesture.isActive(pointer)) return;
+        this.gesture.end(pointer);
+        this.onRelease();
+      };
+      this.input.on('pointerup', release);
       // 手指滑出画面也算松手：进度不会因为一次意外一直攒着
-      this.input.on('pointerupoutside', () => this.onRelease());
+      this.input.on('pointerupoutside', release);
       this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
         this.tick(delta),
       );

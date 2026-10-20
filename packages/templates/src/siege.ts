@@ -329,7 +329,13 @@ function createSiegeVitalScene(
     // ---------------- 输入 ----------------
 
     private onPress(pointer: Phaser.Input.Pointer): void {
-      if (this.finished || this.busy) return;
+      // 抽柴 / 回防的演出（900ms / 620ms）里点下一根是孩子最自然的动作：
+      // 以前这里裸 return，一声都没有。给一声轻回应，孩子才知道"收到了，等这根抽完"。
+      if (this.finished) return;
+      if (this.busy) {
+        this.tapAck(pointer.x, pointer.y);
+        return;
+      }
       // 要害优先：它压在城墙的命中范围上也照样算要害
       const vital = vitalAt(pointer.x, pointer.y, cfg.level, SIEGE.tapForgive);
       if (vital) {
@@ -379,7 +385,11 @@ function createSiegeVitalScene(
     private pushFront(): void {
       if (this.finished || this.busy) return;
       const now = this.ctx.services.now();
-      if (now - this.lastTapAt < SIEGE.tapCooldownMs) return;
+      // 70ms 的连点冷却里也只吞"多余的重复"，但要让手指知道程序在听
+      if (now - this.lastTapAt < SIEGE.tapCooldownMs) {
+        this.tapAck();
+        return;
+      }
       this.lastTapAt = now;
 
       const before = this.state;

@@ -2,7 +2,7 @@
 import { loadEntry } from '@chags/content';
 import type { ContentEntry, QuizQuestion } from '@chags/content';
 import { daysUntil } from '@chags/progress';
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { navigate } from '../router';
 import {
   createReviewQuiz,
@@ -56,6 +56,19 @@ onMounted(async () => {
   }
   entry.value = loaded;
   state.value = createReviewQuiz();
+});
+
+/**
+ * 答完之后把「下一题」滚进视野。
+ *
+ * 选完答案，其余选项会 disabled（看起来仍可点）—— 孩子会反复点选项，而真正的出口
+ * 在选项列表下面、小屏上经常已经在屏幕外：又一次"点了没反应"。
+ */
+const nextButton = ref<HTMLButtonElement | null>(null);
+watch(answered, async (done) => {
+  if (!done) return;
+  await nextTick();
+  nextButton.value?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 });
 
 function choose(index: number): void {
@@ -166,6 +179,7 @@ async function next(): Promise<void> {
 
       <button
         v-if="answered"
+        ref="nextButton"
         type="button"
         data-testid="review-next"
         class="mt-6 min-h-14 w-full rounded-full bg-[#b03a31] px-6 py-3 text-base font-bold text-[#fdf3dc] active:scale-95"

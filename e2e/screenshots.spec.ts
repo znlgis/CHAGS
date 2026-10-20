@@ -54,7 +54,8 @@ test('capture screenshots', async ({ page }) => {
   await page.waitForTimeout(2400);
   await page.screenshot({ path: 'docs/screenshots/09-card.png' });
 
-  await clickDesign(page, REWARD.done.x, REWARD.done.y);
+  // 「收下」按钮中心 = REWARD.done.x + 168（两个按钮并排）
+  await clickDesign(page, REWARD.done.x + 168, REWARD.done.y);
   await page.waitForTimeout(500);
   await page.getByRole('button', { name: '我的图鉴' }).click();
   await page.waitForTimeout(200);

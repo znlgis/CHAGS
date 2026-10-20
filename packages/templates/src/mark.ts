@@ -85,9 +85,17 @@ export function createMarkScene(ctx: GameContext, cfg: MarkConfig): Phaser.Types
     // ---------------- 输入 ----------------
 
     private onTap(pointer: Phaser.Input.Pointer): void {
-      if (this.busy || this.finished || this.state.phase !== 'carve') return;
+      // 刻完一笔之后要等"看刻痕 → 漂船 → 下水 → 出结果"，约 7.6 秒（捞空 9.4 秒）。
+      // 这段时间以前是纯静默：孩子刻完想再刻一下，点哪都没反应。给一声轻回应，
+      // 让他知道"收到了，先看船漂过去"。
+      if (this.busy || this.state.phase !== 'carve') {
+        if (!this.finished) this.tapAck(pointer.x, pointer.y);
+        return;
+      }
       const surface = surfaceAt(pointer.x, pointer.y, cfg.level, MARK.carveForgive);
       if (surface) this.carve(surface);
+      // 点空（没刻在任何一个面上）也要有回应，否则和"卡住了"分不开
+      else this.tapAck(pointer.x, pointer.y);
     }
 
     /** 刻一道痕（真实操作与无头验证走的是同一条路） */

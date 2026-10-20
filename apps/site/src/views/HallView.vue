@@ -151,10 +151,14 @@ const groupEmpty = (id: string): string => i18n.t(groupMessageKey(id, 'empty'));
       </div>
 
       <ul v-if="groupGames.length > 0" class="mt-4 grid gap-4 sm:grid-cols-2">
+        <!-- 整张卡都是可点的：孩子看到一张大卡片，第一反应就是点卡片本身，
+             以前只有底部那个「开始」按钮有反应（53 张卡、每次进大厅都会遇到） -->
         <li
           v-for="entry in groupGames"
           :key="entry.id"
-          class="rounded-3xl border-2 border-[#f0e0bd] bg-[#fffaf0] p-5 shadow-sm"
+          class="cursor-pointer rounded-3xl border-2 border-[#f0e0bd] bg-[#fffaf0] p-5 shadow-sm transition active:scale-[0.99]"
+          :data-testid="'card-' + entry.id"
+          @click="navigate('/play/' + entry.id)"
         >
           <div class="flex items-baseline justify-between gap-2">
             <h3 class="text-xl font-bold">{{ entry.title }}</h3>

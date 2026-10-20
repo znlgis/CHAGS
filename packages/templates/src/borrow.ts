@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import type { MessageKey } from '@chags/i18n';
-import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
+import { BaseScene, THEME, createGestureGuard, createHand, sparkleAt } from '@chags/phaser-kit';
 import { SCENE_KEYS, resolveEnding } from './layout';
 import {
   availableFlags, bannerStart, borrowStart, canLift, connectProp, disconnectProp, flagAt,
@@ -182,6 +182,8 @@ function createBannerScene(
     private startedAt = 0;
     private finished = false;
     private dragging: BorrowFlag | null = null;
+    /** 拖旗的这根手指（多点触控下别的手指不参与） */
+    private readonly gesture = createGestureGuard();
     private dragAt: { x: number; y: number } | null = null;
     private downAt = { x: 0, y: 0 };
     private lastRaised: string | null = null;
@@ -205,6 +207,8 @@ function createBannerScene(
 
     private onDown(pointer: Phaser.Input.Pointer): void {
       if (this.finished || this.dragging) return;
+      // 多点触控：拖旗是一次连续手势，别的手指不参与
+      if (!this.gesture.begin(pointer)) return;
       this.idleMs = 0;
       this.downAt = { x: pointer.x, y: pointer.y };
       const flag = flagAt(pointer.x, pointer.y, this.level, BORROW.bannerForgive);
@@ -222,10 +226,14 @@ function createBannerScene(
 
     private onMove(pointer: Phaser.Input.Pointer): void {
       if (!this.dragging || this.finished) return;
+      if (!this.gesture.isActive(pointer)) return;
       this.dragAt = { x: pointer.x, y: pointer.y };
     }
 
     private onUp(pointer: Phaser.Input.Pointer): void {
+      // 只认伸手的那根手指：另一根手指抬起不能让旗提前落地
+      if (!this.gesture.isActive(pointer)) return;
+      this.gesture.end(pointer);
       const flag = this.dragging;
       if (!flag || this.finished) return;
       this.dragging = null;

@@ -3,6 +3,7 @@ import type { GameContext, SfxKey } from '@chags/game-kit';
 import { createTranslator } from '@chags/i18n';
 import type { MessageKey, MessageParams, Translator } from '@chags/i18n';
 import { createHand, groundShadow, popIn, roundRect, shade, sparkleAt } from './cartoon';
+import { containerHitArea } from './hitArea';
 import { isTapArmed } from './tapGuard';
 import { CSS, THEME, textStyle } from './theme';
 
@@ -122,10 +123,14 @@ export abstract class BaseScene extends Phaser.Scene {
 
     container.add([lip, face, text]);
     container.setSize(w, h);
-    container.setInteractive(
-      new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
-      Phaser.Geom.Rectangle.Contains,
-    );
+    // 命中区从 (0,0) 起算（见 hitArea.ts）：写成 (-w/2,-h/2,w,h) 会让可点区整体左上
+    // 偏移半个按钮，只有左上四分之一能点中 —— 典故卡/故事页/配对模板的按钮都中过这一枪。
+    // 外圈再给 TOUCH_PAD：孩子手指落点散，点偏一点也算数。
+    container.setInteractive({
+      hitArea: containerHitArea(w, h),
+      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+      useHandCursor: true,
+    });
     container.on('pointerdown', () => {
       if (opts.disabled) return;
       this.sfx('tap');
@@ -148,6 +153,30 @@ export abstract class BaseScene extends Phaser.Scene {
       ...textStyle(size, color, bold),
       wordWrap: { width: wrapWidth, useAdvancedWrap: true },
       lineSpacing: 12,
+    });
+  }
+
+  /**
+   * "我收到了" —— 被守卫挡下的那一下也要有回应。
+   *
+   * 模板里大量 `if (busy || phase !== 'x') return;` 的守卫：演出那一两秒（mark 最长
+   * 7.6 秒）里，孩子点屏幕完全没有反馈，他分不清"点错了"和"卡住了"，只会觉得
+   * "点了没反应"。这里给最轻的回应：一声短音 + 一圈快速散开的金色涟漪，
+   * **不推进任何状态**（守卫该挡还是挡，只是不再静默）。
+   */
+  protected tapAck(x = this.W / 2, y = this.H / 2): void {
+    this.sfx('tap');
+    const ring = this.add.graphics().setDepth(960);
+    ring.lineStyle(7, THEME.gold, 0.9);
+    ring.strokeCircle(0, 0, 22);
+    ring.setPosition(x, y);
+    this.tweens.add({
+      targets: ring,
+      scale: 2.1,
+      alpha: 0,
+      duration: 380,
+      ease: 'Quad.easeOut',
+      onComplete: () => ring.destroy(),
     });
   }
 

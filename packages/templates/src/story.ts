@@ -199,12 +199,18 @@ export function createStoryScene(
       ).setDepth(950);
     }
 
-    /** 点早了：不翻页，只告诉他故事还没听完 */
+    /**
+     * 点早了：不翻页，只告诉他故事还没听完。
+     *
+     * ★ 节流只节流**提示气泡**，不节流反馈：旁白通常十几秒，孩子会连点十来下，
+     * 以前 1.6 秒内连"嗒"一声都没有（静默），孩子以为屏幕坏了。现在每一下都有声音，
+     * 气泡仍旧 1.6 秒一次（不然一直在闪）。
+     */
     private nag(): void {
+      this.sfx('tap');
       const now = this.ctx.services.now();
       if (now - this.nagAt < 1600) return;
       this.nagAt = now;
-      this.sfx('tap');
       // 提示放在插画上方：标题、正文、小喇叭各自的位置都不能被它压住
       this.showHint(this.tr('story.listenFirst'), 2000, STORY_ART.y + 50);
     }

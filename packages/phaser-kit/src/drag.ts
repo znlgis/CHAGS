@@ -25,7 +25,8 @@ export interface DragController {
  */
 export function createDragController(scene: Phaser.Scene): DragController {
   const targets: GrabTarget[] = [];
-  let active: { target: GrabTarget; dx: number; dy: number } | null = null;
+  // 记住是**哪一根手指**抓着的：开了多点触控之后，另一根手指抬起不能把手里的东西扔掉
+  let active: { target: GrabTarget; dx: number; dy: number; pointerId: number } | null = null;
 
   const onDown = (pointer: Phaser.Input.Pointer): void => {
     if (active) return;
@@ -44,17 +45,19 @@ export function createDragController(scene: Phaser.Scene): DragController {
       target: best,
       dx: pointer.x - best.obj.x,
       dy: pointer.y - best.obj.y,
+      pointerId: pointer.id,
     };
     best.onGrab?.(best.obj);
   };
 
   const onMove = (pointer: Phaser.Input.Pointer): void => {
-    if (!active) return;
+    if (!active || pointer.id !== active.pointerId) return;
     active.target.obj.setPosition(pointer.x - active.dx, pointer.y - active.dy);
   };
 
-  const onUp = (): void => {
-    if (!active) return;
+  const onUp = (pointer: Phaser.Input.Pointer): void => {
+    // 只认抓住东西的那根手指；另一根手指抬起不放下手里的
+    if (!active || pointer.id !== active.pointerId) return;
     const { target } = active;
     active = null;
     target.onDrop?.(target.obj);

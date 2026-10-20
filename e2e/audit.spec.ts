@@ -584,7 +584,8 @@ for (const locale of LOCALES) {
       await expect.poll(() => events(page), { timeout: 60_000 }).toContain('card:unlocked');
       await page.waitForTimeout(500);
       await page.screenshot({ path: out + '/' + id + '-3-card.png' });
-      await clickDesign(page, REWARD.done.x, REWARD.done.y);
+      // 「收下」按钮中心 = REWARD.done.x + 168（两个按钮并排）
+      await clickDesign(page, REWARD.done.x + 168, REWARD.done.y);
       await expect.poll(() => events(page), { timeout: 20_000 }).toContain('session:exit');
     }
     });

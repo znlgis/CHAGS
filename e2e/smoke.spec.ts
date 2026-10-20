@@ -55,7 +55,9 @@ test('真实操作通关：拖大象上船 → 刻水痕 → 搬石头 → 称�
   await expect.poll(() => events(page), { timeout: 40_000 }).toContain('level:complete');
   await expect.poll(() => events(page), { timeout: 40_000 }).toContain('card:unlocked');
 
-  await clickDesign(page, REWARD.done.x, REWARD.done.y);
+  // 「收下」按钮中心 = REWARD.done.x + 168（两个按钮并排、各距卡片中心 168）。
+  // 别点 REWARD.done.x：那是两个按钮之间的空隙 —— 命中区修正前它会"漏"到收下按钮上。
+  await clickDesign(page, REWARD.done.x + 168, REWARD.done.y);
   await expect.poll(() => events(page)).toContain('session:exit');
 });
 
@@ -205,7 +207,9 @@ test('盘古：点蛋 → 连点撑天 → 拖光球化身，真实操作通关'
   await expect.poll(() => events(page), { timeout: 30_000 }).toContain('card:unlocked');
   await expect.poll(() => events(page), { timeout: 30_000 }).toContain('level:complete');
 
-  await clickDesign(page, REWARD.done.x, REWARD.done.y);
+  // 「收下」按钮中心 = REWARD.done.x + 168（两个按钮并排、各距卡片中心 168）。
+  // 别点 REWARD.done.x：那是两个按钮之间的空隙 —— 命中区修正前它会"漏"到收下按钮上。
+  await clickDesign(page, REWARD.done.x + 168, REWARD.done.y);
   await expect.poll(() => events(page)).toContain('session:exit');
 });
 

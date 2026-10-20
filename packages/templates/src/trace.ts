@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameContext } from '@chags/game-kit';
 import type { MessageKey } from '@chags/i18n';
-import { BaseScene, THEME, createHand, sparkleAt } from '@chags/phaser-kit';
+import { BaseScene, THEME, createGestureGuard, createHand, sparkleAt } from '@chags/phaser-kit';
 import { SCENE_KEYS, TRACE, resolveEnding } from './layout';
 import {
   advanceTrace, currentTarget, isTraceComplete, traceProgress, traceStart,
@@ -63,6 +63,8 @@ export function createTraceScene(ctx: GameContext, cfg: TraceConfig): Phaser.Typ
     private path: TracePoint[] = [];
     private lastPoint: TracePoint | null = null;
     private drawing = false;
+    /** 这一笔属于哪根手指（多点触控下别的手指不能接走） */
+    private readonly gesture = createGestureGuard();
     private busy = false;
     private finished = false;
     private stageGfx: Phaser.GameObjects.Graphics | null = null;
@@ -82,6 +84,8 @@ export function createTraceScene(ctx: GameContext, cfg: TraceConfig): Phaser.Typ
 
     private beginStroke(pointer: Phaser.Input.Pointer): void {
       if (this.busy || this.finished) return;
+      // 多点触控：一笔只属于一根手指，别的手指不能把线接走
+      if (!this.gesture.begin(pointer)) return;
       this.drawing = true;
       this.idleMs = 0;
       this.hideHand();
@@ -93,10 +97,16 @@ export function createTraceScene(ctx: GameContext, cfg: TraceConfig): Phaser.Typ
 
     private moveStroke(pointer: Phaser.Input.Pointer): void {
       if (!this.drawing || this.busy || this.finished) return;
+      if (!this.gesture.isActive(pointer)) return;
       this.advance({ x: pointer.x, y: pointer.y });
     }
 
-    private endStroke(): void {
+    private endStroke(pointer?: Phaser.Input.Pointer): void {
+      // 只认正在画的那根手指抬起
+      if (pointer) {
+        if (!this.gesture.isActive(pointer)) return;
+        this.gesture.end(pointer);
+      }
       this.drawing = false;
       this.lastPoint = null;
     }
@@ -381,8 +391,8 @@ export function createTraceScene(ctx: GameContext, cfg: TraceConfig): Phaser.Typ
 
       this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.beginStroke(pointer));
       this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => this.moveStroke(pointer));
-      this.input.on('pointerup', () => this.endStroke());
-      this.input.on('pointerupoutside', () => this.endStroke());
+      this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => this.endStroke(pointer));
+      this.input.on('pointerupoutside', (pointer: Phaser.Input.Pointer) => this.endStroke(pointer));
 
       this.events.on(Phaser.Scenes.Events.UPDATE, (_time: number, delta: number) =>
         this.tick(delta),
