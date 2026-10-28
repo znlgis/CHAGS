@@ -161,7 +161,7 @@ describe('假痴不癫 · 故事与复习', () => {
     expect(entry.quiz[1]!.question).toContain('同桌');
   });
 
-  it('儿童化：装糊涂是"忍"，不是骗人，也没有一处流血', () => {
+  it('适龄化：装糊涂是"忍"，不是骗人，也没有一处流血', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

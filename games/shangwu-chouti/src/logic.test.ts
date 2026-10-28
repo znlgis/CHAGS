@@ -193,7 +193,7 @@ describe('上屋抽梯 · 故事与复习', () => {
     expect(entry.quiz[1]!.question).toContain('小表弟');
   });
 
-  it('儿童化：换的是旗、抽的是梯子，没有一处流血', () => {
+  it('适龄化：换的是旗、抽的是梯子，没有一处流血', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

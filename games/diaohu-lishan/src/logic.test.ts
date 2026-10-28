@@ -96,7 +96,7 @@ describe('调虎离山 · 内容', () => {
     expect(entry.story[1]!.text).toContain('山口空了');
   });
 
-  it('儿童化：山口只有守将与炊烟，没有交战、没有流血', () => {
+  it('适龄化：山口只有守将与炊烟，没有交战、没有流血', () => {
     const text = JSON.stringify(entry);
     expect(text).not.toContain('血');
     expect(text).not.toContain('打起来');

@@ -61,7 +61,7 @@ describe('借尸还魂 · 关卡数据', () => {
     ]);
   });
 
-  it('儿童化：计名里的"尸"按方案保留，但画面与文案里没有尸体', () => {
+  it('适龄化：计名里的"尸"按方案保留，但画面与文案里没有尸体', () => {
     // 关卡数据里一个"尸"字都不该有 —— 画面上只有旧旗和散掉的人
     expect(JSON.stringify(level).includes('尸')).toBe(false);
     const text = JSON.stringify({

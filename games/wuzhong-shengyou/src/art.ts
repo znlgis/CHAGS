@@ -45,7 +45,7 @@ function drawStrawMan(g: Phaser.GameObjects.Graphics, x: number, y: number, stre
   g.strokeTriangle(x - hh * 0.21, bodyTop - hh * 0.21, x + hh * 0.21, bodyTop - hh * 0.21, x, bodyTop - hh * 0.42);
 }
 
-/** 扎在草人身上的箭：只扎草人，不扎人（儿童化的那一半就在这一笔里） */
+/** 扎在草人身上的箭：只扎草人，不扎人（适龄化的那一半就在这一笔里） */
 function drawStuckArrows(
   g: Phaser.GameObjects.Graphics,
   x: number,

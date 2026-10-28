@@ -257,7 +257,7 @@ export function createLocalTelemetry(): Telemetry {
       if (buffer.length > 500) buffer.shift();
     },
     async flush(): Promise<void> {
-      // 刻意不发送：儿童产品默认不上报
+      // 刻意不发送：低龄向产品默认不上报
     },
   };
 }

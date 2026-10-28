@@ -202,7 +202,7 @@ describe('偷梁换柱 · 故事与复习', () => {
     expect(entry.quiz[1]!.question).toContain('纸桥');
   });
 
-  it('儿童化：换的是柱子，没有人受伤，也没有一处流血', () => {
+  it('适龄化：换的是柱子，没有人受伤，也没有一处流血', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

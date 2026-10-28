@@ -171,7 +171,7 @@ function drawRunner(
     g.fillEllipse(headX + dir * 11 * scale + (turned ? -6 * scale : 0), y - 176 * scale, 9 * scale, 12 * scale);
   }
   if (turned) {
-    // 回头的一瞬：眉头压下来 + 两笔红（儿童化的"不高兴"，不是打斗）
+    // 回头的一瞬：眉头压下来 + 两笔红（适龄化的"不高兴"，不是打斗）
     g.lineStyle(6 * scale, THEME.outline, 1);
     g.lineBetween(headX - 20 * scale, y - 194 * scale, headX - 4 * scale, y - 188 * scale);
     g.lineBetween(headX + 4 * scale, y - 188 * scale, headX + 20 * scale, y - 194 * scale);

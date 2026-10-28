@@ -7,7 +7,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
  */
 const config: CapacitorConfig = {
   appId: 'com.chags.tales',
-  appName: '典故游戏',
+  appName: '历史典故游戏',
   webDir: '../site/dist',
   android: {
     backgroundColor: '#3a2f26',

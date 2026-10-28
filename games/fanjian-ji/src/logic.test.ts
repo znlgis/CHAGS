@@ -222,7 +222,7 @@ describe('反间计 · 故事与复习', () => {
     expect(entry.quiz[1]!.question).toContain('器材');
   });
 
-  it('儿童化：没有一处流血、伤人；落点是"他自己看到"', () => {
+  it('适龄化：没有一处流血、伤人；落点是"他自己看到"', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

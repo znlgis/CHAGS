@@ -189,7 +189,7 @@ describe('指桑骂槐 · 故事与复习', () => {
     expect(entry.quiz[1]!.question).toContain('转笔');
   });
 
-  it('儿童化：没有流血、没有骂人，落点在"换个说法，别人更容易听进去"', () => {
+  it('适龄化：没有流血、没有骂人，落点在"换个说法，别人更容易听进去"', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

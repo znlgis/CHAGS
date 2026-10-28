@@ -239,7 +239,7 @@ describe('反客为主 · 故事与复习', () => {
     expect(transfer.explanation).toContain('一步一步');
   });
 
-  it('儿童化：没有交战、没有一处流血 —— 只有营帐、关隘、城池与接手', () => {
+  it('适龄化：没有交战、没有一处流血 —— 只有营帐、关隘、城池与接手', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

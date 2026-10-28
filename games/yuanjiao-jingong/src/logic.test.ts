@@ -191,7 +191,7 @@ describe('远交近攻 · 故事与复习', () => {
     expect(transfer?.question).toContain('听写');
   });
 
-  it('儿童化：地图上只有结盟与处理，没有一处交战与流血', () => {
+  it('适龄化：地图上只有结盟与处理，没有一处交战与流血', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

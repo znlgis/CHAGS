@@ -201,7 +201,7 @@ describe('空城计 · 故事与复习', () => {
     expect(entry.quiz[1]!.question).toContain('紧张');
   });
 
-  it('儿童化：不出现流血死亡，"不动"也不是认输', () => {
+  it('适龄化：不出现流血死亡，"不动"也不是认输', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

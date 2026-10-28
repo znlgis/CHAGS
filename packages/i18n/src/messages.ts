@@ -3,7 +3,7 @@ import { GROUPS, STRATAGEM_SETS } from '@chags/content';
 /** 界面文案表。典故本身的文字在内容 JSON 里，不在这里。 */
 export const messages = {
   'zh-CN': {
-    'app.title': '中国历史典故',
+    'app.title': '历史典故游戏',
     'app.subtitle': '给小朋友的典故游戏合集',
     'nav.hall': '游戏馆',
     'nav.album': '我的图鉴',
@@ -135,7 +135,7 @@ export const messages = {
     'parent.back': '回游戏馆',
   },
   en: {
-    'app.title': 'Chinese Tales',
+    'app.title': 'Historical Tales',
     'app.subtitle': 'History and myth, played',
     'nav.hall': 'Games',
     'nav.album': 'My Album',

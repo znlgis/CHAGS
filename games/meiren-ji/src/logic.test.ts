@@ -148,7 +148,7 @@ describe('美人计 · 故事与复习', () => {
     expect(entry.quiz[1]!.question).toContain('见面礼');
   });
 
-  it('儿童化：只是送东西、看目光，没有人受伤，也没有一处流血', () => {
+  it('适龄化：只是送东西、看目光，没有人受伤，也没有一处流血', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

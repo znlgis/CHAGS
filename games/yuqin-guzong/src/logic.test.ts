@@ -65,7 +65,7 @@ describe('欲擒故纵 · 关卡数据', () => {
     ]);
   });
 
-  it('儿童化：这一计的"擒"落在"让他心服"，不是把人抓住、更没有流血', () => {
+  it('适龄化：这一计的"擒"落在"让他心服"，不是把人抓住、更没有流血', () => {
     const text = JSON.stringify({
       moral: entry.moral,
       story: entry.story,

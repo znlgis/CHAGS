@@ -36,7 +36,7 @@ describe('借刀杀人 · 关卡数据', () => {
     expect(entry.keywords).toContain('借力');
   });
 
-  it('儿童化：这一计落在"借力"，故事与题目里不出现刀剑与死亡', () => {
+  it('适龄化：这一计落在"借力"，故事与题目里不出现刀剑与死亡', () => {
     // 计名（借刀杀人）按方案保留；要守住的是画面与文案的落点：工地、杠杆、请人帮忙
     const text = JSON.stringify({
       moral: entry.moral,

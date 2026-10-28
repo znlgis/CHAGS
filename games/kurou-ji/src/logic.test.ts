@@ -142,7 +142,7 @@ describe('苦肉计 · 故事与复习', () => {
     expect(transfer.explanation).toContain('看得见');
   });
 
-  it('儿童化：没有一处流血受伤 —— 代价是"送出去的一份东西"', () => {
+  it('适龄化：没有一处流血受伤 —— 代价是"送出去的一份东西"', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

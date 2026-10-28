@@ -56,7 +56,7 @@ describe('暗度陈仓 · 关卡数据', () => {
     ]);
   });
 
-  it('儿童化：全程是工地与夜路，没有交战', () => {
+  it('适龄化：全程是工地与夜路，没有交战', () => {
     const text = JSON.stringify(entry);
     expect(entry.story[1]!.narration).toContain('进了陈仓');
     expect(text).not.toContain('血');

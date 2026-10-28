@@ -147,7 +147,7 @@ describe('釜底抽薪 · 故事与复习', () => {
     expect(entry.quiz[1]!.question).toContain('汤');
   });
 
-  it('儿童化：烧的是粮，没有一处流血', () => {
+  it('适龄化：烧的是粮，没有一处流血', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

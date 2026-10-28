@@ -80,7 +80,7 @@ describe('抛砖引玉 · 内容', () => {
     expect(entry.story[1]!.text).toContain('补出了后面的好句');
   });
 
-  it('儿童化：书斋题诗，是文人的典故，没有打斗', () => {
+  it('适龄化：书斋题诗，是文人的典故，没有打斗', () => {
     const text = JSON.stringify(entry);
     expect(text).not.toContain('血');
     expect(entry.moral).toContain('先给一点点');

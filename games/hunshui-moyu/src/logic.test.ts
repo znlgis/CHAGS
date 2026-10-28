@@ -201,7 +201,7 @@ describe('混水摸鱼 · 故事与复习', () => {
     expect(transfer?.question).toContain('教室');
   });
 
-  it('儿童化：鱼只是滑走，水里没有一处流血', () => {
+  it('适龄化：鱼只是滑走，水里没有一处流血', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

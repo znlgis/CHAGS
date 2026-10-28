@@ -244,7 +244,7 @@ describe('假道伐虢 · 故事与复习', () => {
     expect(transfer?.explanation).toContain('先想清楚');
   });
 
-  it('儿童化：没有交战、没有一处流血 —— 只有借路、关口与回师', () => {
+  it('适龄化：没有交战、没有一处流血 —— 只有借路、关口与回师', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

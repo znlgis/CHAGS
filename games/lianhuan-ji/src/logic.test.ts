@@ -222,7 +222,7 @@ describe('连环计 · 故事与复习', () => {
     expect(transfer.explanation).toContain('一环接一环');
   });
 
-  it('儿童化：没有交战、没有一处流血 —— 只有江面、船、铁索与信号火把', () => {
+  it('适龄化：没有交战、没有一处流血 —— 只有江面、船、铁索与信号火把', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

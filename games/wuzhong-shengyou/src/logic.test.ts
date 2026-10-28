@@ -49,7 +49,7 @@ describe('无中生有 · 关卡数据', () => {
     ]);
   });
 
-  it('儿童化：雾里的箭全扎在草人身上，没有一个人受伤', () => {
+  it('适龄化：雾里的箭全扎在草人身上，没有一个人受伤', () => {
     const text = JSON.stringify(entry);
     expect(entry.story[1]!.narration).toContain('没有一个人受伤');
     expect(text).not.toContain('血');

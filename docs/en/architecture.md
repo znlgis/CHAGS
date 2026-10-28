@@ -1,7 +1,7 @@
 # CHAGS Architecture · v1.3 (architecture synced to §7.3; facts updated 2026-10-18)
 
 > Status: living document. Chinese version: [../技术方案.md](../技术方案.md)
-> A collection of small games about Chinese historical anecdotes and myths, for children aged 7–10.
+> A collection of small games about historical anecdotes and myths, for ages 7–10.
 
 > ⚠️ **The architecture narrative here is synced up to §7.3** (the bilingual round, 2026-10-13). The Chinese
 > [../技术方案.md](../技术方案.md) kept going through **§7.4–§7.18** — the review-and-optimisation passes,
@@ -30,7 +30,7 @@ through templates; story content is driven by JSON.
 | Build | **Vite 8 + pnpm workspace** | Native multi-entry and code splitting — every game becomes its own chunk automatically |
 | Content | **JSON + zod, validated at build time** | New story = new data, not new code |
 | Gameplay | **Template library** | Makes story #30 far cheaper than story #1 |
-| Storage | **IndexedDB, local-first, behind an interface** | No backend, no ads, no personal data — the safest option for children's privacy |
+| Storage | **IndexedDB, local-first, behind an interface** | No backend, no ads, no personal data — the safest option for minors' privacy |
 | Offline | **PWA** (planned) | Playable on weak networks, installable to the home screen |
 | i18n | **Chinese + English, switchable at runtime** | UI, story content, narration and docs all follow |
 | Backend | **None** | A static site is the cheapest, most stable and most compliant deployment |
@@ -49,7 +49,7 @@ through templates; story content is driven by JSON.
 
 ## 1. Constraints derived from the product
 
-The product is a **collection of Chinese historical anecdotes for children (6–12), where the point is not "played it"
+The product is a **collection of historical anecdotes for ages 6–12, where the point is not "played it"
 but "remembered it and understood what it means."**
 
 | # | Product need | Technical constraint |
@@ -143,7 +143,7 @@ DOM plus Tailwind is far faster to build than drawing lists, scrolling and forms
 - Fonts **must be commercially licensed** (Noto Sans SC, LXGW WenKai, ZCOOL KuaiLe — verify each). Subset them: a full CJK
   font is 5–10 MB, a subset can be ~100 KB.
 - Keep an `ASSETS-LICENSES.md` ledger — but only once real art enters the pipeline (everything is drawn with geometry today, so it would be an empty table).
-- Style: **rounded cartoon with Chinese colours** (vermilion / indigo / cream / ink).
+- Style: **rounded cartoon with traditional colours** (vermilion / indigo / cream / ink).
 - **Stage 0–1 ship zero image assets**: everything is drawn with Phaser Graphics, so gameplay could be verified before art
   existed. Swapping in real art changes no code.
 
@@ -398,8 +398,7 @@ a design doc.**
 Tap targets ≥ 88×88 logical px; no hover-dependent UI; no fail state, no timer pressure, unlimited retries;
 pinyin and speech alongside text; minimum 28 px type; never encode meaning in colour alone; a rest prompt after 20 minutes;
 a parent lock for exit and settings; respect `prefers-reduced-motion`; no ads, no external links, no personal data
-(China's Regulations on the Protection of Minors in Cyberspace and the Provisions on the Protection of Children's Personal
-Information).
+(the Regulations on the Protection of Minors in Cyberspace).
 
 ### 3.8 Platform adapter
 

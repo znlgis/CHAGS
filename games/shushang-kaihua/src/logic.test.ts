@@ -213,7 +213,7 @@ describe('树上开花 · 故事与复习', () => {
     expect(transfer.explanation).toContain('借');
   });
 
-  it('儿童化：没有一场交战、没有一处流血 —— 只有尘土、旗与桥', () => {
+  it('适龄化：没有一场交战、没有一处流血 —— 只有尘土、旗与桥', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

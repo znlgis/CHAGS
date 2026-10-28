@@ -172,7 +172,7 @@ describe('金蝉脱壳 · 内容', () => {
     expect(entry.quiz.some((q) => q.question.includes('模型'))).toBe(true);
   });
 
-  it('儿童化：壳是稻草人，没有一处流血 —— 人只是悄悄走了', () => {
+  it('适龄化：壳是稻草人，没有一处流血 —— 人只是悄悄走了', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

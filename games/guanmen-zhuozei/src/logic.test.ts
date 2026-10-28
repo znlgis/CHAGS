@@ -164,7 +164,7 @@ describe('关门捉贼 · 故事与复习', () => {
     expect(entry.quiz[1]!.question).toContain('弹珠');
   });
 
-  it('儿童化：门是"关上"不是"夹住"，贼只是跑掉，没有一处流血', () => {
+  it('适龄化：门是"关上"不是"夹住"，贼只是跑掉，没有一处流血', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

@@ -1,4 +1,4 @@
-# CHAGS · Chinese Historical Anecdotes Game Series
+# CHAGS · Historical Tales
 
 One story, one small game — kids remember an anecdote by **playing** it, not by reading it.
 
@@ -345,7 +345,7 @@ sorted by stratagem number.
 |---|---|---|
 | ![drums](docs/screenshots/95-stratagem-04-yiyi.png) | ![window](docs/screenshots/96-stratagem-05-chenhuo.png) | ![divert](docs/screenshots/97-stratagem-06-shengdong.png) |
 
-**For children** (the six hard rules live in [docs/三十六计方案.md](docs/三十六计方案.md)): the Chinese
+**For younger players** (the six hard rules live in [docs/三十六计方案.md](docs/三十六计方案.md)): the Chinese
 names and the original text stay; conflict is abstracted into puzzles, races and building sites, with no
 blood and no death; the defensive stratagems (hide a knife behind a smile, sow discord, play on desire,
 the self-harm ruse) teach **spotting** them, not using them. Every stratagem carries a historical source —

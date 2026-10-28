@@ -114,7 +114,7 @@ describe('擒贼擒王 · 故事与复习', () => {
     expect(entry.quiz[1]!.question).toContain('操场');
   });
 
-  it('儿童化：蒿箭没有杀伤，揭晓语落在"找出关键的那一个"，不是打倒他', () => {
+  it('适龄化：蒿箭没有杀伤，揭晓语落在"找出关键的那一个"，不是打倒他', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

@@ -78,7 +78,7 @@ describe('李代桃僵 · 关卡数据', () => {
     expect(entry.game.stages[0]!.template).toBe('matchup');
   });
 
-  it('儿童化：赛场不是战场，输一局只是"这一局我们认了"', () => {
+  it('适龄化：赛场不是战场，输一局只是"这一局我们认了"', () => {
     expect(entry.moral).toBe('舍一局，赢整场 —— 局部吃点亏，整体反而赢。');
     const prose = [
       entry.moral,

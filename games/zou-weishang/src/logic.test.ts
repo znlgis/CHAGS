@@ -204,7 +204,7 @@ describe('走为上 · 故事与复习', () => {
     expect(transfer.explanation).toContain('不是认输');
   });
 
-  it('儿童化：退是保住人和东西，不是认输 —— 也没有一处流血', () => {
+  it('适龄化：退是保住人和东西，不是认输 —— 也没有一处流血', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),

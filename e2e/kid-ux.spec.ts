@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { clickDesign, events, waitEvent } from './helpers';
 
 /**
- * 儿童体验与安全边界（2026-10-18 产品审查后新增）：
+ * 适龄体验与安全边界（2026-10-18 产品审查后新增）：
  * 声音可控、游戏内能退出、家长页、20 分钟休息提醒、二周目跳过故事、再来一次。
  *
  * 这些不是玩法，但直接决定"孩子愿不愿意再玩"和"家长放不放心"。
