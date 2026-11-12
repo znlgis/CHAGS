@@ -67,5 +67,8 @@ if (size.code !== 0) {
   process.exit(1);
 }
 
+// 注意：`pnpm toy:check` **不在这里**跑 —— 它检查的是 Toy 专用裁剪版（VITE_TOY=1），
+// 会覆盖这里刚 build 出来的完整版 dist。发 Toy 前单独跑 `pnpm toy:check`。
+
 const seconds = ((Date.now() - started) / 1000).toFixed(1);
 console.log('\n✅ 全部门禁通过（' + seconds + 's）');

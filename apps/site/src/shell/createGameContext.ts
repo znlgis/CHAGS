@@ -18,9 +18,11 @@ export interface GameHostHooks {
 function debugAllowed(): boolean {
   // Toy 发布形态**不留任何自动化开关**：`navigator.webdriver` 这种「给无头浏览器开的后门」
   // 在审核眼里就是作弊入口，而 Toy 里也没有 e2e 要跑。
-  if (import.meta.env.VITE_TOY === '1') return false;
   if (import.meta.env.DEV) return true;
-  return typeof navigator !== 'undefined' && navigator.webdriver === true;
+  // 只认显式构建开关：生产 / Toy 构建里它是 undefined，Rollup 会把整段折叠成 false，
+  // 于是 `webdriver` 这个字符串根本不会出现在产物里（包体安全检查会把它当自动化后门）。
+  // e2e 构建（--mode e2e）读到 .env.e2e 里的 VITE_DEBUG_HOOKS=1 才打开。
+  return import.meta.env.VITE_DEBUG_HOOKS === '1';
 }
 
 /** ?autoplay=1 —— 无头直达的调试开关（?story=instant、?card=hold 同理，仅开发/自动化可用） */
