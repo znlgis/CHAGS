@@ -1,3 +1,5 @@
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
@@ -16,6 +18,23 @@ import type { Plugin } from 'vite';
  */
 const phaserTrim = fileURLToPath(new URL('../../packages/phaser-kit/vendor/phaser-trim.esm.js', import.meta.url));
 const useFullPhaser = process.env.PHASER_FULL === '1';
+
+/**
+ * pinia 的开发构建里带着 devtools 的时间线桥（file-saver 的 saveAs → XMLHttpRequest + Blob），
+ * 生产包一个字节都用不到，而包体安全检查会把它当「动态下载」，所以直接指到 prod 构建。
+ *
+ * ★ 路径必须**运行时解析**：`node_modules/.pnpm/pinia@<版本>_<hash>/...` 里的 hash 因平台与
+ * 依赖图而变（CI 与本地就不一样），写死会在 CI 上直接「No such file or directory」。
+ */
+function resolvePiniaProd(): string | null {
+  try {
+    const require = createRequire(import.meta.url);
+    return join(dirname(require.resolve('pinia')), 'pinia.esm-browser.prod.js');
+  } catch {
+    return null;
+  }
+}
+const piniaProd = resolvePiniaProd();
 
 
 /**
@@ -120,9 +139,9 @@ export default defineConfig({
   resolve: {
     // 只替换裸 'phaser' 导入；TS 类型仍解析到 phaser 包（typecheck 不受影响）
     alias: [
-      // pinia 的开发构建里带着 devtools 的时间线桥（file-saver 的 saveAs → XMLHttpRequest + Blob），
-      // 生产包一个字节都用不到，而包体安全检查会把它当成「动态下载」。指向 prod 构建后整段消失。
-      { find: /^pinia$/, replacement: fileURLToPath(new URL('../../node_modules/.pnpm/pinia@4.0.3_@vue+devtools-a_3ff3e03ba37e8b7715c88d9b8a57689f/node_modules/pinia/dist/pinia.esm-browser.prod.js', import.meta.url)) },
+      // pinia 指到 prod 构建：devtools 桥里的 file-saver（XHR + Blob）不进包。
+      // 路径是运行时解析出来的（见 resolvePiniaProd），不能写死 .pnpm 里的 hash。
+      ...(piniaProd === null ? [] : [{ find: /^pinia$/, replacement: piniaProd }]),
       ...(useFullPhaser ? [] : [{ find: /^phaser$/, replacement: phaserTrim }]),
     ],
   },
