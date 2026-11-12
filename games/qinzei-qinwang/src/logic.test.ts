@@ -92,7 +92,7 @@ describe('擒贼擒王 · 故事与复习', () => {
     expect(entry.story[1]!.text).toContain('蒿箭');
     expect(entry.keyMoment.beatId).toBe('s1');
     expect(entry.keyMoment.options.filter((option) => option.isCanonical).map((option) => option.text))
-      .toEqual(['用一枝没有杀伤的箭试，看谁的反应最大']);
+      .toEqual(['用一枝不会伤人的箭试，看谁的反应最大']);
   });
 
   it('三十六计的登记信息：第 18 计、攻战计、兵法；史源用按语', () => {
@@ -114,7 +114,7 @@ describe('擒贼擒王 · 故事与复习', () => {
     expect(entry.quiz[1]!.question).toContain('操场');
   });
 
-  it('适龄化：蒿箭没有杀伤，揭晓语落在"找出关键的那一个"，不是打倒他', () => {
+  it('适龄化：蒿箭不会伤人，揭晓语落在"找出关键的那一个"，不是打倒他', () => {
     const prose = [
       entry.moral,
       ...entry.story.map((beat) => beat.text + beat.narration),
@@ -122,7 +122,7 @@ describe('擒贼擒王 · 故事与复习', () => {
       ...entry.quiz.map((question) => question.question + question.explanation),
       entry.keyMoment.reveal,
     ].join('');
-    expect(prose).toContain('没有杀伤');
+    expect(prose).toContain('不会伤人');
     expect(entry.keyMoment.reveal).toContain('找出关键的那一个');
     expect(entry.keyMoment.reveal).not.toContain('打倒');
     expect(prose).not.toContain('血');

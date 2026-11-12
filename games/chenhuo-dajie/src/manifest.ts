@@ -3,7 +3,7 @@ import { DESIGN } from '@chags/templates/layout';
 
 export const manifest: GameManifest = {
   id: 'chenhuo-dajie',
-  title: '趁火打劫',
+  title: '趁势取利',
   version: '0.1.0',
   template: 'window',
   designSize: { width: DESIGN.width, height: DESIGN.height },

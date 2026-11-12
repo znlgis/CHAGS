@@ -3,7 +3,7 @@ import { DESIGN } from '@chags/templates/layout';
 
 export const manifest: GameManifest = {
   id: 'jiedao-sharen',
-  title: '借刀杀人',
+  title: '借力成事',
   version: '0.1.0',
   template: 'borrow',
   designSize: { width: DESIGN.width, height: DESIGN.height },

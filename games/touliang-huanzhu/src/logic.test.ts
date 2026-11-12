@@ -220,7 +220,7 @@ describe('偷梁换柱 · 故事与复习', () => {
 describe('偷梁换柱 · 英译补丁', () => {
   it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
     const merged = getEntry('touliang-huanzhu', 'en')!;
-    expect(merged.title).toBe('Replace the Beams with Rotten Timbers');
+    expect(merged.title).toBe('Swap the Key Piece');
     expect(merged.source.book).toBe('The Thirty-Six Stratagems, Annexation Stratagems');
     expect(merged.game.stages[0]!.levelScript).toMatchObject({ hint: 'Hold on, beat the count' });
   });

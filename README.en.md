@@ -343,7 +343,7 @@ sorted by stratagem number.
 | 2 | Besiege Wei to Rescue Zhao | The front will not budge: tap the two places he *must* save, and his guard pulls back | `siege` |
 | 3 | A Borrowed Sword | A boulder on a building site: set a fulcrum, hook up a pole and a water wheel, borrow their strength | `borrow` |
 | 4 | Wait Till They Tire | Three drum rolls: hold still for the first two, strike only in the window after the third | `stillness` |
-| 5 | Strike While the Fire Burns | The camp swings between calm and chaos; work only gets done in the short window while it is in chaos | `window` |
+| 5 | Seize the Moment | The camp swings between calm and chaos; work only gets done in the short window while it is in chaos | `window` |
 | 6 | Make a Noise in the East, Attack in the West | Bang the gong to hold the lamp on the left, walk past on the right; being seen only sends you back | `ruse` (divert) |
 
 | Slip past the check | Hit what he must save | Borrowed strength |
@@ -373,7 +373,7 @@ of `wait` / `split` / `trace`, two ended up reused whole (34 and 36). Each volum
 | 7 | Something Out of Nothing | Paint straw figures onto empty spots on the rail in the fog: they fade, so keep painting until the other side believes | `show` |
 | 8 | Secretly March to Chencang | The open road decays unless topped up; the hidden path only moves when tapped — both lines compete for one finger | `twoline` |
 | 9 | Watch the Fire from Afar | Step in to make peace and the two sides make up and turn on you — the game is holding still | `wait` (reused) |
-| 10 | A Smile Hiding a Knife | Sweet words, but the eyes, the sleeve, the fingers give him away: **this one teaches spotting it, not using it** | `read` |
+| 10 | A Smile That Reads the Heart | Sweet words, but the eyes, the sleeve, the fingers give him away: **this one teaches spotting it, not using it** | `read` |
 | 11 | The Plum Stands In for the Peach | Tian Ji's horse race: match your lowest against his best, win the other two | `matchup` |
 | 12 | Lead the Sheep Along | The column walks on; an opportunity passes once per round, and only in that short window can it be picked up | `window` (glimpse) |
 
@@ -419,7 +419,7 @@ Volume 3 adds **three new templates** (`probe` / `lure` / `chase`) plus a `banne
 | 19 | Pull the Firewood from Under the Pot | Do not fight the fire: pull the logs out from underneath, and the base log drops it fast | `siege` (support) |
 | 20 | Muddy the Water to Catch Fish | The window is **made by you**: stir the water, and only while it is muddy are the fish slow enough | `window` (stir) |
 | 21 | The Golden Cicada Sheds Its Shell | Swap each guard for a look-alike dummy; the inspector looks up every few seconds | `swap` |
-| 22 | Shut the Door to Catch the Thief | Shut every gate before he bolts; miss one and he runs — you simply start again | `siege` (close) |
+| 22 | Lock Every Exit | Shut every gate before he bolts; miss one and he runs — you simply start again | `siege` (close) |
 | 23 | Befriend the Far, Attack the Near | A ring of neighbours: settle the near ones, befriend the far ones — wrong order just means re-arranging | `matchup` (order) |
 | 24 | Borrow a Road to Attack Guo | Talk your way to a borrowed road, take the passes in order, then march home (Yu's lesson: chipped teeth feel the cold) | `chain` |
 
@@ -440,7 +440,7 @@ support / close, `window` gains stir, `matchup` gains order). When extending, th
 
 | # | Stratagem | What the child actually does | Template |
 |---|---|---|---|
-| 25 | Replace the Beams with Rotten Timbers | Swap a row of load-bearing posts for **identical-looking** new ones; each takes a hold-to-work spell, and the inspector **calls the roll** every few seconds | `swap` (beam) |
+| 25 | Swap the Key Piece | Swap a row of load-bearing posts for **identical-looking** new ones; each takes a hold-to-work spell, and the inspector **calls the roll** every few seconds | `swap` (beam) |
 | 26 | Point at the Mulberry Tree While Cursing the Locust Tree | No naming names: mulberry, locust, bell, drum — knock the one he understands, and the man who should take the hint steps forward himself | `probe` (hint) |
 | 27 | Feign Madness, Keep Your Wits | The rival keeps testing you: **any tap during a test gives you away**, so only the gaps between tests let you push on | `stillness` (feign) |
 | 28 | Lure Him Up, Then Pull the Ladder | Give the convenience first: build the ladder rung by rung, watch him climb into place, then pull it away (pull early and he simply slides back) | `siege` (ladder) |

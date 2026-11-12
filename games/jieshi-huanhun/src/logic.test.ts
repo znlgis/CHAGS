@@ -74,7 +74,7 @@ describe('借尸还魂 · 关卡数据', () => {
     for (const word of ['尸体', '尸首', '血', '死', '杀', '刀', '剑']) {
       expect(text.includes(word)).toBe(false);
     }
-    expect(entry.title).toBe('借尸还魂'); // 计名保留
+    expect(entry.title).toBe('借名归心'); // 计名中性化：卡面不出现「尸」
     expect(entry.moral).toContain('名号');
   });
 

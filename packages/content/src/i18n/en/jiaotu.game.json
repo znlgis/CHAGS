@@ -11,8 +11,8 @@
     },
     {
       "title": "Three Burrows",
-      "text": "Feng Xuan said: a cunning rabbit has three burrows, and only thus escapes death.",
-      "narration": "Feng Xuan said to Lord Mengchang: a cunning rabbit keeps three burrows, and only thus escapes death. You have but one burrow, and cannot yet sleep with your pillow high — let me dig two more for you."
+      "text": "Feng Xuan said: a cunning rabbit has three burrows, and only thus stays safe.",
+      "narration": "Feng Xuan said to Lord Mengchang: a cunning rabbit keeps three burrows, and only thus stays safe. You have but one burrow, and cannot yet sleep with your pillow high — let me dig two more for you."
     }
   ],
   "keyMoment": {
@@ -46,7 +46,7 @@
         "As many as possible"
       ],
       "answer": 1,
-      "explanation": "Three burrows — only then does it escape death."
+      "explanation": "Three burrows — only then does it stay safe."
     },
     {
       "question": "Why could the rabbit not get out while the fox waited at one entrance?",

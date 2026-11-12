@@ -181,6 +181,6 @@ describe('关门捉贼 · 故事与复习', () => {
 describe('关门捉贼 · 英译补丁', () => {
   it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
     const merged = getEntry('guanmen-zhuozei', 'en')!;
-    expect(merged.title).toBe('Shut the Door to Catch the Thief');
+    expect(merged.title).toBe('Lock Every Exit');
   });
 });

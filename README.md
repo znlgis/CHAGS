@@ -315,22 +315,22 @@ pnpm dist:toy       # 打 B站 Toy 上传包（release/chags-toy-v<版本>.zip�
 |---|---|---|---|
 | 1 | 瞒天过海 | 给显眼的东西挑"最平常的外壳"，一盏巡回的灯扫过来时混过检查口 | `ruse` |
 | 2 | 围魏救赵 | 正面推不动，去点他非救不可的两处要害；守备一撤，正面才推得动 | `siege` |
-| 3 | 借刀杀人 | 工地上的大石搬不动：垫上支点、接上木棍与水车，借别人的力气 | `borrow` |
+| 3 | 借力成事 | 工地上的大石搬不动：垫上支点、接上木棍与水车，借别人的力气 | `borrow` |
 | 4 | 以逸待劳 | 三通鼓：前两通忍住不出手，第三通之后的窗口里一击定局 | `stillness` |
-| 5 | 趁火打劫 | 营地在"稳"与"乱"之间摆：只有乱起来的那一小段窗口里，活才干得完 | `window` |
+| 5 | 趁势取利 | 营地在"稳"与"乱"之间摆：只有乱起来的那一小段窗口里，活才干得完 | `window` |
 | 6 | 声东击西 | 敲锣把灯留在左边，人从右边走过去；被照到只是退回，不惩罚 | `ruse`（divert） |
 
 | 混过检查 | 打要害 | 借力 |
 |---|---|---|
-| ![瞒天过海](docs/screenshots/92-stratagem-01-mantian.png) | ![围魏救赵](docs/screenshots/93-stratagem-02-weiwei.png) | ![借刀杀人](docs/screenshots/94-stratagem-03-jiedao.png) |
+| ![瞒天过海](docs/screenshots/92-stratagem-01-mantian.png) | ![围魏救赵](docs/screenshots/93-stratagem-02-weiwei.png) | ![借力成事](docs/screenshots/94-stratagem-03-jiedao.png) |
 
 | 等第三通鼓 | 抓窗口 | 声东击西 |
 |---|---|---|
-| ![以逸待劳](docs/screenshots/95-stratagem-04-yiyi.png) | ![趁火打劫](docs/screenshots/96-stratagem-05-chenhuo.png) | ![声东击西](docs/screenshots/97-stratagem-06-shengdong.png) |
+| ![以逸待劳](docs/screenshots/95-stratagem-04-yiyi.png) | ![趁势取利](docs/screenshots/96-stratagem-05-chenhuo.png) | ![声东击西](docs/screenshots/97-stratagem-06-shengdong.png) |
 
 **适龄化口径**（六条硬规矩写在 [三十六计方案.md](docs/三十六计方案.md) 第三节）：
-计名与原文保留，冲突抽象成难题 / 赛场 / 工地，不出现流血与死亡；
-防御性的几计（笑里藏刀 / 反间计 / 美人计 / 苦肉计）**只教"识别"**，不教怎么使；
+计名中性化（如「借刀杀人」→「借力成事」），《三十六计》与史书原文逐字保留；冲突抽象成难题 / 赛场 / 工地，不出现流血与死亡；
+防御性的几计（笑里辨心 / 反间计 / 美人计 / 苦肉计）**只教"识别"**，不教怎么使；
 每一计都写了史源战例与《三十六计》本计按语 —— 逐字确证不了的战例原文宁可用按语，也不编。
 
 这一辑为"每一计一个专属动词"新写了 **5 个玩法模板**（`ruse` / `siege` / `borrow` /
@@ -345,17 +345,17 @@ pnpm dist:toy       # 打 B站 Toy 上传包（release/chags-toy-v<版本>.zip�
 | 7 | 无中生有 | 雾里在船帮的空位上一笔笔画草人：影子会淡，得不停补笔，把"疑心"撑到满 | `show` |
 | 8 | 暗度陈仓 | 明面修栈道会回落、暗线走小路要点到底 —— 两条线抢同一根手指 | `twoline` |
 | 9 | 隔岸观火 | 只要出手调解，两边立刻和好一致对外 —— 这一关的玩法是"忍住不动" | `wait`（复用） |
-| 10 | 笑里藏刀 | 满口好话，但眼神、袖口、手指会露破绽：**这一计教的是识破，不教怎么使** | `read` |
+| 10 | 笑里辨心 | 满口好话，但眼神、袖口、手指会露破绽：**这一计教的是识破，不教怎么使** | `read` |
 | 11 | 李代桃僵 | 田忌赛马：用下驷对上驷，三局两胜的配对编排 | `matchup` |
-| 12 | 顺手牵羊 | 队伍沿路走，机会每隔一轮路过一次，只在那一小段窗口里抓得住 | `window`（glimpse） |
+| 12 | 顺手得助 | 队伍沿路走，机会每隔一轮路过一次，只在那一小段窗口里抓得住 | `window`（glimpse） |
 
 | 无中生有 | 暗度陈仓 | 隔岸观火 |
 |---|---|---|
 | ![无中生有](docs/screenshots/98-stratagem-07-wuzhong.png) | ![暗度陈仓](docs/screenshots/99-stratagem-08-andu.png) | ![隔岸观火](docs/screenshots/100-stratagem-09-gean.png) |
 
-| 笑里藏刀 | 李代桃僵 | 顺手牵羊 |
+| 笑里辨心 | 李代桃僵 | 顺手得助 |
 |---|---|---|
-| ![笑里藏刀](docs/screenshots/101-stratagem-10-xiaoli.png) | ![李代桃僵](docs/screenshots/102-stratagem-11-lidai.png) | ![顺手牵羊](docs/screenshots/103-stratagem-12-shunshou.png) |
+| ![笑里辨心](docs/screenshots/101-stratagem-10-xiaoli.png) | ![李代桃僵](docs/screenshots/102-stratagem-11-lidai.png) | ![顺手得助](docs/screenshots/103-stratagem-12-shunshou.png) |
 
 第二辑新增 **4 个模板**（`show` / `twoline` / `read` / `matchup`）+ 扩展 `window` 的
 `glimpse` 模式，规格书见 [三十六计-第二辑方案.md](docs/三十六计-第二辑方案.md)。
@@ -365,19 +365,19 @@ pnpm dist:toy       # 打 B站 Toy 上传包（release/chags-toy-v<版本>.zip�
 | # | 计 | 这一关在做什么 | 玩法模板 |
 |---|---|---|---|
 | 13 | 打草惊蛇 | 一丛一丛敲过去 —— 敲到蛇，附近的草丛会一起被搅乱（"试"本身有代价） | `probe` |
-| 14 | 借尸还魂 | 把旧旗竖起来，散掉的人自己归队：旗号就是名号 | `borrow`（banner） |
+| 14 | 借名归心 | 把旧旗竖起来，散掉的人自己归队：旗号就是名号 | `borrow`（banner） |
 | 15 | 调虎离山 | 把看守引开，趁空档把东西拿走 —— 要挑能空够久的那个诱饵点 | `lure` |
 | 16 | 欲擒故纵 | 按住追、松手放：距离要待在区间里，逼急了会反抗、离远了会跟丢 | `chase` |
 | 17 | 抛砖引玉 | 先给出一块"砖"，对方拿出更好的来换 —— 最不起眼的那块换回最多 | `lure`（trade） |
-| 18 | 擒贼擒王 | 一排一模一样的身影里，用没有杀伤的蒿箭一个个试出"王" | `probe`（spot） |
+| 18 | 擒王定局 | 一排一模一样的身影里，用没有杀伤的蒿箭一个个试出"王" | `probe`（spot） |
 
-| 打草惊蛇 | 借尸还魂 | 调虎离山 |
+| 打草惊蛇 | 借名归心 | 调虎离山 |
 |---|---|---|
-| ![打草惊蛇](docs/screenshots/104-stratagem-13-dacao.png) | ![借尸还魂](docs/screenshots/105-stratagem-14-jieshi.png) | ![调虎离山](docs/screenshots/106-stratagem-15-diaohu.png) |
+| ![打草惊蛇](docs/screenshots/104-stratagem-13-dacao.png) | ![借名归心](docs/screenshots/105-stratagem-14-jieshi.png) | ![调虎离山](docs/screenshots/106-stratagem-15-diaohu.png) |
 
-| 欲擒故纵 | 抛砖引玉 | 擒贼擒王 |
+| 欲擒故纵 | 抛砖引玉 | 擒王定局 |
 |---|---|---|
-| ![欲擒故纵](docs/screenshots/107-stratagem-16-yuqin.png) | ![抛砖引玉](docs/screenshots/108-stratagem-17-paozhuan.png) | ![擒贼擒王](docs/screenshots/109-stratagem-18-qinzei.png) |
+| ![欲擒故纵](docs/screenshots/107-stratagem-16-yuqin.png) | ![抛砖引玉](docs/screenshots/108-stratagem-17-paozhuan.png) | ![擒王定局](docs/screenshots/109-stratagem-18-qinzei.png) |
 
 第三辑新增 **3 个模板**（`probe` / `lure` / `chase`）+ 扩展 `borrow` 的 `banner` 模式
 （`force` 分支一行未动），规格书见 [三十六计-第三辑方案.md](docs/三十六计-第三辑方案.md)。
@@ -389,7 +389,7 @@ pnpm dist:toy       # 打 B站 Toy 上传包（release/chags-toy-v<版本>.zip�
 | 19 | 釜底抽薪 | 不跟火硬碰：从底下把柴一根根抽走，抽到"根上的那根"火势骤降 | `siege`（support） |
 | 20 | 混水摸鱼 | 窗口是**自己搅出来的**：点水面搅浑，浑水期鱼才慢下来，清了就抓不动 | `window`（stir） |
 | 21 | 金蝉脱壳 | 把人一个个换成"样子一样"的替身；检查者每隔一会儿抬头看一次 | `swap` |
-| 22 | 关门捉贼 | 抢在贼跑掉之前把出口一扇扇关上；没关完他就从最近的门跑了（可以重来） | `siege`（close） |
+| 22 | 关门落锁 | 抢在贼跑掉之前把出口一扇扇关上；没关完他就从最近的门跑了（可以重来） | `siege`（close） |
 | 23 | 远交近攻 | 一圈势力：近的先解决、远的先结好 —— 顺序点错只是重排 | `matchup`（order） |
 | 24 | 假道伐虢 | 先谈成借路，再按顺序取下沿途关口，最后回师（虞国的教训：唇亡齿寒） | `chain` |
 
@@ -397,9 +397,9 @@ pnpm dist:toy       # 打 B站 Toy 上传包（release/chags-toy-v<版本>.zip�
 |---|---|---|
 | ![釜底抽薪](docs/screenshots/110-stratagem-19-fudi.png) | ![混水摸鱼](docs/screenshots/111-stratagem-20-hunshui.png) | ![金蝉脱壳](docs/screenshots/112-stratagem-21-jinchan.png) |
 
-| 关门捉贼 | 远交近攻 | 假道伐虢 |
+| 关门落锁 | 远交近攻 | 假道伐虢 |
 |---|---|---|
-| ![关门捉贼](docs/screenshots/113-stratagem-22-guanmen.png) | ![远交近攻](docs/screenshots/114-stratagem-23-yuanjiao.png) | ![假道伐虢](docs/screenshots/115-stratagem-24-jiadao.png) |
+| ![关门落锁](docs/screenshots/113-stratagem-22-guanmen.png) | ![远交近攻](docs/screenshots/114-stratagem-23-yuanjiao.png) | ![假道伐虢](docs/screenshots/115-stratagem-24-jiadao.png) |
 
 第四辑新增 **2 个模板**（`swap` / `chain`）+ **三处扩展**（`siege` 加 support / close、
 `window` 加 stir、`matchup` 加 order）—— 扩展时老模式（`vital` / `fire` / `glimpse` / `pair`）
@@ -409,16 +409,16 @@ pnpm dist:toy       # 打 B站 Toy 上传包（release/chags-toy-v<版本>.zip�
 
 | # | 计 | 这一关在做什么 | 玩法模板 |
 |---|---|---|---|
-| 25 | 偷梁换柱 | 一排承重柱要换成**外形一模一样**的新柱；换一根得按住干一会儿，而检查者每隔几秒**清点**一次 | `swap`（beam） |
+| 25 | 偷换关键 | 一排承重柱要换成**外形一模一样**的新柱；换一根得按住干一会儿，而检查者每隔几秒**清点**一次 | `swap`（beam） |
 | 26 | 指桑骂槐 | 不能点名：场上桑、槐、钟、鼓，敲**他听得懂的那样**，该听懂的人自己往前迈一步 | `probe`（hint） |
 | 27 | 假痴不癫 | 对手一次次试探，**试探期任何点击都算露馅**；只有试探之间的空档能推进一步 | `stillness`（feign） |
 | 28 | 上屋抽梯 | 先给方便：一级级把梯子搭好，看他顺着走到位，再把梯子抽掉（抽早了只是他掉回来） | `siege`（ladder） |
 | 29 | 树上开花 | 借现成的树与城墙挂旗：支点能挂几面、每面顶多少"规模"各不相同，凑够规模就成 | `show`（borrow） |
 | 30 | 反客为主 | 每一步都要**先被允许**：允许只持续一会儿，过期作废，得重新求（急不得） | `chain`（step） |
 
-| 偷梁换柱 | 指桑骂槐 | 假痴不癫 |
+| 偷换关键 | 指桑骂槐 | 假痴不癫 |
 |---|---|---|
-| ![偷梁换柱](docs/screenshots/116-stratagem-25-touliang.png) | ![指桑骂槐](docs/screenshots/117-stratagem-26-zhisang.png) | ![假痴不癫](docs/screenshots/118-stratagem-27-jiachi.png) |
+| ![偷换关键](docs/screenshots/116-stratagem-25-touliang.png) | ![指桑骂槐](docs/screenshots/117-stratagem-26-zhisang.png) | ![假痴不癫](docs/screenshots/118-stratagem-27-jiachi.png) |
 
 | 上屋抽梯 | 树上开花 | 反客为主 |
 |---|---|---|

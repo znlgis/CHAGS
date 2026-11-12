@@ -3,7 +3,7 @@ import { DESIGN } from '@chags/templates/layout';
 
 export const manifest: GameManifest = {
   id: 'guanmen-zhuozei',
-  title: '关门捉贼',
+  title: '关门落锁',
   version: '0.1.0',
   template: 'siege',
   designSize: { width: DESIGN.width, height: DESIGN.height },

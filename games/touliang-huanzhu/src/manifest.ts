@@ -3,7 +3,7 @@ import { DESIGN } from '@chags/templates/layout';
 
 export const manifest: GameManifest = {
   id: 'touliang-huanzhu',
-  title: '偷梁换柱',
+  title: '偷换关键',
   version: '0.1.0',
   template: 'swap',
   designSize: { width: DESIGN.width, height: DESIGN.height },
