@@ -282,7 +282,7 @@ const close = SiegeCloseSchema.parse({
     { id: 'north', x: 375, y: 330, radius: 84, closeMs: 1200 },
     { id: 'south', x: 375, y: 1010, radius: 84, closeMs: 1200 },
   ],
-  thief: { x: 375, y: 690, radius: 80 },
+  runner: { x: 375, y: 690, radius: 80 },
   escapeAfterMs: 9000,
   hint: '趁贼还没跑，把出口都关上',
 });

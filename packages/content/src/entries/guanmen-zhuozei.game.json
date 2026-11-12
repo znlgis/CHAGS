@@ -121,7 +121,7 @@
               "closeMs": 1200
             }
           ],
-          "thief": {
+          "runner": {
             "x": 375,
             "y": 690,
             "radius": 80

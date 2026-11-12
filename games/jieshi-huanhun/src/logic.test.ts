@@ -86,7 +86,7 @@ describe('借尸还魂 · 关卡数据', () => {
     expect(entry.figures).toEqual(['陈胜', '吴广']);
     expect(entry.ageRange).toEqual([8, 12]);
     expect(entry.source.book).toContain('三十六计');
-    expect(entry.source.chapter).toBe('借尸还魂');
+    expect(entry.source.chapter).toBe('借名归心');
     expect(entry.source.quote).toContain('有用者，不可借');
     expect(entry.story[1]!.narration).toContain('扶苏');
   });

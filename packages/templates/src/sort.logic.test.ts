@@ -10,12 +10,12 @@ const level = SortLevelSchema.parse({
   bins: [
     { id: 'eat', kind: 'eat', x: 140, y: 1120, radius: 100, label: '能吃' },
     { id: 'cure', kind: 'cure', x: 375, y: 1120, radius: 100, label: '能治病' },
-    { id: 'poison', kind: 'poison', x: 610, y: 1120, radius: 100, label: '有毒' },
+    { id: 'bitter', kind: 'bitter', x: 610, y: 1120, radius: 100, label: '有毒' },
   ],
   items: [
     { id: 'a', binId: 'eat', kind: 'grain', x: 160, y: 700 },
     { id: 'b', binId: 'cure', kind: 'leaf', x: 375, y: 700 },
-    { id: 'c', binId: 'poison', kind: 'mushroom', x: 590, y: 700 },
+    { id: 'c', binId: 'bitter', kind: 'mushroom', x: 590, y: 700 },
     { id: 'd', binId: 'eat', kind: 'berry', x: 260, y: 860 },
   ],
   hint: '看形状，放进对的那一块',
@@ -97,6 +97,6 @@ describe('关卡脚本的自我体检', () => {
     };
     expect(SortLevelSchema.safeParse(base).success).toBe(false); // 有 probe 却没有 tastedKind
     expect(SortLevelSchema.safeParse({ ...base, probe: undefined, items: [{ ...level.items[0]!, binId: 'nope' }, ...level.items.slice(1)] }).success).toBe(false);
-    expect(SortLevelSchema.safeParse({ ...base, probe: undefined, items: level.items.slice(0, 3).filter((i) => i.binId !== 'poison') }).success).toBe(false); // 有一块木牍没东西放
+    expect(SortLevelSchema.safeParse({ ...base, probe: undefined, items: level.items.slice(0, 3).filter((i) => i.binId !== 'bitter') }).success).toBe(false); // 有一块木牍没东西放
   });
 });

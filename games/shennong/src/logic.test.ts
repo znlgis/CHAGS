@@ -24,7 +24,7 @@ describe('神农尝百草 · 关卡数据', () => {
     expect(level.probe).toBeTruthy();
     for (const item of level.items) {
       expect(item.tastedKind, item.id + ' 没有尝过之后的样子').toBeTruthy();
-      expect(['food', 'cure', 'poison']).toContain(item.tastedKind);
+      expect(['food', 'cure', 'bitter']).toContain(item.tastedKind);
     }
   });
 

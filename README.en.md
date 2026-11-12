@@ -440,7 +440,7 @@ support / close, `window` gains stir, `matchup` gains order). When extending, th
 
 | # | Stratagem | What the child actually does | Template |
 |---|---|---|---|
-| 25 | Swap the Key Piece | Swap a row of load-bearing posts for **identical-looking** new ones; each takes a hold-to-work spell, and the inspector **calls the roll** every few seconds | `swap` (beam) |
+| 25 | New Beams for Old | Swap a row of load-bearing posts for **identical-looking** new ones; each takes a hold-to-work spell, and the inspector **calls the roll** every few seconds | `swap` (beam) |
 | 26 | Point at the Mulberry Tree While Cursing the Locust Tree | No naming names: mulberry, locust, bell, drum — knock the one he understands, and the man who should take the hint steps forward himself | `probe` (hint) |
 | 27 | Feign Madness, Keep Your Wits | The rival keeps testing you: **any tap during a test gives you away**, so only the gaps between tests let you push on | `stillness` (feign) |
 | 28 | Lure Him Up, Then Pull the Ladder | Give the convenience first: build the ladder rung by rung, watch him climb into place, then pull it away (pull early and he simply slides back) | `siege` (ladder) |

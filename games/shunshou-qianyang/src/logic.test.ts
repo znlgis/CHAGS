@@ -67,7 +67,7 @@ describe('顺手牵羊 · 关卡数据', () => {
     expect(entry.kind).toBe('strategy');
     expect(entry.stratagem).toEqual({ number: 12, set: 2 });
     expect(entry.source.book).toContain('三十六计');
-    expect(entry.source.chapter).toBe('顺手牵羊');
+    expect(entry.source.chapter).toBe('顺手得助');
     expect(entry.source.quote).toContain('微隙在所必乘');
     expect(entry.yearApprox).toBe(817);
     expect(entry.figures).toEqual(['李愬']);

@@ -108,8 +108,8 @@
               "label": "能治病"
             },
             {
-              "id": "poison",
-              "kind": "poison",
+              "id": "bitter",
+              "kind": "bitter",
               "x": 605,
               "y": 1128,
               "radius": 100,
@@ -178,18 +178,18 @@
             },
             {
               "id": "mushroom",
-              "binId": "poison",
+              "binId": "bitter",
               "kind": "mushroom",
-              "tastedKind": "poison",
+              "tastedKind": "bitter",
               "x": 450,
               "y": 800,
               "speak": "这种蘑菇不能吃。"
             },
             {
               "id": "blueberry",
-              "binId": "poison",
+              "binId": "bitter",
               "kind": "blueberry",
-              "tastedKind": "poison",
+              "tastedKind": "bitter",
               "x": 605,
               "y": 800,
               "speak": "不认识的蓝果子，不能吃。"

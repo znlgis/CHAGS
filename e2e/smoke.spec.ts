@@ -459,7 +459,7 @@ test('神农尝百草：没尝过就分不了类，会被送回嘴边先尝一�
     bins: { id: string; x: number; y: number }[];
   });
   const liquorice = herbs.items.find((i) => i.id === 'liquorice')!;
-  const poisonBin = herbs.bins.find((b) => b.id === 'poison')!;
+  const poisonBin = herbs.bins.find((b) => b.id === 'bitter')!;
   const cureBin = herbs.bins.find((b) => b.id === 'cure')!;
 
   // 甘草还没尝过就拖到"有毒别吃"上：不算错，会被送回嘴边尝一口

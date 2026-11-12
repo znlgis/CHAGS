@@ -37,8 +37,8 @@ export default defineGame({
           drawItem: (g, item, state) => drawPlant(g, item, state),
           onTaste: (item, api) => {
             const kind = item.tastedKind ?? 'food';
-            setMood(kind === 'food' ? 'sweet' : kind === 'cure' ? 'cure' : 'poison');
-            sparkleAt(api.scene, 375, 300, kind === 'poison' ? 0x8b5fbf : THEME.gold, 7);
+            setMood(kind === 'food' ? 'sweet' : kind === 'cure' ? 'cure' : 'bitter');
+            sparkleAt(api.scene, 375, 300, kind === 'bitter' ? 0x8b5fbf : THEME.gold, 7);
             // 毒草只是难受一下：脸上冒会儿星星，就过去了
             api.scene.time.delayedCall(1100, () => {
               setMood('idle');

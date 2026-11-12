@@ -1600,7 +1600,7 @@ export const SiegeCloseSchema = z
   .object({
     mode: z.literal('close'),
     exits: z.array(SiegeExitSchema).min(3).max(5),
-    thief: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
+    runner: z.object({ x: z.number(), y: z.number(), radius: z.number().positive() }),
     /** 贼多久之后开始跑 */
     escapeAfterMs: z.number().positive(),
     hint: z.string().min(1).max(24),

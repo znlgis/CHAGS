@@ -186,7 +186,7 @@ function drawThief(
 }
 
 /** 贼这一刻在哪儿：没跑的时候会一点点朝他要去的那扇门挪，跑了就一路冲出去 */
-function thiefView(stage: SiegeCloseMetrics): { x: number; y: number; running: boolean; alpha: number } {
+function runnerView(stage: SiegeCloseMetrics): { x: number; y: number; running: boolean; alpha: number } {
   if (stage.escaped && stage.escapedAtMs >= 0) {
     const exit = EXITS.find((item) => item.id === stage.escapedExitId) ?? EXITS[0];
     const p = clamp01((stage.elapsedMs - stage.escapedAtMs) / SIEGE.escapeRunMs);
@@ -253,8 +253,8 @@ export function drawClose(g: Phaser.GameObjects.Graphics, stage: SiegeCloseMetri
     const closing = stage.closingId === exit.id ? stage.closingRatio : 0;
     drawGate(g, exit, closed, closing);
   });
-  const thief = thiefView(stage);
-  drawThief(g, thief.x, thief.y, stage.elapsedMs, thief.running, thief.alpha);
+  const runner = runnerView(stage);
+  drawThief(g, runner.x, runner.y, stage.elapsedMs, runner.running, runner.alpha);
   drawClock(g, stage);
 }
 

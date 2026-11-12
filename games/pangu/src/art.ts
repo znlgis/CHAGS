@@ -230,7 +230,7 @@ export function drawOrb(g: Phaser.GameObjects.Graphics, kind: string): void {
       g.arc(0, 2, 22, Math.PI * 0.15, Math.PI * 1.55, false);
       g.strokePath();
       break;
-    case 'blood':
+    case 'sap':
       g.fillTriangle(0, -24, -17, 10, 17, 10);
       g.fillCircle(0, 12, 16);
       break;

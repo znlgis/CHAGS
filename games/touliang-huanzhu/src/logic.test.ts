@@ -191,7 +191,7 @@ describe('偷梁换柱 · 故事与复习', () => {
     expect(entry.figures).toEqual(['赵高', '秦二世']);
     expect(entry.ageRange).toEqual([8, 12]);
     expect(entry.source.book).toBe('《三十六计·并战计》');
-    expect(entry.source.chapter).toBe('偷梁换柱');
+    expect(entry.source.chapter).toBe('梁柱换新');
     expect(entry.source.quote).toContain('频更其阵');
     expect(entry.moral).toContain('关键的那一根');
     expect(entry.game.template).toBe('swap');
@@ -220,7 +220,7 @@ describe('偷梁换柱 · 故事与复习', () => {
 describe('偷梁换柱 · 英译补丁', () => {
   it('英文文案（结构 / 漏翻 / 模板合法性由 content:check 守）', () => {
     const merged = getEntry('touliang-huanzhu', 'en')!;
-    expect(merged.title).toBe('Swap the Key Piece');
+    expect(merged.title).toBe('New Beams for Old');
     expect(merged.source.book).toBe('The Thirty-Six Stratagems, Annexation Stratagems');
     expect(merged.game.stages[0]!.levelScript).toMatchObject({ hint: 'Hold on, beat the count' });
   });

@@ -16,14 +16,14 @@
     }
   ],
   "keyMoment": {
-    "question": "Ten suns — how many should he shoot down?",
+    "question": "Ten suns — how many should he bring down?",
     "options": [
       {
-        "text": "Shoot down all ten",
+        "text": "Bring down all ten",
         "hint": ""
       },
       {
-        "text": "Shoot down nine and keep one",
+        "text": "Bring down nine and keep one",
         "hint": ""
       }
     ],
@@ -35,13 +35,13 @@
   ],
   "quiz": [
     {
-      "question": "How many suns did Houyi shoot down?",
+      "question": "How many suns did Houyi bring down?",
       "options": [
-        "Shot down ten",
-        "Shot down nine",
-        "Shot down only one"
+        "Brought down ten",
+        "Brought down nine",
+        "Brought down only one"
       ],
-      "explanation": "He shot down nine and left one to light the world."
+      "explanation": "He brought down nine and left one to light the world."
     },
     {
       "question": "Why shouldn't he shoot down all ten?",

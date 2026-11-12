@@ -30,21 +30,21 @@ describe('关门捉贼 · 关卡数据', () => {
       expect(exit.radius).toBe(EXIT_RADIUS);
       expect(exit.closeMs).toBe(CLOSE_MS);
     }
-    expect(level.thief).toEqual({ x: THIEF.x, y: THIEF.y, radius: THIEF.radius });
+    expect(level.runner).toEqual({ x: THIEF.x, y: THIEF.y, radius: THIEF.radius });
     expect(level.escapeAfterMs).toBe(ESCAPE_AFTER_MS);
   });
 
   it('四个出口都在画面里、都围着贼，而且互相点得开', () => {
     // 贼站在道当中，四个出口围着他
-    expect(Math.abs(level.thief.x - DESIGN_W / 2)).toBeLessThan(40);
+    expect(Math.abs(level.runner.x - DESIGN_W / 2)).toBeLessThan(40);
     for (const exit of level.exits) {
       expect(exit.x - exit.radius).toBeGreaterThanOrEqual(0);
       expect(exit.x + exit.radius).toBeLessThanOrEqual(DESIGN_W);
       expect(exit.y - exit.radius).toBeGreaterThan(NIGHT_TOP);
       expect(exit.y + exit.radius).toBeLessThan(DESIGN_H);
       expect(
-        Math.hypot(exit.x - level.thief.x, exit.y - level.thief.y),
-      ).toBeGreaterThan(exit.radius + level.thief.radius);
+        Math.hypot(exit.x - level.runner.x, exit.y - level.runner.y),
+      ).toBeGreaterThan(exit.radius + level.runner.radius);
     }
     // 任意两扇门的命中圈都不叠在一起 —— 手指粗也不会点到隔壁那扇
     for (const a of level.exits) {
@@ -98,7 +98,7 @@ describe('关门捉贼 · 关卡数据', () => {
   });
 
   it('零惩罚：贼站着的地方没有门；已经关上的门再点也不会更糟', () => {
-    expect(exitAt(level, level.thief.x, level.thief.y, TAP_FORGIVE)).toBeUndefined();
+    expect(exitAt(level, level.runner.x, level.runner.y, TAP_FORGIVE)).toBeUndefined();
     const start = closeStart(level, 0);
     const west = closeExit(level, start, 'west', 0);
     expect(west).not.toBe(start);
@@ -153,7 +153,7 @@ describe('关门捉贼 · 故事与复习', () => {
     expect(entry.figures).toEqual(['孙膑', '庞涓']);
     expect(entry.ageRange).toEqual([8, 12]);
     expect(entry.source.book).toBe('《三十六计·混战计》');
-    expect(entry.source.chapter).toBe('关门捉贼');
+    expect(entry.source.chapter).toBe('关门落锁');
     expect(entry.source.quote).toContain('小敌困之');
     expect(entry.moral).toBe('动手之前，先把他的退路想清楚。');
     expect(entry.game.template).toBe('siege');

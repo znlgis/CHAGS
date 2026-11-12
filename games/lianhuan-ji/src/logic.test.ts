@@ -210,7 +210,7 @@ describe('连环计 · 故事与复习', () => {
     expect(entry.source.book).toBe('《三十六计·败战计》');
     expect(entry.source.chapter).toContain('三国演义');
     expect(entry.source.chapter).toContain('演义');
-    expect(entry.source.quote).toBe('将多兵众，不可以敌，使其自累，以杀其势。在师中吉，承天宠也。');
+    expect(entry.source.quote).toBe('将多兵众，不可以敌，使其自累……在师中吉，承天宠也。');
     expect(entry.moral).toContain('一件事接一件事');
     expect(entry.game.template).toBe('chain');
     expect(entry.game.stages[0]!.template).toBe('chain');

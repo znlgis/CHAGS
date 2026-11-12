@@ -103,7 +103,7 @@ describe('擒贼擒王 · 故事与复习', () => {
     expect(entry.figures).toEqual(['张巡', '尹子奇']);
     expect(entry.ageRange).toEqual([8, 12]);
     expect(entry.source.book).toContain('三十六计');
-    expect(entry.source.chapter).toBe('擒贼擒王');
+    expect(entry.source.chapter).toBe('擒王定局');
     expect(entry.source.quote).toContain('摧其坚');
     expect(entry.moral).toBe('一群人里，先找出最关键的那一个。');
     expect(entry.game.template).toBe('probe');

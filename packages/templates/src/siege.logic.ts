@@ -421,7 +421,7 @@ function nearestExit(exits: SiegeExit[], level: SiegeCloseLevel): SiegeExit | un
   let best: SiegeExit | undefined;
   let bestDist = Number.POSITIVE_INFINITY;
   for (const exit of exits) {
-    const dist = Math.hypot(exit.x - level.thief.x, exit.y - level.thief.y);
+    const dist = Math.hypot(exit.x - level.runner.x, exit.y - level.runner.y);
     if (dist < bestDist) {
       best = exit;
       bestDist = dist;

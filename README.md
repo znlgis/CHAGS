@@ -409,16 +409,16 @@ pnpm dist:toy       # 打 B站 Toy 上传包（release/chags-toy-v<版本>.zip�
 
 | # | 计 | 这一关在做什么 | 玩法模板 |
 |---|---|---|---|
-| 25 | 偷换关键 | 一排承重柱要换成**外形一模一样**的新柱；换一根得按住干一会儿，而检查者每隔几秒**清点**一次 | `swap`（beam） |
+| 25 | 梁柱换新 | 一排承重柱要换成**外形一模一样**的新柱；换一根得按住干一会儿，而检查者每隔几秒**清点**一次 | `swap`（beam） |
 | 26 | 指桑骂槐 | 不能点名：场上桑、槐、钟、鼓，敲**他听得懂的那样**，该听懂的人自己往前迈一步 | `probe`（hint） |
 | 27 | 假痴不癫 | 对手一次次试探，**试探期任何点击都算露馅**；只有试探之间的空档能推进一步 | `stillness`（feign） |
 | 28 | 上屋抽梯 | 先给方便：一级级把梯子搭好，看他顺着走到位，再把梯子抽掉（抽早了只是他掉回来） | `siege`（ladder） |
 | 29 | 树上开花 | 借现成的树与城墙挂旗：支点能挂几面、每面顶多少"规模"各不相同，凑够规模就成 | `show`（borrow） |
 | 30 | 反客为主 | 每一步都要**先被允许**：允许只持续一会儿，过期作废，得重新求（急不得） | `chain`（step） |
 
-| 偷换关键 | 指桑骂槐 | 假痴不癫 |
+| 梁柱换新 | 指桑骂槐 | 假痴不癫 |
 |---|---|---|
-| ![偷换关键](docs/screenshots/116-stratagem-25-touliang.png) | ![指桑骂槐](docs/screenshots/117-stratagem-26-zhisang.png) | ![假痴不癫](docs/screenshots/118-stratagem-27-jiachi.png) |
+| ![梁柱换新](docs/screenshots/116-stratagem-25-touliang.png) | ![指桑骂槐](docs/screenshots/117-stratagem-26-zhisang.png) | ![假痴不癫](docs/screenshots/118-stratagem-27-jiachi.png) |
 
 | 上屋抽梯 | 树上开花 | 反客为主 |
 |---|---|---|

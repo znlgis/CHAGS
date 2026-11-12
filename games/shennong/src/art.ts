@@ -2,7 +2,7 @@ import type Phaser from 'phaser';
 import { THEME, circle, roundRect, shade } from '@chags/phaser-kit';
 import type { SortBin, SortItem, SortItemState } from '@chags/templates';
 
-export type Mood = 'idle' | 'sweet' | 'cure' | 'poison';
+export type Mood = 'idle' | 'sweet' | 'cure' | 'bitter';
 
 const SKIN = 0xf6d3ae;
 const ROBE = 0x6fa86a;
@@ -53,7 +53,7 @@ function face(g: Phaser.GameObjects.Graphics, cx: number, cy: number, mood: Mood
     // 眯成两条弯弯的线
     strokeArc(g, cx - 24, eyeY + 6, 13, Math.PI * 1.15, Math.PI * 1.85, 5);
     strokeArc(g, cx + 24, eyeY + 6, 13, Math.PI * 1.15, Math.PI * 1.85, 5);
-  } else if (mood === 'poison') {
+  } else if (mood === 'bitter') {
     // 眼睛转圈：画两个小叉
     for (const dx of [-24, 24]) {
       g.lineStyle(5, THEME.outline, 1);
@@ -73,7 +73,7 @@ function face(g: Phaser.GameObjects.Graphics, cx: number, cy: number, mood: Mood
     g.fillRect(cx - 16, cy + 8, 32, 9);
   } else if (mood === 'cure') {
     circle(g, cx, cy + 22, 11, 0x8c4a3f, THEME.outline, 4);
-  } else if (mood === 'poison') {
+  } else if (mood === 'bitter') {
     g.lineStyle(6, THEME.outline, 1);
     g.beginPath();
     g.moveTo(cx - 22, cy + 24);
@@ -152,7 +152,7 @@ function drawShennong(g: Phaser.GameObjects.Graphics, mood: Mood): void {
   // 表情画在胡子之前的位置：尝到东西时，脸上看得出来
   face(g, cx, headY - 4, mood);
 
-  if (mood === 'poison') {
+  if (mood === 'bitter') {
     // 只是难受一下：脸发青 + 头上转圈的小星星，不出现倒下
     g.fillStyle(0x7fc48a, 0.34);
     g.fillCircle(cx, headY + 6, headR - 4);
@@ -170,7 +170,7 @@ function drawShennong(g: Phaser.GameObjects.Graphics, mood: Mood): void {
 
 /** 尝一口时嘴边的小光点（由 index.ts 触发，画在世界层上） */
 export function drawTasteGlow(g: Phaser.GameObjects.Graphics, kind: string): void {
-  const color = kind === 'poison' ? 0x8b5fbf : THEME.gold;
+  const color = kind === 'bitter' ? 0x8b5fbf : THEME.gold;
   g.fillStyle(color, 0.3);
   g.fillCircle(375, 330, 96);
 }
@@ -418,7 +418,7 @@ export function drawFinale(g: Phaser.GameObjects.Graphics): void {
   for (let i = 0; i < 8; i += 1) {
     const x = 375 - 216 + i * 54;
     roundRect(g, x, 604, 50, 300, 12, i % 2 === 0 ? 0xf0dcb4 : 0xe8d0a0, THEME.woodDeep, 5);
-    drawIcon(g, i < 3 ? 'food' : i < 6 ? 'cure' : 'poison', x + 25, 700, 0.22);
+    drawIcon(g, i < 3 ? 'food' : i < 6 ? 'cure' : 'bitter', x + 25, 700, 0.22);
   }
   g.fillStyle(THEME.redDeep, 1);
   g.fillRect(140, 646, 470, 12);

@@ -179,11 +179,11 @@
               "speak": "呼出的气息变成了风云"
             },
             {
-              "id": "blood",
+              "id": "sap",
               "slotId": "river",
               "x": 545,
               "y": 1226,
-              "kind": "blood",
+              "kind": "sap",
               "speak": "气息变成了江河"
             },
             {

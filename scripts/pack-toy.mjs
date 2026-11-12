@@ -108,6 +108,25 @@ if (external.length > 0) {
   ok('没有站外加载（src/href/fetch 全部相对路径）');
 }
 
+
+// ---------- 6. 审核用词门禁（2026-11 内容审核被退后加回）----------
+// 平台只看得到打包产物里的文本，所以按「孩子看得见的字面词」扫一遍。
+// 这一条只拦**正文文案**：`source.quote` 里的古文已经做了节引，命中即说明新写的内容又带回来了。
+const RISKY = ['杀', '死', '血', '尸', '毒', '贼', '劫', '偷', '盗', '鬼', '毙', '砍', '打仗'];
+const riskyHits = [];
+for (const path of files) {
+  const name = relative(DIST, path).replace(/\\/g, '/');
+  if (!/\.(?:html|css|js)$/.test(name)) continue;
+  const text = readFileSync(path, 'utf8');
+  for (const word of RISKY) {
+    if (text.includes(word)) riskyHits.push(name + ' 含「' + word + '」');
+  }
+}
+if (riskyHits.length > 0) {
+  for (const hit of riskyHits.slice(0, 8)) fail(hit + '（内容审核会按字面词退件，改成中性说法）');
+} else {
+  ok('审核用词：' + RISKY.length + ' 个敏感词在产物里都没有出现');
+}
 mkdirSync(OUT_DIR, { recursive: true });
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 const version = String(pkg.version ?? '0.0.0');
