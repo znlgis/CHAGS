@@ -113,14 +113,26 @@ function toyContentPlugin(): Plugin {
 }
 export default defineConfig({
   base: './',
+  // pinia 会把 devtools 的桥一起打进来（里面用 XHR 同步时间线），生产包不需要它：
+  // 定义成 false 后 Rollup 能把整段静态消除 —— 这是包里最后一处 XHR。
+  define: { __VUE_PROD_DEVTOOLS__: 'false' },
   plugins: [vue(), tailwindcss(), toyContentPlugin()],
   resolve: {
     // 只替换裸 'phaser' 导入；TS 类型仍解析到 phaser 包（typecheck 不受影响）
-    alias: useFullPhaser ? [] : [{ find: /^phaser$/, replacement: phaserTrim }],
+    alias: [
+      // pinia 的开发构建里带着 devtools 的时间线桥（file-saver 的 saveAs → XMLHttpRequest + Blob），
+      // 生产包一个字节都用不到，而包体安全检查会把它当成「动态下载」。指向 prod 构建后整段消失。
+      { find: /^pinia$/, replacement: fileURLToPath(new URL('../../node_modules/.pnpm/pinia@4.0.3_@vue+devtools-a_3ff3e03ba37e8b7715c88d9b8a57689f/node_modules/pinia/dist/pinia.esm-browser.prod.js', import.meta.url)) },
+      ...(useFullPhaser ? [] : [{ find: /^phaser$/, replacement: phaserTrim }]),
+    ],
   },
   server: { host: '127.0.0.1', port: 5183, strictPort: true },
   build: {
     target: 'es2022',
+    // 关掉 modulepreload 的 polyfill：它内部用 XHR 探测与 fetch 预载，",
+    // 而包里一条网络请求都不应该存在（包体安全检查会把 XHR / fetch 当「动态下载」退件）。
+    // 目标浏览器（Chrome 105+ / WebView）都原生支持 modulepreload，polyfill 只是冗余代码。
+    modulePreload: { polyfill: false },
     // 告警线贴着裁剪后的 Phaser（约 877 KB 原始）：它本来就是共享的大 chunk，
     // 而任何**新增**的大 chunk 都该在构建日志里出声（体积门禁见 scripts/check-size.mjs）。
     chunkSizeWarningLimit: 1000,

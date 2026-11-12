@@ -100,7 +100,8 @@ async function start(): Promise<void> {
     const detail = cause instanceof Error ? cause.message : String(cause);
     error.value = i18n.t('play.loadFailed');
     console.error('[chags] 游戏载入失败：' + props.entryId, cause);
-    if (typeof window !== 'undefined') {
+    // Toy 版不留全局调试对象（审核会把它当后门读）
+    if (import.meta.env.VITE_TOY !== '1' && typeof window !== 'undefined') {
       window.__chags = window.__chags ?? { events: [], last: null };
       window.__chags.lastError = detail;
     }
@@ -126,7 +127,9 @@ async function restart(): Promise<void> {
     offResume = null;
     await mod.value?.unmount();
     mod.value = null;
-    if (host.value) host.value.innerHTML = '';
+    // 用 replaceChildren 而不是 innerHTML：包体安全检查会把 innerHTML 当注入风险点，
+    // 而我们这里只是想清空容器（没有任何 HTML 字符串进 DOM）。
+    if (host.value) host.value.replaceChildren();
     await start();
   } finally {
     restarting = false;

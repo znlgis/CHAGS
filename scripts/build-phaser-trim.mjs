@@ -121,6 +121,9 @@ function buildConfig(webpack, phaserSrcDir, outDir) {
         'typeof WEBGL_RENDERER': JSON.stringify(true),
         'typeof WEBGL_DEBUG': JSON.stringify(false),
         'typeof FEATURE_SOUND': JSON.stringify(false),
+      // Loader 子系统（atob / XMLHttpRequest / createObjectURL）—— 53 款游戏都不加载贴图，
+      // 留着它只会让包体安全检查多出几个「动态下载/解码」的命中点
+      'typeof FEATURE_LOADER': JSON.stringify(false),
         'typeof EXPERIMENTAL': JSON.stringify(false),
       }),
     ],

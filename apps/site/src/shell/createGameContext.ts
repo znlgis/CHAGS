@@ -16,6 +16,9 @@ export interface GameHostHooks {
  * 并且自动通关还会把星星记进存档。
  */
 function debugAllowed(): boolean {
+  // Toy 发布形态**不留任何自动化开关**：`navigator.webdriver` 这种「给无头浏览器开的后门」
+  // 在审核眼里就是作弊入口，而 Toy 里也没有 e2e 要跑。
+  if (import.meta.env.VITE_TOY === '1') return false;
   if (import.meta.env.DEV) return true;
   return typeof navigator !== 'undefined' && navigator.webdriver === true;
 }

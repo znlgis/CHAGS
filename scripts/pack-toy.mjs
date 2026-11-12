@@ -127,6 +127,36 @@ if (riskyHits.length > 0) {
 } else {
   ok('审核用词：' + RISKY.length + ' 个敏感词在产物里都没有出现');
 }
+
+// ---------- 7. 代码安全扫描（2026-11「包体安全检查未通过」之后加回）----------
+// 平台读的是压缩后的产物，所以这里扫的就是压缩后的文本。
+// 规则只列「能执行代码 / 能联网 / 能挂后门」的那几个 —— 这几项我们自己一个都不需要：
+// 画面全程序化绘制（贴图 Loader 已从 Phaser 裁剪版里去掉）、零网络请求、没有自动化开关。
+const SECURITY_RULES = [
+  { name: 'eval', pattern: 'eval(' },
+  { name: 'new Function', pattern: 'new Function' },
+  { name: 'document.write', pattern: 'document.write' },
+  { name: 'XHR', pattern: 'XMLHttpRequest' },
+  { name: 'fetch', pattern: 'fetch(' },
+  { name: 'WebSocket', pattern: 'WebSocket' },
+  { name: 'atob', pattern: 'atob(' },
+  { name: 'debug-hook webdriver', pattern: 'webdriver' },
+  { name: '__chags', pattern: '__chags' },
+];
+const securityHits = [];
+for (const path of files) {
+  const name = relative(DIST, path).replace(/\\/g, '/');
+  if (!/\.(?:html|css|js)$/.test(name)) continue;
+  const text = readFileSync(path, 'utf8');
+  for (const rule of SECURITY_RULES) {
+    if (text.includes(rule.pattern)) securityHits.push(name + ' 命中 ' + rule.name);
+  }
+}
+if (securityHits.length > 0) {
+  for (const hit of securityHits.slice(0, 8)) fail(hit + '（包体安全检查会按「代码安全风险」退件）');
+} else {
+  ok('代码安全：' + SECURITY_RULES.length + ' 条规则全不命中（无 eval / 无网络 / 无调试后门）');
+}
 mkdirSync(OUT_DIR, { recursive: true });
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 const version = String(pkg.version ?? '0.0.0');

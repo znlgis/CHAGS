@@ -31,7 +31,10 @@ var Phaser = {
   Game: require('phaser-src/core/Game'),
   GameObjects: require('./gameobjects-trim.cjs'),
   Input: require('phaser-src/input'),
-  Loader: require('phaser-src/loader'),
+  // FEATURE_LOADER=false 时连 Loader 子系统一起裁掉：53 个游戏的画面全是程序化绘制，
+  // 一帧贴图都不加载，而 Loader 里带着 atob / XMLHttpRequest / createObjectURL ——
+  // 包体安全检查把这些当「动态下载与解码」的风险点，所以 Toy 版干脆不带。
+  ...(typeof FEATURE_LOADER ? { Loader: require('phaser-src/loader') } : {}),
   Math: require('phaser-src/math'),
   Plugins: require('phaser-src/plugins'),
   Renderer: require('phaser-src/renderer'),
