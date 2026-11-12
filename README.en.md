@@ -29,6 +29,7 @@ pnpm audit:i18n     # screenshot every screen in both languages into .scratch/i1
 pnpm icons          # regenerate the app icons (needs Python + Pillow; only when icons change)
 pnpm keystore       # generate an Android signing key (optional — see docs/打包与分发.md §4)
 pnpm dist:win       # portable Windows exe (double-click to play, no install; size: see the build output)
+pnpm dist:toy       # Bilibili Toy upload bundle (release/chags-toy-v<version>.zip, platform checks built in)
 pnpm dist:apk       # Android APK (sideload)
 ```
 
@@ -41,6 +42,14 @@ Handy debug links (**only active on the dev server and in automated browsers** �
 
 - `/?autoplay=1#/play/caochong-elephant` — play the whole game automatically (used for headless verification)
 - `/?lang=en` — force English
+
+## Publishing to Bilibili Toy
+
+The same site bundle also publishes to [Bilibili Toy](https://www.bilibili.com/toy/publish/guide/faq): `pnpm dist:toy` zips
+`apps/site/dist` so that **`index.html` sits at the archive root**, and runs the platform's hard requirements as a gate
+(entry ≤1 MB, bundle ≤50 MB, whitelisted file extensions, no off-site links, no sourcemaps).
+The line-by-line self-check — including the two options you must pick by hand on the upload page (most importantly:
+do **not** pick the "game" type, or minors are blocked from playing) — is in [docs/Toy发布与审核.md](docs/Toy发布与审核.md).
 
 ## For parents
 

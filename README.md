@@ -30,6 +30,7 @@ pnpm icons          # 重新生成应用图标（需要 Python + Pillow；只在
 pnpm keystore       # 生成安卓签名密钥（可选：不生成也能打包，见 docs/打包与分发.md §4）
 pnpm dist:win       # 打包 Windows 便携 exe（双击即玩，不用安装；体积以产物为准）
 pnpm dist:apk       # 打包安卓 apk（直接安装）
+pnpm dist:toy       # 打 B站 Toy 上传包（release/chags-toy-v<版本>.zip，脚本内置平台门禁）
 ```
 
 > 安卓签名：**没有正式密钥也能打包**。本地与 CI 都会退回 debug 签名，APK 直接能装到自己手机上；
@@ -37,6 +38,13 @@ pnpm dist:apk       # 打包安卓 apk（直接安装）
 
 调试直达链接（**仅开发服务器与自动化浏览器生效**，普通分享链接里不起作用）：
 `/?autoplay=1#/play/caochong-elephant`（自动通关，用于无头验证）、`/?lang=en`（强制英文）。
+
+## 上 B站 Toy
+
+同一个站点产物也能直接发到 [哔哩哔哩 Toy](https://www.bilibili.com/toy/publish/guide/faq)：`pnpm dist:toy` 会把 `apps/site/dist` 打成
+**根目录就是 `index.html`** 的 zip，并把平台硬性条款（入口 ≤1 MB、整包 ≤50 MB、白名单后缀、无站外链接、无 sourcemap）当门禁跑一遍。
+逐条自查与**发布页要手动选对的两个选项**（尤其：类型别选「游戏」，否则未成年人自动无法游玩）见
+[docs/Toy发布与审核.md](docs/Toy发布与审核.md)。
 
 ## 给家长
 
