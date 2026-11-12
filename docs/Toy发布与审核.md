@@ -6,6 +6,11 @@
 
 ## 0. 一条命令
 
+> **Toy 版内容口径（2026-11 起）**：`pnpm dist:toy` 出的是 **14 款典故**的裁剪版，不含三十六计，
+> 也不含后羿射日 / 百步穿杨 / 庖丁解牛（弓箭与刀具题材）。完整 53 款仍走 `pnpm build`（GitHub Pages / 桌面 / 安卓）。
+> 开关在 `apps/site/.env.toy` 的 `VITE_TOY=1`，可见性规则见 `apps/site/src/shell/profile.ts`。
+> 两次提审都被通用文案退回、而产物里敏感字已清零，剩下的高风险只剩题材本身，所以先按最小合规集出手。
+
 ```bash
 pnpm dist:toy    # 构建站点 → 跑平台硬性门禁 → release/chags-toy-v<版本>.zip
 ```

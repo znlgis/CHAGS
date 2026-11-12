@@ -29,7 +29,7 @@ pnpm audit:i18n     # screenshot every screen in both languages into .scratch/i1
 pnpm icons          # regenerate the app icons (needs Python + Pillow; only when icons change)
 pnpm keystore       # generate an Android signing key (optional — see docs/打包与分发.md §4)
 pnpm dist:win       # portable Windows exe (double-click to play, no install; size: see the build output)
-pnpm dist:toy       # Bilibili Toy upload bundle (release/chags-toy-v<version>.zip, platform checks built in)
+pnpm dist:toy       # Bilibili Toy bundle: trimmed to the 14 anecdote games (no stratagems), platform checks built in
 pnpm dist:apk       # Android APK (sideload)
 ```
 

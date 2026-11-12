@@ -30,7 +30,7 @@ pnpm icons          # 重新生成应用图标（需要 Python + Pillow；只在
 pnpm keystore       # 生成安卓签名密钥（可选：不生成也能打包，见 docs/打包与分发.md §4）
 pnpm dist:win       # 打包 Windows 便携 exe（双击即玩，不用安装；体积以产物为准）
 pnpm dist:apk       # 打包安卓 apk（直接安装）
-pnpm dist:toy       # 打 B站 Toy 上传包（release/chags-toy-v<版本>.zip，脚本内置平台门禁）
+pnpm dist:toy       # 打 B站 Toy 上传包：14 款典故的裁剪版（不含三十六计），脚本内置平台门禁
 ```
 
 > 安卓签名：**没有正式密钥也能打包**。本地与 CI 都会退回 debug 签名，APK 直接能装到自己手机上；

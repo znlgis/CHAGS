@@ -3,6 +3,7 @@ import { gameGroups } from '@chags/content';
 import { groupMessageKey, stratagemLabel, stratagemSetKey } from '@chags/i18n';
 import { computed } from 'vue';
 import { navigate } from '../router';
+import { filterEntries, filterGroups } from '../shell/profile';
 import { useLocale } from '../stores/locale';
 import { usePlaytime } from '../stores/playtime';
 import { useProgress } from '../stores/progress';
@@ -41,7 +42,12 @@ const kindClass = (kind: string): string =>
  * 以后加第三组、第四组，这里一行都不用改。
  * 空组也会出现（三十六计现在就是空的），显示成"敬请期待"。
  */
-const groups = computed(() => gameGroups(i18n.locale));
+const groups = computed(() =>
+  filterGroups(gameGroups(i18n.locale)).map((section) => ({
+    group: section.group,
+    games: filterEntries(section.games),
+  })),
+);
 const total = computed(() => groups.value.reduce((sum, g) => sum + g.games.length, 0));
 
 /** 到期要复习的内容（按大厅顺序，横幅上的"去复习"直接进第一部） */

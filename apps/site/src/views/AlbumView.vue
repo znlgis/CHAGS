@@ -3,6 +3,7 @@ import { gameGroups } from '@chags/content';
 import { groupMessageKey, stratagemLabel, stratagemSetKey } from '@chags/i18n';
 import { computed } from 'vue';
 import { navigate } from '../router';
+import { filterEntries, filterGroups } from '../shell/profile';
 import { useLocale } from '../stores/locale';
 import { useProgress } from '../stores/progress';
 
@@ -15,10 +16,10 @@ const i18n = useLocale();
  * 空状态交给下面那句总提示。
  */
 const sections = computed(() =>
-  gameGroups(i18n.locale)
+  filterGroups(gameGroups(i18n.locale))
     .map(({ group, games }) => ({
       group,
-      cards: games.filter((a) => progress.hasCard(a.id)),
+      cards: filterEntries(games).filter((a) => progress.hasCard(a.id)),
     }))
     .filter((section) => section.cards.length > 0),
 );

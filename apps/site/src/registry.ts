@@ -1,10 +1,17 @@
 import type { GameModule } from '@chags/game-kit';
+import { isEntryVisible } from './shell/profile';
 
 /**
  * 新增一个典故 = 加一行 import。外壳不认识任何具体玩法，
  * Vite 会自动把每个游戏切成独立 chunk（Phaser 只在这些 chunk 里）。
  */
-export const registry: Record<string, () => Promise<{ default: GameModule }>> = {
+/**
+ * Toy 版会上哪几款，由 shell/profile.ts 决定；这里只是把注册表包一层，
+ * 让不存在于当前发布形态的 id 连入口都没有（深链接也进不去）。
+ */
+export const registry: Record<string, () => Promise<{ default: GameModule }>> = Object.fromEntries(
+  Object.entries({
+
   'caochong-elephant': () => import('@chags/game-caochong-elephant'),
   pangu: () => import('@chags/game-pangu'),
   houyi: () => import('@chags/game-houyi'),
@@ -63,4 +70,5 @@ export const registry: Record<string, () => Promise<{ default: GameModule }>> = 
   'kurou-ji': () => import('@chags/game-kurou-ji'),
   'lianhuan-ji': () => import('@chags/game-lianhuan-ji'),
   'zou-weishang': () => import('@chags/game-zou-weishang'),
-};
+  } satisfies Record<string, () => Promise<{ default: GameModule }>>).filter(([id]) => isEntryVisible(id)),
+);

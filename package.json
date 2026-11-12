@@ -21,7 +21,7 @@
     "keystore": "node scripts/make-keystore.mjs",
     "dist:win": "pnpm --filter @chags/site build && pnpm --filter @chags/desktop build",
     "dist:apk": "pnpm --filter @chags/site build && pnpm --filter @chags/mobile build",
-    "dist:toy": "pnpm --filter @chags/site build && node scripts/pack-toy.mjs",
+    "dist:toy": "pnpm --filter @chags/site build --mode toy && node scripts/pack-toy.mjs",
     "size": "node scripts/check-size.mjs",
     "phaser:trim": "node scripts/build-phaser-trim.mjs"
   },
